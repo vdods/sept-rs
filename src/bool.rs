@@ -1,0 +1,38 @@
+use crate::{False, NonParametricTermTrait, DynNPTerm, TermTrait, True, TypeTrait};
+use std::any::Any;
+
+/// This represents the Bool type itself, not a boolean value such as true or false.
+#[derive(Debug)]
+pub struct Bool;
+
+impl TermTrait for Bool {
+    fn is_parametric_term(&self) -> bool {
+        false
+    }
+    fn is_type_term(&self) -> bool {
+        true
+    }
+}
+
+impl NonParametricTermTrait for Bool {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Bool
+    }
+}
+
+impl TypeTrait for Bool {
+    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
+        // TODO: Could potentially implement this via equals
+        let x_: &dyn Any = x;
+        x_.is::<True>() ||
+        x_.is::<False>() ||
+        x_.is::<bool>() ||
+        match x_.downcast_ref::<DynNPTerm>() {
+            Some(DynNPTerm::True) => true,
+            Some(DynNPTerm::False) => true,
+            _ => false,
+        }
+    }
+}
+
+pub const BOOL: Bool = Bool{};
