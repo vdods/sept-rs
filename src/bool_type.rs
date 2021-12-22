@@ -1,8 +1,14 @@
-use crate::{Bool, FalseType, TermTrait, TrueType, TypeTrait};
+use crate::{Bool, FalseType, Stringify, TermTrait, TrueType, TypeTrait};
 use std::any::Any;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct BoolType;
+
+impl Stringify for BoolType {
+    fn stringify(&self) -> String {
+        "BoolType".into()
+    }
+}
 
 impl TermTrait for BoolType {
     fn is_parametric_term(&self) -> bool {

@@ -1,8 +1,14 @@
-use crate::{Void, TermTrait, TypeTrait};
+use crate::{Stringify, TermTrait, TypeTrait, Void};
 use std::any::Any;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct VoidType;
+
+impl Stringify for VoidType {
+    fn stringify(&self) -> String {
+        "VoidType".into()
+    }
+}
 
 impl TermTrait for VoidType {
     fn is_parametric_term(&self) -> bool {

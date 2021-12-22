@@ -1,8 +1,14 @@
-use crate::{NonParametricTermTrait, DynNPTerm, TermTrait};
+use crate::{NonParametricTermTrait, DynNPTerm, Stringify, TermTrait};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Term;
+
+impl Stringify for Term {
+    fn stringify(&self) -> String {
+        "Term".into()
+    }
+}
 
 impl TermTrait for Term {
     fn is_parametric_term(&self) -> bool {

@@ -1,7 +1,7 @@
 use crate::TypeTrait;
 use std::{any::Any, fmt::Debug};
 
-pub trait TermTrait: Any+Debug+Sized {
+pub trait TermTrait: Any + Debug + Sized {
     /// Defines if this term (which means an instance of the Rust type implementing this trait) has
     /// any parameters (i.e. "state variables").  If not, then this term is, by definition, a singleton.
     fn is_parametric_term(&self) -> bool;

@@ -5,6 +5,8 @@ mod dyn_np_term;
 mod r#false;
 mod false_type;
 mod non_parametric_term_trait;
+mod runtime;
+mod stringify;
 mod term;
 mod term_trait;
 mod r#true;
@@ -23,6 +25,8 @@ pub use crate::{
     r#false::{FALSE, False},
     false_type::{FALSE_TYPE, FalseType},
     non_parametric_term_trait::NonParametricTermTrait,
+    runtime::{BinaryPredicate, Runtime, StringifyFn, UnaryPredicate},
+    stringify::Stringify,
     term::{TERM, Term},
     term_trait::TermTrait,
     r#type::{TYPE, Type},

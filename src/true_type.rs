@@ -1,8 +1,14 @@
-use crate::{TermTrait, True, TypeTrait};
+use crate::{Stringify, TermTrait, True, TypeTrait};
 use std::any::Any;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TrueType;
+
+impl Stringify for TrueType {
+    fn stringify(&self) -> String {
+        "TrueType".into()
+    }
+}
 
 impl TermTrait for TrueType {
     fn is_parametric_term(&self) -> bool {

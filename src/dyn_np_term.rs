@@ -1,8 +1,8 @@
-use crate::{BOOL, FALSE, FALSE_TYPE, NonParametricTermTrait, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE, VOID, VOID_TYPE};
+use crate::{BOOL, FALSE, FALSE_TYPE, NonParametricTermTrait, Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE, VOID, VOID_TYPE};
 
 // The repr(u8) attribute is to be compatible with the C++ implementation.
 #[repr(u8)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DynNPTerm {
     // The most basic Types.
     Term = 0, // Literally everything is a Term (this could be called Any)
@@ -143,6 +143,13 @@ pub enum DynNPTerm {
 //         }
 //     }
 // }
+
+impl Stringify for DynNPTerm {
+    fn stringify(&self) -> String {
+        // Not sure if it should qualify the thing, or just print the variant raw.
+        format!("DynNPTerm::{:?}", self)
+    }
+}
 
 impl TermTrait for DynNPTerm {
     fn is_parametric_term(&self) -> bool {

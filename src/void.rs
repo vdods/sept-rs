@@ -1,8 +1,14 @@
-use crate::{NonParametricTermTrait, DynNPTerm, TermTrait};
+use crate::{NonParametricTermTrait, DynNPTerm, Stringify, TermTrait};
 
 /// This represents the Void term itself.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Void;
+
+impl Stringify for Void {
+    fn stringify(&self) -> String {
+        "Void".into()
+    }
+}
 
 impl TermTrait for Void {
     fn is_parametric_term(&self) -> bool {
