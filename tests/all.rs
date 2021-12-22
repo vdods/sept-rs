@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 
-use sept::{BOOL, Bool, BOOL_TYPE, BoolType, FALSE, False, FALSE_TYPE, FalseType, Result, Runtime, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait, VOID, VOID_TYPE};
+use sept::{BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType, Result, Runtime, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait, VOID, VOID_TYPE};
 
 #[test]
 fn test_term_and_type() -> Result<()> {
@@ -122,6 +122,8 @@ fn test_runtime_inhabits() -> Result<()> {
     assert!(!rt.inhabits(&BOOL_TYPE, &BOOL));
     assert!(rt.inhabits(&VOID, &VOID_TYPE));
     assert!(!rt.inhabits(&VOID_TYPE, &VOID));
+
+    assert!(!rt.inhabits(&BOOL, &EMPTY_TYPE));
 
     Ok(())
 }

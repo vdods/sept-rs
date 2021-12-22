@@ -1,4 +1,4 @@
-use crate::{BOOL, FALSE, FALSE_TYPE, NonParametricTermTrait, Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE, VOID, VOID_TYPE};
+use crate::{BOOL, EMPTY_TYPE, FALSE, FALSE_TYPE, NonParametricTermTrait, Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE, VOID, VOID_TYPE};
 
 // The repr(u8) attribute is to be compatible with the C++ implementation.
 #[repr(u8)]
@@ -167,7 +167,7 @@ impl TermTrait for DynNPTerm {
             DynNPTerm::VoidType => VOID_TYPE.is_parametric_term(),
             DynNPTerm::TrueType => TRUE_TYPE.is_parametric_term(),
             DynNPTerm::FalseType => FALSE_TYPE.is_parametric_term(),
-//             DynNPTerm::EmptyType,
+            DynNPTerm::EmptyType => EMPTY_TYPE.is_parametric_term(),
 //             DynNPTerm::FormalTypeOf,
             DynNPTerm::Bool => BOOL.is_parametric_term(),
 //             DynNPTerm::Sint8,
@@ -252,7 +252,7 @@ impl TermTrait for DynNPTerm {
             DynNPTerm::VoidType => VOID_TYPE.is_type_term(),
             DynNPTerm::TrueType => TRUE_TYPE.is_type_term(),
             DynNPTerm::FalseType => FALSE_TYPE.is_type_term(),
-//             DynNPTerm::EmptyType,
+            DynNPTerm::EmptyType => EMPTY_TYPE.is_type_term(),
 //             DynNPTerm::FormalTypeOf,
             DynNPTerm::Bool => BOOL.is_type_term(),
             _ => unimplemented!("sad face"),

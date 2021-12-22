@@ -1,4 +1,4 @@
-use crate::{Bool, BoolType, False, FalseType, Inhabits, Result, Stringify, True, TrueType, Void, VoidType};
+use crate::{Bool, BoolType, EmptyType, False, FalseType, Inhabits, Result, Stringify, True, TrueType, Void, VoidType};
 use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
 
 pub type StringifyFn = fn(x: &dyn Any) -> String;
@@ -33,6 +33,7 @@ impl Runtime {
         runtime.register_stringify::<bool>().unwrap();
         runtime.register_stringify::<Bool>().unwrap();
         runtime.register_stringify::<BoolType>().unwrap();
+        runtime.register_stringify::<EmptyType>().unwrap();
         runtime.register_stringify::<False>().unwrap();
         runtime.register_stringify::<FalseType>().unwrap();
         runtime.register_stringify::<True>().unwrap();
@@ -50,6 +51,7 @@ impl Runtime {
         runtime.register_eq_fn::<FalseType, FalseType>().unwrap();
         runtime.register_eq_fn::<True, True>().unwrap();
         runtime.register_eq_fn::<TrueType, TrueType>().unwrap();
+        runtime.register_eq_fn::<EmptyType, EmptyType>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
 
@@ -60,6 +62,7 @@ impl Runtime {
         runtime.register_inhabits_fn::<True, Bool>().unwrap();
         runtime.register_inhabits_fn::<Bool, BoolType>().unwrap();
         runtime.register_inhabits_fn::<Void, VoidType>().unwrap();
+        // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
 
         runtime
     }

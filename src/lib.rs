@@ -2,6 +2,7 @@ mod r#bool;
 mod bool_term;
 mod bool_type;
 mod dyn_np_term;
+mod empty_type;
 mod r#false;
 mod false_type;
 mod inhabits_trait;
@@ -23,6 +24,7 @@ pub use crate::{
     bool_term::{},
     bool_type::{BOOL_TYPE, BoolType},
     dyn_np_term::DynNPTerm,
+    empty_type::{EMPTY_TYPE, EmptyType},
     r#false::{FALSE, False},
     false_type::{FALSE_TYPE, FalseType},
     inhabits_trait::Inhabits,
