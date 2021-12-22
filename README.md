@@ -2,6 +2,8 @@
 
 Rust SDK for Structured Expression Project Toolkit
 
+Copyright 2021 by Victor Dods, licensed under Apache 2.0 -- see [LICENSE.txt].
+
 ## To-dos
 
 -   Create a runtime for the term/type system.
