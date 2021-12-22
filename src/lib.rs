@@ -4,9 +4,10 @@ mod bool_type;
 mod dyn_np_term;
 mod r#false;
 mod false_type;
+mod inhabits_trait;
 mod non_parametric_term_trait;
 mod runtime;
-mod stringify;
+mod stringify_trait;
 mod term;
 mod term_trait;
 mod r#true;
@@ -24,9 +25,10 @@ pub use crate::{
     dyn_np_term::DynNPTerm,
     r#false::{FALSE, False},
     false_type::{FALSE_TYPE, FalseType},
+    inhabits_trait::Inhabits,
     non_parametric_term_trait::NonParametricTermTrait,
     runtime::{BinaryPredicate, Runtime, StringifyFn, UnaryPredicate},
-    stringify::Stringify,
+    stringify_trait::Stringify,
     term::{TERM, Term},
     term_trait::TermTrait,
     r#type::{TYPE, Type},

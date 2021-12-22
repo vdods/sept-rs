@@ -1,7 +1,13 @@
-use crate::{False, Stringify, TermTrait};
+use crate::{Bool, Inhabits, False, Stringify, TermTrait};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct True;
+
+impl Inhabits<Bool> for True {
+    fn inhabits(&self, _rhs: &Bool) -> bool {
+        true
+    }
+}
 
 impl PartialEq<bool> for True {
     fn eq(&self, other: &bool) -> bool {

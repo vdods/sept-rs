@@ -1,9 +1,15 @@
-use crate::{False, NonParametricTermTrait, DynNPTerm, Stringify, TermTrait, True, TypeTrait};
+use crate::{BoolType, False, NonParametricTermTrait, DynNPTerm, Inhabits, Stringify, TermTrait, True, TypeTrait};
 use std::any::Any;
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Bool;
+
+impl Inhabits<BoolType> for Bool {
+    fn inhabits(&self, _: &BoolType) -> bool {
+        true
+    }
+}
 
 impl NonParametricTermTrait for Bool {
     fn as_dyn_npterm(&self) -> DynNPTerm {

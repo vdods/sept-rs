@@ -110,7 +110,18 @@ fn test_runtime_inhabits() -> Result<()> {
 
     let rt = Runtime::new();
 
-//     assert!(rt.inhabits( TODO
+    assert!(rt.inhabits(&true, &BOOL));
+    assert!(rt.inhabits(&false, &BOOL));
+    assert!(!rt.inhabits(&true, &FALSE_TYPE));
+    assert!(rt.inhabits(&false, &FALSE_TYPE));
+    assert!(rt.inhabits(&true, &TRUE_TYPE));
+    assert!(!rt.inhabits(&false, &TRUE_TYPE));
+    assert!(rt.inhabits(&True, &BOOL));
+    assert!(rt.inhabits(&False, &BOOL));
+    assert!(rt.inhabits(&BOOL, &BOOL_TYPE));
+    assert!(!rt.inhabits(&BOOL_TYPE, &BOOL));
+    assert!(rt.inhabits(&VOID, &VOID_TYPE));
+    assert!(!rt.inhabits(&VOID_TYPE, &VOID));
 
     Ok(())
 }

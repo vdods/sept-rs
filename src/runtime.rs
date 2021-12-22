@@ -1,4 +1,4 @@
-use crate::{Bool, BoolType, False, FalseType, Result, Stringify, True, TrueType, Void, VoidType};
+use crate::{Bool, BoolType, False, FalseType, Inhabits, Result, Stringify, True, TrueType, Void, VoidType};
 use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
 
 pub type StringifyFn = fn(x: &dyn Any) -> String;
@@ -53,6 +53,14 @@ impl Runtime {
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
 
+        runtime.register_inhabits_fn::<bool, Bool>().unwrap();
+        runtime.register_inhabits_fn::<bool, FalseType>().unwrap();
+        runtime.register_inhabits_fn::<bool, TrueType>().unwrap();
+        runtime.register_inhabits_fn::<False, Bool>().unwrap();
+        runtime.register_inhabits_fn::<True, Bool>().unwrap();
+        runtime.register_inhabits_fn::<Bool, BoolType>().unwrap();
+        runtime.register_inhabits_fn::<Void, VoidType>().unwrap();
+
         runtime
     }
     pub fn register_term(&mut self, type_id: TypeId) -> Result<()> {
@@ -91,18 +99,18 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub fn register_eq_fn<Lhs: 'static, Rhs: PartialEq<Lhs> + 'static>(&mut self) -> Result<()> {
+    pub fn register_eq_fn<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
-        let inner_eq_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
-            *rhs.downcast_ref::<Rhs>().unwrap() == *lhs.downcast_ref::<Lhs>().unwrap()
+        let eq_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
+            *lhs.downcast_ref::<Lhs>().unwrap() == *rhs.downcast_ref::<Rhs>().unwrap()
         };
-        Ok(self.register_eq_fn_impl(type_id_pair, inner_eq_fn)?)
+        Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
-    pub fn register_inhabits_fn(
-        &mut self,
-        type_id_pair: (TypeId, TypeId),
-        inhabits_fn: BinaryPredicate,
-    ) -> Result<()> {
+    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
+        let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
+        let inhabits_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
+            lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())
+        };
         match self.inhabits_fn_m.insert(type_id_pair, inhabits_fn) {
             Some(_) => Err(anyhow::anyhow!("collision with already-registered inhabits fn for {:?}", type_id_pair)),
             None => Ok(())
