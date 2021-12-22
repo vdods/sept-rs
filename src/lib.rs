@@ -1,5 +1,8 @@
 // #![feature(adt_const_params)] -- TODO: Would be nice to use this, so that enums can be used as const generic params
 
+mod array;
+mod array_term;
+mod array_type;
 mod r#bool;
 mod bool_term;
 mod bool_type;
@@ -28,6 +31,9 @@ mod void_type;
 
 pub use anyhow::{Error, Result};
 pub use crate::{
+    array::{ARRAY, Array},
+    array_term::ArrayTerm,
+    array_type::{ARRAY_TYPE, ArrayType},
     r#bool::{BOOL, Bool},
     bool_term::{},
     bool_type::{BOOL_TYPE, BoolType},
@@ -43,7 +49,7 @@ pub use crate::{
     int_term::{},
     int_type::{IntNType, SINT8_TYPE, Sint8Type, SINT16_TYPE, Sint16Type, SINT32_TYPE, Sint32Type, SINT64_TYPE, Sint64Type, UINT8_TYPE, Uint8Type, UINT16_TYPE, Uint16Type, UINT32_TYPE, Uint32Type, UINT64_TYPE, Uint64Type},
     non_parametric_term_trait::NonParametricTermTrait,
-    runtime::{BinaryPredicate, Runtime, StringifyFn, UnaryPredicate},
+    runtime::{BinaryPredicate, RUNTIME, Runtime, StringifyFn, UnaryPredicate},
     stringify_trait::Stringify,
     term::{TERM, Term},
     term_trait::TermTrait,

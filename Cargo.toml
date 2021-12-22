@@ -9,8 +9,10 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.44"
 derive_more = "0.99.17"
+lazy_static = "1.4.0"
 log = "0.4.14"
 
 [dev-dependencies]
 anyhow = { version = "1.0.44", features = ["backtrace"] }
 env_logger = "0.8.4"
+serial_test = "0.5.1"

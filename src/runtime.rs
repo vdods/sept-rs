@@ -1,4 +1,5 @@
 use crate::{
+    Array, ArrayTerm, ArrayType,
     Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
     Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
     Stringify, True, TrueType, Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
@@ -75,6 +76,8 @@ impl Runtime {
         runtime.register_stringify::<Float64Type>().unwrap();
         runtime.register_stringify::<Void>().unwrap();
         runtime.register_stringify::<VoidType>().unwrap();
+        runtime.register_stringify::<Array>().unwrap();
+        runtime.register_stringify::<ArrayType>().unwrap();
 
         runtime.register_eq_fn::<bool, bool>().unwrap();
         runtime.register_eq_fn::<bool, True>().unwrap();
@@ -117,6 +120,8 @@ impl Runtime {
         runtime.register_eq_fn::<Float64Type, Float64Type>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
+        runtime.register_eq_fn::<Array, Array>().unwrap();
+        runtime.register_eq_fn::<ArrayType, ArrayType>().unwrap();
 
         runtime.register_inhabits_fn::<bool, Bool>().unwrap();
         runtime.register_inhabits_fn::<bool, FalseType>().unwrap();
@@ -146,6 +151,8 @@ impl Runtime {
         runtime.register_inhabits_fn::<Uint64, Uint64Type>().unwrap();
         runtime.register_inhabits_fn::<Float32, Float32Type>().unwrap();
         runtime.register_inhabits_fn::<Float64, Float64Type>().unwrap();
+        runtime.register_inhabits_fn::<ArrayTerm, Array>().unwrap();
+        runtime.register_inhabits_fn::<Array, ArrayType>().unwrap();
 
         runtime
     }
@@ -247,4 +254,10 @@ impl Runtime {
             }
         }
     }
+}
+
+lazy_static::lazy_static! {
+    /// This is the static singleton Runtime.  TODO: This probably won't suffice once a program can
+    /// add stuff to Runtime at runtime.  But maybe some kind of layering structure could work.
+    pub static ref RUNTIME: Runtime = Runtime::new();
 }
