@@ -1,4 +1,8 @@
-use crate::{Bool, BoolType, EmptyType, False, FalseType, Inhabits, Result, Stringify, True, TrueType, Void, VoidType};
+use crate::{
+    Bool, BoolType, EmptyType, False, FalseType, Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type,
+    Sint32, Sint32Type, Sint64, Sint64Type, Stringify, True, TrueType, Uint8, Uint8Type, Uint16, Uint16Type,
+    Uint32, Uint32Type, Uint64, Uint64Type, Void, VoidType,
+};
 use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
 
 pub type StringifyFn = fn(x: &dyn Any) -> String;
@@ -30,14 +34,40 @@ impl Runtime {
         // TODO: Figure out how to move these into something like "init" fns
         // in the respective modules
 
+        // TODO: Order these in some sensible way
+
         runtime.register_stringify::<bool>().unwrap();
         runtime.register_stringify::<Bool>().unwrap();
         runtime.register_stringify::<BoolType>().unwrap();
         runtime.register_stringify::<EmptyType>().unwrap();
         runtime.register_stringify::<False>().unwrap();
         runtime.register_stringify::<FalseType>().unwrap();
+        runtime.register_stringify::<i8>().unwrap();
+        runtime.register_stringify::<i16>().unwrap();
+        runtime.register_stringify::<i32>().unwrap();
+        runtime.register_stringify::<i64>().unwrap();
+        runtime.register_stringify::<Sint8>().unwrap();
+        runtime.register_stringify::<Sint16>().unwrap();
+        runtime.register_stringify::<Sint32>().unwrap();
+        runtime.register_stringify::<Sint64>().unwrap();
+        runtime.register_stringify::<Sint8Type>().unwrap();
+        runtime.register_stringify::<Sint16Type>().unwrap();
+        runtime.register_stringify::<Sint32Type>().unwrap();
+        runtime.register_stringify::<Sint64Type>().unwrap();
         runtime.register_stringify::<True>().unwrap();
         runtime.register_stringify::<TrueType>().unwrap();
+        runtime.register_stringify::<u8>().unwrap();
+        runtime.register_stringify::<u16>().unwrap();
+        runtime.register_stringify::<u32>().unwrap();
+        runtime.register_stringify::<u64>().unwrap();
+        runtime.register_stringify::<Uint8>().unwrap();
+        runtime.register_stringify::<Uint16>().unwrap();
+        runtime.register_stringify::<Uint32>().unwrap();
+        runtime.register_stringify::<Uint64>().unwrap();
+        runtime.register_stringify::<Uint8Type>().unwrap();
+        runtime.register_stringify::<Uint16Type>().unwrap();
+        runtime.register_stringify::<Uint32Type>().unwrap();
+        runtime.register_stringify::<Uint64Type>().unwrap();
         runtime.register_stringify::<Void>().unwrap();
         runtime.register_stringify::<VoidType>().unwrap();
 
@@ -49,9 +79,33 @@ impl Runtime {
         runtime.register_eq_fn::<False, False>().unwrap();
         runtime.register_eq_fn::<False, True>().unwrap();
         runtime.register_eq_fn::<FalseType, FalseType>().unwrap();
+        runtime.register_eq_fn::<i8, i8>().unwrap();
+        runtime.register_eq_fn::<i16, i16>().unwrap();
+        runtime.register_eq_fn::<i32, i32>().unwrap();
+        runtime.register_eq_fn::<i64, i64>().unwrap();
+        runtime.register_eq_fn::<Sint8, Sint8>().unwrap();
+        runtime.register_eq_fn::<Sint16, Sint16>().unwrap();
+        runtime.register_eq_fn::<Sint32, Sint32>().unwrap();
+        runtime.register_eq_fn::<Sint64, Sint64>().unwrap();
+        runtime.register_eq_fn::<Sint8Type, Sint8Type>().unwrap();
+        runtime.register_eq_fn::<Sint16Type, Sint16Type>().unwrap();
+        runtime.register_eq_fn::<Sint32Type, Sint32Type>().unwrap();
+        runtime.register_eq_fn::<Sint64Type, Sint64Type>().unwrap();
         runtime.register_eq_fn::<True, True>().unwrap();
         runtime.register_eq_fn::<TrueType, TrueType>().unwrap();
         runtime.register_eq_fn::<EmptyType, EmptyType>().unwrap();
+        runtime.register_eq_fn::<u8, u8>().unwrap();
+        runtime.register_eq_fn::<u16, u16>().unwrap();
+        runtime.register_eq_fn::<u32, u32>().unwrap();
+        runtime.register_eq_fn::<u64, u64>().unwrap();
+        runtime.register_eq_fn::<Uint8, Uint8>().unwrap();
+        runtime.register_eq_fn::<Uint16, Uint16>().unwrap();
+        runtime.register_eq_fn::<Uint32, Uint32>().unwrap();
+        runtime.register_eq_fn::<Uint64, Uint64>().unwrap();
+        runtime.register_eq_fn::<Uint8Type, Uint8Type>().unwrap();
+        runtime.register_eq_fn::<Uint16Type, Uint16Type>().unwrap();
+        runtime.register_eq_fn::<Uint32Type, Uint32Type>().unwrap();
+        runtime.register_eq_fn::<Uint64Type, Uint64Type>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
 
@@ -63,6 +117,22 @@ impl Runtime {
         runtime.register_inhabits_fn::<Bool, BoolType>().unwrap();
         runtime.register_inhabits_fn::<Void, VoidType>().unwrap();
         // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
+        runtime.register_inhabits_fn::<i8, Sint8>().unwrap();
+        runtime.register_inhabits_fn::<i16, Sint16>().unwrap();
+        runtime.register_inhabits_fn::<i32, Sint32>().unwrap();
+        runtime.register_inhabits_fn::<i64, Sint64>().unwrap();
+        runtime.register_inhabits_fn::<u8, Uint8>().unwrap();
+        runtime.register_inhabits_fn::<u16, Uint16>().unwrap();
+        runtime.register_inhabits_fn::<u32, Uint32>().unwrap();
+        runtime.register_inhabits_fn::<u64, Uint64>().unwrap();
+        runtime.register_inhabits_fn::<Sint8, Sint8Type>().unwrap();
+        runtime.register_inhabits_fn::<Sint16, Sint16Type>().unwrap();
+        runtime.register_inhabits_fn::<Sint32, Sint32Type>().unwrap();
+        runtime.register_inhabits_fn::<Sint64, Sint64Type>().unwrap();
+        runtime.register_inhabits_fn::<Uint8, Uint8Type>().unwrap();
+        runtime.register_inhabits_fn::<Uint16, Uint16Type>().unwrap();
+        runtime.register_inhabits_fn::<Uint32, Uint32Type>().unwrap();
+        runtime.register_inhabits_fn::<Uint64, Uint64Type>().unwrap();
 
         runtime
     }

@@ -1,4 +1,8 @@
-use crate::{BOOL, EMPTY_TYPE, FALSE, FALSE_TYPE, NonParametricTermTrait, Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE, VOID, VOID_TYPE};
+use crate::{
+    BOOL, BOOL_TYPE, EMPTY_TYPE, FALSE, FALSE_TYPE, NonParametricTermTrait, SINT8, SINT8_TYPE, SINT16, SINT16_TYPE,
+    SINT32, SINT32_TYPE, SINT64, SINT64_TYPE, Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE,
+    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+};
 
 // The repr(u8) attribute is to be compatible with the C++ implementation.
 #[repr(u8)]
@@ -121,6 +125,7 @@ pub enum DynNPTerm {
     // this could be used for application-specific values, though that would hinder interoperability.
 }
 
+// TODO: should this be Box<dyn Any>?
 // impl Into<Box<&dyn TermTrait>> for DynNPTerm {
 //     fn into(&self) -> Box<dyn TermTrait> {
 //         match self {
@@ -170,25 +175,25 @@ impl TermTrait for DynNPTerm {
             DynNPTerm::EmptyType => EMPTY_TYPE.is_parametric_term(),
 //             DynNPTerm::FormalTypeOf,
             DynNPTerm::Bool => BOOL.is_parametric_term(),
-//             DynNPTerm::Sint8,
-//             DynNPTerm::Sint16,
-//             DynNPTerm::Sint32,
-//             DynNPTerm::Sint64,
-//             DynNPTerm::Uint8,
-//             DynNPTerm::Uint16,
-//             DynNPTerm::Uint32,
-//             DynNPTerm::Uint64,
+            DynNPTerm::Sint8 => SINT8.is_parametric_term(),
+            DynNPTerm::Sint16 => SINT16.is_parametric_term(),
+            DynNPTerm::Sint32 => SINT32.is_parametric_term(),
+            DynNPTerm::Sint64 => SINT64.is_parametric_term(),
+            DynNPTerm::Uint8 => UINT8.is_parametric_term(),
+            DynNPTerm::Uint16 => UINT16.is_parametric_term(),
+            DynNPTerm::Uint32 => UINT32.is_parametric_term(),
+            DynNPTerm::Uint64 => UINT64.is_parametric_term(),
 //             DynNPTerm::Float32,
 //             DynNPTerm::Float64,
-//             DynNPTerm::BoolType,
-//             DynNPTerm::Sint8Type,
-//             DynNPTerm::Sint16Type,
-//             DynNPTerm::Sint32Type,
-//             DynNPTerm::Sint64Type,
-//             DynNPTerm::Uint8Type,
-//             DynNPTerm::Uint16Type,
-//             DynNPTerm::Uint32Type,
-//             DynNPTerm::Uint64Type,
+            DynNPTerm::BoolType => BOOL_TYPE.is_parametric_term(),
+            DynNPTerm::Sint8Type => SINT8_TYPE.is_parametric_term(),
+            DynNPTerm::Sint16Type => SINT16_TYPE.is_parametric_term(),
+            DynNPTerm::Sint32Type => SINT32_TYPE.is_parametric_term(),
+            DynNPTerm::Sint64Type => SINT64_TYPE.is_parametric_term(),
+            DynNPTerm::Uint8Type => UINT8_TYPE.is_parametric_term(),
+            DynNPTerm::Uint16Type => UINT16_TYPE.is_parametric_term(),
+            DynNPTerm::Uint32Type => UINT32_TYPE.is_parametric_term(),
+            DynNPTerm::Uint64Type => UINT64_TYPE.is_parametric_term(),
 //             DynNPTerm::Float32Type,
 //             DynNPTerm::Float64Type,
 //             DynNPTerm::SintType,
@@ -255,6 +260,25 @@ impl TermTrait for DynNPTerm {
             DynNPTerm::EmptyType => EMPTY_TYPE.is_type_term(),
 //             DynNPTerm::FormalTypeOf,
             DynNPTerm::Bool => BOOL.is_type_term(),
+            DynNPTerm::Sint8 => SINT8.is_type_term(),
+            DynNPTerm::Sint16 => SINT16.is_type_term(),
+            DynNPTerm::Sint32 => SINT32.is_type_term(),
+            DynNPTerm::Sint64 => SINT64.is_type_term(),
+            DynNPTerm::Uint8 => UINT8.is_type_term(),
+            DynNPTerm::Uint16 => UINT16.is_type_term(),
+            DynNPTerm::Uint32 => UINT32.is_type_term(),
+            DynNPTerm::Uint64 => UINT64.is_type_term(),
+//             DynNPTerm::Float32,
+//             DynNPTerm::Float64,
+            DynNPTerm::BoolType => BOOL_TYPE.is_type_term(),
+            DynNPTerm::Sint8Type => SINT8_TYPE.is_type_term(),
+            DynNPTerm::Sint16Type => SINT16_TYPE.is_type_term(),
+            DynNPTerm::Sint32Type => SINT32_TYPE.is_type_term(),
+            DynNPTerm::Sint64Type => SINT64_TYPE.is_type_term(),
+            DynNPTerm::Uint8Type => UINT8_TYPE.is_type_term(),
+            DynNPTerm::Uint16Type => UINT16_TYPE.is_type_term(),
+            DynNPTerm::Uint32Type => UINT32_TYPE.is_type_term(),
+            DynNPTerm::Uint64Type => UINT64_TYPE.is_type_term(),
             _ => unimplemented!("sad face"),
         }
     }

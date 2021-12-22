@@ -1,6 +1,11 @@
 #![allow(unused_imports)]
 
-use sept::{BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType, Result, Runtime, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait, VOID, VOID_TYPE};
+use sept::{
+    BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType, Result, Runtime,
+    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE, TermTrait, TRUE, True,
+    TRUE_TYPE, TrueType, TYPE, TypeTrait, UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE,
+    UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+};
 
 #[test]
 fn test_term_and_type() -> Result<()> {
@@ -124,6 +129,35 @@ fn test_runtime_inhabits() -> Result<()> {
     assert!(!rt.inhabits(&VOID_TYPE, &VOID));
 
     assert!(!rt.inhabits(&BOOL, &EMPTY_TYPE));
+
+    Ok(())
+}
+
+#[test]
+fn test_ints() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    let rt = Runtime::new();
+
+    assert!(rt.inhabits(&123i8, &SINT8));
+    assert!(rt.inhabits(&123i16, &SINT16));
+    assert!(rt.inhabits(&123i32, &SINT32));
+    assert!(rt.inhabits(&123i64, &SINT64));
+
+    assert!(rt.inhabits(&123u8, &UINT8));
+    assert!(rt.inhabits(&123u16, &UINT16));
+    assert!(rt.inhabits(&123u32, &UINT32));
+    assert!(rt.inhabits(&123u64, &UINT64));
+
+    assert!(rt.inhabits(&SINT8, &SINT8_TYPE));
+    assert!(rt.inhabits(&SINT16, &SINT16_TYPE));
+    assert!(rt.inhabits(&SINT32, &SINT32_TYPE));
+    assert!(rt.inhabits(&SINT64, &SINT64_TYPE));
+
+    assert!(rt.inhabits(&UINT8, &UINT8_TYPE));
+    assert!(rt.inhabits(&UINT16, &UINT16_TYPE));
+    assert!(rt.inhabits(&UINT32, &UINT32_TYPE));
+    assert!(rt.inhabits(&UINT64, &UINT64_TYPE));
 
     Ok(())
 }
