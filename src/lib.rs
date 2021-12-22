@@ -7,6 +7,9 @@ mod dyn_np_term;
 mod empty_type;
 mod r#false;
 mod false_type;
+mod float;
+mod float_term;
+mod float_type;
 mod inhabits_trait;
 mod int;
 mod int_term;
@@ -32,6 +35,9 @@ pub use crate::{
     empty_type::{EMPTY_TYPE, EmptyType},
     r#false::{FALSE, False},
     false_type::{FALSE_TYPE, FalseType},
+    float::{FloatN, FLOAT32, Float32, FLOAT64, Float64},
+    float_term::{},
+    float_type::{FloatNType, FLOAT32_TYPE, Float32Type, FLOAT64_TYPE, Float64Type},
     inhabits_trait::Inhabits,
     int::{IntN, SIGNED, SINT8, Sint8, SINT16, Sint16, SINT32, Sint32, SINT64, Sint64, UNSIGNED, UINT8, Uint8, UINT16, Uint16, UINT32, Uint32, UINT64, Uint64},
     int_term::{},

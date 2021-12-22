@@ -1,10 +1,11 @@
 #![allow(unused_imports)]
 
 use sept::{
-    BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType, Result, Runtime,
-    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE, TermTrait, TRUE, True,
-    TRUE_TYPE, TrueType, TYPE, TypeTrait, UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE,
-    UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+    BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
+    FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Result, Runtime,
+    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE,
+    TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait,
+    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
 };
 
 #[test]
@@ -158,6 +159,21 @@ fn test_ints() -> Result<()> {
     assert!(rt.inhabits(&UINT16, &UINT16_TYPE));
     assert!(rt.inhabits(&UINT32, &UINT32_TYPE));
     assert!(rt.inhabits(&UINT64, &UINT64_TYPE));
+
+    Ok(())
+}
+
+#[test]
+fn test_floats() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    let rt = Runtime::new();
+
+    assert!(rt.inhabits(&5.875f32, &FLOAT32));
+    assert!(rt.inhabits(&5.875f64, &FLOAT64));
+
+    assert!(rt.inhabits(&FLOAT32, &FLOAT32_TYPE));
+    assert!(rt.inhabits(&FLOAT64, &FLOAT64_TYPE));
 
     Ok(())
 }

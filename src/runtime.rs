@@ -1,7 +1,8 @@
 use crate::{
-    Bool, BoolType, EmptyType, False, FalseType, Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type,
-    Sint32, Sint32Type, Sint64, Sint64Type, Stringify, True, TrueType, Uint8, Uint8Type, Uint16, Uint16Type,
-    Uint32, Uint32Type, Uint64, Uint64Type, Void, VoidType,
+    Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
+    Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
+    Stringify, True, TrueType, Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
+    Void, VoidType,
 };
 use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
 
@@ -60,6 +61,8 @@ impl Runtime {
         runtime.register_stringify::<u16>().unwrap();
         runtime.register_stringify::<u32>().unwrap();
         runtime.register_stringify::<u64>().unwrap();
+        runtime.register_stringify::<f32>().unwrap();
+        runtime.register_stringify::<f64>().unwrap();
         runtime.register_stringify::<Uint8>().unwrap();
         runtime.register_stringify::<Uint16>().unwrap();
         runtime.register_stringify::<Uint32>().unwrap();
@@ -68,6 +71,8 @@ impl Runtime {
         runtime.register_stringify::<Uint16Type>().unwrap();
         runtime.register_stringify::<Uint32Type>().unwrap();
         runtime.register_stringify::<Uint64Type>().unwrap();
+        runtime.register_stringify::<Float32Type>().unwrap();
+        runtime.register_stringify::<Float64Type>().unwrap();
         runtime.register_stringify::<Void>().unwrap();
         runtime.register_stringify::<VoidType>().unwrap();
 
@@ -98,6 +103,8 @@ impl Runtime {
         runtime.register_eq_fn::<u16, u16>().unwrap();
         runtime.register_eq_fn::<u32, u32>().unwrap();
         runtime.register_eq_fn::<u64, u64>().unwrap();
+        runtime.register_eq_fn::<f32, f32>().unwrap();
+        runtime.register_eq_fn::<f64, f64>().unwrap();
         runtime.register_eq_fn::<Uint8, Uint8>().unwrap();
         runtime.register_eq_fn::<Uint16, Uint16>().unwrap();
         runtime.register_eq_fn::<Uint32, Uint32>().unwrap();
@@ -106,6 +113,8 @@ impl Runtime {
         runtime.register_eq_fn::<Uint16Type, Uint16Type>().unwrap();
         runtime.register_eq_fn::<Uint32Type, Uint32Type>().unwrap();
         runtime.register_eq_fn::<Uint64Type, Uint64Type>().unwrap();
+        runtime.register_eq_fn::<Float32Type, Float32Type>().unwrap();
+        runtime.register_eq_fn::<Float64Type, Float64Type>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
 
@@ -125,6 +134,8 @@ impl Runtime {
         runtime.register_inhabits_fn::<u16, Uint16>().unwrap();
         runtime.register_inhabits_fn::<u32, Uint32>().unwrap();
         runtime.register_inhabits_fn::<u64, Uint64>().unwrap();
+        runtime.register_inhabits_fn::<f32, Float32>().unwrap();
+        runtime.register_inhabits_fn::<f64, Float64>().unwrap();
         runtime.register_inhabits_fn::<Sint8, Sint8Type>().unwrap();
         runtime.register_inhabits_fn::<Sint16, Sint16Type>().unwrap();
         runtime.register_inhabits_fn::<Sint32, Sint32Type>().unwrap();
@@ -133,6 +144,8 @@ impl Runtime {
         runtime.register_inhabits_fn::<Uint16, Uint16Type>().unwrap();
         runtime.register_inhabits_fn::<Uint32, Uint32Type>().unwrap();
         runtime.register_inhabits_fn::<Uint64, Uint64Type>().unwrap();
+        runtime.register_inhabits_fn::<Float32, Float32Type>().unwrap();
+        runtime.register_inhabits_fn::<Float64, Float64Type>().unwrap();
 
         runtime
     }
