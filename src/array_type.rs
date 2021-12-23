@@ -1,4 +1,4 @@
-use crate::{DynNPTerm, Array, NonParametricTermTrait, Stringify, TermTrait, TypeTrait};
+use crate::{DynNPTerm, Array, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -17,11 +17,20 @@ impl Stringify for ArrayType {
 }
 
 impl TermTrait for ArrayType {
+    // TODO: This could/should actually be FormalTypeOf(ArrayType)
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "ArrayType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

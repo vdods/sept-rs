@@ -1,4 +1,4 @@
-use crate::{Stringify, TermTrait, TypeTrait};
+use crate::{Stringify, TermTrait, Type, TypeTrait};
 
 /// EmptyType is a Type that by definition has no inhabitants.
 #[derive(Debug, Eq, PartialEq)]
@@ -11,11 +11,19 @@ impl Stringify for EmptyType {
 }
 
 impl TermTrait for EmptyType {
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "EmptyType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

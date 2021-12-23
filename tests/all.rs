@@ -191,3 +191,52 @@ fn test_arrays() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_abstract_type() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    {
+        let x = &VOID;
+        log::debug!("RUNTIME.abstract_type_of({}): {}", RUNTIME.stringify(x), RUNTIME.stringify(RUNTIME.abstract_type_of(x).as_ref()));
+    }
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&VOID).as_ref(), &VOID_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&VOID_TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&BOOL).as_ref(), &BOOL_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&BOOL_TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&TRUE).as_ref(), &TRUE_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&TRUE_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FALSE).as_ref(), &FALSE_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FALSE_TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT8).as_ref(), &SINT8_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT8_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT16).as_ref(), &SINT16_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT16_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT32).as_ref(), &SINT32_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT32_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT64).as_ref(), &SINT64_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&SINT64_TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT8).as_ref(), &UINT8_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT8_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT16).as_ref(), &UINT16_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT16_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT32).as_ref(), &UINT32_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT32_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT64).as_ref(), &UINT64_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&UINT64_TYPE).as_ref(), &TYPE));
+
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT32).as_ref(), &FLOAT32_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT32_TYPE).as_ref(), &TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT64).as_ref(), &FLOAT64_TYPE));
+    assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT64_TYPE).as_ref(), &TYPE));
+
+    Ok(())
+}

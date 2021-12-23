@@ -1,4 +1,4 @@
-use crate::{Bool, FalseType, Stringify, TermTrait, TrueType, TypeTrait};
+use crate::{Bool, FalseType, Stringify, TermTrait, TrueType, Type, TypeTrait};
 use std::any::Any;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -11,11 +11,19 @@ impl Stringify for BoolType {
 }
 
 impl TermTrait for BoolType {
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "BoolType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

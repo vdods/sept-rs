@@ -1,4 +1,4 @@
-use crate::{Bool, Inhabits, False, Stringify, TermTrait};
+use crate::{Bool, Inhabits, False, Stringify, TermTrait, TrueType};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct True;
@@ -28,11 +28,19 @@ impl Stringify for True {
 }
 
 impl TermTrait for True {
+    type AbstractTypeFnReturnType = TrueType;
+
+    fn label() -> &'static str {
+        "True"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

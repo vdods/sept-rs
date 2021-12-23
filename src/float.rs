@@ -27,11 +27,19 @@ impl<const N: usize> Stringify for FloatN<N> {
 }
 
 impl<const N: usize> TermTrait for FloatN<N> {
+    type AbstractTypeFnReturnType = FloatNType<N>;
+
+    fn label() -> &'static str {
+        "FloatN"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

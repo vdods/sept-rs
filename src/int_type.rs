@@ -1,6 +1,6 @@
 use crate::{
     DynNPTerm, NonParametricTermTrait, SIGNED, Sint8, Sint16, Sint32, Sint64, Stringify,
-    TermTrait, TypeTrait, UNSIGNED, Uint8, Uint16, Uint32, Uint64,
+    TermTrait, Type, TypeTrait, UNSIGNED, Uint8, Uint16, Uint32, Uint64,
 };
 use std::{any::Any, fmt::Debug};
 
@@ -35,11 +35,19 @@ impl<const IS_SIGNED: bool, const N: usize> Stringify for IntNType<IS_SIGNED, N>
 }
 
 impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntNType<IS_SIGNED, N> {
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "IntNType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

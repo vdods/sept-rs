@@ -97,73 +97,137 @@ impl Stringify for u64 {
 }
 
 impl TermTrait for i8 {
+    type AbstractTypeFnReturnType = Sint8;
+
+    fn label() -> &'static str {
+        "Sint8"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for i16 {
+    type AbstractTypeFnReturnType = Sint16;
+
+    fn label() -> &'static str {
+        "i16"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for i32 {
+    type AbstractTypeFnReturnType = Sint32;
+
+    fn label() -> &'static str {
+        "i32"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for i64 {
+    type AbstractTypeFnReturnType = Sint64;
+
+    fn label() -> &'static str {
+        "i64"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for u8 {
+    type AbstractTypeFnReturnType = Uint8;
+
+    fn label() -> &'static str {
+        "u8"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for u16 {
+    type AbstractTypeFnReturnType = Uint16;
+
+    fn label() -> &'static str {
+        "u16"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for u32 {
+    type AbstractTypeFnReturnType = Uint32;
+
+    fn label() -> &'static str {
+        "u32"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
 impl TermTrait for u64 {
+    type AbstractTypeFnReturnType = Uint64;
+
+    fn label() -> &'static str {
+        "u64"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }

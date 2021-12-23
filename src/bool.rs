@@ -24,11 +24,19 @@ impl Stringify for Bool {
 }
 
 impl TermTrait for Bool {
+    type AbstractTypeFnReturnType = BoolType;
+
+    fn label() -> &'static str {
+        "Bool"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

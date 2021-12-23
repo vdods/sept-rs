@@ -1,4 +1,4 @@
-use crate::{DynNPTerm, Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, TypeTrait};
+use crate::{DynNPTerm, Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -21,11 +21,19 @@ impl<const N: usize> Stringify for FloatNType<N> {
 }
 
 impl<const N: usize> TermTrait for FloatNType<N> {
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "FloatNType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{Stringify, TermTrait, True, TypeTrait};
+use crate::{Stringify, TermTrait, True, Type, TypeTrait};
 use std::any::Any;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -11,11 +11,19 @@ impl Stringify for TrueType {
 }
 
 impl TermTrait for TrueType {
+    type AbstractTypeFnReturnType = Type;
+
+    fn label() -> &'static str {
+        "TrueType"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

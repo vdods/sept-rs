@@ -41,11 +41,19 @@ impl<const IS_SIGNED: bool, const N: usize> Stringify for IntN<IS_SIGNED, N> {
 }
 
 impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntN<IS_SIGNED, N> {
+    type AbstractTypeFnReturnType = IntNType<IS_SIGNED, N>;
+
+    fn label() -> &'static str {
+        "IntN"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 

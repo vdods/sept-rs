@@ -2,12 +2,15 @@ use crate::{
     Array, ArrayTerm, ArrayType,
     Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
     Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
-    Stringify, True, TrueType, Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
+    Stringify, Term, TermTrait, True, TrueType, Type,
+    Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
     Void, VoidType,
 };
 use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
 
 pub type StringifyFn = fn(x: &dyn Any) -> String;
+pub type LabelFn = fn() -> &'static str;
+pub type AbstractTypeFn = fn(x: &dyn Any) -> Box<dyn Any>;
 pub type UnaryPredicate = fn(x: &dyn Any) -> bool;
 pub type BinaryPredicate = fn(lhs: &dyn Any, rhs: &dyn Any) -> bool;
 
@@ -16,17 +19,21 @@ struct RegisteredEqualsFn {
     is_transposed: bool,
 }
 
-/// The sept Runtime is what tracks what types are registered, and the various subtyping
-/// (and other) relationships.
+/// The sept Runtime is what supports the sept data model; ittracks what types are registered
+/// and the various inhabitation and subtyping (and other) relationships.
 #[derive(Default)]
 pub struct Runtime {
     // TODO: [po]set of types (poset based on which relationship?)
     // TODO: [po]set of terms(?)
 
     term_s: HashSet<TypeId>,
+    // TODO: This is silly, just map to &'static str
+    label_fn_m: HashMap<TypeId, LabelFn>,
     stringify_fn_m: HashMap<TypeId, StringifyFn>,
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
+    abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
+    // TODO: subtype of
 }
 
 impl Runtime {
@@ -38,6 +45,51 @@ impl Runtime {
 
         // TODO: Order these in some sensible way
 
+        runtime.register_label::<Term>().unwrap();
+        runtime.register_label::<Type>().unwrap();
+        runtime.register_label::<bool>().unwrap();
+        runtime.register_label::<Bool>().unwrap();
+        runtime.register_label::<BoolType>().unwrap();
+        runtime.register_label::<EmptyType>().unwrap();
+        runtime.register_label::<False>().unwrap();
+        runtime.register_label::<FalseType>().unwrap();
+        runtime.register_label::<i8>().unwrap();
+        runtime.register_label::<i16>().unwrap();
+        runtime.register_label::<i32>().unwrap();
+        runtime.register_label::<i64>().unwrap();
+        runtime.register_label::<Sint8>().unwrap();
+        runtime.register_label::<Sint16>().unwrap();
+        runtime.register_label::<Sint32>().unwrap();
+        runtime.register_label::<Sint64>().unwrap();
+        runtime.register_label::<Sint8Type>().unwrap();
+        runtime.register_label::<Sint16Type>().unwrap();
+        runtime.register_label::<Sint32Type>().unwrap();
+        runtime.register_label::<Sint64Type>().unwrap();
+        runtime.register_label::<True>().unwrap();
+        runtime.register_label::<TrueType>().unwrap();
+        runtime.register_label::<u8>().unwrap();
+        runtime.register_label::<u16>().unwrap();
+        runtime.register_label::<u32>().unwrap();
+        runtime.register_label::<u64>().unwrap();
+        runtime.register_label::<f32>().unwrap();
+        runtime.register_label::<f64>().unwrap();
+        runtime.register_label::<Uint8>().unwrap();
+        runtime.register_label::<Uint16>().unwrap();
+        runtime.register_label::<Uint32>().unwrap();
+        runtime.register_label::<Uint64>().unwrap();
+        runtime.register_label::<Uint8Type>().unwrap();
+        runtime.register_label::<Uint16Type>().unwrap();
+        runtime.register_label::<Uint32Type>().unwrap();
+        runtime.register_label::<Uint64Type>().unwrap();
+        runtime.register_label::<Float32Type>().unwrap();
+        runtime.register_label::<Float64Type>().unwrap();
+        runtime.register_label::<Void>().unwrap();
+        runtime.register_label::<VoidType>().unwrap();
+        runtime.register_label::<Array>().unwrap();
+        runtime.register_label::<ArrayType>().unwrap();
+
+        runtime.register_stringify::<Term>().unwrap();
+        runtime.register_stringify::<Type>().unwrap();
         runtime.register_stringify::<bool>().unwrap();
         runtime.register_stringify::<Bool>().unwrap();
         runtime.register_stringify::<BoolType>().unwrap();
@@ -79,6 +131,8 @@ impl Runtime {
         runtime.register_stringify::<Array>().unwrap();
         runtime.register_stringify::<ArrayType>().unwrap();
 
+        runtime.register_eq_fn::<Term, Term>().unwrap();
+        runtime.register_eq_fn::<Type, Type>().unwrap();
         runtime.register_eq_fn::<bool, bool>().unwrap();
         runtime.register_eq_fn::<bool, True>().unwrap();
         runtime.register_eq_fn::<bool, False>().unwrap();
@@ -123,6 +177,8 @@ impl Runtime {
         runtime.register_eq_fn::<Array, Array>().unwrap();
         runtime.register_eq_fn::<ArrayType, ArrayType>().unwrap();
 
+        // TODO: Need to somehow make it so that everything inhabits Term
+        runtime.register_inhabits_fn::<Type, Type>().unwrap();
         runtime.register_inhabits_fn::<bool, Bool>().unwrap();
         runtime.register_inhabits_fn::<bool, FalseType>().unwrap();
         runtime.register_inhabits_fn::<bool, TrueType>().unwrap();
@@ -154,12 +210,75 @@ impl Runtime {
         runtime.register_inhabits_fn::<ArrayTerm, Array>().unwrap();
         runtime.register_inhabits_fn::<Array, ArrayType>().unwrap();
 
+        runtime.register_abstract_type::<Term>().unwrap();
+        runtime.register_abstract_type::<Type>().unwrap();
+        runtime.register_abstract_type::<bool>().unwrap();
+        runtime.register_abstract_type::<Bool>().unwrap();
+        runtime.register_abstract_type::<BoolType>().unwrap();
+        runtime.register_abstract_type::<EmptyType>().unwrap();
+        runtime.register_abstract_type::<False>().unwrap();
+        runtime.register_abstract_type::<FalseType>().unwrap();
+        runtime.register_abstract_type::<i8>().unwrap();
+        runtime.register_abstract_type::<i16>().unwrap();
+        runtime.register_abstract_type::<i32>().unwrap();
+        runtime.register_abstract_type::<i64>().unwrap();
+        runtime.register_abstract_type::<Sint8>().unwrap();
+        runtime.register_abstract_type::<Sint16>().unwrap();
+        runtime.register_abstract_type::<Sint32>().unwrap();
+        runtime.register_abstract_type::<Sint64>().unwrap();
+        runtime.register_abstract_type::<Sint8Type>().unwrap();
+        runtime.register_abstract_type::<Sint16Type>().unwrap();
+        runtime.register_abstract_type::<Sint32Type>().unwrap();
+        runtime.register_abstract_type::<Sint64Type>().unwrap();
+        runtime.register_abstract_type::<True>().unwrap();
+        runtime.register_abstract_type::<TrueType>().unwrap();
+        runtime.register_abstract_type::<u8>().unwrap();
+        runtime.register_abstract_type::<u16>().unwrap();
+        runtime.register_abstract_type::<u32>().unwrap();
+        runtime.register_abstract_type::<u64>().unwrap();
+        runtime.register_abstract_type::<f32>().unwrap();
+        runtime.register_abstract_type::<f64>().unwrap();
+        runtime.register_abstract_type::<Uint8>().unwrap();
+        runtime.register_abstract_type::<Uint16>().unwrap();
+        runtime.register_abstract_type::<Uint32>().unwrap();
+        runtime.register_abstract_type::<Uint64>().unwrap();
+        runtime.register_abstract_type::<Uint8Type>().unwrap();
+        runtime.register_abstract_type::<Uint16Type>().unwrap();
+        runtime.register_abstract_type::<Uint32Type>().unwrap();
+        runtime.register_abstract_type::<Uint64Type>().unwrap();
+        runtime.register_abstract_type::<Float32>().unwrap();
+        runtime.register_abstract_type::<Float64>().unwrap();
+        runtime.register_abstract_type::<Float32Type>().unwrap();
+        runtime.register_abstract_type::<Float64Type>().unwrap();
+        runtime.register_abstract_type::<Void>().unwrap();
+        runtime.register_abstract_type::<VoidType>().unwrap();
+        runtime.register_abstract_type::<Array>().unwrap();
+        runtime.register_abstract_type::<ArrayType>().unwrap();
+
         runtime
     }
+    // TODO: This could be used to register everything that TermTrait specifies
     pub fn register_term(&mut self, type_id: TypeId) -> Result<()> {
         match self.term_s.insert(type_id) {
-            false => Err(anyhow::anyhow!("collision with already-registered term {:?}", type_id)),
+            false => Err(anyhow::anyhow!("collision with already-registered term {}", self.label_of(type_id))),
             true => Ok(())
+        }
+    }
+    pub fn register_label_fn(
+        &mut self,
+        type_id: TypeId,
+        label_fn: LabelFn,
+    ) -> Result<()> {
+        match self.label_fn_m.insert(type_id, label_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered label fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub fn register_label<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        match self.label_fn_m.insert(type_id, T::label) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered label fn for {}", self.label_of(type_id))),
+            None => Ok(())
         }
     }
     pub fn register_stringify_fn(
@@ -168,7 +287,7 @@ impl Runtime {
         stringify_fn: StringifyFn,
     ) -> Result<()> {
         match self.stringify_fn_m.insert(type_id, stringify_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {:?}", type_id)),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
@@ -176,7 +295,43 @@ impl Runtime {
         let type_id = TypeId::of::<S>();
         let stringify_fn = |x: &dyn Any| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
         match self.stringify_fn_m.insert(type_id, stringify_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {:?}", type_id)),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub fn register_abstract_type_fn(
+        &mut self,
+        type_id: TypeId,
+        abstract_type_fn: AbstractTypeFn,
+    ) -> Result<()> {
+        match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered abstract_type fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    // TODO: Rename this something different (this was copied and pasted from register_stringify
+    // and the semantics don't match).
+    pub fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let abstract_type_fn = |x: &dyn Any| -> Box<dyn Any> {
+            // TODO: if the return type is Box<dyn Any>, then just return that,
+            // but otherwise use Box::new on the return value
+            let abstract_type = x.downcast_ref::<T>().unwrap().abstract_type();
+//             TODO start here
+//             if { let at: &dyn Any = &abstract_type; at.is::<Box<dyn Any>>() } {
+//                 abstract_type
+//             } else {
+//                 Box::new(abstract_type)
+//             }
+            // TEMP HACK: If abstract_type is already a Box<dyn Any>, then this will make a double
+            // box, which is not what is wanted.  But for now, whateva.
+            if { let at: &dyn Any = &abstract_type; at.is::<Box<dyn Any>>() } {
+                panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<dyn Any>>");
+            }
+            Box::new(abstract_type)
+        };
+        match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered abstract_type fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
@@ -188,7 +343,7 @@ impl Runtime {
         let is_transposed = type_id_pair.0 > type_id_pair.1;
         let type_id_pair_ = if is_transposed { (type_id_pair.1, type_id_pair.0) } else { type_id_pair };
         match self.eq_fn_m.insert(type_id_pair_, RegisteredEqualsFn { eq_fn, is_transposed }) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered eq fn for {:?}", type_id_pair)),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered eq fn for ({}, {})", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1))),
             None => Ok(())
         }
     }
@@ -205,8 +360,14 @@ impl Runtime {
             lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())
         };
         match self.inhabits_fn_m.insert(type_id_pair, inhabits_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered inhabits fn for {:?}", type_id_pair)),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered inhabits fn for ({}, {})", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1))),
             None => Ok(())
+        }
+    }
+    pub fn label_of(&self, type_id: TypeId) -> String {
+        match self.label_fn_m.get(&type_id) {
+            Some(label_fn) => label_fn().into(),
+            None => format!("{:?}", type_id),
         }
     }
     pub fn stringify(&self, x: &dyn Any) -> String {
@@ -215,8 +376,8 @@ impl Runtime {
             // None => Err(anyhow::anyhow!("no stringify fn found for {:?}", x.type_id())),
             None => {
                 // panic!("no stringify fn found for {:?}", x.type_id()),
-                log::warn!("no stringify fn found for {:?}; returning generic default", x.type_id());
-                format!("ValueHavingTypeId({:?})", x.type_id())
+                log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
+                format!("InstanceOf({})", self.label_of(x.type_id()))
             }
         }
     }
@@ -235,7 +396,7 @@ impl Runtime {
             },
             None => {
                 // panic!("no eq fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!("no eq fn found for {:?}; returning default value of false", (lhs_type_id, rhs_type_id));
+                log::warn!("no eq fn found for ({}, {}); returning default value of false", self.label_of(lhs_type_id), self.label_of(rhs_type_id));
                 false
             },
         }
@@ -249,8 +410,19 @@ impl Runtime {
             Some(inhabits_fn) => inhabits_fn(x, t),
             None => {
                 // panic!("no inhabits fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!("no inhabits fn found for {:?}; returning default value of false", type_id_pair);
+                log::warn!("no inhabits fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
                 false
+            }
+        }
+    }
+    pub fn abstract_type_of(&self, x: &dyn Any) -> Box<dyn Any> {
+        let type_id = x.type_id();
+        match self.abstract_type_fn_m.get(&type_id) {
+            Some(abstract_type_fn) => abstract_type_fn(x),
+            None => {
+                // panic!("no abstract_type fn found for {:?}", (lhs_type_id, rhs_type_id)),
+                log::warn!("no abstract_type fn found for {}; returning default value of Box::<dyn Any>::new(Type{{ }})", self.label_of(type_id));
+                Box::new(Type{})
             }
         }
     }

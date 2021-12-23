@@ -26,11 +26,19 @@ impl Stringify for ArrayTerm {
 }
 
 impl TermTrait for ArrayTerm {
+    type AbstractTypeFnReturnType = Array;
+
+    fn label() -> &'static str {
+        "ArrayTerm"
+    }
     fn is_parametric_term(&self) -> bool {
         true
     }
     fn is_type_term(&self) -> bool {
         // TODO: Think about if this should return the AND of is_type_term for all elements.
         false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }

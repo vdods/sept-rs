@@ -23,11 +23,19 @@ impl Stringify for Array {
 }
 
 impl TermTrait for Array {
+    type AbstractTypeFnReturnType = ArrayType;
+
+    fn label() -> &'static str {
+        "Array"
+    }
     fn is_parametric_term(&self) -> bool {
         false
     }
     fn is_type_term(&self) -> bool {
         true
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+        Self::AbstractTypeFnReturnType{}
     }
 }
 
