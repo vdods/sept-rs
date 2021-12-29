@@ -506,7 +506,7 @@ impl Runtime {
         };
         Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
-    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
+    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
         let inhabits_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
             lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())
