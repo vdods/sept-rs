@@ -89,6 +89,7 @@ impl Runtime {
         runtime.register_label::<Float64Type>().unwrap();
         runtime.register_label::<Void>().unwrap();
         runtime.register_label::<VoidType>().unwrap();
+        runtime.register_label::<ArrayTerm>().unwrap();
         runtime.register_label::<Array>().unwrap();
         runtime.register_label::<ArrayType>().unwrap();
 
@@ -134,6 +135,7 @@ impl Runtime {
         runtime.register_stringify::<Float64Type>().unwrap();
         runtime.register_stringify::<Void>().unwrap();
         runtime.register_stringify::<VoidType>().unwrap();
+        runtime.register_stringify::<ArrayTerm>().unwrap();
         runtime.register_stringify::<Array>().unwrap();
         runtime.register_stringify::<ArrayType>().unwrap();
 
@@ -182,6 +184,7 @@ impl Runtime {
         runtime.register_eq_fn::<Float64Type, Float64Type>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
         runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
+        runtime.register_eq_fn::<ArrayTerm, ArrayTerm>().unwrap();
         runtime.register_eq_fn::<Array, Array>().unwrap();
         runtime.register_eq_fn::<ArrayType, ArrayType>().unwrap();
 
@@ -260,6 +263,7 @@ impl Runtime {
         runtime.register_abstract_type::<Float64Type>().unwrap();
         runtime.register_abstract_type::<Void>().unwrap();
         runtime.register_abstract_type::<VoidType>().unwrap();
+        runtime.register_abstract_type::<ArrayTerm>().unwrap();
         runtime.register_abstract_type::<Array>().unwrap();
         runtime.register_abstract_type::<ArrayType>().unwrap();
 
@@ -305,6 +309,7 @@ impl Runtime {
         runtime.register_is_parametric_term::<Float64Type>().unwrap();
         runtime.register_is_parametric_term::<Void>().unwrap();
         runtime.register_is_parametric_term::<VoidType>().unwrap();
+        runtime.register_is_parametric_term::<ArrayTerm>().unwrap();
         runtime.register_is_parametric_term::<Array>().unwrap();
         runtime.register_is_parametric_term::<ArrayType>().unwrap();
 
@@ -350,6 +355,7 @@ impl Runtime {
         runtime.register_is_type_term::<Float64Type>().unwrap();
         runtime.register_is_type_term::<Void>().unwrap();
         runtime.register_is_type_term::<VoidType>().unwrap();
+        runtime.register_is_type_term::<ArrayTerm>().unwrap();
         runtime.register_is_type_term::<Array>().unwrap();
         runtime.register_is_type_term::<ArrayType>().unwrap();
 
