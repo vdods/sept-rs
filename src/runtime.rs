@@ -33,6 +33,8 @@ pub struct Runtime {
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
     abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
+    is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
+    is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
 }
 
@@ -261,6 +263,96 @@ impl Runtime {
         runtime.register_abstract_type::<Array>().unwrap();
         runtime.register_abstract_type::<ArrayType>().unwrap();
 
+        runtime.register_is_parametric_term::<Term>().unwrap();
+        runtime.register_is_parametric_term::<Type>().unwrap();
+        runtime.register_is_parametric_term::<bool>().unwrap();
+        runtime.register_is_parametric_term::<Bool>().unwrap();
+        runtime.register_is_parametric_term::<BoolType>().unwrap();
+        runtime.register_is_parametric_term::<EmptyType>().unwrap();
+        runtime.register_is_parametric_term::<False>().unwrap();
+        runtime.register_is_parametric_term::<FalseType>().unwrap();
+        runtime.register_is_parametric_term::<i8>().unwrap();
+        runtime.register_is_parametric_term::<i16>().unwrap();
+        runtime.register_is_parametric_term::<i32>().unwrap();
+        runtime.register_is_parametric_term::<i64>().unwrap();
+        runtime.register_is_parametric_term::<Sint8>().unwrap();
+        runtime.register_is_parametric_term::<Sint16>().unwrap();
+        runtime.register_is_parametric_term::<Sint32>().unwrap();
+        runtime.register_is_parametric_term::<Sint64>().unwrap();
+        runtime.register_is_parametric_term::<Sint8Type>().unwrap();
+        runtime.register_is_parametric_term::<Sint16Type>().unwrap();
+        runtime.register_is_parametric_term::<Sint32Type>().unwrap();
+        runtime.register_is_parametric_term::<Sint64Type>().unwrap();
+        runtime.register_is_parametric_term::<True>().unwrap();
+        runtime.register_is_parametric_term::<TrueType>().unwrap();
+        runtime.register_is_parametric_term::<u8>().unwrap();
+        runtime.register_is_parametric_term::<u16>().unwrap();
+        runtime.register_is_parametric_term::<u32>().unwrap();
+        runtime.register_is_parametric_term::<u64>().unwrap();
+        runtime.register_is_parametric_term::<f32>().unwrap();
+        runtime.register_is_parametric_term::<f64>().unwrap();
+        runtime.register_is_parametric_term::<Uint8>().unwrap();
+        runtime.register_is_parametric_term::<Uint16>().unwrap();
+        runtime.register_is_parametric_term::<Uint32>().unwrap();
+        runtime.register_is_parametric_term::<Uint64>().unwrap();
+        runtime.register_is_parametric_term::<Uint8Type>().unwrap();
+        runtime.register_is_parametric_term::<Uint16Type>().unwrap();
+        runtime.register_is_parametric_term::<Uint32Type>().unwrap();
+        runtime.register_is_parametric_term::<Uint64Type>().unwrap();
+        runtime.register_is_parametric_term::<Float32>().unwrap();
+        runtime.register_is_parametric_term::<Float64>().unwrap();
+        runtime.register_is_parametric_term::<Float32Type>().unwrap();
+        runtime.register_is_parametric_term::<Float64Type>().unwrap();
+        runtime.register_is_parametric_term::<Void>().unwrap();
+        runtime.register_is_parametric_term::<VoidType>().unwrap();
+        runtime.register_is_parametric_term::<Array>().unwrap();
+        runtime.register_is_parametric_term::<ArrayType>().unwrap();
+
+        runtime.register_is_type_term::<Term>().unwrap();
+        runtime.register_is_type_term::<Type>().unwrap();
+        runtime.register_is_type_term::<bool>().unwrap();
+        runtime.register_is_type_term::<Bool>().unwrap();
+        runtime.register_is_type_term::<BoolType>().unwrap();
+        runtime.register_is_type_term::<EmptyType>().unwrap();
+        runtime.register_is_type_term::<False>().unwrap();
+        runtime.register_is_type_term::<FalseType>().unwrap();
+        runtime.register_is_type_term::<i8>().unwrap();
+        runtime.register_is_type_term::<i16>().unwrap();
+        runtime.register_is_type_term::<i32>().unwrap();
+        runtime.register_is_type_term::<i64>().unwrap();
+        runtime.register_is_type_term::<Sint8>().unwrap();
+        runtime.register_is_type_term::<Sint16>().unwrap();
+        runtime.register_is_type_term::<Sint32>().unwrap();
+        runtime.register_is_type_term::<Sint64>().unwrap();
+        runtime.register_is_type_term::<Sint8Type>().unwrap();
+        runtime.register_is_type_term::<Sint16Type>().unwrap();
+        runtime.register_is_type_term::<Sint32Type>().unwrap();
+        runtime.register_is_type_term::<Sint64Type>().unwrap();
+        runtime.register_is_type_term::<True>().unwrap();
+        runtime.register_is_type_term::<TrueType>().unwrap();
+        runtime.register_is_type_term::<u8>().unwrap();
+        runtime.register_is_type_term::<u16>().unwrap();
+        runtime.register_is_type_term::<u32>().unwrap();
+        runtime.register_is_type_term::<u64>().unwrap();
+        runtime.register_is_type_term::<f32>().unwrap();
+        runtime.register_is_type_term::<f64>().unwrap();
+        runtime.register_is_type_term::<Uint8>().unwrap();
+        runtime.register_is_type_term::<Uint16>().unwrap();
+        runtime.register_is_type_term::<Uint32>().unwrap();
+        runtime.register_is_type_term::<Uint64>().unwrap();
+        runtime.register_is_type_term::<Uint8Type>().unwrap();
+        runtime.register_is_type_term::<Uint16Type>().unwrap();
+        runtime.register_is_type_term::<Uint32Type>().unwrap();
+        runtime.register_is_type_term::<Uint64Type>().unwrap();
+        runtime.register_is_type_term::<Float32>().unwrap();
+        runtime.register_is_type_term::<Float64>().unwrap();
+        runtime.register_is_type_term::<Float32Type>().unwrap();
+        runtime.register_is_type_term::<Float64Type>().unwrap();
+        runtime.register_is_type_term::<Void>().unwrap();
+        runtime.register_is_type_term::<VoidType>().unwrap();
+        runtime.register_is_type_term::<Array>().unwrap();
+        runtime.register_is_type_term::<ArrayType>().unwrap();
+
         runtime
     }
     // TODO: This could be used to register everything that TermTrait specifies
@@ -338,6 +430,30 @@ impl Runtime {
         };
         match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
             Some(_) => Err(anyhow::anyhow!("collision with already-registered abstract_type fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    // TODO: Rename this something different (this was copied and pasted from register_stringify
+    // and the semantics don't match).
+    pub fn register_is_parametric_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let is_parametric_term_fn = |x: &dyn Any| -> bool {
+            x.downcast_ref::<T>().unwrap().is_parametric_term()
+        };
+        match self.is_parametric_term_fn_m.insert(type_id, is_parametric_term_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric_term fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    // TODO: Rename this something different (this was copied and pasted from register_stringify
+    // and the semantics don't match).
+    pub fn register_is_type_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let is_type_term_fn = |x: &dyn Any| -> bool {
+            x.downcast_ref::<T>().unwrap().is_type_term()
+        };
+        match self.is_type_term_fn_m.insert(type_id, is_type_term_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_type_term fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
@@ -430,6 +546,28 @@ impl Runtime {
                 // panic!("no abstract_type fn found for {:?}", (lhs_type_id, rhs_type_id)),
                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<dyn Any>::new(Type{{ }})", self.label_of(type_id));
                 Box::new(Type{})
+            }
+        }
+    }
+    pub fn is_parametric_term(&self, x: &dyn Any) -> bool {
+        match self.is_parametric_term_fn_m.get(&x.type_id()) {
+            Some(is_parametric_term_fn) => is_parametric_term_fn(x),
+            None => {
+                panic!("no is_parametric_term fn found for {:?}", x.type_id());
+                // NOTE: A default here probably doesn't make any sense.
+//                 log::warn!("no is_parametric_term fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+//                 false
+            }
+        }
+    }
+    pub fn is_type_term(&self, x: &dyn Any) -> bool {
+        match self.is_type_term_fn_m.get(&x.type_id()) {
+            Some(is_type_term_fn) => is_type_term_fn(x),
+            None => {
+                panic!("no is_type_term fn found for {:?}", x.type_id());
+                // NOTE: A default here probably doesn't make any sense.
+//                 log::warn!("no is_type_term fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+//                 false
             }
         }
     }

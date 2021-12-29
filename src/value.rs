@@ -75,4 +75,10 @@ impl Value {
     pub fn abstract_type(&self) -> Value {
         Value(RUNTIME.abstract_type_of(self.as_ref()))
     }
+    pub fn is_parametric_term(&self) -> bool {
+        RUNTIME.is_parametric_term(self.as_ref())
+    }
+    pub fn is_type_term(&self) -> bool {
+        RUNTIME.is_type_term(self.as_ref())
+    }
 }
