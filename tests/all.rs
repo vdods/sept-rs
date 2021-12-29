@@ -1,12 +1,17 @@
 #![allow(unused_imports)]
 
 use sept::{
-    ARRAY, ArrayTerm, ARRAY_TYPE,
-    BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
-    FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Inhabits, Result, RUNTIME,
-    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE,
-    Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TupleTerm, TYPE, TypeTrait,
-    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, Value, VOID, VOID_TYPE,
+    dy::{
+        ArrayTerm, RUNTIME, TupleTerm, Value,
+    },
+    st::{
+        ARRAY, ARRAY_TYPE,
+        BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
+        FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Inhabits, Result,
+        SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE,
+        Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait,
+        UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+    },
 };
 use std::any::Any;
 
