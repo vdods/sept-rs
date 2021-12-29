@@ -81,6 +81,8 @@ impl Runtime {
         runtime.register_label::<Uint16Type>().unwrap();
         runtime.register_label::<Uint32Type>().unwrap();
         runtime.register_label::<Uint64Type>().unwrap();
+        runtime.register_label::<Float32>().unwrap();
+        runtime.register_label::<Float64>().unwrap();
         runtime.register_label::<Float32Type>().unwrap();
         runtime.register_label::<Float64Type>().unwrap();
         runtime.register_label::<Void>().unwrap();
@@ -124,6 +126,8 @@ impl Runtime {
         runtime.register_stringify::<Uint16Type>().unwrap();
         runtime.register_stringify::<Uint32Type>().unwrap();
         runtime.register_stringify::<Uint64Type>().unwrap();
+        runtime.register_stringify::<Float32>().unwrap();
+        runtime.register_stringify::<Float64>().unwrap();
         runtime.register_stringify::<Float32Type>().unwrap();
         runtime.register_stringify::<Float64Type>().unwrap();
         runtime.register_stringify::<Void>().unwrap();
@@ -170,6 +174,8 @@ impl Runtime {
         runtime.register_eq_fn::<Uint16Type, Uint16Type>().unwrap();
         runtime.register_eq_fn::<Uint32Type, Uint32Type>().unwrap();
         runtime.register_eq_fn::<Uint64Type, Uint64Type>().unwrap();
+        runtime.register_eq_fn::<Float32, Float32>().unwrap();
+        runtime.register_eq_fn::<Float64, Float64>().unwrap();
         runtime.register_eq_fn::<Float32Type, Float32Type>().unwrap();
         runtime.register_eq_fn::<Float64Type, Float64Type>().unwrap();
         runtime.register_eq_fn::<Void, Void>().unwrap();
