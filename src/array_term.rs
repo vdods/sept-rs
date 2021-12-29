@@ -37,11 +37,13 @@ impl TermTrait for ArrayTerm {
     fn label() -> &'static str {
         "ArrayTerm"
     }
+    /// An Array term is parametric if there is at least one parameter.
     fn is_parametric_term(&self) -> bool {
-        true
+        self.0.len() > 0
     }
     fn is_type_term(&self) -> bool {
         // TODO: Think about if this should return the AND of is_type_term for all elements.
+        // NOTE: Probably not, that particular semantic is meant for Tuple.
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
