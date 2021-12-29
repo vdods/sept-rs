@@ -1,3 +1,4 @@
+// #![feature(iter_zip)]
 // #![feature(adt_const_params)] -- TODO: Would be nice to use this, so that enums can be used as const generic params
 
 mod array;
@@ -24,6 +25,9 @@ mod term;
 mod term_trait;
 mod r#true;
 mod true_type;
+mod tuple;
+mod tuple_term;
+mod tuple_type;
 mod r#type;
 mod type_trait;
 mod value;
@@ -54,6 +58,9 @@ pub use crate::{
     stringify_trait::Stringify,
     term::{TERM, Term},
     term_trait::TermTrait,
+    tuple::{TUPLE, Tuple},
+    tuple_term::TupleTerm,
+    tuple_type::{TUPLE_TYPE, TupleType},
     r#type::{TYPE, Type},
     type_trait::TypeTrait,
     r#true::{TRUE, True},

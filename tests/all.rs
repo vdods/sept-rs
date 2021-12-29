@@ -3,9 +3,9 @@
 use sept::{
     ARRAY, ArrayTerm, ARRAY_TYPE,
     BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
-    FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Result, RUNTIME,
+    FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Inhabits, Result, RUNTIME,
     SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE,
-    Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait,
+    Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TupleTerm, TYPE, TypeTrait,
     UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, Value, VOID, VOID_TYPE,
 };
 use std::any::Any;
@@ -18,29 +18,29 @@ fn test_term_and_type() -> Result<()> {
     log::debug!("TRUE: {:#?}", TRUE);
     log::debug!("TRUE_TYPE: {:#?}", TRUE_TYPE);
 
-    assert!(VOID.inhabits(&VOID_TYPE));
-    assert!(!VOID.inhabits(&FALSE_TYPE));
-    assert!(!VOID.inhabits(&TYPE));
-    assert!(!VOID.inhabits(&BOOL));
-    assert!(!VOID.inhabits(&BOOL_TYPE));
+    assert!(VOID.inhabits_type(&VOID_TYPE));
+    assert!(!VOID.inhabits_type(&FALSE_TYPE));
+    assert!(!VOID.inhabits_type(&TYPE));
+    assert!(!VOID.inhabits_type(&BOOL));
+    assert!(!VOID.inhabits_type(&BOOL_TYPE));
 
-    assert!(VOID_TYPE.inhabits(&TYPE));
+    assert!(VOID_TYPE.inhabits_type(&TYPE));
 
-    assert!(TRUE.inhabits(&TRUE_TYPE));
-    assert!(!TRUE.inhabits(&FALSE_TYPE));
-    assert!(TRUE.inhabits(&BOOL));
-    assert!(!TRUE.inhabits(&BOOL_TYPE));
+    assert!(TRUE.inhabits_type(&TRUE_TYPE));
+    assert!(!TRUE.inhabits_type(&FALSE_TYPE));
+    assert!(TRUE.inhabits_type(&BOOL));
+    assert!(!TRUE.inhabits_type(&BOOL_TYPE));
 
-    assert!(!FALSE.inhabits(&TRUE_TYPE));
-    assert!(FALSE.inhabits(&FALSE_TYPE));
-    assert!(FALSE.inhabits(&BOOL));
-    assert!(!FALSE.inhabits(&BOOL_TYPE));
+    assert!(!FALSE.inhabits_type(&TRUE_TYPE));
+    assert!(FALSE.inhabits_type(&FALSE_TYPE));
+    assert!(FALSE.inhabits_type(&BOOL));
+    assert!(!FALSE.inhabits_type(&BOOL_TYPE));
 
-    assert!(TRUE_TYPE.inhabits(&BOOL_TYPE));
-    assert!(FALSE_TYPE.inhabits(&BOOL_TYPE));
-    assert!(BOOL.inhabits(&BOOL_TYPE));
-    assert!(!BOOL.inhabits(&TRUE_TYPE));
-    assert!(!BOOL.inhabits(&FALSE_TYPE));
+    assert!(TRUE_TYPE.inhabits_type(&BOOL_TYPE));
+    assert!(FALSE_TYPE.inhabits_type(&BOOL_TYPE));
+    assert!(BOOL.inhabits_type(&BOOL_TYPE));
+    assert!(!BOOL.inhabits_type(&TRUE_TYPE));
+    assert!(!BOOL.inhabits_type(&FALSE_TYPE));
 
     assert!(!TRUE.is_parametric_term());
     assert!(!TRUE.is_type_term());
@@ -203,6 +203,27 @@ fn test_arrays() -> Result<()> {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_tuples() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    let t1 = TupleTerm::from(vec![3i32.into(), 5.5f32.into()]);
+    let t2 = TupleTerm::from(vec![SINT32.into(), FLOAT32.into()]);
+    log::debug!("t1: {}", t1);
+    log::debug!("t2: {}", t2);
+    log::debug!("t1.abstract_type(): {}", t1.abstract_type());
+    log::debug!("t2.abstract_type(): {}", t2.abstract_type());
+
+    assert!(t1.inhabits(&t2));
+    assert!(t1.is_parametric_term());
+    assert!(t2.is_parametric_term());
+    assert!(!t1.is_type_term());
+    assert!(t2.is_type_term());
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_abstract_type() -> Result<()> {
     let _ = env_logger::try_init();
 
@@ -255,14 +276,6 @@ fn test_abstract_type() -> Result<()> {
 fn test_value() -> Result<()> {
     let _ = env_logger::try_init();
 
-//     let n1: Box<dyn Any> = Box::new(3i32);
-//     let n2: Box<dyn Any> = Box::new(7i32);
-//     let v1 = Value::from(n1);
-//     let v2 = Value::from(n2);
-
-//     let v1 = Value::new(3i32);
-//     let v2 = Value::new(7i32);
-
     let v1 = Value::from(3i32);
     let v2 = Value::from(7i32);
 
@@ -275,14 +288,8 @@ fn test_value() -> Result<()> {
     log::debug!("v1.inhabits_type(&SINT32): {:?}", v1.inhabits_type(&SINT32));
     log::debug!("v1.inhabits_type(&BOOL): {:?}", v1.inhabits_type(&BOOL));
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
-//     let n3: Box<dyn Any> = Box::new(SINT32);
-//     let v3 = Value::from(n3);
     let v3 = Value::new(SINT32);
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
-//     {
-//         use std::ops::Deref;
-//         log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
-//     }
 
     log::debug!("v1: {}", v1);
     log::debug!("v2: {}", v2);
@@ -295,7 +302,6 @@ fn test_value() -> Result<()> {
     log::debug!("v2 == v1: {:?}", v2 == v1);
     log::debug!("v2 == v2: {:?}", v2 == v2);
 
-
-
     Ok(())
 }
+

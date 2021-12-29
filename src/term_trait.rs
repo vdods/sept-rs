@@ -22,7 +22,7 @@ pub trait TermTrait: Any + Debug + Sized {
     /// the correct return type here.
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType;
     /// Convenience method for checking type inhabitation.
-    fn inhabits(&self, t: &impl TypeTrait) -> bool {
+    fn inhabits_type(&self, t: &impl TypeTrait) -> bool {
         t.has_inhabitant(self)
     }
 }

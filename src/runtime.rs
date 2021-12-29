@@ -2,7 +2,7 @@ use crate::{
     Array, ArrayTerm, ArrayType,
     Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
     Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
-    Stringify, Term, TermTrait, True, TrueType, Type,
+    Stringify, Term, TermTrait, True, TrueType, Tuple, TupleTerm, TupleType, Type,
     Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
     Void, VoidType,
 };
@@ -92,6 +92,9 @@ impl Runtime {
         runtime.register_label::<ArrayTerm>().unwrap();
         runtime.register_label::<Array>().unwrap();
         runtime.register_label::<ArrayType>().unwrap();
+        runtime.register_label::<TupleTerm>().unwrap();
+        runtime.register_label::<Tuple>().unwrap();
+        runtime.register_label::<TupleType>().unwrap();
 
         runtime.register_stringify::<Term>().unwrap();
         runtime.register_stringify::<Type>().unwrap();
@@ -138,6 +141,9 @@ impl Runtime {
         runtime.register_stringify::<ArrayTerm>().unwrap();
         runtime.register_stringify::<Array>().unwrap();
         runtime.register_stringify::<ArrayType>().unwrap();
+        runtime.register_stringify::<TupleTerm>().unwrap();
+        runtime.register_stringify::<Tuple>().unwrap();
+        runtime.register_stringify::<TupleType>().unwrap();
 
         runtime.register_eq_fn::<Term, Term>().unwrap();
         runtime.register_eq_fn::<Type, Type>().unwrap();
@@ -187,6 +193,9 @@ impl Runtime {
         runtime.register_eq_fn::<ArrayTerm, ArrayTerm>().unwrap();
         runtime.register_eq_fn::<Array, Array>().unwrap();
         runtime.register_eq_fn::<ArrayType, ArrayType>().unwrap();
+        runtime.register_eq_fn::<TupleTerm, TupleTerm>().unwrap();
+        runtime.register_eq_fn::<Tuple, Tuple>().unwrap();
+        runtime.register_eq_fn::<TupleType, TupleType>().unwrap();
 
         // TODO: Need to somehow make it so that everything inhabits Term
         runtime.register_inhabits_fn::<Type, Type>().unwrap();
@@ -220,6 +229,9 @@ impl Runtime {
         runtime.register_inhabits_fn::<Float64, Float64Type>().unwrap();
         runtime.register_inhabits_fn::<ArrayTerm, Array>().unwrap();
         runtime.register_inhabits_fn::<Array, ArrayType>().unwrap();
+        runtime.register_inhabits_fn::<TupleTerm, TupleTerm>().unwrap();
+        runtime.register_inhabits_fn::<TupleTerm, Tuple>().unwrap();
+        runtime.register_inhabits_fn::<Tuple, TupleType>().unwrap();
 
         runtime.register_abstract_type::<Term>().unwrap();
         runtime.register_abstract_type::<Type>().unwrap();
@@ -266,6 +278,9 @@ impl Runtime {
         runtime.register_abstract_type::<ArrayTerm>().unwrap();
         runtime.register_abstract_type::<Array>().unwrap();
         runtime.register_abstract_type::<ArrayType>().unwrap();
+        runtime.register_abstract_type::<TupleTerm>().unwrap();
+        runtime.register_abstract_type::<Tuple>().unwrap();
+        runtime.register_abstract_type::<TupleType>().unwrap();
 
         runtime.register_is_parametric_term::<Term>().unwrap();
         runtime.register_is_parametric_term::<Type>().unwrap();
@@ -312,6 +327,9 @@ impl Runtime {
         runtime.register_is_parametric_term::<ArrayTerm>().unwrap();
         runtime.register_is_parametric_term::<Array>().unwrap();
         runtime.register_is_parametric_term::<ArrayType>().unwrap();
+        runtime.register_is_parametric_term::<TupleTerm>().unwrap();
+        runtime.register_is_parametric_term::<Tuple>().unwrap();
+        runtime.register_is_parametric_term::<TupleType>().unwrap();
 
         runtime.register_is_type_term::<Term>().unwrap();
         runtime.register_is_type_term::<Type>().unwrap();
@@ -358,6 +376,9 @@ impl Runtime {
         runtime.register_is_type_term::<ArrayTerm>().unwrap();
         runtime.register_is_type_term::<Array>().unwrap();
         runtime.register_is_type_term::<ArrayType>().unwrap();
+        runtime.register_is_type_term::<TupleTerm>().unwrap();
+        runtime.register_is_type_term::<Tuple>().unwrap();
+        runtime.register_is_type_term::<TupleType>().unwrap();
 
         runtime
     }
