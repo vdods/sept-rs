@@ -26,6 +26,7 @@ mod r#true;
 mod true_type;
 mod r#type;
 mod type_trait;
+mod value;
 mod void;
 mod void_type;
 
@@ -57,6 +58,7 @@ pub use crate::{
     type_trait::TypeTrait,
     r#true::{TRUE, True},
     true_type::{TRUE_TYPE, TrueType},
+    value::Value,
     void::{VOID, Void},
     void_type::{VOID_TYPE, VoidType},
 };

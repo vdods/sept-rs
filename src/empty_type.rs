@@ -1,7 +1,7 @@
 use crate::{Stringify, TermTrait, Type, TypeTrait};
 
 /// EmptyType is a Type that by definition has no inhabitants.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct EmptyType;
 
 impl Stringify for EmptyType {

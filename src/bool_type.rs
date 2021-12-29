@@ -1,7 +1,7 @@
 use crate::{Bool, FalseType, Stringify, TermTrait, TrueType, Type, TypeTrait};
 use std::any::Any;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BoolType;
 
 impl Stringify for BoolType {

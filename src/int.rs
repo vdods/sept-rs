@@ -4,7 +4,7 @@ use std::{any::Any, fmt::Debug};
 pub const SIGNED: bool = true;
 pub const UNSIGNED: bool = false;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntN<const IS_SIGNED: bool, const N: usize> {}
 
 impl<const IS_SIGNED: bool, const N: usize> Inhabits<IntNType<IS_SIGNED, N>> for IntN<IS_SIGNED, N> {

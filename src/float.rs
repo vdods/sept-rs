@@ -1,7 +1,7 @@
 use crate::{DynNPTerm, Inhabits, FloatNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatN<const N: usize> {}
 
 impl<const N: usize> Inhabits<FloatNType<N>> for FloatN<N> {

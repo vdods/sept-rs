@@ -1,12 +1,12 @@
 #![allow(unused_imports)]
 
 use sept::{
-    ARRAY, ARRAY_TYPE,
+    ARRAY, ArrayTerm, ARRAY_TYPE,
     BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
     FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE, Result, RUNTIME,
-    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE,
+    SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE,
     Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, TypeTrait,
-    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, Value, VOID, VOID_TYPE,
 };
 use std::any::Any;
 
@@ -181,13 +181,22 @@ fn test_floats() -> Result<()> {
 fn test_arrays() -> Result<()> {
     let _ = env_logger::try_init();
 
-    let a0: Vec<Box<dyn Any>> = vec![Box::new(3i32), Box::new(5.5f32)];
-
-    log::debug!("a0: {:#?}", a0);
-    log::debug!("a0.stringify(): {:#?}", a0.stringify());
+    // Note that Vec<Value> is ArrayTerm.
+    // Note also that this is constructing a Vec with nonhomogeneous elements, because
+    // Value stores Box<dyn Any>.
+    let a0 = ArrayTerm::from(vec![3i32.into(), 5.5f32.into()]);
+    log::debug!("a0: {}", a0);
+    log::debug!("a0 (as Debug): {:?}", a0);
+    log::debug!("a0.stringify(): {}", a0.stringify());
 
     assert!(RUNTIME.inhabits(&a0, &ARRAY));
     assert!(RUNTIME.inhabits(&ARRAY, &ARRAY_TYPE));
+
+//     let a1 = vec![100i8, 101i8, 99i8, 10i8];
+//     log::debug!("a1: {:?}", a1);
+//     log::debug!("a1.stringify(): {}", a1.stringify());
+//
+//     assert!(a1.inhabits(&ARRAY));
 
     Ok(())
 }
@@ -237,6 +246,56 @@ fn test_abstract_type() -> Result<()> {
     assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT32_TYPE).as_ref(), &TYPE));
     assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT64).as_ref(), &FLOAT64_TYPE));
     assert!(RUNTIME.eq(RUNTIME.abstract_type_of(&FLOAT64_TYPE).as_ref(), &TYPE));
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_value() -> Result<()> {
+    let _ = env_logger::try_init();
+
+//     let n1: Box<dyn Any> = Box::new(3i32);
+//     let n2: Box<dyn Any> = Box::new(7i32);
+//     let v1 = Value::from(n1);
+//     let v2 = Value::from(n2);
+
+//     let v1 = Value::new(3i32);
+//     let v2 = Value::new(7i32);
+
+    let v1 = Value::from(3i32);
+    let v2 = Value::from(7i32);
+
+    log::debug!("v1.label(): {:?}", v1.label());
+    log::debug!("v1.stringify(): {:?}", v1.stringify());
+    log::debug!("v2.label(): {:?}", v2.label());
+    log::debug!("v2.stringify(): {:?}", v2.stringify());
+    log::debug!("v1.abstract_type(): {:?}", v1.abstract_type());
+
+    log::debug!("v1.inhabits_type(&SINT32): {:?}", v1.inhabits_type(&SINT32));
+    log::debug!("v1.inhabits_type(&BOOL): {:?}", v1.inhabits_type(&BOOL));
+    log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
+//     let n3: Box<dyn Any> = Box::new(SINT32);
+//     let v3 = Value::from(n3);
+    let v3 = Value::new(SINT32);
+    log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
+//     {
+//         use std::ops::Deref;
+//         log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
+//     }
+
+    log::debug!("v1: {}", v1);
+    log::debug!("v2: {}", v2);
+
+    log::debug!("v1 (as Debug): {:?}", v1);
+    log::debug!("v2 (as Debug): {:?}", v2);
+
+    log::debug!("v1 == v1: {:?}", v1 == v1);
+    log::debug!("v1 == v2: {:?}", v1 == v2);
+    log::debug!("v2 == v1: {:?}", v2 == v1);
+    log::debug!("v2 == v2: {:?}", v2 == v2);
+
+
 
     Ok(())
 }

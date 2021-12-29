@@ -1,7 +1,7 @@
 use crate::{Inhabits, DynNPTerm, NonParametricTermTrait, Stringify, TermTrait, TypeTrait};
 
 /// This represents the NonParametricType `Type` itself, not the trait TypeTrait.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Type;
 
 impl Inhabits<Type> for Type {

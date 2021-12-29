@@ -1,7 +1,7 @@
 use crate::{DynNPTerm, Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatNType<const N: usize> {}
 
 impl<const N: usize> NonParametricTermTrait for FloatNType<N> {

@@ -364,6 +364,7 @@ impl Runtime {
             None => Ok(())
         }
     }
+
     pub fn label_of(&self, type_id: TypeId) -> String {
         match self.label_fn_m.get(&type_id) {
             Some(label_fn) => label_fn().into(),

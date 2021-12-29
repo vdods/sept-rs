@@ -2,7 +2,7 @@ use crate::{BoolType, False, NonParametricTermTrait, DynNPTerm, Inhabits, String
 use std::any::Any;
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Bool;
 
 impl Inhabits<BoolType> for Bool {

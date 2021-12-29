@@ -1,6 +1,6 @@
 use crate::{Bool, Inhabits, False, Stringify, TermTrait, TrueType};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct True;
 
 impl Inhabits<Bool> for True {

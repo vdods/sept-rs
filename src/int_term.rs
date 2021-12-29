@@ -100,7 +100,7 @@ impl TermTrait for i8 {
     type AbstractTypeFnReturnType = Sint8;
 
     fn label() -> &'static str {
-        "Sint8"
+        "i8"
     }
     fn is_parametric_term(&self) -> bool {
         false

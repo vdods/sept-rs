@@ -1,13 +1,19 @@
-use crate::{Inhabits, NonParametricTermTrait, DynNPTerm, Stringify, TermTrait, Type};
+use crate::{Inhabits, NonParametricTermTrait, DynNPTerm, Stringify, TermTrait, Type, TypeTrait};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Term;
 
 /// Everything inhabits Term.
 impl<T: TermTrait> Inhabits<Term> for T {
     fn inhabits(&self, _: &Term) -> bool {
         true
+    }
+}
+
+impl NonParametricTermTrait for Term {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Term
     }
 }
 
@@ -34,9 +40,10 @@ impl TermTrait for Term {
     }
 }
 
-impl NonParametricTermTrait for Term {
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Term
+impl TypeTrait for Term {
+    /// All terms inhabit Term.
+    fn has_inhabitant(&self, _: &impl TermTrait) -> bool {
+        true
     }
 }
 

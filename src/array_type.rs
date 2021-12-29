@@ -1,7 +1,7 @@
 use crate::{DynNPTerm, Array, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ArrayType {}
 
 impl NonParametricTermTrait for ArrayType {

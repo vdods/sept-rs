@@ -6,7 +6,8 @@ pub trait TermTrait: Any + Debug + Sized {
     type AbstractTypeFnReturnType;
 
     /// Non-parametric label for this kind of term.  If this is a parametric term, then the parameters
-    /// should be represented by `...` or something.
+    /// should be represented by `...` or something.  For example, a term of type Array should have a
+    /// label of "Array(...)"
     // NOTE: &'static str may change later.
     fn label() -> &'static str;
     /// Defines if this term (which means an instance of the Rust type implementing this trait) has

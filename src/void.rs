@@ -1,7 +1,7 @@
 use crate::{Inhabits, NonParametricTermTrait, DynNPTerm, Stringify, TermTrait, VoidType};
 
 /// This represents the Void term itself.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Void;
 
 impl Inhabits<VoidType> for Void {

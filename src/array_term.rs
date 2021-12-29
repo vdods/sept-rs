@@ -1,8 +1,14 @@
-use crate::{Array, Inhabits, RUNTIME, Stringify, TermTrait};
-use std::any::Any;
+use crate::{Array, Inhabits, Stringify, TermTrait, Value};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-pub type ArrayTerm = Vec<Box<dyn Any>>;
+#[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
+pub struct ArrayTerm(Vec<Value>);
+
+impl std::fmt::Display for ArrayTerm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", &self.stringify())
+    }
+}
 
 impl Inhabits<Array> for ArrayTerm {
     fn inhabits(&self, _: &Array) -> bool {
@@ -14,9 +20,9 @@ impl Stringify for ArrayTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Array(");
-        for (i, element) in self.iter().enumerate() {
-            s.push_str(&RUNTIME.stringify(element.as_ref()));
-            if i+1 < self.len() {
+        for (i, element) in self.0.iter().enumerate() {
+            s.push_str(&element.stringify());
+            if i+1 < self.0.len() {
                 s.push_str(", ");
             }
         }

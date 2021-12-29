@@ -1,7 +1,7 @@
 use crate::{ArrayTerm, ArrayType, DynNPTerm, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait};
 use std::{any::Any, fmt::Debug};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Array;
 
 impl Inhabits<ArrayType> for Array {

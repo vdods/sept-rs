@@ -4,7 +4,7 @@ use crate::{
 };
 use std::{any::Any, fmt::Debug};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
 
 impl<const IS_SIGNED: bool, const N: usize> NonParametricTermTrait for IntNType<IS_SIGNED, N> {
