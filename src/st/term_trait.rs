@@ -1,4 +1,4 @@
-use crate::st::TypeTrait;
+use crate::{dy, st::TypeTrait};
 use std::{any::Any, fmt::Debug};
 
 // pub trait TermTrait: Any + Debug + Into<Box<dyn Any>> + Sized {
@@ -24,6 +24,10 @@ pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     /// Convenience method for checking type inhabitation.
     fn inhabits_type(&self, t: &impl TypeTrait) -> bool {
         t.has_inhabitant(self)
+    }
+    fn downcast_ref<T: TermTrait>(&self) -> Option<&T> {
+        let self_: &dy::ValueGuts = self;
+        self_.downcast_ref::<T>()
     }
 }
 

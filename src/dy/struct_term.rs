@@ -1,14 +1,18 @@
-use crate::{dy, st::{Inhabits, Stringify, Struct, TermTrait}};
+use crate::{dy, st::{self, Inhabits, Stringify, Struct, TermTrait}};
 use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
 #[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct StructTerm {
+    // NOTE: This is probably temporary, since constructing a term of this type won't necessarily
+    // use GlobalSymRefTerm.
     symbol_id: String,
     /// This stores the actual `elem: Type` pairs in a particular order.  TODO: Check that each is a type.
     /// Theoretically this could store non-types, but that is feature creep for structs.
-    ordered_type_v: Vec<(String, dy::Value)>,
+    // TODO: Maybe separate this out into name_v (and eventually name_tuple_term) and type_tuple_term,
+    // which would simplify various checks and projections into TupleTerm.
+    pub(crate) ordered_type_v: Vec<(String, dy::Value)>,
     /// This is a cache for the quick lookup of the element index based on a name.
     name_index_m: HashMap<String, usize>,
 }
@@ -80,5 +84,19 @@ impl TermTrait for StructTerm {
     }
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
         Self::AbstractTypeFnReturnType{}
+    }
+}
+
+impl st::TypeTrait for StructTerm {
+    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
+        match x.downcast_ref::<dy::StructTermTerm>() {
+            Some(struct_term_term) => { return struct_term_term.element_tuple_term.inhabits(self); }
+            None => { }
+        };
+        match x.downcast_ref::<dy::TupleTerm>() {
+            Some(tuple_term) => { return tuple_term.inhabits(self); }
+            None => { }
+        };
+        false
     }
 }

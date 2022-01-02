@@ -900,6 +900,9 @@ fn eval_expr(expr: &Value) -> f64 {
 fn test_ast() -> Result<()> {
     let _ = env_logger::try_init();
 
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    RUNTIME.write().unwrap().global_symbol_table.clear();
+
     {
         let mut rt = RUNTIME.write().unwrap();
 
@@ -954,6 +957,25 @@ fn test_ast() -> Result<()> {
 
     let expr3 = TupleTerm::from((TupleTerm::from((77.75f64, Mul{}, 900.125f64)), Add{}, 1.0f64));
     log::debug!("expr3: {}", expr3);
+
+    // TEMP TESTING
+    {
+        // Create the BinOpExpr struct
+        RUNTIME.write().unwrap()
+            .global_symbol_table
+            .define_symbol(
+                "BinOpExpr",
+                StructTerm::new(
+                    "BinOpExpr".into(),
+                    vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
+                ).into()
+            )?;
+        log::debug!("global_symbol_table: {:#?}", RUNTIME.read().unwrap().global_symbol_table);
+        let bin_op_expr = GlobalSymRefTerm::from("BinOpExpr");
+        log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
+
+//         assert!(expr3.inhabits(&bin_op_expr));
+    }
 
     Ok(())
 }

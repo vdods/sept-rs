@@ -262,6 +262,7 @@ impl Runtime {
         runtime.register_inhabits_fn::<Tuple, TupleType>().unwrap();
         // TODO: special handling for inhabitation of and by GlobalSymRefTerm
         runtime.register_inhabits_fn::<GlobalSymRef, GlobalSymRefType>().unwrap();
+        runtime.register_inhabits_fn::<TupleTerm, StructTerm>().unwrap();
         runtime.register_inhabits_fn::<StructTermTerm, StructTerm>().unwrap();
         runtime.register_inhabits_fn::<StructTerm, Struct>().unwrap();
         runtime.register_inhabits_fn::<Struct, StructType>().unwrap();

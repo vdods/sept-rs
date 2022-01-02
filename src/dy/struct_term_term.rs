@@ -16,7 +16,7 @@ pub struct StructTermTerm {
     // via some ref counted construction.
     type_: dy::GlobalSymRefTerm,
     // This is the ordered sequence of element values.
-    element_tuple_term: dy::TupleTerm,
+    pub(crate) element_tuple_term: dy::TupleTerm,
 }
 
 impl dy::IntoValue for StructTermTerm {}
@@ -47,7 +47,7 @@ impl std::fmt::Display for StructTermTerm {
 
 impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, struct_term: &dy::StructTerm) -> bool {
-        struct_term.verify_inhabitation_by(&self.element_tuple_term).is_ok()
+        self.element_tuple_term.inhabits(struct_term)
     }
 }
 

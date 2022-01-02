@@ -98,6 +98,22 @@ impl Inhabits<TupleTerm> for TupleTerm {
     }
 }
 
+// Because a StructTerm is effectively an (ordered) tuple of types, TupleTerm can naturally inhabit StructTerm.
+impl Inhabits<dy::StructTerm> for TupleTerm {
+    fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
+        if self.len() != rhs.ordered_type_v.len() {
+            return false;
+        }
+        for (i, datum) in self.iter().enumerate() {
+            if !datum.inhabits(&rhs.ordered_type_v[i].1) {
+                return false;
+            }
+        }
+        true
+
+    }
+}
+
 impl Stringify for TupleTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
