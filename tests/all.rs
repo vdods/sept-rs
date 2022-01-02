@@ -5,7 +5,7 @@ use sept::{
         self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME, StructTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
-        ARRAY, ARRAY_TYPE,
+        self, ARRAY, ARRAY_TYPE,
         BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
         FLOAT32, FLOAT32_TYPE, FLOAT64, Float64, FLOAT64_TYPE, Inhabits, Result,
         SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE, Stringify,
@@ -16,11 +16,15 @@ use sept::{
 };
 use std::any::Any;
 
+/// This will run once at load time (i.e. presumably before main function is called).
+#[ctor::ctor]
+fn overall_init() {
+    env_logger::try_init().unwrap();
+}
+
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_term_and_type() -> Result<()> {
-    let _ = env_logger::try_init();
-
     log::debug!("TRUE: {:#?}", TRUE);
     log::debug!("TRUE_TYPE: {:#?}", TRUE_TYPE);
 
@@ -78,8 +82,6 @@ fn test_term_and_type() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_stringify() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     assert_eq!(rt.stringify(&true), "True");
@@ -99,8 +101,6 @@ fn test_runtime_stringify() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_eq() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     assert!(rt.eq(&true, &true));
@@ -129,8 +129,6 @@ fn test_runtime_eq() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_inhabits() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     assert!(rt.inhabits(&true, &BOOL));
@@ -154,8 +152,6 @@ fn test_runtime_inhabits() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ints() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     assert!(rt.inhabits(&123i8, &SINT8));
@@ -184,8 +180,6 @@ fn test_ints() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_floats() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     assert!(rt.inhabits(&5.875f32, &FLOAT32));
@@ -200,8 +194,6 @@ fn test_floats() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_arrays() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     // Note that Vec<Value> is ArrayTerm.
@@ -227,8 +219,6 @@ fn test_arrays() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_tuples() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let t1 = TupleTerm::from(vec![3i32.into(), 5.5f32.into()]);
     let t2 = TupleTerm::from(vec![SINT32.into(), FLOAT32.into()]);
     log::debug!("t1: {}", t1);
@@ -248,8 +238,6 @@ fn test_tuples() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_abstract_type() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let rt = RUNTIME.read().unwrap();
 
     {
@@ -299,8 +287,6 @@ fn test_abstract_type() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_value() -> Result<()> {
-    let _ = env_logger::try_init();
-
     let v1 = Value::from(3i32);
     let v2 = Value::from(7i32);
 
@@ -334,8 +320,6 @@ fn test_value() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_symbol_table() -> Result<()> {
-    let _ = env_logger::try_init();
-
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     RUNTIME.write().unwrap().global_symbol_table.clear();
 
@@ -368,8 +352,6 @@ fn test_symbol_table() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_global_sym_ref_term() -> Result<()> {
-    let _ = env_logger::try_init();
-
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     RUNTIME.write().unwrap().global_symbol_table.clear();
 
@@ -402,8 +384,6 @@ fn test_global_sym_ref_term() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_structs() -> Result<()> {
-    let _ = env_logger::try_init();
-
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     RUNTIME.write().unwrap().global_symbol_table.clear();
 
@@ -457,10 +437,22 @@ fn test_structs() -> Result<()> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BinOp;
 
+impl st::Inhabits<Type> for BinOp {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
 impl dy::IntoValue for BinOp {}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UnOp;
+
+impl st::Inhabits<Type> for UnOp {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
 impl dy::IntoValue for UnOp {}
 
@@ -767,6 +759,12 @@ impl Inhabits<UnOp> for Neg {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Expr;
 
+impl st::Inhabits<Type> for Expr {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
 impl dy::IntoValue for Expr {}
 
 impl Stringify for Expr {
@@ -846,42 +844,26 @@ fn eval_expr(expr: &Value) -> f64 {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ast() -> Result<()> {
-    let _ = env_logger::try_init();
-
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     RUNTIME.write().unwrap().global_symbol_table.clear();
 
     {
         let mut rt = RUNTIME.write().unwrap();
 
-        rt.register_label::<Add>().unwrap();
-        rt.register_label::<Sub>().unwrap();
-        rt.register_label::<Mul>().unwrap();
-        rt.register_label::<Div>().unwrap();
-        rt.register_label::<Pow>().unwrap();
-        rt.register_label::<Neg>().unwrap();
-        rt.register_label::<BinOp>().unwrap();
-        rt.register_label::<UnOp>().unwrap();
-        rt.register_label::<Expr>().unwrap();
+        rt.register_term::<Add>()?;
+        rt.register_term::<Sub>()?;
+        rt.register_term::<Mul>()?;
+        rt.register_term::<Div>()?;
+        rt.register_term::<Pow>()?;
+        rt.register_term::<Neg>()?;
 
-        rt.register_stringify::<Add>().unwrap();
-        rt.register_stringify::<Sub>().unwrap();
-        rt.register_stringify::<Mul>().unwrap();
-        rt.register_stringify::<Div>().unwrap();
-        rt.register_stringify::<Pow>().unwrap();
-        rt.register_stringify::<Neg>().unwrap();
-        rt.register_stringify::<BinOp>().unwrap();
-        rt.register_stringify::<UnOp>().unwrap();
-        rt.register_stringify::<Expr>().unwrap();
+        rt.register_type::<BinOp>()?;
+        rt.register_type::<UnOp>()?;
+        rt.register_type::<Expr>()?;
 
-        rt.register_inhabits_fn::<Add,BinOp>().unwrap();
-        rt.register_inhabits_fn::<Sub,BinOp>().unwrap();
-        rt.register_inhabits_fn::<Mul,BinOp>().unwrap();
-        rt.register_inhabits_fn::<Div,BinOp>().unwrap();
-        rt.register_inhabits_fn::<Pow,BinOp>().unwrap();
-        rt.register_inhabits_fn::<Neg,UnOp>().unwrap();
-        rt.register_inhabits_fn::<f64,Expr>().unwrap();
-        rt.register_inhabits_fn::<TupleTerm,Expr>().unwrap();
+        // Non-uniform registrations.
+        rt.register_inhabits::<f64,Expr>().unwrap();
+        rt.register_inhabits::<TupleTerm,Expr>().unwrap();
     }
 
     let expr1 = TupleTerm::from(vec![123.0f64.into(), Add{}.into(), 456.0f64.into()]);

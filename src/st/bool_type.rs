@@ -1,7 +1,13 @@
-use crate::{dy, st::{Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BoolType;
+
+impl st::Inhabits<Type> for BoolType {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
 impl dy::IntoValue for BoolType {}
 

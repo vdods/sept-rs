@@ -3,6 +3,12 @@ use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TrueType;
 
+impl st::Inhabits<Type> for TrueType {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
 impl dy::IntoValue for TrueType {}
 
 impl st::Inhabits<st::BoolType> for TrueType {

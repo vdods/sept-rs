@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify}};
+use crate::{dy, st::{self, Stringify, TermTrait}};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -17,6 +17,30 @@ pub struct StructTermTerm {
     type_: dy::GlobalSymRefTerm,
     // This is the ordered sequence of element values.
     pub(crate) element_tuple_term: dy::TupleTerm,
+}
+
+// TEMP HACK: This should be Inhabits<Value> (once type_ is changed accordingly)
+impl st::Inhabits<dy::GlobalSymRefTerm> for StructTermTerm {
+    fn inhabits(&self, rhs: &dy::GlobalSymRefTerm) -> bool {
+        let runtime_l = dy::RUNTIME.read().unwrap();
+        let value: &dy::Value = match runtime_l.global_symbol_table.resolve_symbol(&self.type_.symbol_id) {
+            Ok(value) => value,
+            Err(e) => {
+                log::warn!("{} inhabitation in {} failed; {}; returning default value of false", Self::label(), rhs.stringify(), e);
+                return false;
+            }
+        };
+        let struct_term = match value.downcast_ref::<dy::StructTerm>() {
+            Some(struct_term) => struct_term,
+            None => {
+                log::warn!("{} inhabitation in {} failed because type is not a {}; returning default value of false", Self::label(), rhs.stringify(), dy::StructTerm::label());
+                return false;
+            }
+        };
+        // NOTE: This is a little wasteful because if this returns false, then it will have
+        // constructed and thrown away the explanation error message.
+        struct_term.verify_inhabitation_by(&self.element_tuple_term).is_ok()
+    }
 }
 
 impl dy::IntoValue for StructTermTerm {}

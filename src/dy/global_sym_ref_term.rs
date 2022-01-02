@@ -1,4 +1,4 @@
-use crate::{dy::{self, RUNTIME}, st::{/*GlobalSymRef, Inhabits, */Stringify, TermTrait}};
+use crate::{dy::{self, RUNTIME}, st::{self, /*GlobalSymRef, Inhabits, */Stringify, TermTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
@@ -71,6 +71,8 @@ impl TermTrait for GlobalSymRefTerm {
         RUNTIME.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().abstract_type()
     }
 }
+
+impl st::TypeTrait for GlobalSymRefTerm {}
 
 // // TODO: Probably move this into its own file
 // #[derive(derive_more::From, derive_more::Into)]

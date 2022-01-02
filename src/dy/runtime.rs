@@ -31,6 +31,7 @@ pub struct Runtime {
     // TODO: [po]set of terms(?)
 
     term_s: HashSet<TypeId>,
+    type_s: HashSet<TypeId>,
     // TODO: This is silly, just map to &'static str
     label_fn_m: HashMap<TypeId, LabelFn>,
     stringify_fn_m: HashMap<TypeId, StringifyFn>,
@@ -53,398 +54,129 @@ impl Runtime {
 
         // TODO: Order these in some sensible way
 
-        runtime.register_label::<Term>().unwrap();
-        runtime.register_label::<Type>().unwrap();
-        runtime.register_label::<bool>().unwrap();
-        runtime.register_label::<Bool>().unwrap();
-        runtime.register_label::<BoolType>().unwrap();
-        runtime.register_label::<EmptyType>().unwrap();
-        runtime.register_label::<False>().unwrap();
-        runtime.register_label::<FalseType>().unwrap();
-        runtime.register_label::<i8>().unwrap();
-        runtime.register_label::<i16>().unwrap();
-        runtime.register_label::<i32>().unwrap();
-        runtime.register_label::<i64>().unwrap();
-        runtime.register_label::<Sint8>().unwrap();
-        runtime.register_label::<Sint16>().unwrap();
-        runtime.register_label::<Sint32>().unwrap();
-        runtime.register_label::<Sint64>().unwrap();
-        runtime.register_label::<Sint8Type>().unwrap();
-        runtime.register_label::<Sint16Type>().unwrap();
-        runtime.register_label::<Sint32Type>().unwrap();
-        runtime.register_label::<Sint64Type>().unwrap();
-        runtime.register_label::<True>().unwrap();
-        runtime.register_label::<TrueType>().unwrap();
-        runtime.register_label::<u8>().unwrap();
-        runtime.register_label::<u16>().unwrap();
-        runtime.register_label::<u32>().unwrap();
-        runtime.register_label::<u64>().unwrap();
-        runtime.register_label::<f32>().unwrap();
-        runtime.register_label::<f64>().unwrap();
-        runtime.register_label::<Uint8>().unwrap();
-        runtime.register_label::<Uint16>().unwrap();
-        runtime.register_label::<Uint32>().unwrap();
-        runtime.register_label::<Uint64>().unwrap();
-        runtime.register_label::<Uint8Type>().unwrap();
-        runtime.register_label::<Uint16Type>().unwrap();
-        runtime.register_label::<Uint32Type>().unwrap();
-        runtime.register_label::<Uint64Type>().unwrap();
-        runtime.register_label::<Float32>().unwrap();
-        runtime.register_label::<Float64>().unwrap();
-        runtime.register_label::<Float32Type>().unwrap();
-        runtime.register_label::<Float64Type>().unwrap();
-        runtime.register_label::<Void>().unwrap();
-        runtime.register_label::<VoidType>().unwrap();
-        runtime.register_label::<ArrayTerm>().unwrap();
-        runtime.register_label::<Array>().unwrap();
-        runtime.register_label::<ArrayType>().unwrap();
-        runtime.register_label::<TupleTerm>().unwrap();
-        runtime.register_label::<Tuple>().unwrap();
-        runtime.register_label::<TupleType>().unwrap();
-        runtime.register_label::<GlobalSymRefTerm>().unwrap();
-        runtime.register_label::<GlobalSymRef>().unwrap();
-        runtime.register_label::<GlobalSymRefType>().unwrap();
-        runtime.register_label::<StructTermTerm>().unwrap();
-        runtime.register_label::<StructTerm>().unwrap();
-        runtime.register_label::<Struct>().unwrap();
-        runtime.register_label::<StructType>().unwrap();
+        // Register non-type terms
+        runtime.register_term::<bool>().unwrap();
+        runtime.register_term::<False>().unwrap();
+        runtime.register_term::<True>().unwrap();
+        runtime.register_term::<i8>().unwrap();
+        runtime.register_term::<i16>().unwrap();
+        runtime.register_term::<i32>().unwrap();
+        runtime.register_term::<i64>().unwrap();
+        runtime.register_term::<u8>().unwrap();
+        runtime.register_term::<u16>().unwrap();
+        runtime.register_term::<u32>().unwrap();
+        runtime.register_term::<u64>().unwrap();
+        runtime.register_term::<f32>().unwrap();
+        runtime.register_term::<f64>().unwrap();
+        runtime.register_term::<Void>().unwrap();
+        runtime.register_term::<ArrayTerm>().unwrap();
+        runtime.register_term::<StructTermTerm>().unwrap();
 
-        runtime.register_stringify::<Term>().unwrap();
-        runtime.register_stringify::<Type>().unwrap();
-        runtime.register_stringify::<bool>().unwrap();
-        runtime.register_stringify::<Bool>().unwrap();
-        runtime.register_stringify::<BoolType>().unwrap();
-        runtime.register_stringify::<EmptyType>().unwrap();
-        runtime.register_stringify::<False>().unwrap();
-        runtime.register_stringify::<FalseType>().unwrap();
-        runtime.register_stringify::<i8>().unwrap();
-        runtime.register_stringify::<i16>().unwrap();
-        runtime.register_stringify::<i32>().unwrap();
-        runtime.register_stringify::<i64>().unwrap();
-        runtime.register_stringify::<Sint8>().unwrap();
-        runtime.register_stringify::<Sint16>().unwrap();
-        runtime.register_stringify::<Sint32>().unwrap();
-        runtime.register_stringify::<Sint64>().unwrap();
-        runtime.register_stringify::<Sint8Type>().unwrap();
-        runtime.register_stringify::<Sint16Type>().unwrap();
-        runtime.register_stringify::<Sint32Type>().unwrap();
-        runtime.register_stringify::<Sint64Type>().unwrap();
-        runtime.register_stringify::<True>().unwrap();
-        runtime.register_stringify::<TrueType>().unwrap();
-        runtime.register_stringify::<u8>().unwrap();
-        runtime.register_stringify::<u16>().unwrap();
-        runtime.register_stringify::<u32>().unwrap();
-        runtime.register_stringify::<u64>().unwrap();
-        runtime.register_stringify::<f32>().unwrap();
-        runtime.register_stringify::<f64>().unwrap();
-        runtime.register_stringify::<Uint8>().unwrap();
-        runtime.register_stringify::<Uint16>().unwrap();
-        runtime.register_stringify::<Uint32>().unwrap();
-        runtime.register_stringify::<Uint64>().unwrap();
-        runtime.register_stringify::<Uint8Type>().unwrap();
-        runtime.register_stringify::<Uint16Type>().unwrap();
-        runtime.register_stringify::<Uint32Type>().unwrap();
-        runtime.register_stringify::<Uint64Type>().unwrap();
-        runtime.register_stringify::<Float32>().unwrap();
-        runtime.register_stringify::<Float64>().unwrap();
-        runtime.register_stringify::<Float32Type>().unwrap();
-        runtime.register_stringify::<Float64Type>().unwrap();
-        runtime.register_stringify::<Void>().unwrap();
-        runtime.register_stringify::<VoidType>().unwrap();
-        runtime.register_stringify::<ArrayTerm>().unwrap();
-        runtime.register_stringify::<Array>().unwrap();
-        runtime.register_stringify::<ArrayType>().unwrap();
-        runtime.register_stringify::<TupleTerm>().unwrap();
-        runtime.register_stringify::<Tuple>().unwrap();
-        runtime.register_stringify::<TupleType>().unwrap();
-        runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
-        runtime.register_stringify::<GlobalSymRef>().unwrap();
-        runtime.register_stringify::<GlobalSymRefType>().unwrap();
-        runtime.register_stringify::<StructTermTerm>().unwrap();
-        runtime.register_stringify::<StructTerm>().unwrap();
-        runtime.register_stringify::<Struct>().unwrap();
-        runtime.register_stringify::<StructType>().unwrap();
+        // Register types
+        runtime.register_type::<Term>().unwrap();
+        runtime.register_type::<Type>().unwrap();
+        runtime.register_type::<Bool>().unwrap();
+        runtime.register_type::<BoolType>().unwrap();
+        runtime.register_type::<EmptyType>().unwrap();
+        runtime.register_type::<FalseType>().unwrap();
+        runtime.register_type::<TrueType>().unwrap();
+        runtime.register_type::<Sint8>().unwrap();
+        runtime.register_type::<Sint16>().unwrap();
+        runtime.register_type::<Sint32>().unwrap();
+        runtime.register_type::<Sint64>().unwrap();
+        runtime.register_type::<Sint8Type>().unwrap();
+        runtime.register_type::<Sint16Type>().unwrap();
+        runtime.register_type::<Sint32Type>().unwrap();
+        runtime.register_type::<Sint64Type>().unwrap();
+        runtime.register_type::<Uint8>().unwrap();
+        runtime.register_type::<Uint16>().unwrap();
+        runtime.register_type::<Uint32>().unwrap();
+        runtime.register_type::<Uint64>().unwrap();
+        runtime.register_type::<Uint8Type>().unwrap();
+        runtime.register_type::<Uint16Type>().unwrap();
+        runtime.register_type::<Uint32Type>().unwrap();
+        runtime.register_type::<Uint64Type>().unwrap();
+        runtime.register_type::<Float32>().unwrap();
+        runtime.register_type::<Float64>().unwrap();
+        runtime.register_type::<Float32Type>().unwrap();
+        runtime.register_type::<Float64Type>().unwrap();
+        runtime.register_type::<VoidType>().unwrap();
+        runtime.register_type::<Array>().unwrap();
+        runtime.register_type::<ArrayType>().unwrap();
+        runtime.register_type::<TupleTerm>().unwrap();
+        runtime.register_type::<Tuple>().unwrap();
+        runtime.register_type::<TupleType>().unwrap();
+        // NOTE: This is a special type, and requires special handling (TODO)
+//         runtime.register_type::<GlobalSymRefTerm>().unwrap();
+        runtime.register_type::<GlobalSymRef>().unwrap();
+        runtime.register_type::<GlobalSymRefType>().unwrap();
+        runtime.register_type::<StructTerm>().unwrap();
+        runtime.register_type::<Struct>().unwrap();
+        runtime.register_type::<StructType>().unwrap();
 
-        runtime.register_eq_fn::<Term, Term>().unwrap();
-        runtime.register_eq_fn::<Type, Type>().unwrap();
-        runtime.register_eq_fn::<bool, bool>().unwrap();
-        runtime.register_eq_fn::<bool, True>().unwrap();
-        runtime.register_eq_fn::<bool, False>().unwrap();
-        runtime.register_eq_fn::<Bool, Bool>().unwrap();
-        runtime.register_eq_fn::<BoolType, BoolType>().unwrap();
-        runtime.register_eq_fn::<False, False>().unwrap();
-        runtime.register_eq_fn::<False, True>().unwrap();
-        runtime.register_eq_fn::<FalseType, FalseType>().unwrap();
-        runtime.register_eq_fn::<i8, i8>().unwrap();
-        runtime.register_eq_fn::<i16, i16>().unwrap();
-        runtime.register_eq_fn::<i32, i32>().unwrap();
-        runtime.register_eq_fn::<i64, i64>().unwrap();
-        runtime.register_eq_fn::<Sint8, Sint8>().unwrap();
-        runtime.register_eq_fn::<Sint16, Sint16>().unwrap();
-        runtime.register_eq_fn::<Sint32, Sint32>().unwrap();
-        runtime.register_eq_fn::<Sint64, Sint64>().unwrap();
-        runtime.register_eq_fn::<Sint8Type, Sint8Type>().unwrap();
-        runtime.register_eq_fn::<Sint16Type, Sint16Type>().unwrap();
-        runtime.register_eq_fn::<Sint32Type, Sint32Type>().unwrap();
-        runtime.register_eq_fn::<Sint64Type, Sint64Type>().unwrap();
-        runtime.register_eq_fn::<True, True>().unwrap();
-        runtime.register_eq_fn::<TrueType, TrueType>().unwrap();
-        runtime.register_eq_fn::<EmptyType, EmptyType>().unwrap();
-        runtime.register_eq_fn::<u8, u8>().unwrap();
-        runtime.register_eq_fn::<u16, u16>().unwrap();
-        runtime.register_eq_fn::<u32, u32>().unwrap();
-        runtime.register_eq_fn::<u64, u64>().unwrap();
-        runtime.register_eq_fn::<f32, f32>().unwrap();
-        runtime.register_eq_fn::<f64, f64>().unwrap();
-        runtime.register_eq_fn::<Uint8, Uint8>().unwrap();
-        runtime.register_eq_fn::<Uint16, Uint16>().unwrap();
-        runtime.register_eq_fn::<Uint32, Uint32>().unwrap();
-        runtime.register_eq_fn::<Uint64, Uint64>().unwrap();
-        runtime.register_eq_fn::<Uint8Type, Uint8Type>().unwrap();
-        runtime.register_eq_fn::<Uint16Type, Uint16Type>().unwrap();
-        runtime.register_eq_fn::<Uint32Type, Uint32Type>().unwrap();
-        runtime.register_eq_fn::<Uint64Type, Uint64Type>().unwrap();
-        runtime.register_eq_fn::<Float32, Float32>().unwrap();
-        runtime.register_eq_fn::<Float64, Float64>().unwrap();
-        runtime.register_eq_fn::<Float32Type, Float32Type>().unwrap();
-        runtime.register_eq_fn::<Float64Type, Float64Type>().unwrap();
-        runtime.register_eq_fn::<Void, Void>().unwrap();
-        runtime.register_eq_fn::<VoidType, VoidType>().unwrap();
-        runtime.register_eq_fn::<ArrayTerm, ArrayTerm>().unwrap();
-        runtime.register_eq_fn::<Array, Array>().unwrap();
-        runtime.register_eq_fn::<ArrayType, ArrayType>().unwrap();
-        runtime.register_eq_fn::<TupleTerm, TupleTerm>().unwrap();
-        runtime.register_eq_fn::<Tuple, Tuple>().unwrap();
-        runtime.register_eq_fn::<TupleType, TupleType>().unwrap();
-        // TODO: referential transparency has to be handled with special code
-//         runtime.register_eq_fn::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
-        runtime.register_eq_fn::<GlobalSymRef, GlobalSymRef>().unwrap();
-        runtime.register_eq_fn::<GlobalSymRefType, GlobalSymRefType>().unwrap();
-        runtime.register_eq_fn::<StructTermTerm, StructTermTerm>().unwrap();
-        runtime.register_eq_fn::<StructTerm, StructTerm>().unwrap();
-        runtime.register_eq_fn::<Struct, Struct>().unwrap();
-        runtime.register_eq_fn::<StructType, StructType>().unwrap();
-
+        // Other, non-uniform registrations.
         // TODO: Need to somehow make it so that everything inhabits Term
-        runtime.register_inhabits_fn::<Type, Type>().unwrap();
-        runtime.register_inhabits_fn::<bool, Bool>().unwrap();
-        runtime.register_inhabits_fn::<bool, FalseType>().unwrap();
-        runtime.register_inhabits_fn::<bool, TrueType>().unwrap();
-        runtime.register_inhabits_fn::<False, Bool>().unwrap();
-        runtime.register_inhabits_fn::<True, Bool>().unwrap();
-        runtime.register_inhabits_fn::<Bool, BoolType>().unwrap();
-        runtime.register_inhabits_fn::<Void, VoidType>().unwrap();
         // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
-        runtime.register_inhabits_fn::<i8, Sint8>().unwrap();
-        runtime.register_inhabits_fn::<i16, Sint16>().unwrap();
-        runtime.register_inhabits_fn::<i32, Sint32>().unwrap();
-        runtime.register_inhabits_fn::<i64, Sint64>().unwrap();
-        runtime.register_inhabits_fn::<u8, Uint8>().unwrap();
-        runtime.register_inhabits_fn::<u16, Uint16>().unwrap();
-        runtime.register_inhabits_fn::<u32, Uint32>().unwrap();
-        runtime.register_inhabits_fn::<u64, Uint64>().unwrap();
-        runtime.register_inhabits_fn::<f32, Float32>().unwrap();
-        runtime.register_inhabits_fn::<f64, Float64>().unwrap();
-        runtime.register_inhabits_fn::<Sint8, Sint8Type>().unwrap();
-        runtime.register_inhabits_fn::<Sint16, Sint16Type>().unwrap();
-        runtime.register_inhabits_fn::<Sint32, Sint32Type>().unwrap();
-        runtime.register_inhabits_fn::<Sint64, Sint64Type>().unwrap();
-        runtime.register_inhabits_fn::<Uint8, Uint8Type>().unwrap();
-        runtime.register_inhabits_fn::<Uint16, Uint16Type>().unwrap();
-        runtime.register_inhabits_fn::<Uint32, Uint32Type>().unwrap();
-        runtime.register_inhabits_fn::<Uint64, Uint64Type>().unwrap();
-        runtime.register_inhabits_fn::<Float32, Float32Type>().unwrap();
-        runtime.register_inhabits_fn::<Float64, Float64Type>().unwrap();
-        runtime.register_inhabits_fn::<ArrayTerm, Array>().unwrap();
-        runtime.register_inhabits_fn::<Array, ArrayType>().unwrap();
-        runtime.register_inhabits_fn::<TupleTerm, TupleTerm>().unwrap();
-        runtime.register_inhabits_fn::<TupleTerm, Tuple>().unwrap();
-        runtime.register_inhabits_fn::<Tuple, TupleType>().unwrap();
+
+        runtime.register_label::<GlobalSymRefTerm>().unwrap();
+        runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
+        runtime.register_eq::<bool, True>().unwrap();
+        runtime.register_eq::<bool, False>().unwrap();
+        // TODO: referential transparency has to be handled with special code
+//         runtime.register_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime.register_inhabits::<bool, FalseType>().unwrap();
+        runtime.register_inhabits::<bool, TrueType>().unwrap();
+        runtime.register_inhabits::<False, Bool>().unwrap();
+        runtime.register_inhabits::<True, Bool>().unwrap();
         // TODO: special handling for inhabitation of and by GlobalSymRefTerm
-        runtime.register_inhabits_fn::<GlobalSymRef, GlobalSymRefType>().unwrap();
-        runtime.register_inhabits_fn::<TupleTerm, StructTerm>().unwrap();
-        runtime.register_inhabits_fn::<StructTermTerm, StructTerm>().unwrap();
-        runtime.register_inhabits_fn::<StructTerm, Struct>().unwrap();
-        runtime.register_inhabits_fn::<Struct, StructType>().unwrap();
+//         runtime.register_inhabits::<GlobalSymRef, GlobalSymRefType>().unwrap();
+        runtime.register_inhabits::<TupleTerm, StructTerm>().unwrap();
 
-        runtime.register_abstract_type::<Term>().unwrap();
-        runtime.register_abstract_type::<Type>().unwrap();
-        runtime.register_abstract_type::<bool>().unwrap();
-        runtime.register_abstract_type::<Bool>().unwrap();
-        runtime.register_abstract_type::<BoolType>().unwrap();
-        runtime.register_abstract_type::<EmptyType>().unwrap();
-        runtime.register_abstract_type::<False>().unwrap();
-        runtime.register_abstract_type::<FalseType>().unwrap();
-        runtime.register_abstract_type::<i8>().unwrap();
-        runtime.register_abstract_type::<i16>().unwrap();
-        runtime.register_abstract_type::<i32>().unwrap();
-        runtime.register_abstract_type::<i64>().unwrap();
-        runtime.register_abstract_type::<Sint8>().unwrap();
-        runtime.register_abstract_type::<Sint16>().unwrap();
-        runtime.register_abstract_type::<Sint32>().unwrap();
-        runtime.register_abstract_type::<Sint64>().unwrap();
-        runtime.register_abstract_type::<Sint8Type>().unwrap();
-        runtime.register_abstract_type::<Sint16Type>().unwrap();
-        runtime.register_abstract_type::<Sint32Type>().unwrap();
-        runtime.register_abstract_type::<Sint64Type>().unwrap();
-        runtime.register_abstract_type::<True>().unwrap();
-        runtime.register_abstract_type::<TrueType>().unwrap();
-        runtime.register_abstract_type::<u8>().unwrap();
-        runtime.register_abstract_type::<u16>().unwrap();
-        runtime.register_abstract_type::<u32>().unwrap();
-        runtime.register_abstract_type::<u64>().unwrap();
-        runtime.register_abstract_type::<f32>().unwrap();
-        runtime.register_abstract_type::<f64>().unwrap();
-        runtime.register_abstract_type::<Uint8>().unwrap();
-        runtime.register_abstract_type::<Uint16>().unwrap();
-        runtime.register_abstract_type::<Uint32>().unwrap();
-        runtime.register_abstract_type::<Uint64>().unwrap();
-        runtime.register_abstract_type::<Uint8Type>().unwrap();
-        runtime.register_abstract_type::<Uint16Type>().unwrap();
-        runtime.register_abstract_type::<Uint32Type>().unwrap();
-        runtime.register_abstract_type::<Uint64Type>().unwrap();
-        runtime.register_abstract_type::<Float32>().unwrap();
-        runtime.register_abstract_type::<Float64>().unwrap();
-        runtime.register_abstract_type::<Float32Type>().unwrap();
-        runtime.register_abstract_type::<Float64Type>().unwrap();
-        runtime.register_abstract_type::<Void>().unwrap();
-        runtime.register_abstract_type::<VoidType>().unwrap();
-        runtime.register_abstract_type::<ArrayTerm>().unwrap();
-        runtime.register_abstract_type::<Array>().unwrap();
-        runtime.register_abstract_type::<ArrayType>().unwrap();
-        runtime.register_abstract_type::<TupleTerm>().unwrap();
-        runtime.register_abstract_type::<Tuple>().unwrap();
-        runtime.register_abstract_type::<TupleType>().unwrap();
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
-        runtime.register_abstract_type::<GlobalSymRef>().unwrap();
-        runtime.register_abstract_type::<GlobalSymRefType>().unwrap();
-        runtime.register_abstract_type::<StructTermTerm>().unwrap();
-        runtime.register_abstract_type::<StructTerm>().unwrap();
-        runtime.register_abstract_type::<Struct>().unwrap();
-        runtime.register_abstract_type::<StructType>().unwrap();
-
-        runtime.register_is_parametric_term::<Term>().unwrap();
-        runtime.register_is_parametric_term::<Type>().unwrap();
-        runtime.register_is_parametric_term::<bool>().unwrap();
-        runtime.register_is_parametric_term::<Bool>().unwrap();
-        runtime.register_is_parametric_term::<BoolType>().unwrap();
-        runtime.register_is_parametric_term::<EmptyType>().unwrap();
-        runtime.register_is_parametric_term::<False>().unwrap();
-        runtime.register_is_parametric_term::<FalseType>().unwrap();
-        runtime.register_is_parametric_term::<i8>().unwrap();
-        runtime.register_is_parametric_term::<i16>().unwrap();
-        runtime.register_is_parametric_term::<i32>().unwrap();
-        runtime.register_is_parametric_term::<i64>().unwrap();
-        runtime.register_is_parametric_term::<Sint8>().unwrap();
-        runtime.register_is_parametric_term::<Sint16>().unwrap();
-        runtime.register_is_parametric_term::<Sint32>().unwrap();
-        runtime.register_is_parametric_term::<Sint64>().unwrap();
-        runtime.register_is_parametric_term::<Sint8Type>().unwrap();
-        runtime.register_is_parametric_term::<Sint16Type>().unwrap();
-        runtime.register_is_parametric_term::<Sint32Type>().unwrap();
-        runtime.register_is_parametric_term::<Sint64Type>().unwrap();
-        runtime.register_is_parametric_term::<True>().unwrap();
-        runtime.register_is_parametric_term::<TrueType>().unwrap();
-        runtime.register_is_parametric_term::<u8>().unwrap();
-        runtime.register_is_parametric_term::<u16>().unwrap();
-        runtime.register_is_parametric_term::<u32>().unwrap();
-        runtime.register_is_parametric_term::<u64>().unwrap();
-        runtime.register_is_parametric_term::<f32>().unwrap();
-        runtime.register_is_parametric_term::<f64>().unwrap();
-        runtime.register_is_parametric_term::<Uint8>().unwrap();
-        runtime.register_is_parametric_term::<Uint16>().unwrap();
-        runtime.register_is_parametric_term::<Uint32>().unwrap();
-        runtime.register_is_parametric_term::<Uint64>().unwrap();
-        runtime.register_is_parametric_term::<Uint8Type>().unwrap();
-        runtime.register_is_parametric_term::<Uint16Type>().unwrap();
-        runtime.register_is_parametric_term::<Uint32Type>().unwrap();
-        runtime.register_is_parametric_term::<Uint64Type>().unwrap();
-        runtime.register_is_parametric_term::<Float32>().unwrap();
-        runtime.register_is_parametric_term::<Float64>().unwrap();
-        runtime.register_is_parametric_term::<Float32Type>().unwrap();
-        runtime.register_is_parametric_term::<Float64Type>().unwrap();
-        runtime.register_is_parametric_term::<Void>().unwrap();
-        runtime.register_is_parametric_term::<VoidType>().unwrap();
-        runtime.register_is_parametric_term::<ArrayTerm>().unwrap();
-        runtime.register_is_parametric_term::<Array>().unwrap();
-        runtime.register_is_parametric_term::<ArrayType>().unwrap();
-        runtime.register_is_parametric_term::<TupleTerm>().unwrap();
-        runtime.register_is_parametric_term::<Tuple>().unwrap();
-        runtime.register_is_parametric_term::<TupleType>().unwrap();
         runtime.register_is_parametric_term::<GlobalSymRefTerm>().unwrap();
-        runtime.register_is_parametric_term::<GlobalSymRef>().unwrap();
-        runtime.register_is_parametric_term::<GlobalSymRefType>().unwrap();
-        runtime.register_is_parametric_term::<StructTermTerm>().unwrap();
-        runtime.register_is_parametric_term::<StructTerm>().unwrap();
-        runtime.register_is_parametric_term::<Struct>().unwrap();
-        runtime.register_is_parametric_term::<StructType>().unwrap();
-
-        runtime.register_is_type_term::<Term>().unwrap();
-        runtime.register_is_type_term::<Type>().unwrap();
-        runtime.register_is_type_term::<bool>().unwrap();
-        runtime.register_is_type_term::<Bool>().unwrap();
-        runtime.register_is_type_term::<BoolType>().unwrap();
-        runtime.register_is_type_term::<EmptyType>().unwrap();
-        runtime.register_is_type_term::<False>().unwrap();
-        runtime.register_is_type_term::<FalseType>().unwrap();
-        runtime.register_is_type_term::<i8>().unwrap();
-        runtime.register_is_type_term::<i16>().unwrap();
-        runtime.register_is_type_term::<i32>().unwrap();
-        runtime.register_is_type_term::<i64>().unwrap();
-        runtime.register_is_type_term::<Sint8>().unwrap();
-        runtime.register_is_type_term::<Sint16>().unwrap();
-        runtime.register_is_type_term::<Sint32>().unwrap();
-        runtime.register_is_type_term::<Sint64>().unwrap();
-        runtime.register_is_type_term::<Sint8Type>().unwrap();
-        runtime.register_is_type_term::<Sint16Type>().unwrap();
-        runtime.register_is_type_term::<Sint32Type>().unwrap();
-        runtime.register_is_type_term::<Sint64Type>().unwrap();
-        runtime.register_is_type_term::<True>().unwrap();
-        runtime.register_is_type_term::<TrueType>().unwrap();
-        runtime.register_is_type_term::<u8>().unwrap();
-        runtime.register_is_type_term::<u16>().unwrap();
-        runtime.register_is_type_term::<u32>().unwrap();
-        runtime.register_is_type_term::<u64>().unwrap();
-        runtime.register_is_type_term::<f32>().unwrap();
-        runtime.register_is_type_term::<f64>().unwrap();
-        runtime.register_is_type_term::<Uint8>().unwrap();
-        runtime.register_is_type_term::<Uint16>().unwrap();
-        runtime.register_is_type_term::<Uint32>().unwrap();
-        runtime.register_is_type_term::<Uint64>().unwrap();
-        runtime.register_is_type_term::<Uint8Type>().unwrap();
-        runtime.register_is_type_term::<Uint16Type>().unwrap();
-        runtime.register_is_type_term::<Uint32Type>().unwrap();
-        runtime.register_is_type_term::<Uint64Type>().unwrap();
-        runtime.register_is_type_term::<Float32>().unwrap();
-        runtime.register_is_type_term::<Float64>().unwrap();
-        runtime.register_is_type_term::<Float32Type>().unwrap();
-        runtime.register_is_type_term::<Float64Type>().unwrap();
-        runtime.register_is_type_term::<Void>().unwrap();
-        runtime.register_is_type_term::<VoidType>().unwrap();
-        runtime.register_is_type_term::<ArrayTerm>().unwrap();
-        runtime.register_is_type_term::<Array>().unwrap();
-        runtime.register_is_type_term::<ArrayType>().unwrap();
-        runtime.register_is_type_term::<TupleTerm>().unwrap();
-        runtime.register_is_type_term::<Tuple>().unwrap();
-        runtime.register_is_type_term::<TupleType>().unwrap();
         runtime.register_is_type_term::<GlobalSymRefTerm>().unwrap();
-        runtime.register_is_type_term::<GlobalSymRef>().unwrap();
-        runtime.register_is_type_term::<GlobalSymRefType>().unwrap();
-        runtime.register_is_type_term::<StructTermTerm>().unwrap();
-        runtime.register_is_type_term::<StructTerm>().unwrap();
-        runtime.register_is_type_term::<Struct>().unwrap();
-        runtime.register_is_type_term::<StructType>().unwrap();
 
         runtime
     }
-    // TODO: This could be used to register everything that TermTrait specifies
-    pub fn register_term(&mut self, type_id: TypeId) -> Result<()> {
-        match self.term_s.insert(type_id) {
-            false => Err(anyhow::anyhow!("collision with already-registered term {}", self.label_of(type_id))),
-            true => Ok(())
-        }
+
+    // TODO: Ideally, this wouldn't require all the traits, but could do compile-time if clauses
+    // to call the methods that require those traits.
+    pub fn register_term<T>(&mut self) -> Result<()>
+    where
+        T:  st::TermTrait +
+            Stringify +
+            std::cmp::PartialEq +
+            Inhabits<<T as TermTrait>::AbstractTypeFnReturnType> +
+            'static,
+        <T as TermTrait>::AbstractTypeFnReturnType: st::TypeTrait
+    {
+        let type_id = TypeId::of::<T>();
+        anyhow::ensure!(self.term_s.insert(type_id), "collision with already-registered term {}", self.label_of(type_id));
+        self.register_label::<T>()?;
+        self.register_stringify::<T>()?;
+        self.register_eq::<T, T>()?;
+        self.register_inhabits::<T, <T as TermTrait>::AbstractTypeFnReturnType>()?;
+        self.register_abstract_type::<T>()?;
+        self.register_is_parametric_term::<T>()?;
+        self.register_is_type_term::<T>()?;
+        Ok(())
     }
-    pub fn register_label_fn(
+    pub fn register_type<T>(&mut self) -> Result<()>
+    where
+        T:  st::TypeTrait +
+            Stringify +
+            std::cmp::PartialEq +
+            Inhabits<<T as TermTrait>::AbstractTypeFnReturnType> +
+            'static,
+        <T as TermTrait>::AbstractTypeFnReturnType: st::TypeTrait
+    {
+        self.register_term::<T>()?;
+        let type_id = TypeId::of::<T>();
+        anyhow::ensure!(self.type_s.insert(type_id), "collision with already-registered type {}", self.label_of(type_id));
+        Ok(())
+    }
+
+    pub(crate) fn register_label_fn(
         &mut self,
         type_id: TypeId,
         label_fn: LabelFn,
@@ -454,14 +186,10 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub fn register_label<T: TermTrait + 'static>(&mut self) -> Result<()> {
-        let type_id = TypeId::of::<T>();
-        match self.label_fn_m.insert(type_id, T::label) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered label fn for {}", self.label_of(type_id))),
-            None => Ok(())
-        }
+    pub(crate) fn register_label<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        Ok(self.register_label_fn(TypeId::of::<T>(), T::label)?)
     }
-    pub fn register_stringify_fn(
+    pub(crate) fn register_stringify_fn(
         &mut self,
         type_id: TypeId,
         stringify_fn: StringifyFn,
@@ -471,15 +199,12 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub fn register_stringify<S: Stringify + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_stringify<S: Stringify + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<S>();
         let stringify_fn = |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
-        match self.stringify_fn_m.insert(type_id, stringify_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {}", self.label_of(type_id))),
-            None => Ok(())
-        }
+        Ok(self.register_stringify_fn(type_id, stringify_fn)?)
     }
-    pub fn register_abstract_type_fn(
+    pub(crate) fn register_abstract_type_fn(
         &mut self,
         type_id: TypeId,
         abstract_type_fn: AbstractTypeFn,
@@ -491,9 +216,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()>
-//         where AbstractReturnFnReturnType: Send
-    {
+    pub(crate) fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let abstract_type_fn = |x: &ValueGuts| -> Box<ValueGuts> {
             // TODO: if the return type is Box<ValueGuts>, then just return that,
@@ -507,19 +230,19 @@ impl Runtime {
 //             }
             // TEMP HACK: If abstract_type is already a Box<ValueGuts>, then this will make a double
             // box, which is not what is wanted.  But for now, whateva.
+            // NOTE: I think because of the fixed Value::from situation (using dy::IntoValue to bound
+            // `impl From<T> for Value`), this is not a problem anymore, meaning that Box<Box<ValueGuts>>
+            // should not be possible, and all this can be cleaned up.
             if { let at: &ValueGuts = &abstract_type; at.is::<Box<ValueGuts>>() } {
                 panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<ValueGuts>>");
             }
             Box::new(abstract_type)
         };
-        match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered abstract_type fn for {}", self.label_of(type_id))),
-            None => Ok(())
-        }
+        Ok(self.register_abstract_type_fn(type_id, abstract_type_fn)?)
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub fn register_is_parametric_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_parametric_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_parametric_term_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_parametric_term()
@@ -531,7 +254,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub fn register_is_type_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_type_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_type_term_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_type_term()
@@ -553,14 +276,14 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub fn register_eq_fn<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
+    pub fn register_eq<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
         let eq_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             *lhs.downcast_ref::<Lhs>().unwrap() == *rhs.downcast_ref::<Rhs>().unwrap()
         };
         Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
-    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_inhabits<Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
         let inhabits_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())

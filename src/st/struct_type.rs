@@ -1,8 +1,14 @@
-use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct StructType {}
+
+impl st::Inhabits<Type> for StructType {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
 impl dy::IntoValue for StructType {}
 

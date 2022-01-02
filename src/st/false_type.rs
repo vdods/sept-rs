@@ -3,6 +3,12 @@ use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FalseType;
 
+impl st::Inhabits<Type> for FalseType {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
 impl dy::IntoValue for FalseType {}
 
 impl st::Inhabits<st::BoolType> for FalseType {

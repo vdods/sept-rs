@@ -1,11 +1,17 @@
 use crate::{
     dy::{self, DynNPTerm},
-    st::{NonParametricTermTrait, SIGNED, Stringify, TermTrait, Type, TypeTrait, UNSIGNED},
+    st::{self, NonParametricTermTrait, SIGNED, Stringify, TermTrait, Type, TypeTrait, UNSIGNED},
 };
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
+
+impl<const IS_SIGNED: bool, const N: usize> st::Inhabits<Type> for IntNType<IS_SIGNED, N> {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
 impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntNType<IS_SIGNED, N> {}
 

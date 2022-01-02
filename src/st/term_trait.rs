@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Debug};
 
-// pub trait TermTrait: Any + Debug + Into<Box<dyn Any>> + Sized {
+// TODO: Figure out if it's possible to require trait Inhabits<Self::AbstractTypeFnReturnType>
 pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     type AbstractTypeFnReturnType: TermTrait;
 

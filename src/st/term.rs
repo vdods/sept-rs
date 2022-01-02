@@ -13,6 +13,12 @@ impl<T: TermTrait + dy::IntoValue + 'static> Inhabits<Term> for T {
     }
 }
 
+impl Inhabits<Type> for Term {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Term {
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Term
