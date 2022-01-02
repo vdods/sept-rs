@@ -34,3 +34,4 @@
 -   Maybe split things up into a compile-time module `ct` and runtime module `rt`, since there are essentially
     two analogous sides to the sept data model.  Then there would be compile-time and runtime versions of each
     trait, e.g. TermTrait, TypeTrait, etc.
+-   Implement macros for deriving traits, which will clean a ton of boilerplate up.
