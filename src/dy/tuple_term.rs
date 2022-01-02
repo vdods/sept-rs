@@ -18,6 +18,63 @@ impl std::fmt::Display for TupleTerm {
     }
 }
 
+// Hacky way to get Rust-syntax-tuple-valued constructors for a tuples of length 0-6.
+// TODO: Maybe implement a macro to handle these.
+
+impl From<()> for TupleTerm {
+    fn from(_: ()) -> Self {
+        vec![].into()
+    }
+}
+
+impl<T0> From<(T0,)> for TupleTerm
+where T0: TermTrait
+{
+    fn from(t: (T0,)) -> Self {
+        vec![t.0.into()].into()
+    }
+}
+
+impl<T0, T1> From<(T0, T1)> for TupleTerm
+where T0: TermTrait, T1: TermTrait
+{
+    fn from(t: (T0, T1)) -> Self {
+        vec![t.0.into(), t.1.into()].into()
+    }
+}
+
+impl<T0, T1, T2> From<(T0, T1, T2)> for TupleTerm
+where T0: TermTrait, T1: TermTrait, T2: TermTrait
+{
+    fn from(t: (T0, T1, T2)) -> Self {
+        vec![t.0.into(), t.1.into(), t.2.into()].into()
+    }
+}
+
+impl<T0, T1, T2, T3> From<(T0, T1, T2, T3)> for TupleTerm
+where T0: TermTrait, T1: TermTrait, T2: TermTrait, T3: TermTrait
+{
+    fn from(t: (T0, T1, T2, T3)) -> Self {
+        vec![t.0.into(), t.1.into(), t.2.into(), t.3.into()].into()
+    }
+}
+
+impl<T0, T1, T2, T3, T4> From<(T0, T1, T2, T3, T4)> for TupleTerm
+where T0: TermTrait, T1: TermTrait, T2: TermTrait, T3: TermTrait, T4: TermTrait
+{
+    fn from(t: (T0, T1, T2, T3, T4)) -> Self {
+        vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into()].into()
+    }
+}
+
+impl<T0, T1, T2, T3, T4, T5> From<(T0, T1, T2, T3, T4, T5)> for TupleTerm
+where T0: TermTrait, T1: TermTrait, T2: TermTrait, T3: TermTrait, T4: TermTrait, T5: TermTrait
+{
+    fn from(t: (T0, T1, T2, T3, T4, T5)) -> Self {
+        vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into(), t.5.into()].into()
+    }
+}
+
 impl Inhabits<Tuple> for TupleTerm {
     fn inhabits(&self, _: &Tuple) -> bool {
         true
