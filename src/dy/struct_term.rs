@@ -23,14 +23,14 @@ impl StructTerm {
         Self { symbol_id, ordered_type_v, name_index_m }
     }
     // TEMP HACK NAME -- this type-checks the contents.
-    pub fn construct(&self, data: Vec<dy::Value>) -> anyhow::Result<dy::StructTermTerm> {
-        self.verify_inhabitation_by(&data)?;
-        Ok(dy::StructTermTerm::new(dy::GlobalSymRefTerm::from(self.symbol_id.clone()), data)?)
+    pub fn construct(&self, element_tuple_term: dy::TupleTerm) -> anyhow::Result<dy::StructTermTerm> {
+        self.verify_inhabitation_by(&element_tuple_term)?;
+        Ok(dy::StructTermTerm::new(dy::GlobalSymRefTerm::from(self.symbol_id.clone()), element_tuple_term)?)
     }
-    pub(crate) fn verify_inhabitation_by(&self, data: &Vec<dy::Value>) -> anyhow::Result<()> {
-        anyhow::ensure!(data.len() == self.ordered_type_v.len(), "mismatch in number of type elements in StructTerm (which was {}) and in data (which was {})", self.ordered_type_v.len(), data.len());
-        for (i, datum) in data.iter().enumerate() {
-            anyhow::ensure!(datum.inhabits(&self.ordered_type_v[i].1), "expected {}th data element (which is named {:?}) to inhabit type {} but it did not; data element abstract_type was {}", i, self.ordered_type_v[i].0, self.ordered_type_v[i].1, datum.abstract_type());
+    pub(crate) fn verify_inhabitation_by(&self, element_tuple_term: &dy::TupleTerm) -> anyhow::Result<()> {
+        anyhow::ensure!(element_tuple_term.len() == self.ordered_type_v.len(), "mismatch in number of type elements in StructTerm (which was {}) and in element_tuple_term (which was {})", self.ordered_type_v.len(), element_tuple_term.len());
+        for (i, datum) in element_tuple_term.iter().enumerate() {
+            anyhow::ensure!(datum.inhabits(&self.ordered_type_v[i].1), "expected {}th element_tuple_term element (which is named {:?}) to inhabit type {} but it did not; element_tuple_term element abstract_type was {}", i, self.ordered_type_v[i].0, self.ordered_type_v[i].1, datum.abstract_type());
         }
         Ok(())
     }

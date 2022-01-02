@@ -16,17 +16,17 @@ pub struct StructTermTerm {
     // via some ref counted construction.
     type_: dy::GlobalSymRefTerm,
     // This is the ordered sequence of element values.
-    value: Vec<dy::Value>
+    element_tuple_term: dy::TupleTerm,
 }
 
 impl dy::IntoValue for StructTermTerm {}
 
 impl StructTermTerm {
-    // NOTE/TODO: This currently checks the type inhabitation of value with type_, but there will
+    // NOTE/TODO: This currently checks the type inhabitation of element_tuple_term with type_, but there will
     // probably eventually be cases where it'll be necessary to construct a StructTermTerm before
     // its StructTerm type_ exists, and therefore the type can't be checked.  On the other hand,
     // maybe not.
-    pub fn new(type_: dy::GlobalSymRefTerm, value: Vec<dy::Value>) -> anyhow::Result<Self> {
+    pub fn new(type_: dy::GlobalSymRefTerm, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
         // Verify type inhabitation.
         // TODO: Use GlobalSymRefTermReadLock
         dy::RUNTIME.read().unwrap()
@@ -34,8 +34,8 @@ impl StructTermTerm {
             .resolve_symbol(&type_.symbol_id)?
             .downcast_ref::<dy::StructTerm>()
             .expect("expected StructTerm")
-            .verify_inhabitation_by(&value)?;
-        Ok(Self { type_, value })
+            .verify_inhabitation_by(&element_tuple_term)?;
+        Ok(Self { type_, element_tuple_term })
     }
 }
 
@@ -47,7 +47,7 @@ impl std::fmt::Display for StructTermTerm {
 
 impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, struct_term: &dy::StructTerm) -> bool {
-        struct_term.verify_inhabitation_by(&self.value).is_ok()
+        struct_term.verify_inhabitation_by(&self.element_tuple_term).is_ok()
     }
 }
 
@@ -58,9 +58,9 @@ impl st::Stringify for StructTermTerm {
         // -    self.type_.symbol_id is a C-style (i.e. Rust-style) identifier
         // -    self.type_.symbol_id doesn't collide with the other type names like "Array"
         s.push_str(&format!("{}(", self.type_.symbol_id));
-        for (i, element) in self.value.iter().enumerate() {
+        for (i, element) in self.element_tuple_term.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.value.len() {
+            if i+1 < self.element_tuple_term.len() {
                 s.push_str(", ");
             }
         }
@@ -77,7 +77,7 @@ impl st::TermTrait for StructTermTerm {
     }
     /// A StructTermTerm term is parametric if there is at least one element.
     fn is_parametric_term(&self) -> bool {
-        self.value.len() > 0
+        self.element_tuple_term.len() > 0
     }
     fn is_type_term(&self) -> bool {
         false
