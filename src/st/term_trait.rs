@@ -1,4 +1,3 @@
-use crate::dy;
 use std::{any::Any, fmt::Debug};
 
 // pub trait TermTrait: Any + Debug + Into<Box<dyn Any>> + Sized {
@@ -21,11 +20,6 @@ pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     /// sept::ArrayTerm is NOT "ArrayTerm", but rather Array.  TODO: Not sure if Box<dyn Any> is really
     /// the correct return type here.
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType;
-    // TODO: Figure out if this is actually necessary.
-    fn downcast_ref<T: TermTrait>(&self) -> Option<&T> {
-        let self_: &dy::ValueGuts = self;
-        self_.downcast_ref::<T>()
-    }
 }
 
 // TODO: Implement derive macro for deriving TermTrait

@@ -84,14 +84,3 @@ impl TermTrait for Value {
 }
 
 impl st::TypeTrait for Value {}
-
-impl Value {
-    /// Helper method which forwards the call to downcast_ref to the inner `Any`.
-    pub fn downcast_ref<T: TermTrait + 'static>(&self) -> Option<&T> {
-        self.as_ref().downcast_ref::<T>()
-    }
-    /// Helper method which forwards the call to type_id to the inner `Any`.
-    pub fn type_id(&self) -> std::any::TypeId {
-        self.as_ref().type_id()
-    }
-}
