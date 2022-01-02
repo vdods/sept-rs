@@ -1,4 +1,13 @@
-use crate::st::{Inhabits, Sint8, Sint16, Sint32, Sint64, Stringify, TermTrait, Uint8, Uint16, Uint32, Uint64};
+use crate::{dy, st::{Inhabits, Sint8, Sint16, Sint32, Sint64, Stringify, TermTrait, Uint8, Uint16, Uint32, Uint64}};
+
+impl dy::IntoValue for i8 {}
+impl dy::IntoValue for i16 {}
+impl dy::IntoValue for i32 {}
+impl dy::IntoValue for i64 {}
+impl dy::IntoValue for u8 {}
+impl dy::IntoValue for u16 {}
+impl dy::IntoValue for u32 {}
+impl dy::IntoValue for u64 {}
 
 impl Inhabits<Sint8> for i8 {
     fn inhabits(&self, _: &Sint8) -> bool {

@@ -1,4 +1,4 @@
-use crate::{dy::DynNPTerm, st::{Inhabits, IntNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Inhabits, IntNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 pub const SIGNED: bool = true;
@@ -6,6 +6,8 @@ pub const UNSIGNED: bool = false;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntN<const IS_SIGNED: bool, const N: usize> {}
+
+impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
 
 impl<const IS_SIGNED: bool, const N: usize> Inhabits<IntNType<IS_SIGNED, N>> for IntN<IS_SIGNED, N> {
     fn inhabits(&self, _: &IntNType<IS_SIGNED, N>) -> bool {

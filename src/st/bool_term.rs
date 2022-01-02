@@ -1,4 +1,6 @@
-use crate::st::{Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType};
+use crate::{dy, st::{Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
+
+impl dy::IntoValue for bool {}
 
 impl Inhabits<Bool> for bool {
     fn inhabits(&self, _rhs: &Bool) -> bool {

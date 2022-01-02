@@ -2,15 +2,16 @@
 
 use sept::{
     dy::{
-        ArrayTerm, RUNTIME, TupleTerm, Value,
+        self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME, StructTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
         ARRAY, ARRAY_TYPE,
         BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
         FLOAT32, FLOAT32_TYPE, FLOAT64, Float64, FLOAT64_TYPE, Inhabits, Result,
-        SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE,
-        Stringify, TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, Type, TypeTrait,
-        UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+        SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE, Stringify,
+        STRUCT, Struct, STRUCT_TYPE, StructType,
+        TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, Type, TypeTrait,
+        UINT8, Uint8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, Void, VOID_TYPE,
     },
 };
 use std::any::Any;
@@ -298,9 +299,8 @@ fn test_value() -> Result<()> {
     let v1 = Value::from(3i32);
     let v2 = Value::from(7i32);
 
-    log::debug!("v1.label(): {:?}", v1.label());
+    log::debug!("Value::label(): {:?}", Value::label());
     log::debug!("v1.stringify(): {:?}", v1.stringify());
-    log::debug!("v2.label(): {:?}", v2.label());
     log::debug!("v2.stringify(): {:?}", v2.stringify());
     log::debug!("v1.abstract_type(): {:?}", v1.abstract_type());
 
@@ -324,6 +324,125 @@ fn test_value() -> Result<()> {
     Ok(())
 }
 
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_symbol_table() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    RUNTIME.write().unwrap().global_symbol_table.clear();
+
+    let mut symbol_table = SymbolTable::default();
+    assert!(!symbol_table.symbol_is_defined("blah"));
+    symbol_table.define_symbol("blah", Value::from(123i32))?;
+    assert!(symbol_table.symbol_is_defined("blah"));
+    assert_eq!(*symbol_table.resolve_symbol("blah")?, Value::from(123i32));
+
+    log::debug!("symbol_table: {:#?}", symbol_table);
+
+    // Now check RUNTIME.global_symbol_table
+    {
+        assert!(!RUNTIME.read().unwrap().global_symbol_table.symbol_is_defined("bleh"));
+
+        // Have to acquire a separate write lock.
+        RUNTIME.write().unwrap().global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
+
+        // Now acquire a read lock.
+        let global_symbol_table = &RUNTIME.read().unwrap().global_symbol_table;
+        assert!(global_symbol_table.symbol_is_defined("bleh"));
+        assert_eq!(*global_symbol_table.resolve_symbol("bleh")?, Value::from(456f32));
+
+        log::debug!("global_symbol_table: {:#?}", global_symbol_table);
+    }
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_global_sym_ref_term() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    RUNTIME.write().unwrap().global_symbol_table.clear();
+
+    // Write a bunch of stuff into the global_symbol_table
+    {
+        let mut write_lock = RUNTIME.write().unwrap();
+        write_lock.global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
+        write_lock.global_symbol_table.define_symbol("stuff", Value::from(True{}))?;
+        write_lock.global_symbol_table.define_symbol("andthings", Value::from(Void{}))?;
+    }
+
+    // Now check GlobalSymRefTerm.
+    let r = GlobalSymRefTerm::from("bleh");
+    log::debug!("r (as Debug): {:#?}", r);
+    log::debug!("r (as Display): {}" , r);
+    log::debug!("r: {}" , r.stringify());
+
+    let t = TupleTerm::from(vec![
+        GlobalSymRefTerm::from("bleh").into(),
+        GlobalSymRefTerm::from("stuff").into(),
+        GlobalSymRefTerm::from("andthings").into(),
+    ]);
+    log::debug!("t (as Debug): {:#?}", t);
+    log::debug!("t (as Display): {}", t);
+    log::debug!("t: {}", t.stringify());
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_structs() -> Result<()> {
+    let _ = env_logger::try_init();
+
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    RUNTIME.write().unwrap().global_symbol_table.clear();
+
+    log::debug!("STRUCT: {}", STRUCT.stringify());
+    log::debug!("STRUCT_TYPE: {}", STRUCT_TYPE.stringify());
+
+    assert!(STRUCT.inhabits(&STRUCT_TYPE));
+
+    // Create the Hippo struct
+    RUNTIME.write().unwrap()
+        .global_symbol_table
+        .define_symbol(
+            "Hippo",
+            StructTerm::new(
+                "Hippo".into(),
+                vec![("age".into(), Uint8{}.into()), ("gravity".into(), Float64{}.into())].into()
+            ).into()
+        )?;
+    log::debug!("global_symbol_table: {:#?}", RUNTIME.read().unwrap().global_symbol_table);
+    let hippo = GlobalSymRefTerm::from("Hippo");
+    log::debug!("hippo: {}", hippo.stringify());
+
+    let x = RUNTIME.read().unwrap()
+        .global_symbol_table
+        .resolve_symbol("Hippo")?
+        .downcast_ref::<StructTerm>()
+        .unwrap()
+        .construct(vec![23u8.into(), 999.0f64.into()].into())?;
+    let y = RUNTIME.read().unwrap()
+        .global_symbol_table
+        .resolve_symbol("Hippo")?
+        .downcast_ref::<StructTerm>()
+        .unwrap()
+        .construct(vec![100u8.into(), (-3.0f64).into()].into())?;
+    log::debug!("x: {}", x.stringify());
+    log::debug!("y: {}", y.stringify());
+    log::debug!("x == y: {}", x == y);
+
+    assert_eq!(x, x);
+    assert_eq!(y, y);
+    assert!(x != y);
+    assert!(y != x);
+
+    Ok(())
+}
+
 //
 // TEMP TESTING
 //
@@ -331,8 +450,12 @@ fn test_value() -> Result<()> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BinOp;
 
+impl dy::IntoValue for BinOp {}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UnOp;
+
+impl dy::IntoValue for UnOp {}
 
 trait BinOpTermTrait {
     // TODO: A BinOp whose character is defined at runtime (analogous to DynNPTerm) would need
@@ -410,6 +533,13 @@ pub struct Pow;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Neg;
+
+impl dy::IntoValue for Add {}
+impl dy::IntoValue for Sub {}
+impl dy::IntoValue for Mul {}
+impl dy::IntoValue for Div {}
+impl dy::IntoValue for Pow {}
+impl dy::IntoValue for Neg {}
 
 impl BinOpTermTrait for Add {
     fn is_commutative() -> bool {
@@ -690,6 +820,8 @@ impl Inhabits<UnOp> for Neg {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Expr;
+
+impl dy::IntoValue for Expr {}
 
 impl Stringify for Expr {
     fn stringify(&self) -> String {

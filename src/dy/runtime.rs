@@ -1,28 +1,29 @@
 use crate::{
-    dy::{ArrayTerm, TupleTerm},
+    dy::{ArrayTerm, GlobalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, SymbolTable, ValueGuts},
     st::{
         Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
-        Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
-        Stringify, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
+        GlobalSymRef, GlobalSymRefType,
+        Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
+        Struct, StructType, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
         Void, VoidType,
     },
 };
-use std::{any::{Any, TypeId}, collections::{HashMap, HashSet}};
+use std::{any::TypeId, collections::{HashMap, HashSet}};
 
-pub type StringifyFn = fn(x: &dyn Any) -> String;
+pub type StringifyFn = fn(x: &ValueGuts) -> String;
 pub type LabelFn = fn() -> &'static str;
-pub type AbstractTypeFn = fn(x: &dyn Any) -> Box<dyn Any>;
-pub type UnaryPredicate = fn(x: &dyn Any) -> bool;
-pub type BinaryPredicate = fn(lhs: &dyn Any, rhs: &dyn Any) -> bool;
+pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
+pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
+pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
 
 struct RegisteredEqualsFn {
     eq_fn: BinaryPredicate,
     is_transposed: bool,
 }
 
-/// The sept Runtime is what supports the sept data model; ittracks what types are registered
+/// The sept Runtime is what supports the sept data model; it tracks what types are registered
 /// and the various inhabitation and subtyping (and other) relationships.
 #[derive(Default)]
 pub struct Runtime {
@@ -39,11 +40,13 @@ pub struct Runtime {
     is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
+
+    pub global_symbol_table: SymbolTable,
 }
 
 impl Runtime {
     pub fn new() -> Self {
-        let mut runtime: Runtime = Default::default();
+        let mut runtime = Runtime::default();
 
         // TODO: Figure out how to move these into something like "init" fns
         // in the respective modules
@@ -98,6 +101,13 @@ impl Runtime {
         runtime.register_label::<TupleTerm>().unwrap();
         runtime.register_label::<Tuple>().unwrap();
         runtime.register_label::<TupleType>().unwrap();
+        runtime.register_label::<GlobalSymRefTerm>().unwrap();
+        runtime.register_label::<GlobalSymRef>().unwrap();
+        runtime.register_label::<GlobalSymRefType>().unwrap();
+        runtime.register_label::<StructTermTerm>().unwrap();
+        runtime.register_label::<StructTerm>().unwrap();
+        runtime.register_label::<Struct>().unwrap();
+        runtime.register_label::<StructType>().unwrap();
 
         runtime.register_stringify::<Term>().unwrap();
         runtime.register_stringify::<Type>().unwrap();
@@ -147,6 +157,13 @@ impl Runtime {
         runtime.register_stringify::<TupleTerm>().unwrap();
         runtime.register_stringify::<Tuple>().unwrap();
         runtime.register_stringify::<TupleType>().unwrap();
+        runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
+        runtime.register_stringify::<GlobalSymRef>().unwrap();
+        runtime.register_stringify::<GlobalSymRefType>().unwrap();
+        runtime.register_stringify::<StructTermTerm>().unwrap();
+        runtime.register_stringify::<StructTerm>().unwrap();
+        runtime.register_stringify::<Struct>().unwrap();
+        runtime.register_stringify::<StructType>().unwrap();
 
         runtime.register_eq_fn::<Term, Term>().unwrap();
         runtime.register_eq_fn::<Type, Type>().unwrap();
@@ -199,6 +216,14 @@ impl Runtime {
         runtime.register_eq_fn::<TupleTerm, TupleTerm>().unwrap();
         runtime.register_eq_fn::<Tuple, Tuple>().unwrap();
         runtime.register_eq_fn::<TupleType, TupleType>().unwrap();
+        // TODO: referential transparency has to be handled with special code
+//         runtime.register_eq_fn::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime.register_eq_fn::<GlobalSymRef, GlobalSymRef>().unwrap();
+        runtime.register_eq_fn::<GlobalSymRefType, GlobalSymRefType>().unwrap();
+        runtime.register_eq_fn::<StructTermTerm, StructTermTerm>().unwrap();
+        runtime.register_eq_fn::<StructTerm, StructTerm>().unwrap();
+        runtime.register_eq_fn::<Struct, Struct>().unwrap();
+        runtime.register_eq_fn::<StructType, StructType>().unwrap();
 
         // TODO: Need to somehow make it so that everything inhabits Term
         runtime.register_inhabits_fn::<Type, Type>().unwrap();
@@ -235,6 +260,11 @@ impl Runtime {
         runtime.register_inhabits_fn::<TupleTerm, TupleTerm>().unwrap();
         runtime.register_inhabits_fn::<TupleTerm, Tuple>().unwrap();
         runtime.register_inhabits_fn::<Tuple, TupleType>().unwrap();
+        // TODO: special handling for inhabitation of and by GlobalSymRefTerm
+        runtime.register_inhabits_fn::<GlobalSymRef, GlobalSymRefType>().unwrap();
+        runtime.register_inhabits_fn::<StructTermTerm, StructTerm>().unwrap();
+        runtime.register_inhabits_fn::<StructTerm, Struct>().unwrap();
+        runtime.register_inhabits_fn::<Struct, StructType>().unwrap();
 
         runtime.register_abstract_type::<Term>().unwrap();
         runtime.register_abstract_type::<Type>().unwrap();
@@ -284,6 +314,13 @@ impl Runtime {
         runtime.register_abstract_type::<TupleTerm>().unwrap();
         runtime.register_abstract_type::<Tuple>().unwrap();
         runtime.register_abstract_type::<TupleType>().unwrap();
+        runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
+        runtime.register_abstract_type::<GlobalSymRef>().unwrap();
+        runtime.register_abstract_type::<GlobalSymRefType>().unwrap();
+        runtime.register_abstract_type::<StructTermTerm>().unwrap();
+        runtime.register_abstract_type::<StructTerm>().unwrap();
+        runtime.register_abstract_type::<Struct>().unwrap();
+        runtime.register_abstract_type::<StructType>().unwrap();
 
         runtime.register_is_parametric_term::<Term>().unwrap();
         runtime.register_is_parametric_term::<Type>().unwrap();
@@ -333,6 +370,13 @@ impl Runtime {
         runtime.register_is_parametric_term::<TupleTerm>().unwrap();
         runtime.register_is_parametric_term::<Tuple>().unwrap();
         runtime.register_is_parametric_term::<TupleType>().unwrap();
+        runtime.register_is_parametric_term::<GlobalSymRefTerm>().unwrap();
+        runtime.register_is_parametric_term::<GlobalSymRef>().unwrap();
+        runtime.register_is_parametric_term::<GlobalSymRefType>().unwrap();
+        runtime.register_is_parametric_term::<StructTermTerm>().unwrap();
+        runtime.register_is_parametric_term::<StructTerm>().unwrap();
+        runtime.register_is_parametric_term::<Struct>().unwrap();
+        runtime.register_is_parametric_term::<StructType>().unwrap();
 
         runtime.register_is_type_term::<Term>().unwrap();
         runtime.register_is_type_term::<Type>().unwrap();
@@ -382,6 +426,13 @@ impl Runtime {
         runtime.register_is_type_term::<TupleTerm>().unwrap();
         runtime.register_is_type_term::<Tuple>().unwrap();
         runtime.register_is_type_term::<TupleType>().unwrap();
+        runtime.register_is_type_term::<GlobalSymRefTerm>().unwrap();
+        runtime.register_is_type_term::<GlobalSymRef>().unwrap();
+        runtime.register_is_type_term::<GlobalSymRefType>().unwrap();
+        runtime.register_is_type_term::<StructTermTerm>().unwrap();
+        runtime.register_is_type_term::<StructTerm>().unwrap();
+        runtime.register_is_type_term::<Struct>().unwrap();
+        runtime.register_is_type_term::<StructType>().unwrap();
 
         runtime
     }
@@ -421,7 +472,7 @@ impl Runtime {
     }
     pub fn register_stringify<S: Stringify + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<S>();
-        let stringify_fn = |x: &dyn Any| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
+        let stringify_fn = |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
         match self.stringify_fn_m.insert(type_id, stringify_fn) {
             Some(_) => Err(anyhow::anyhow!("collision with already-registered stringify fn for {}", self.label_of(type_id))),
             None => Ok(())
@@ -439,22 +490,24 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()>
+//         where AbstractReturnFnReturnType: Send
+    {
         let type_id = TypeId::of::<T>();
-        let abstract_type_fn = |x: &dyn Any| -> Box<dyn Any> {
-            // TODO: if the return type is Box<dyn Any>, then just return that,
+        let abstract_type_fn = |x: &ValueGuts| -> Box<ValueGuts> {
+            // TODO: if the return type is Box<ValueGuts>, then just return that,
             // but otherwise use Box::new on the return value
             let abstract_type = x.downcast_ref::<T>().unwrap().abstract_type();
 //             TODO start here
-//             if { let at: &dyn Any = &abstract_type; at.is::<Box<dyn Any>>() } {
+//             if { let at: &ValueGuts = &abstract_type; at.is::<Box<ValueGuts>>() } {
 //                 abstract_type
 //             } else {
 //                 Box::new(abstract_type)
 //             }
-            // TEMP HACK: If abstract_type is already a Box<dyn Any>, then this will make a double
+            // TEMP HACK: If abstract_type is already a Box<ValueGuts>, then this will make a double
             // box, which is not what is wanted.  But for now, whateva.
-            if { let at: &dyn Any = &abstract_type; at.is::<Box<dyn Any>>() } {
-                panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<dyn Any>>");
+            if { let at: &ValueGuts = &abstract_type; at.is::<Box<ValueGuts>>() } {
+                panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<ValueGuts>>");
             }
             Box::new(abstract_type)
         };
@@ -467,7 +520,7 @@ impl Runtime {
     // and the semantics don't match).
     pub fn register_is_parametric_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let is_parametric_term_fn = |x: &dyn Any| -> bool {
+        let is_parametric_term_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_parametric_term()
         };
         match self.is_parametric_term_fn_m.insert(type_id, is_parametric_term_fn) {
@@ -479,7 +532,7 @@ impl Runtime {
     // and the semantics don't match).
     pub fn register_is_type_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let is_type_term_fn = |x: &dyn Any| -> bool {
+        let is_type_term_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_type_term()
         };
         match self.is_type_term_fn_m.insert(type_id, is_type_term_fn) {
@@ -501,14 +554,14 @@ impl Runtime {
     }
     pub fn register_eq_fn<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
-        let eq_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
+        let eq_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             *lhs.downcast_ref::<Lhs>().unwrap() == *rhs.downcast_ref::<Rhs>().unwrap()
         };
         Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
     pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
-        let inhabits_fn = |lhs: &dyn Any, rhs: &dyn Any| -> bool {
+        let inhabits_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())
         };
         match self.inhabits_fn_m.insert(type_id_pair, inhabits_fn) {
@@ -523,7 +576,7 @@ impl Runtime {
             None => format!("{:?}", type_id),
         }
     }
-    pub fn stringify(&self, x: &dyn Any) -> String {
+    pub fn stringify(&self, x: &ValueGuts) -> String {
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             // None => Err(anyhow::anyhow!("no stringify fn found for {:?}", x.type_id())),
@@ -534,9 +587,8 @@ impl Runtime {
             }
         }
     }
-    pub fn eq(&self, lhs: &dyn Any, rhs: &dyn Any) -> bool {
+    pub fn eq(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
         // TODO: Check if the types are singletons (i.e. NonParametricTerm) and then can just compare their type id.
-        // Actually this isn't exactly true because of DynNPTerm.  So it would need to check against that.
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
         let is_transposed = lhs_type_id > rhs_type_id;
@@ -554,10 +606,10 @@ impl Runtime {
             },
         }
     }
-    pub fn ne(&self, lhs: &dyn Any, rhs: &dyn Any) -> bool {
+    pub fn ne(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
         !self.eq(lhs, rhs)
     }
-    pub fn inhabits(&self, x: &dyn Any, t: &dyn Any) -> bool {
+    pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
         let type_id_pair = (x.type_id(), t.type_id());
         match self.inhabits_fn_m.get(&type_id_pair) {
             Some(inhabits_fn) => inhabits_fn(x, t),
@@ -568,18 +620,18 @@ impl Runtime {
             }
         }
     }
-    pub fn abstract_type_of(&self, x: &dyn Any) -> Box<dyn Any> {
+    pub fn abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
         let type_id = x.type_id();
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
             None => {
                 // panic!("no abstract_type fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!("no abstract_type fn found for {}; returning default value of Box::<dyn Any>::new(Type{{ }})", self.label_of(type_id));
+                log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 Box::new(Type{})
             }
         }
     }
-    pub fn is_parametric_term(&self, x: &dyn Any) -> bool {
+    pub fn is_parametric_term(&self, x: &ValueGuts) -> bool {
         match self.is_parametric_term_fn_m.get(&x.type_id()) {
             Some(is_parametric_term_fn) => is_parametric_term_fn(x),
             None => {
@@ -590,7 +642,7 @@ impl Runtime {
             }
         }
     }
-    pub fn is_type_term(&self, x: &dyn Any) -> bool {
+    pub fn is_type_term(&self, x: &ValueGuts) -> bool {
         match self.is_type_term_fn_m.get(&x.type_id()) {
             Some(is_type_term_fn) => is_type_term_fn(x),
             None => {

@@ -1,8 +1,10 @@
-use crate::{dy::DynNPTerm, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Term;
+
+impl dy::IntoValue for Term {}
 
 /// Everything inhabits Term.
 impl<T: TermTrait> Inhabits<Term> for T {

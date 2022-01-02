@@ -1,8 +1,10 @@
-use crate::{dy::DynNPTerm, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 
 /// This represents the NonParametricType `Type` itself, not the trait TypeTrait.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Type;
+
+impl dy::IntoValue for Type {}
 
 impl Inhabits<Type> for Type {
     fn inhabits(&self, _rhs: &Type) -> bool {

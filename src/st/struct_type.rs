@@ -1,29 +1,29 @@
-use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Tuple, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, Struct, TermTrait, Type, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct TupleType {}
+pub struct StructType {}
 
-impl dy::IntoValue for TupleType {}
+impl dy::IntoValue for StructType {}
 
-impl NonParametricTermTrait for TupleType {
+impl NonParametricTermTrait for StructType {
     fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::TupleType
+        DynNPTerm::StructType
     }
 }
 
-impl Stringify for TupleType {
+impl Stringify for StructType {
     fn stringify(&self) -> String {
-        "TupleType".into()
+        "StructType".into()
     }
 }
 
-impl TermTrait for TupleType {
-    // TODO: This could/should actually be FormalTypeOf(TupleType)
+impl TermTrait for StructType {
+    // TODO: This could/should actually be FormalTypeOf(StructType)
     type AbstractTypeFnReturnType = Type;
 
     fn label() -> &'static str {
-        "TupleType"
+        "StructType"
     }
     fn is_parametric_term(&self) -> bool {
         false
@@ -36,11 +36,11 @@ impl TermTrait for TupleType {
     }
 }
 
-impl TypeTrait for TupleType {
+impl TypeTrait for StructType {
     fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
         let x_: &dyn Any = x;
-        x_.is::<Tuple>()
+        x_.is::<Struct>()
     }
 }
 
-pub const TUPLE_TYPE: TupleType = TupleType{};
+pub const STRUCT_TYPE: StructType = StructType{};

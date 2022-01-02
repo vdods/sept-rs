@@ -1,9 +1,11 @@
-use crate::{dy::DynNPTerm, st::{BoolType, False, NonParametricTermTrait, Inhabits, Stringify, TermTrait, True, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{BoolType, False, NonParametricTermTrait, Inhabits, Stringify, TermTrait, True, TypeTrait}};
 use std::any::Any;
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Bool;
+
+impl dy::IntoValue for Bool {}
 
 impl Inhabits<BoolType> for Bool {
     fn inhabits(&self, _: &BoolType) -> bool {
@@ -44,14 +46,7 @@ impl TypeTrait for Bool {
     fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
         // TODO: Could potentially implement this via equals
         let x_: &dyn Any = x;
-        x_.is::<True>() ||
-        x_.is::<False>() ||
-        x_.is::<bool>() ||
-        match x_.downcast_ref::<DynNPTerm>() {
-            Some(DynNPTerm::True) => true,
-            Some(DynNPTerm::False) => true,
-            _ => false,
-        }
+        x_.is::<True>() || x_.is::<False>() || x_.is::<bool>()
     }
 }
 

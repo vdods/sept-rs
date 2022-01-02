@@ -5,6 +5,8 @@ use crate::{dy, st::{Array, Inhabits, Stringify, TermTrait}};
 #[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct ArrayTerm(Vec<dy::Value>);
 
+impl dy::IntoValue for ArrayTerm {}
+
 impl std::ops::Deref for ArrayTerm {
     type Target = Vec<dy::Value>;
     fn deref(&self) -> &Self::Target {

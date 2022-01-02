@@ -1,8 +1,10 @@
-use crate::{dy::DynNPTerm, st::{Array, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Array, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ArrayType {}
+
+impl dy::IntoValue for ArrayType {}
 
 impl NonParametricTermTrait for ArrayType {
     fn as_dyn_npterm(&self) -> DynNPTerm {

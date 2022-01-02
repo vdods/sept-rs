@@ -1,8 +1,10 @@
-use crate::{dy::DynNPTerm, st::{Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatNType<const N: usize> {}
+
+impl<const N: usize> dy::IntoValue for FloatNType<N> {}
 
 impl<const N: usize> NonParametricTermTrait for FloatNType<N> {
     fn as_dyn_npterm(&self) -> DynNPTerm {

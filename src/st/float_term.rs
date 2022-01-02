@@ -1,4 +1,7 @@
-use crate::st::{Float32, Float64, Inhabits, Stringify, TermTrait};
+use crate::{dy, st::{Float32, Float64, Inhabits, Stringify, TermTrait}};
+
+impl dy::IntoValue for f32 {}
+impl dy::IntoValue for f64 {}
 
 impl Inhabits<Float32> for f32 {
     fn inhabits(&self, _: &Float32) -> bool {

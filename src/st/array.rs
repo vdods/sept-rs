@@ -1,8 +1,10 @@
-use crate::{dy::{ArrayTerm, DynNPTerm}, st::{ArrayType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, ArrayTerm, DynNPTerm}, st::{ArrayType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Array;
+
+impl dy::IntoValue for Array {}
 
 impl Inhabits<ArrayType> for Array {
     fn inhabits(&self, _: &ArrayType) -> bool {

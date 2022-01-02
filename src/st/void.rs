@@ -1,8 +1,10 @@
-use crate::{dy::DynNPTerm, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, VoidType}};
+use crate::{dy::{self, DynNPTerm}, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, VoidType}};
 
 /// This represents the Void term itself.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Void;
+
+impl dy::IntoValue for Void {}
 
 impl Inhabits<VoidType> for Void {
     fn inhabits(&self, _: &VoidType) -> bool {

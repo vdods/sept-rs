@@ -2,8 +2,8 @@ use crate::st::TypeTrait;
 use std::{any::Any, fmt::Debug};
 
 // pub trait TermTrait: Any + Debug + Into<Box<dyn Any>> + Sized {
-pub trait TermTrait: Any + Debug + Sized {
-    type AbstractTypeFnReturnType;
+pub trait TermTrait: Any + Send + Sync + Debug + Sized {
+    type AbstractTypeFnReturnType: TermTrait;
 
     /// Non-parametric label for this kind of term.  If this is a parametric term, then the parameters
     /// should be represented by `...` or something.  For example, a term of type Array should have a

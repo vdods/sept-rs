@@ -1,5 +1,5 @@
 use crate::{
-    dy::DynNPTerm,
+    dy::{self, DynNPTerm},
     st::{
         NonParametricTermTrait, SIGNED, Sint8, Sint16, Sint32, Sint64, Stringify,
         TermTrait, Type, TypeTrait, UNSIGNED, Uint8, Uint16, Uint32, Uint64,
@@ -9,6 +9,8 @@ use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
+
+impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntNType<IS_SIGNED, N> {}
 
 impl<const IS_SIGNED: bool, const N: usize> NonParametricTermTrait for IntNType<IS_SIGNED, N> {
     fn as_dyn_npterm(&self) -> DynNPTerm {

@@ -1,8 +1,10 @@
-use crate::st::{False, Stringify, TermTrait, Type, TypeTrait};
+use crate::{dy, st::{False, Stringify, TermTrait, Type, TypeTrait}};
 use std::any::Any;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FalseType;
+
+impl dy::IntoValue for FalseType {}
 
 impl Stringify for FalseType {
     fn stringify(&self) -> String {

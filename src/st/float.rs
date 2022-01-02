@@ -1,8 +1,10 @@
-use crate::{dy::{DynNPTerm}, st::{Inhabits, FloatNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{Inhabits, FloatNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 use std::{any::Any, fmt::Debug};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatN<const N: usize> {}
+
+impl<const N: usize> dy::IntoValue for FloatN<N> {}
 
 impl<const N: usize> Inhabits<FloatNType<N>> for FloatN<N> {
     fn inhabits(&self, _: &FloatNType<N>) -> bool {

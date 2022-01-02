@@ -1,13 +1,19 @@
-use crate::st::{
-    ARRAY, ARRAY_TYPE,
-    BOOL, BOOL_TYPE, EMPTY_TYPE, FALSE, FALSE_TYPE, FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE,
-    NonParametricTermTrait, SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE,
-    Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE,
-    UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
-};
-use std::any::Any;
+// use crate::{
+//     dy,
+//     st::{
+//         ARRAY, ARRAY_TYPE,
+//         BOOL, BOOL_TYPE, EMPTY_TYPE, FALSE, FALSE_TYPE, FLOAT32, FLOAT32_TYPE, FLOAT64, FLOAT64_TYPE,
+//         NonParametricTermTrait, SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, SINT32_TYPE, SINT64, SINT64_TYPE,
+//         Stringify, TERM, TermTrait, TRUE, TRUE_TYPE, TYPE,
+//         UINT8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, VOID_TYPE,
+//     },
+// };
 
 // The repr(u8) attribute is to be compatible with the C++ implementation.
+// NOTE: TermTrait and all the other things like Stringify are not being implemented
+// here, as this enum is simply meant for serialization representation purposes.  In
+// deserialization, Values containing the "real" terms would be used instead, so that
+// there isn't a need to check for multiple alternate representations of various types.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DynNPTerm {
@@ -97,6 +103,9 @@ pub enum DynNPTerm {
     TupleType, // Inhabitant is Tuple.
     Tuple, // Inhabitants have the form Tuple(...) -- implemented by class TupleTerm_c.
 
+    StructType, // Inhabitant is Struct.
+    Struct, // Inhabitants have the form Struct(...) -- implemented by StructTerm.
+
     MemRefType, // Inhabitant is MemRef
     MemRef, // Inhabitants have the form MemRef(&d), where d is Data
     GlobalSymRefType, // Inhabitant is GlobalSymRef
@@ -128,6 +137,8 @@ pub enum DynNPTerm {
     // this could be used for application-specific values, though that would hinder interoperability.
 }
 
+// impl dy::IntoValue for DynNPTerm {}
+
 // TODO: should this be Box<dyn Any>?
 // impl Into<Box<&dyn TermTrait>> for DynNPTerm {
 //     fn into(&self) -> Box<dyn TermTrait> {
@@ -152,15 +163,17 @@ pub enum DynNPTerm {
 //     }
 // }
 
-impl Stringify for DynNPTerm {
-    fn stringify(&self) -> String {
-        // Not sure if it should qualify the thing, or just print the variant raw.
-        format!("DynNPTerm::{:?}", self)
-    }
-}
+// impl Stringify for DynNPTerm {
+//     fn stringify(&self) -> String {
+//         // Not sure if it should qualify the thing, or just print the variant raw.
+//         format!("DynNPTerm::{:?}", self)
+//     }
+// }
 
+/*
 impl TermTrait for DynNPTerm {
-    type AbstractTypeFnReturnType = Box<dyn Any>;
+//     type AbstractTypeFnReturnType = Value;
+    type AbstractTypeFnReturnType = Box<dy::ValueGuts>;
 
     fn label() -> &'static str {
         "DynNPTerm"
@@ -337,43 +350,43 @@ impl TermTrait for DynNPTerm {
     }
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
         match self {
-            DynNPTerm::Term => Box::new(TERM.abstract_type()),
+            DynNPTerm::Term => Value::from(TERM.abstract_type()),
 //             DynNPTerm::NonParametricTerm,
 //             DynNPTerm::ParametricTerm,
-            DynNPTerm::Type => Box::new(TYPE.abstract_type()),
+            DynNPTerm::Type => Value::from(TYPE.abstract_type()),
 //             DynNPTerm::NonType,
 //             DynNPTerm::NonParametricType,
 //             DynNPTerm::ParametricType,
-            DynNPTerm::Void => Box::new(VOID.abstract_type()),
-            DynNPTerm::True => Box::new(TRUE.abstract_type()),
-            DynNPTerm::False => Box::new(FALSE.abstract_type()),
-            DynNPTerm::VoidType => Box::new(VOID_TYPE.abstract_type()),
-            DynNPTerm::TrueType => Box::new(TRUE_TYPE.abstract_type()),
-            DynNPTerm::FalseType => Box::new(FALSE_TYPE.abstract_type()),
-            DynNPTerm::EmptyType => Box::new(EMPTY_TYPE.abstract_type()),
+            DynNPTerm::Void => Value::from(VOID.abstract_type()),
+            DynNPTerm::True => Value::from(TRUE.abstract_type()),
+            DynNPTerm::False => Value::from(FALSE.abstract_type()),
+            DynNPTerm::VoidType => Value::from(VOID_TYPE.abstract_type()),
+            DynNPTerm::TrueType => Value::from(TRUE_TYPE.abstract_type()),
+            DynNPTerm::FalseType => Value::from(FALSE_TYPE.abstract_type()),
+            DynNPTerm::EmptyType => Value::from(EMPTY_TYPE.abstract_type()),
 //             DynNPTerm::FormalTypeOf,
-            DynNPTerm::Bool => Box::new(BOOL.abstract_type()),
-            DynNPTerm::Sint8 => Box::new(SINT8.abstract_type()),
-            DynNPTerm::Sint16 => Box::new(SINT16.abstract_type()),
-            DynNPTerm::Sint32 => Box::new(SINT32.abstract_type()),
-            DynNPTerm::Sint64 => Box::new(SINT64.abstract_type()),
-            DynNPTerm::Uint8 => Box::new(UINT8.abstract_type()),
-            DynNPTerm::Uint16 => Box::new(UINT16.abstract_type()),
-            DynNPTerm::Uint32 => Box::new(UINT32.abstract_type()),
-            DynNPTerm::Uint64 => Box::new(UINT64.abstract_type()),
-            DynNPTerm::Float32 => Box::new(FLOAT32.abstract_type()),
-            DynNPTerm::Float64 => Box::new(FLOAT64.abstract_type()),
-            DynNPTerm::BoolType => Box::new(BOOL_TYPE.abstract_type()),
-            DynNPTerm::Sint8Type => Box::new(SINT8_TYPE.abstract_type()),
-            DynNPTerm::Sint16Type => Box::new(SINT16_TYPE.abstract_type()),
-            DynNPTerm::Sint32Type => Box::new(SINT32_TYPE.abstract_type()),
-            DynNPTerm::Sint64Type => Box::new(SINT64_TYPE.abstract_type()),
-            DynNPTerm::Uint8Type => Box::new(UINT8_TYPE.abstract_type()),
-            DynNPTerm::Uint16Type => Box::new(UINT16_TYPE.abstract_type()),
-            DynNPTerm::Uint32Type => Box::new(UINT32_TYPE.abstract_type()),
-            DynNPTerm::Uint64Type => Box::new(UINT64_TYPE.abstract_type()),
-            DynNPTerm::Float32Type => Box::new(FLOAT32_TYPE.abstract_type()),
-            DynNPTerm::Float64Type => Box::new(FLOAT64_TYPE.abstract_type()),
+            DynNPTerm::Bool => Value::from(BOOL.abstract_type()),
+            DynNPTerm::Sint8 => Value::from(SINT8.abstract_type()),
+            DynNPTerm::Sint16 => Value::from(SINT16.abstract_type()),
+            DynNPTerm::Sint32 => Value::from(SINT32.abstract_type()),
+            DynNPTerm::Sint64 => Value::from(SINT64.abstract_type()),
+            DynNPTerm::Uint8 => Value::from(UINT8.abstract_type()),
+            DynNPTerm::Uint16 => Value::from(UINT16.abstract_type()),
+            DynNPTerm::Uint32 => Value::from(UINT32.abstract_type()),
+            DynNPTerm::Uint64 => Value::from(UINT64.abstract_type()),
+            DynNPTerm::Float32 => Value::from(FLOAT32.abstract_type()),
+            DynNPTerm::Float64 => Value::from(FLOAT64.abstract_type()),
+            DynNPTerm::BoolType => Value::from(BOOL_TYPE.abstract_type()),
+            DynNPTerm::Sint8Type => Value::from(SINT8_TYPE.abstract_type()),
+            DynNPTerm::Sint16Type => Value::from(SINT16_TYPE.abstract_type()),
+            DynNPTerm::Sint32Type => Value::from(SINT32_TYPE.abstract_type()),
+            DynNPTerm::Sint64Type => Value::from(SINT64_TYPE.abstract_type()),
+            DynNPTerm::Uint8Type => Value::from(UINT8_TYPE.abstract_type()),
+            DynNPTerm::Uint16Type => Value::from(UINT16_TYPE.abstract_type()),
+            DynNPTerm::Uint32Type => Value::from(UINT32_TYPE.abstract_type()),
+            DynNPTerm::Uint64Type => Value::from(UINT64_TYPE.abstract_type()),
+            DynNPTerm::Float32Type => Value::from(FLOAT32_TYPE.abstract_type()),
+            DynNPTerm::Float64Type => Value::from(FLOAT64_TYPE.abstract_type()),
 //             DynNPTerm::SintType,
 //             DynNPTerm::Sint,
 //             DynNPTerm::UintType,
@@ -387,11 +400,11 @@ impl TermTrait for DynNPTerm {
 //             DynNPTerm::Intersection,
 //             DynNPTerm::Negation,
 //             DynNPTerm::Difference,
-            DynNPTerm::ArrayType => Box::new(ARRAY_TYPE.abstract_type()),
+            DynNPTerm::ArrayType => Value::from(ARRAY_TYPE.abstract_type()),
 //             DynNPTerm::ArrayES,
 //             DynNPTerm::ArrayE,
 //             DynNPTerm::ArrayS,
-            DynNPTerm::Array => Box::new(ARRAY.abstract_type()),
+            DynNPTerm::Array => Value::from(ARRAY.abstract_type()),
 //             DynNPTerm::OrderedMapType,
 //             DynNPTerm::OrderedMapDC,
 //             DynNPTerm::OrderedMapD,
@@ -419,6 +432,89 @@ impl TermTrait for DynNPTerm {
 //             DynNPTerm::RequestSyncInput,
             _ => unimplemented!("sad face"),
         }
+//         match self {
+//             DynNPTerm::Term => Box::new(TERM.abstract_type()),
+// //             DynNPTerm::NonParametricTerm,
+// //             DynNPTerm::ParametricTerm,
+//             DynNPTerm::Type => Box::new(TYPE.abstract_type()),
+// //             DynNPTerm::NonType,
+// //             DynNPTerm::NonParametricType,
+// //             DynNPTerm::ParametricType,
+//             DynNPTerm::Void => Box::new(VOID.abstract_type()),
+//             DynNPTerm::True => Box::new(TRUE.abstract_type()),
+//             DynNPTerm::False => Box::new(FALSE.abstract_type()),
+//             DynNPTerm::VoidType => Box::new(VOID_TYPE.abstract_type()),
+//             DynNPTerm::TrueType => Box::new(TRUE_TYPE.abstract_type()),
+//             DynNPTerm::FalseType => Box::new(FALSE_TYPE.abstract_type()),
+//             DynNPTerm::EmptyType => Box::new(EMPTY_TYPE.abstract_type()),
+// //             DynNPTerm::FormalTypeOf,
+//             DynNPTerm::Bool => Box::new(BOOL.abstract_type()),
+//             DynNPTerm::Sint8 => Box::new(SINT8.abstract_type()),
+//             DynNPTerm::Sint16 => Box::new(SINT16.abstract_type()),
+//             DynNPTerm::Sint32 => Box::new(SINT32.abstract_type()),
+//             DynNPTerm::Sint64 => Box::new(SINT64.abstract_type()),
+//             DynNPTerm::Uint8 => Box::new(UINT8.abstract_type()),
+//             DynNPTerm::Uint16 => Box::new(UINT16.abstract_type()),
+//             DynNPTerm::Uint32 => Box::new(UINT32.abstract_type()),
+//             DynNPTerm::Uint64 => Box::new(UINT64.abstract_type()),
+//             DynNPTerm::Float32 => Box::new(FLOAT32.abstract_type()),
+//             DynNPTerm::Float64 => Box::new(FLOAT64.abstract_type()),
+//             DynNPTerm::BoolType => Box::new(BOOL_TYPE.abstract_type()),
+//             DynNPTerm::Sint8Type => Box::new(SINT8_TYPE.abstract_type()),
+//             DynNPTerm::Sint16Type => Box::new(SINT16_TYPE.abstract_type()),
+//             DynNPTerm::Sint32Type => Box::new(SINT32_TYPE.abstract_type()),
+//             DynNPTerm::Sint64Type => Box::new(SINT64_TYPE.abstract_type()),
+//             DynNPTerm::Uint8Type => Box::new(UINT8_TYPE.abstract_type()),
+//             DynNPTerm::Uint16Type => Box::new(UINT16_TYPE.abstract_type()),
+//             DynNPTerm::Uint32Type => Box::new(UINT32_TYPE.abstract_type()),
+//             DynNPTerm::Uint64Type => Box::new(UINT64_TYPE.abstract_type()),
+//             DynNPTerm::Float32Type => Box::new(FLOAT32_TYPE.abstract_type()),
+//             DynNPTerm::Float64Type => Box::new(FLOAT64_TYPE.abstract_type()),
+// //             DynNPTerm::SintType,
+// //             DynNPTerm::Sint,
+// //             DynNPTerm::UintType,
+// //             DynNPTerm::Uint,
+// //             DynNPTerm::FloatType,
+// //             DynNPTerm::Float,
+// //             DynNPTerm::PodType,
+// //             DynNPTerm::Pod,
+// //             DynNPTerm::UnionType,
+// //             DynNPTerm::Union,
+// //             DynNPTerm::Intersection,
+// //             DynNPTerm::Negation,
+// //             DynNPTerm::Difference,
+//             DynNPTerm::ArrayType => Box::new(ARRAY_TYPE.abstract_type()),
+// //             DynNPTerm::ArrayES,
+// //             DynNPTerm::ArrayE,
+// //             DynNPTerm::ArrayS,
+//             DynNPTerm::Array => Box::new(ARRAY.abstract_type()),
+// //             DynNPTerm::OrderedMapType,
+// //             DynNPTerm::OrderedMapDC,
+// //             DynNPTerm::OrderedMapD,
+// //             DynNPTerm::OrderedMapC,
+// //             DynNPTerm::OrderedMap,
+// //             DynNPTerm::TupleType,
+// //             DynNPTerm::Tuple,
+// //             DynNPTerm::MemRefType,
+// //             DynNPTerm::MemRef,
+// //             DynNPTerm::GlobalSymRefType,
+// //             DynNPTerm::GlobalSymRef,
+// //             DynNPTerm::LocalSymRefType,
+// //             DynNPTerm::LocalSymRef,
+// //             DynNPTerm::PlaceholderType,
+// //             DynNPTerm::Placeholder,
+// //             DynNPTerm::FreevarType,
+// //             DynNPTerm::Freevar,
+// //             DynNPTerm::OutputType,
+// //             DynNPTerm::Output,
+// //             DynNPTerm::ClearOutputType,
+// //             DynNPTerm::ClearOutput,
+// //             DynNPTerm::EndOfFileType,
+// //             DynNPTerm::EndOfFile,
+// //             DynNPTerm::RequestSyncInputType,
+// //             DynNPTerm::RequestSyncInput,
+//             _ => unimplemented!("sad face"),
+//         }
     }
 }
 
@@ -427,3 +523,4 @@ impl NonParametricTermTrait for DynNPTerm {
         *self
     }
 }
+*/

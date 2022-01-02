@@ -1,8 +1,10 @@
-use crate::st::{Stringify, TermTrait, Type, TypeTrait, Void};
+use crate::{dy, st::{Stringify, TermTrait, Type, TypeTrait, Void}};
 use std::any::Any;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VoidType;
+
+impl dy::IntoValue for VoidType {}
 
 impl Stringify for VoidType {
     fn stringify(&self) -> String {

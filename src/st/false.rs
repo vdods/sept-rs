@@ -1,7 +1,9 @@
-use crate::st::{Bool, FalseType, Inhabits, Stringify, TermTrait, True};
+use crate::{dy, st::{Bool, FalseType, Inhabits, Stringify, TermTrait, True}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct False;
+
+impl dy::IntoValue for False {}
 
 impl Inhabits<Bool> for False {
     fn inhabits(&self, _rhs: &Bool) -> bool {
