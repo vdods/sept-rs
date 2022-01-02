@@ -606,5 +606,5 @@ impl Runtime {
 lazy_static::lazy_static! {
     /// This is the static singleton Runtime.  TODO: This probably won't suffice once a program can
     /// add stuff to Runtime at runtime.  But maybe some kind of layering structure could work.
-    pub static ref RUNTIME: Runtime = Runtime::new();
+    pub static ref RUNTIME: std::sync::RwLock<Runtime> = std::sync::RwLock::new(Runtime::new());
 }

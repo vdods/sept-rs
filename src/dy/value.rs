@@ -41,13 +41,13 @@ impl<T: TermTrait + 'static> From<T> for Value {
 
 impl PartialEq<Value> for Value {
     fn eq(&self, other: &Value) -> bool {
-        RUNTIME.eq(self.as_ref(), other.as_ref())
+        RUNTIME.read().unwrap().eq(self.as_ref(), other.as_ref())
     }
 }
 
 impl Stringify for Value {
     fn stringify(&self) -> String {
-        RUNTIME.stringify(self.as_ref())
+        RUNTIME.read().unwrap().stringify(self.as_ref())
     }
 }
 
@@ -59,26 +59,26 @@ impl Value {
         Self(b)
     }
     pub fn label(&self) -> String {
-        RUNTIME.label_of(self.as_ref().type_id())
+        RUNTIME.read().unwrap().label_of(self.as_ref().type_id())
     }
     pub fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
         let x_: &dyn Any = x;
-        RUNTIME.inhabits(self.as_ref(), x_)
+        RUNTIME.read().unwrap().inhabits(self.as_ref(), x_)
     }
     pub fn inhabits(&self, t: impl AsRef<dyn Any>) -> bool {
-        RUNTIME.inhabits(self.as_ref(), t.as_ref())
+        RUNTIME.read().unwrap().inhabits(self.as_ref(), t.as_ref())
     }
     pub fn inhabits_type(&self, t: &impl TypeTrait) -> bool {
         let t_: &dyn Any = t;
-        RUNTIME.inhabits(self.as_ref(), t_)
+        RUNTIME.read().unwrap().inhabits(self.as_ref(), t_)
     }
     pub fn abstract_type(&self) -> Value {
-        Value(RUNTIME.abstract_type_of(self.as_ref()))
+        Value(RUNTIME.read().unwrap().abstract_type_of(self.as_ref()))
     }
     pub fn is_parametric_term(&self) -> bool {
-        RUNTIME.is_parametric_term(self.as_ref())
+        RUNTIME.read().unwrap().is_parametric_term(self.as_ref())
     }
     pub fn is_type_term(&self) -> bool {
-        RUNTIME.is_type_term(self.as_ref())
+        RUNTIME.read().unwrap().is_type_term(self.as_ref())
     }
 }
