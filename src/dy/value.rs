@@ -86,11 +86,6 @@ impl TermTrait for Value {
 impl st::TypeTrait for Value {}
 
 impl Value {
-    // TODO: Figure out if this is needed anymore
-    pub fn new<T: TermTrait + 'static>(t: T) -> Self {
-        let b: Box<ValueGuts> = Box::new(t);
-        Self(b)
-    }
     /// Helper method which forwards the call to downcast_ref to the inner `Any`.
     pub fn downcast_ref<T: TermTrait + 'static>(&self) -> Option<&T> {
         self.as_ref().downcast_ref::<T>()

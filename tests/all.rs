@@ -314,7 +314,7 @@ fn test_value() -> Result<()> {
     log::debug!("v1.inhabits(&Value::from(SINT32)): {:?}", v1.inhabits(&Value::from(SINT32)));
     log::debug!("v1.inhabits(&Value::from(BOOL)): {:?}", v1.inhabits(&Value::from(BOOL)));
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
-    let v3 = Value::new(SINT32);
+    let v3 = Value::from(SINT32);
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
 
     log::debug!("v1: {}", v1);
