@@ -24,29 +24,34 @@ fn test_term_and_type() -> Result<()> {
     log::debug!("TRUE: {:#?}", TRUE);
     log::debug!("TRUE_TYPE: {:#?}", TRUE_TYPE);
 
-    assert!(VOID.inhabits_type(&VOID_TYPE));
-    assert!(!VOID.inhabits_type(&FALSE_TYPE));
-    assert!(!VOID.inhabits_type(&TYPE));
-    assert!(!VOID.inhabits_type(&BOOL));
-    assert!(!VOID.inhabits_type(&BOOL_TYPE));
+    // NOTE: The commented out ones asserting non-inhabitation, if uncommented, would produce
+    // compile errors to the effect of "Void doesn't implement Inhabits<FalseType>", which
+    // is correct and desired, since these types are known at compile time.
 
-    assert!(VOID_TYPE.inhabits_type(&TYPE));
+    assert!(VOID.inhabits(&VOID_TYPE));
+//     assert!(!VOID.inhabits(&FALSE_TYPE));
+//     assert!(!VOID.inhabits(&TYPE));
+//     assert!(!VOID.inhabits(&BOOL));
+//     assert!(!VOID.inhabits(&BOOL_TYPE));
 
-    assert!(TRUE.inhabits_type(&TRUE_TYPE));
-    assert!(!TRUE.inhabits_type(&FALSE_TYPE));
-    assert!(TRUE.inhabits_type(&BOOL));
-    assert!(!TRUE.inhabits_type(&BOOL_TYPE));
+    assert!(VOID_TYPE.inhabits(&TYPE));
 
-    assert!(!FALSE.inhabits_type(&TRUE_TYPE));
-    assert!(FALSE.inhabits_type(&FALSE_TYPE));
-    assert!(FALSE.inhabits_type(&BOOL));
-    assert!(!FALSE.inhabits_type(&BOOL_TYPE));
+    assert!(TRUE.inhabits(&TRUE_TYPE));
+//     assert!(!TRUE.inhabits(&FALSE_TYPE));
+    assert!(TRUE.inhabits(&BOOL));
+//     assert!(!TRUE.inhabits(&BOOL_TYPE));
 
-    assert!(TRUE_TYPE.inhabits_type(&BOOL_TYPE));
-    assert!(FALSE_TYPE.inhabits_type(&BOOL_TYPE));
-    assert!(BOOL.inhabits_type(&BOOL_TYPE));
-    assert!(!BOOL.inhabits_type(&TRUE_TYPE));
-    assert!(!BOOL.inhabits_type(&FALSE_TYPE));
+//     assert!(!FALSE.inhabits(&TRUE_TYPE));
+    assert!(FALSE.inhabits(&FALSE_TYPE));
+    assert!(FALSE.inhabits(&BOOL));
+//     assert!(!FALSE.inhabits(&BOOL_TYPE));
+
+    assert!(TRUE_TYPE.inhabits(&BOOL_TYPE));
+    assert!(FALSE_TYPE.inhabits(&BOOL_TYPE));
+    assert!(BOOL.inhabits(&BOOL_TYPE));
+//     assert!(!BOOL.inhabits(&TRUE_TYPE));
+//     assert!(!BOOL.inhabits(&FALSE_TYPE));
+
 
     assert!(!TRUE.is_parametric_term());
     assert!(!TRUE.is_type_term());
@@ -304,8 +309,10 @@ fn test_value() -> Result<()> {
     log::debug!("v2.stringify(): {:?}", v2.stringify());
     log::debug!("v1.abstract_type(): {:?}", v1.abstract_type());
 
-    log::debug!("v1.inhabits_type(&SINT32): {:?}", v1.inhabits_type(&SINT32));
-    log::debug!("v1.inhabits_type(&BOOL): {:?}", v1.inhabits_type(&BOOL));
+    log::debug!("v1.inhabits(&SINT32): {:?}", v1.inhabits(&SINT32));
+    log::debug!("v1.inhabits(&BOOL): {:?}", v1.inhabits(&BOOL));
+    log::debug!("v1.inhabits(&Value::from(SINT32)): {:?}", v1.inhabits(&Value::from(SINT32)));
+    log::debug!("v1.inhabits(&Value::from(BOOL)): {:?}", v1.inhabits(&Value::from(BOOL)));
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
     let v3 = Value::new(SINT32);
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
@@ -465,56 +472,6 @@ trait BinOpTermTrait {
 }
 
 trait UnOpTermTrait {}
-
-// // This is a bit hacky in its indirection, but Rust's trait rules are annoying.
-// #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-// pub struct BinOpTerm<T: Stringify>(T);
-//
-// // This is a bit hacky in its indirection, but Rust's trait rules are annoying.
-// #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-// pub struct UnOpTerm<T: Stringify>(T);
-//
-// impl<T: Stringify> Inhabits<BinOp> for BinOpTerm<T> {
-//     fn inhabits(&self, _rhs: &BinOp) -> bool {
-//         true
-//     }
-// }
-//
-// impl<T: Stringify> Inhabits<UnOp> for UnOpTerm<T> {
-//     fn inhabits(&self, _rhs: &UnOp) -> bool {
-//         true
-//     }
-// }
-//
-// impl<T: Stringify> Stringify for BinOpTerm<T> {
-//     fn stringify(&self) -> String {
-//         self.0.stringify()
-//     }
-// }
-//
-// impl<T: Stringify> Stringify for UnOpTerm<T> {
-//     fn stringify(&self) -> String {
-//         self.0.stringify()
-//     }
-// }
-//
-// impl<T: std::fmt::Debug + Stringify + 'static> TermTrait for BinOpTerm<T> {
-//     type AbstractTypeFnReturnType = BinOp;
-//
-//     fn label() -> &'static str {
-//         // TEMP HACK
-//         std::any::type_name::<T>()
-//     }
-//     fn is_parametric_term(&self) -> bool {
-//         false
-//     }
-//     fn is_type_term(&self) -> bool {
-//         false
-//     }
-//     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-//         Self::AbstractTypeFnReturnType{}
-//     }
-// }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Add;
@@ -757,19 +714,8 @@ impl TermTrait for Neg {
     }
 }
 
-impl TypeTrait for BinOp {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Add>() || x_.is::<Sub>() || x_.is::<Mul>() || x_.is::<Div>() || x_.is::<Pow>()
-    }
-}
-
-impl TypeTrait for UnOp {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Neg>()
-    }
-}
+impl TypeTrait for BinOp {}
+impl TypeTrait for UnOp {}
 
 impl Inhabits<BinOp> for Add {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
@@ -846,6 +792,8 @@ impl TermTrait for Expr {
     }
 }
 
+impl TypeTrait for Expr {}
+
 impl Inhabits<Expr> for f64 {
     fn inhabits(&self, _rhs: &Expr) -> bool {
         true
@@ -869,9 +817,9 @@ fn eval_expr(expr: &Value) -> f64 {
     let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
 
     // TODO: This should be a poset search under Expr (which is really a Union of types)
-    if expr.inhabits_type(&FLOAT64) {
+    if expr.inhabits(&FLOAT64) {
         *expr.downcast_ref::<f64>().unwrap()
-    } else if expr.inhabits_type(&bin_op_expr) {
+    } else if expr.inhabits(&bin_op_expr) {
         let inner_tuple_term = expr.downcast_ref::<TupleTerm>().unwrap();
         let lhs = eval_expr(&inner_tuple_term[0]);
         let bin_op = &inner_tuple_term[1];

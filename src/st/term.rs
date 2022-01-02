@@ -7,7 +7,7 @@ pub struct Term;
 impl dy::IntoValue for Term {}
 
 /// Everything inhabits Term.
-impl<T: TermTrait> Inhabits<Term> for T {
+impl<T: TermTrait + dy::IntoValue + 'static> Inhabits<Term> for T {
     fn inhabits(&self, _: &Term) -> bool {
         true
     }
@@ -42,11 +42,6 @@ impl TermTrait for Term {
     }
 }
 
-impl TypeTrait for Term {
-    /// All terms inhabit Term.
-    fn has_inhabitant(&self, _: &impl TermTrait) -> bool {
-        true
-    }
-}
+impl TypeTrait for Term {}
 
 pub const TERM: Term = Term{};

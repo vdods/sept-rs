@@ -1,5 +1,4 @@
 use crate::{dy::{self, Value, IntoValue}, st::{Inhabits, Stringify, TermTrait, Tuple, TypeTrait}};
-use std::any::Any;
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 #[derive(derive_more::AsRef, Debug, derive_more::From, derive_more::Into, PartialEq)]
@@ -110,7 +109,6 @@ impl Inhabits<dy::StructTerm> for TupleTerm {
             }
         }
         true
-
     }
 }
 
@@ -152,12 +150,4 @@ impl TermTrait for TupleTerm {
     }
 }
 
-impl TypeTrait for TupleTerm {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        match x_.downcast_ref::<TupleTerm>() {
-            Some(x_tuple_term) => x_tuple_term.inhabits(self),
-            None => false
-        }
-    }
-}
+impl TypeTrait for TupleTerm {}

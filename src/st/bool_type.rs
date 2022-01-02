@@ -1,5 +1,4 @@
-use crate::{dy, st::{Bool, FalseType, Stringify, TermTrait, TrueType, Type, TypeTrait}};
-use std::any::Any;
+use crate::{dy, st::{Stringify, TermTrait, Type, TypeTrait}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BoolType;
@@ -29,11 +28,6 @@ impl TermTrait for BoolType {
     }
 }
 
-impl TypeTrait for BoolType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Bool>() || x_.is::<TrueType>() || x_.is::<FalseType>()
-    }
-}
+impl TypeTrait for BoolType {}
 
 pub const BOOL_TYPE: BoolType = BoolType{};

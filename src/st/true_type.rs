@@ -1,10 +1,15 @@
-use crate::{dy, st::{Stringify, TermTrait, True, Type, TypeTrait}};
-use std::any::Any;
+use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TrueType;
 
 impl dy::IntoValue for TrueType {}
+
+impl st::Inhabits<st::BoolType> for TrueType {
+    fn inhabits(&self, _rhs: &st::BoolType) -> bool {
+        true
+    }
+}
 
 impl Stringify for TrueType {
     fn stringify(&self) -> String {
@@ -29,15 +34,6 @@ impl TermTrait for TrueType {
     }
 }
 
-impl TypeTrait for TrueType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<True>() ||
-        match x_.downcast_ref::<bool>() {
-            Some(b) => *b,
-            None => false
-        }
-    }
-}
+impl TypeTrait for TrueType {}
 
 pub const TRUE_TYPE: TrueType = TrueType{};

@@ -1,5 +1,5 @@
-use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Tuple, Type, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TupleType {}
@@ -36,11 +36,6 @@ impl TermTrait for TupleType {
     }
 }
 
-impl TypeTrait for TupleType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Tuple>()
-    }
-}
+impl TypeTrait for TupleType {}
 
 pub const TUPLE_TYPE: TupleType = TupleType{};

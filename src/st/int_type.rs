@@ -1,11 +1,8 @@
 use crate::{
     dy::{self, DynNPTerm},
-    st::{
-        NonParametricTermTrait, SIGNED, Sint8, Sint16, Sint32, Sint64, Stringify,
-        TermTrait, Type, TypeTrait, UNSIGNED, Uint8, Uint16, Uint32, Uint64,
-    },
+    st::{NonParametricTermTrait, SIGNED, Stringify, TermTrait, Type, TypeTrait, UNSIGNED},
 };
-use std::{any::Any, fmt::Debug};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
@@ -56,27 +53,7 @@ impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntNType<IS_SIGNED, N>
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntNType<IS_SIGNED, N> {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        match IS_SIGNED {
-            SIGNED => match N {
-                8 => x_.is::<Sint8>(),
-                16 => x_.is::<Sint16>(),
-                32 => x_.is::<Sint32>(),
-                64 => x_.is::<Sint64>(),
-                n => panic!("unsupported Sint size: {}", n),
-            },
-            UNSIGNED => match N {
-                8 => x_.is::<Uint8>(),
-                16 => x_.is::<Uint16>(),
-                32 => x_.is::<Uint32>(),
-                64 => x_.is::<Uint64>(),
-                n => panic!("unsupported Uint size: {}", n),
-            },
-        }
-    }
-}
+impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntNType<IS_SIGNED, N> {}
 
 pub type Sint8Type = IntNType<SIGNED, 8>;
 pub type Sint16Type = IntNType<SIGNED, 16>;

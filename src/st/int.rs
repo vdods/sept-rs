@@ -1,5 +1,5 @@
 use crate::{dy::{self, DynNPTerm}, st::{Inhabits, IntNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use std::fmt::Debug;
 
 pub const SIGNED: bool = true;
 pub const UNSIGNED: bool = false;
@@ -8,6 +8,9 @@ pub const UNSIGNED: bool = false;
 pub struct IntN<const IS_SIGNED: bool, const N: usize> {}
 
 impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
+
+unsafe impl<const IS_SIGNED: bool, const N: usize> Send for IntN<IS_SIGNED, N> {}
+unsafe impl<const IS_SIGNED: bool, const N: usize> Sync for IntN<IS_SIGNED, N> {}
 
 impl<const IS_SIGNED: bool, const N: usize> Inhabits<IntNType<IS_SIGNED, N>> for IntN<IS_SIGNED, N> {
     fn inhabits(&self, _: &IntNType<IS_SIGNED, N>) -> bool {
@@ -59,27 +62,7 @@ impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntN<IS_SIGNED, N> {
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntN<IS_SIGNED, N> {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        match IS_SIGNED {
-            SIGNED => match N {
-                8 => x_.is::<i8>(),
-                16 => x_.is::<i16>(),
-                32 => x_.is::<i32>(),
-                64 => x_.is::<i64>(),
-                n => panic!("unsupported Sint size: {}", n),
-            },
-            UNSIGNED => match N {
-                8 => x_.is::<u8>(),
-                16 => x_.is::<u16>(),
-                32 => x_.is::<u32>(),
-                64 => x_.is::<u64>(),
-                n => panic!("unsupported Uint size: {}", n),
-            },
-        }
-    }
-}
+impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntN<IS_SIGNED, N> {}
 
 pub type Sint8 = IntN<SIGNED, 8>;
 pub type Sint16 = IntN<SIGNED, 16>;

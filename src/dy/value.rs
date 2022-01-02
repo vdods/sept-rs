@@ -1,4 +1,4 @@
-use crate::{dy::{IntoValue, RUNTIME}, st::{Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{IntoValue, RUNTIME}, st::{self, Stringify, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -41,6 +41,19 @@ impl<T: TermTrait + IntoValue + 'static> From<T> for Value {
     }
 }
 
+impl st::Inhabits<Value> for Value {
+    fn inhabits(&self, rhs: &Value) -> bool {
+        RUNTIME.read().unwrap().inhabits(self.as_ref(), rhs.as_ref())
+    }
+}
+
+impl<T: st::TypeTrait + IntoValue + 'static> st::Inhabits<T> for Value {
+    fn inhabits(&self, rhs: &T) -> bool {
+        let rhs_: &ValueGuts = rhs;
+        RUNTIME.read().unwrap().inhabits(self.as_ref(), rhs_)
+    }
+}
+
 impl PartialEq<Value> for Value {
     fn eq(&self, other: &Value) -> bool {
         RUNTIME.read().unwrap().eq(self.as_ref(), other.as_ref())
@@ -70,24 +83,20 @@ impl TermTrait for Value {
     }
 }
 
+impl st::TypeTrait for Value {}
+
 impl Value {
+    // TODO: Figure out if this is needed anymore
     pub fn new<T: TermTrait + 'static>(t: T) -> Self {
         let b: Box<ValueGuts> = Box::new(t);
         Self(b)
     }
-    pub fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &ValueGuts = x;
-        RUNTIME.read().unwrap().inhabits(self.as_ref(), x_)
-    }
-    pub fn inhabits(&self, t: impl AsRef<ValueGuts>) -> bool {
-        RUNTIME.read().unwrap().inhabits(self.as_ref(), t.as_ref())
-    }
-    pub fn inhabits_type(&self, t: &impl TypeTrait) -> bool {
-        let t_: &ValueGuts = t;
-        RUNTIME.read().unwrap().inhabits(self.as_ref(), t_)
-    }
-
+    /// Helper method which forwards the call to downcast_ref to the inner `Any`.
     pub fn downcast_ref<T: TermTrait + 'static>(&self) -> Option<&T> {
         self.as_ref().downcast_ref::<T>()
+    }
+    /// Helper method which forwards the call to type_id to the inner `Any`.
+    pub fn type_id(&self) -> std::any::TypeId {
+        self.as_ref().type_id()
     }
 }

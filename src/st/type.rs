@@ -43,10 +43,6 @@ impl TermTrait for Type {
     }
 }
 
-impl TypeTrait for Type {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        x.is_type_term()
-    }
-}
+impl TypeTrait for Type {}
 
 pub const TYPE: Type = Type{};

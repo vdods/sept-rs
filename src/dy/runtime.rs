@@ -1,7 +1,7 @@
 use crate::{
     dy::{ArrayTerm, GlobalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, SymbolTable, ValueGuts},
     st::{
-        Array, ArrayType,
+        self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
         GlobalSymRef, GlobalSymRefType,
         Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
@@ -560,7 +560,7 @@ impl Runtime {
         };
         Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
-    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_inhabits_fn<Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
         let inhabits_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             lhs.downcast_ref::<Lhs>().unwrap().inhabits(rhs.downcast_ref::<Rhs>().unwrap())

@@ -1,4 +1,4 @@
-use crate::{dy, st::TypeTrait};
+use crate::dy;
 use std::{any::Any, fmt::Debug};
 
 // pub trait TermTrait: Any + Debug + Into<Box<dyn Any>> + Sized {
@@ -21,10 +21,7 @@ pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     /// sept::ArrayTerm is NOT "ArrayTerm", but rather Array.  TODO: Not sure if Box<dyn Any> is really
     /// the correct return type here.
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType;
-    /// Convenience method for checking type inhabitation.
-    fn inhabits_type(&self, t: &impl TypeTrait) -> bool {
-        t.has_inhabitant(self)
-    }
+    // TODO: Figure out if this is actually necessary.
     fn downcast_ref<T: TermTrait>(&self) -> Option<&T> {
         let self_: &dy::ValueGuts = self;
         self_.downcast_ref::<T>()

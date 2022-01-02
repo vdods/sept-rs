@@ -11,6 +11,12 @@ impl Inhabits<Bool> for True {
     }
 }
 
+impl Inhabits<TrueType> for True {
+    fn inhabits(&self, _rhs: &TrueType) -> bool {
+        true
+    }
+}
+
 impl PartialEq<bool> for True {
     fn eq(&self, other: &bool) -> bool {
         *other == true

@@ -1,10 +1,15 @@
-use crate::{dy, st::{Stringify, TermTrait, Type, TypeTrait, Void}};
-use std::any::Any;
+use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VoidType;
 
 impl dy::IntoValue for VoidType {}
+
+impl st::Inhabits<st::Type> for VoidType {
+    fn inhabits(&self, _rhs: &st::Type) -> bool {
+        true
+    }
+}
 
 impl Stringify for VoidType {
     fn stringify(&self) -> String {
@@ -29,11 +34,6 @@ impl TermTrait for VoidType {
     }
 }
 
-impl TypeTrait for VoidType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Void>()
-    }
-}
+impl TypeTrait for VoidType {}
 
 pub const VOID_TYPE: VoidType = VoidType{};

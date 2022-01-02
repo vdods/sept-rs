@@ -1,5 +1,5 @@
-use crate::{dy::{self, DynNPTerm}, st::{Array, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ArrayType {}
@@ -36,11 +36,6 @@ impl TermTrait for ArrayType {
     }
 }
 
-impl TypeTrait for ArrayType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Array>()
-    }
-}
+impl TypeTrait for ArrayType {}
 
 pub const ARRAY_TYPE: ArrayType = ArrayType{};

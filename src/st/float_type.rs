@@ -1,5 +1,5 @@
-use crate::{dy::{self, DynNPTerm}, st::{Float32, Float64, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatNType<const N: usize> {}
@@ -39,16 +39,7 @@ impl<const N: usize> TermTrait for FloatNType<N> {
     }
 }
 
-impl<const N: usize> TypeTrait for FloatNType<N> {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        match N {
-            32 => x_.is::<Float32>(),
-            64 => x_.is::<Float64>(),
-            n => panic!("unsupported Float size: {}", n),
-        }
-    }
-}
+impl<const N: usize> TypeTrait for FloatNType<N> {}
 
 pub type Float32Type = FloatNType<32>;
 pub type Float64Type = FloatNType<64>;

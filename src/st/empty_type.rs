@@ -29,11 +29,6 @@ impl TermTrait for EmptyType {
     }
 }
 
-impl TypeTrait for EmptyType {
-    fn has_inhabitant(&self, _x: &impl TermTrait) -> bool {
-        // No inhabitants by definition
-        false
-    }
-}
+impl TypeTrait for EmptyType {}
 
 pub const EMPTY_TYPE: EmptyType = EmptyType{};

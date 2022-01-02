@@ -1,5 +1,5 @@
-use crate::{dy::{self, DynNPTerm}, st::{GlobalSymRef, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct GlobalSymRefType {}
@@ -36,11 +36,6 @@ impl TermTrait for GlobalSymRefType {
     }
 }
 
-impl TypeTrait for GlobalSymRefType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<GlobalSymRef>()
-    }
-}
+impl TypeTrait for GlobalSymRefType {}
 
 pub const GLOBAL_SYM_REF_TYPE: GlobalSymRefType = GlobalSymRefType{};

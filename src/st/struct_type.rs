@@ -1,5 +1,5 @@
-use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, Struct, TermTrait, Type, TypeTrait}};
-use std::{any::Any, fmt::Debug};
+use crate::{dy::{self, DynNPTerm}, st::{NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct StructType {}
@@ -36,11 +36,6 @@ impl TermTrait for StructType {
     }
 }
 
-impl TypeTrait for StructType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<Struct>()
-    }
-}
+impl TypeTrait for StructType {}
 
 pub const STRUCT_TYPE: StructType = StructType{};

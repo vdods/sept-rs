@@ -1,10 +1,15 @@
-use crate::{dy, st::{False, Stringify, TermTrait, Type, TypeTrait}};
-use std::any::Any;
+use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FalseType;
 
 impl dy::IntoValue for FalseType {}
+
+impl st::Inhabits<st::BoolType> for FalseType {
+    fn inhabits(&self, _rhs: &st::BoolType) -> bool {
+        true
+    }
+}
 
 impl Stringify for FalseType {
     fn stringify(&self) -> String {
@@ -29,16 +34,6 @@ impl TermTrait for FalseType {
     }
 }
 
-impl TypeTrait for FalseType {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        let x_: &dyn Any = x;
-        x_.is::<False>() ||
-        match x_.downcast_ref::<bool>() {
-            Some(b) => !*b,
-            None => false
-        }
-
-    }
-}
+impl TypeTrait for FalseType {}
 
 pub const FALSE_TYPE: FalseType = FalseType{};

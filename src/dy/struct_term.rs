@@ -87,16 +87,4 @@ impl TermTrait for StructTerm {
     }
 }
 
-impl st::TypeTrait for StructTerm {
-    fn has_inhabitant(&self, x: &impl TermTrait) -> bool {
-        match x.downcast_ref::<dy::StructTermTerm>() {
-            Some(struct_term_term) => { return struct_term_term.element_tuple_term.inhabits(self); }
-            None => { }
-        };
-        match x.downcast_ref::<dy::TupleTerm>() {
-            Some(tuple_term) => { return tuple_term.inhabits(self); }
-            None => { }
-        };
-        false
-    }
-}
+impl st::TypeTrait for StructTerm {}
