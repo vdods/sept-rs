@@ -5,6 +5,13 @@ use crate::{dy, st::{Array, Inhabits, Stringify, TermTrait}};
 #[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct ArrayTerm(Vec<dy::Value>);
 
+impl std::ops::Deref for ArrayTerm {
+    type Target = Vec<dy::Value>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl std::fmt::Display for ArrayTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", &self.stringify())

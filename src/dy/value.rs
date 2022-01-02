@@ -14,12 +14,12 @@ impl AsRef<dyn Any> for Value {
     }
 }
 
-// impl std::ops::Deref for Value {
-//     type Target = dyn Any;
-//     fn deref(&self) -> &Self::Target {
-//         self.as_ref()
-//     }
-// }
+impl std::ops::Deref for Value {
+    type Target = dyn Any;
+    fn deref(&self) -> &Self::Target {
+        self.as_ref()
+    }
+}
 
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {

@@ -2,8 +2,15 @@ use crate::{dy::Value, st::{Inhabits, Stringify, TermTrait, Tuple, TypeTrait}};
 use std::any::Any;
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(derive_more::AsRef, Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct TupleTerm(Vec<Value>);
+
+impl std::ops::Deref for TupleTerm {
+    type Target = Vec<Value>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl std::fmt::Display for TupleTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
