@@ -10,6 +10,12 @@ pub type ValueGuts = dyn Any + Send + Sync;
 #[derive(derive_more::From, derive_more::Into)]
 pub struct Value(Box<ValueGuts>);
 
+impl AsMut<ValueGuts> for Value {
+    fn as_mut(&mut self) -> &mut ValueGuts {
+        self.0.as_mut()
+    }
+}
+
 impl AsRef<ValueGuts> for Value {
     fn as_ref(&self) -> &ValueGuts {
         self.0.as_ref()
@@ -20,6 +26,12 @@ impl std::ops::Deref for Value {
     type Target = ValueGuts;
     fn deref(&self) -> &Self::Target {
         self.as_ref()
+    }
+}
+
+impl std::ops::DerefMut for Value {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.as_mut()
     }
 }
 

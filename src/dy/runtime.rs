@@ -1,5 +1,5 @@
 use crate::{
-    dy::{ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, SymbolTable, ValueGuts},
+    dy::{ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, ValueGuts},
     st::{
         self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
@@ -41,8 +41,6 @@ pub struct Runtime {
     is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
-
-    pub global_symbol_table: SymbolTable,
 }
 
 impl Runtime {
@@ -303,6 +301,8 @@ impl Runtime {
         }
     }
 
+    /// This gives the [non-parametric] label of the concrete type.  For example, even though
+    /// GlobalSymRefTerm is referentially transparent, its label is still GlobalSymRefTerm.
     pub fn label_of(&self, type_id: TypeId) -> String {
         match self.label_fn_m.get(&type_id) {
             Some(label_fn) => label_fn().into(),
@@ -310,6 +310,8 @@ impl Runtime {
         }
     }
     pub fn stringify(&self, x: &ValueGuts) -> String {
+        // TODO: Handle referential transparency here
+
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             None => {
@@ -320,6 +322,8 @@ impl Runtime {
         }
     }
     pub fn eq(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
+        // TODO: Handle referential transparency here
+
         // TODO: Check if the types are singletons (i.e. NonParametricTerm) and then can just compare their type id.
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
@@ -342,6 +346,8 @@ impl Runtime {
         !self.eq(lhs, rhs)
     }
     pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
+        // TODO: Handle referential transparency here
+
         let type_id_pair = (x.type_id(), t.type_id());
         match self.inhabits_fn_m.get(&type_id_pair) {
             Some(inhabits_fn) => inhabits_fn(x, t),
@@ -353,6 +359,8 @@ impl Runtime {
         }
     }
     pub fn abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
+        // TODO: Handle referential transparency here
+
         let type_id = x.type_id();
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
@@ -364,6 +372,8 @@ impl Runtime {
         }
     }
     pub fn is_parametric_term(&self, x: &ValueGuts) -> bool {
+        // TODO: Handle referential transparency here
+
         match self.is_parametric_term_fn_m.get(&x.type_id()) {
             Some(is_parametric_term_fn) => is_parametric_term_fn(x),
             None => {
@@ -375,6 +385,8 @@ impl Runtime {
         }
     }
     pub fn is_type_term(&self, x: &ValueGuts) -> bool {
+        // TODO: Handle referential transparency here
+
         match self.is_type_term_fn_m.get(&x.type_id()) {
             Some(is_type_term_fn) => is_type_term_fn(x),
             None => {

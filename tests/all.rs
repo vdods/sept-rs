@@ -82,18 +82,18 @@ fn test_term_and_type() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_stringify() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert_eq!(rt.stringify(&true), "True");
-    assert_eq!(rt.stringify(&false), "False");
-    assert_eq!(rt.stringify(&TRUE), "True");
-    assert_eq!(rt.stringify(&FALSE), "False");
-    assert_eq!(rt.stringify(&TRUE_TYPE), "TrueType");
-    assert_eq!(rt.stringify(&FALSE_TYPE), "FalseType");
-    assert_eq!(rt.stringify(&BOOL), "Bool");
-    assert_eq!(rt.stringify(&BOOL_TYPE), "BoolType");
+    assert_eq!(runtime_g.stringify(&true), "True");
+    assert_eq!(runtime_g.stringify(&false), "False");
+    assert_eq!(runtime_g.stringify(&TRUE), "True");
+    assert_eq!(runtime_g.stringify(&FALSE), "False");
+    assert_eq!(runtime_g.stringify(&TRUE_TYPE), "TrueType");
+    assert_eq!(runtime_g.stringify(&FALSE_TYPE), "FalseType");
+    assert_eq!(runtime_g.stringify(&BOOL), "Bool");
+    assert_eq!(runtime_g.stringify(&BOOL_TYPE), "BoolType");
 
-    log::debug!("RUNTIME_LA.stringify(&123): {:#?}", rt.stringify(&123));
+    log::debug!("RUNTIME_LA.stringify(&123): {:#?}", runtime_g.stringify(&123));
 
     Ok(())
 }
@@ -101,27 +101,27 @@ fn test_runtime_stringify() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_eq() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(rt.eq(&true, &true));
-    assert!(!rt.eq(&true, &false));
-    assert!(rt.eq(&true, &TRUE));
-    assert!(!rt.eq(&true, &FALSE));
+    assert!(runtime_g.eq(&true, &true));
+    assert!(!runtime_g.eq(&true, &false));
+    assert!(runtime_g.eq(&true, &TRUE));
+    assert!(!runtime_g.eq(&true, &FALSE));
 
-    assert!(!rt.eq(&false, &true));
-    assert!(rt.eq(&false, &false));
-    assert!(!rt.eq(&false, &TRUE));
-    assert!(rt.eq(&false, &FALSE));
+    assert!(!runtime_g.eq(&false, &true));
+    assert!(runtime_g.eq(&false, &false));
+    assert!(!runtime_g.eq(&false, &TRUE));
+    assert!(runtime_g.eq(&false, &FALSE));
 
-    assert!(rt.eq(&TRUE, &true));
-    assert!(!rt.eq(&TRUE, &false));
-    assert!(rt.eq(&TRUE, &TRUE));
-    assert!(!rt.eq(&TRUE, &FALSE));
+    assert!(runtime_g.eq(&TRUE, &true));
+    assert!(!runtime_g.eq(&TRUE, &false));
+    assert!(runtime_g.eq(&TRUE, &TRUE));
+    assert!(!runtime_g.eq(&TRUE, &FALSE));
 
-    assert!(!rt.eq(&FALSE, &true));
-    assert!(rt.eq(&FALSE, &false));
-    assert!(!rt.eq(&FALSE, &TRUE));
-    assert!(rt.eq(&FALSE, &FALSE));
+    assert!(!runtime_g.eq(&FALSE, &true));
+    assert!(runtime_g.eq(&FALSE, &false));
+    assert!(!runtime_g.eq(&FALSE, &TRUE));
+    assert!(runtime_g.eq(&FALSE, &FALSE));
 
     Ok(())
 }
@@ -129,22 +129,22 @@ fn test_runtime_eq() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_inhabits() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(rt.inhabits(&true, &BOOL));
-    assert!(rt.inhabits(&false, &BOOL));
-    assert!(!rt.inhabits(&true, &FALSE_TYPE));
-    assert!(rt.inhabits(&false, &FALSE_TYPE));
-    assert!(rt.inhabits(&true, &TRUE_TYPE));
-    assert!(!rt.inhabits(&false, &TRUE_TYPE));
-    assert!(rt.inhabits(&True, &BOOL));
-    assert!(rt.inhabits(&False, &BOOL));
-    assert!(rt.inhabits(&BOOL, &BOOL_TYPE));
-    assert!(!rt.inhabits(&BOOL_TYPE, &BOOL));
-    assert!(rt.inhabits(&VOID, &VOID_TYPE));
-    assert!(!rt.inhabits(&VOID_TYPE, &VOID));
+    assert!(runtime_g.inhabits(&true, &BOOL));
+    assert!(runtime_g.inhabits(&false, &BOOL));
+    assert!(!runtime_g.inhabits(&true, &FALSE_TYPE));
+    assert!(runtime_g.inhabits(&false, &FALSE_TYPE));
+    assert!(runtime_g.inhabits(&true, &TRUE_TYPE));
+    assert!(!runtime_g.inhabits(&false, &TRUE_TYPE));
+    assert!(runtime_g.inhabits(&True, &BOOL));
+    assert!(runtime_g.inhabits(&False, &BOOL));
+    assert!(runtime_g.inhabits(&BOOL, &BOOL_TYPE));
+    assert!(!runtime_g.inhabits(&BOOL_TYPE, &BOOL));
+    assert!(runtime_g.inhabits(&VOID, &VOID_TYPE));
+    assert!(!runtime_g.inhabits(&VOID_TYPE, &VOID));
 
-    assert!(!rt.inhabits(&BOOL, &EMPTY_TYPE));
+    assert!(!runtime_g.inhabits(&BOOL, &EMPTY_TYPE));
 
     Ok(())
 }
@@ -152,27 +152,27 @@ fn test_runtime_inhabits() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ints() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(rt.inhabits(&123i8, &SINT8));
-    assert!(rt.inhabits(&123i16, &SINT16));
-    assert!(rt.inhabits(&123i32, &SINT32));
-    assert!(rt.inhabits(&123i64, &SINT64));
+    assert!(runtime_g.inhabits(&123i8, &SINT8));
+    assert!(runtime_g.inhabits(&123i16, &SINT16));
+    assert!(runtime_g.inhabits(&123i32, &SINT32));
+    assert!(runtime_g.inhabits(&123i64, &SINT64));
 
-    assert!(rt.inhabits(&123u8, &UINT8));
-    assert!(rt.inhabits(&123u16, &UINT16));
-    assert!(rt.inhabits(&123u32, &UINT32));
-    assert!(rt.inhabits(&123u64, &UINT64));
+    assert!(runtime_g.inhabits(&123u8, &UINT8));
+    assert!(runtime_g.inhabits(&123u16, &UINT16));
+    assert!(runtime_g.inhabits(&123u32, &UINT32));
+    assert!(runtime_g.inhabits(&123u64, &UINT64));
 
-    assert!(rt.inhabits(&SINT8, &SINT8_TYPE));
-    assert!(rt.inhabits(&SINT16, &SINT16_TYPE));
-    assert!(rt.inhabits(&SINT32, &SINT32_TYPE));
-    assert!(rt.inhabits(&SINT64, &SINT64_TYPE));
+    assert!(runtime_g.inhabits(&SINT8, &SINT8_TYPE));
+    assert!(runtime_g.inhabits(&SINT16, &SINT16_TYPE));
+    assert!(runtime_g.inhabits(&SINT32, &SINT32_TYPE));
+    assert!(runtime_g.inhabits(&SINT64, &SINT64_TYPE));
 
-    assert!(rt.inhabits(&UINT8, &UINT8_TYPE));
-    assert!(rt.inhabits(&UINT16, &UINT16_TYPE));
-    assert!(rt.inhabits(&UINT32, &UINT32_TYPE));
-    assert!(rt.inhabits(&UINT64, &UINT64_TYPE));
+    assert!(runtime_g.inhabits(&UINT8, &UINT8_TYPE));
+    assert!(runtime_g.inhabits(&UINT16, &UINT16_TYPE));
+    assert!(runtime_g.inhabits(&UINT32, &UINT32_TYPE));
+    assert!(runtime_g.inhabits(&UINT64, &UINT64_TYPE));
 
     Ok(())
 }
@@ -180,13 +180,13 @@ fn test_ints() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_floats() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(rt.inhabits(&5.875f32, &FLOAT32));
-    assert!(rt.inhabits(&5.875f64, &FLOAT64));
+    assert!(runtime_g.inhabits(&5.875f32, &FLOAT32));
+    assert!(runtime_g.inhabits(&5.875f64, &FLOAT64));
 
-    assert!(rt.inhabits(&FLOAT32, &FLOAT32_TYPE));
-    assert!(rt.inhabits(&FLOAT64, &FLOAT64_TYPE));
+    assert!(runtime_g.inhabits(&FLOAT32, &FLOAT32_TYPE));
+    assert!(runtime_g.inhabits(&FLOAT64, &FLOAT64_TYPE));
 
     Ok(())
 }
@@ -194,7 +194,7 @@ fn test_floats() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_arrays() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
     // Note that Vec<Value> is ArrayTerm.
     // Note also that this is constructing a Vec with nonhomogeneous elements, because
@@ -204,8 +204,8 @@ fn test_arrays() -> Result<()> {
     log::debug!("a0 (as Debug): {:?}", a0);
     log::debug!("a0.stringify(): {}", a0.stringify());
 
-    assert!(rt.inhabits(&a0, &ARRAY));
-    assert!(rt.inhabits(&ARRAY, &ARRAY_TYPE));
+    assert!(runtime_g.inhabits(&a0, &ARRAY));
+    assert!(runtime_g.inhabits(&ARRAY, &ARRAY_TYPE));
 
 //     let a1 = vec![100i8, 101i8, 99i8, 10i8];
 //     log::debug!("a1: {:?}", a1);
@@ -238,48 +238,48 @@ fn test_tuples() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_abstract_type() -> Result<()> {
-    let rt = RUNTIME_LA.read().unwrap();
+    let runtime_g = RUNTIME_LA.read().unwrap();
 
     {
         let x = &VOID;
-        log::debug!("rt.abstract_type_of({}): {}", rt.stringify(x), rt.stringify(rt.abstract_type_of(x).as_ref()));
+        log::debug!("runtime_g.abstract_type_of({}): {}", runtime_g.stringify(x), runtime_g.stringify(runtime_g.abstract_type_of(x).as_ref()));
     }
 
-    assert!(rt.eq(rt.abstract_type_of(&TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&VOID).as_ref(), &VOID_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&VOID_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&VOID).as_ref(), &VOID_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&VOID_TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&BOOL).as_ref(), &BOOL_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&BOOL_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&BOOL).as_ref(), &BOOL_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&BOOL_TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&TRUE).as_ref(), &TRUE_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&TRUE_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&FALSE).as_ref(), &FALSE_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&FALSE_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TRUE).as_ref(), &TRUE_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TRUE_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FALSE).as_ref(), &FALSE_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FALSE_TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&SINT8).as_ref(), &SINT8_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT8_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT16).as_ref(), &SINT16_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT16_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT32).as_ref(), &SINT32_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT32_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT64).as_ref(), &SINT64_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&SINT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT8).as_ref(), &SINT8_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT8_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT16).as_ref(), &SINT16_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT16_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT32).as_ref(), &SINT32_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT32_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT64).as_ref(), &SINT64_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT64_TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&UINT8).as_ref(), &UINT8_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT8_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT16).as_ref(), &UINT16_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT16_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT32).as_ref(), &UINT32_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT32_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT64).as_ref(), &UINT64_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&UINT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT8).as_ref(), &UINT8_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT8_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT16).as_ref(), &UINT16_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT16_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT32).as_ref(), &UINT32_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT32_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT64).as_ref(), &UINT64_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT64_TYPE).as_ref(), &TYPE));
 
-    assert!(rt.eq(rt.abstract_type_of(&FLOAT32).as_ref(), &FLOAT32_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&FLOAT32_TYPE).as_ref(), &TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&FLOAT64).as_ref(), &FLOAT64_TYPE));
-    assert!(rt.eq(rt.abstract_type_of(&FLOAT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT32).as_ref(), &FLOAT32_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT32_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT64).as_ref(), &FLOAT64_TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT64_TYPE).as_ref(), &TYPE));
 
     Ok(())
 }
@@ -321,7 +321,7 @@ fn test_value() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_symbol_table() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     let mut symbol_table = SymbolTable::default();
     assert!(!symbol_table.symbol_is_defined("blah"));
@@ -331,19 +331,19 @@ fn test_symbol_table() -> Result<()> {
 
     log::debug!("symbol_table: {:#?}", symbol_table);
 
-    // Now check RUNTIME_LA.global_symbol_table
+    // Now check GLOBAL_SYMBOL_TABLE_LA
     {
-        assert!(!RUNTIME_LA.read().unwrap().global_symbol_table.symbol_is_defined("bleh"));
+        assert!(!dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().symbol_is_defined("bleh"));
 
         // Have to acquire a separate write lock.
-        RUNTIME_LA.write().unwrap().global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
+        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bleh", Value::from(456f32))?;
 
         // Now acquire a read lock.
-        let global_symbol_table = &RUNTIME_LA.read().unwrap().global_symbol_table;
-        assert!(global_symbol_table.symbol_is_defined("bleh"));
-        assert_eq!(*global_symbol_table.resolve_symbol("bleh")?, Value::from(456f32));
+        let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+        assert!(global_symbol_table_g.symbol_is_defined("bleh"));
+        assert_eq!(*global_symbol_table_g.resolve_symbol("bleh")?, Value::from(456f32));
 
-        log::debug!("global_symbol_table: {:#?}", global_symbol_table);
+        log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
     }
 
     Ok(())
@@ -353,30 +353,62 @@ fn test_symbol_table() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_global_sym_ref_term() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     // Write a bunch of stuff into the global_symbol_table
     {
-        let mut write_lock = RUNTIME_LA.write().unwrap();
-        write_lock.global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
-        write_lock.global_symbol_table.define_symbol("stuff", Value::from(True{}))?;
-        write_lock.global_symbol_table.define_symbol("andthings", Value::from(Void{}))?;
+        let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
+        global_symbol_table_g.define_symbol("bleh", Value::from(456f32))?;
+        global_symbol_table_g.define_symbol("stuff", Value::from(True{}))?;
+        global_symbol_table_g.define_symbol("andthings", Value::from(Void{}))?;
     }
 
     // Now check GlobalSymRefTerm.
-    let r = GlobalSymRefTerm::from("bleh");
+    let r = GlobalSymRefTerm::new_unchecked("bleh".into());
     log::debug!("r (as Debug): {:#?}", r);
     log::debug!("r (as Display): {}" , r);
     log::debug!("r: {}" , r.stringify());
 
     let t = TupleTerm::from(vec![
-        GlobalSymRefTerm::from("bleh").into(),
-        GlobalSymRefTerm::from("stuff").into(),
-        GlobalSymRefTerm::from("andthings").into(),
+        GlobalSymRefTerm::new_unchecked("bleh".into()).into(),
+        GlobalSymRefTerm::new_unchecked("stuff".into()).into(),
+        GlobalSymRefTerm::new_unchecked("andthings".into()).into(),
     ]);
     log::debug!("t (as Debug): {:#?}", t);
     log::debug!("t (as Display): {}", t);
     log::debug!("t: {}", t.stringify());
+
+    // Test dereferenced
+    {
+        let r_dereferenced = r.dereferenced();
+        log::debug!("r_dereferenced (as Debug): {:#?}", r_dereferenced);
+        log::debug!("r_dereferenced.as_ref() (as Debug): {:#?}", r_dereferenced.as_ref());
+
+    //     use std::ops::Deref; // Is this somehow unnecessary?
+        log::debug!("r_dereferenced (as Display): {}", r_dereferenced);
+        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
+
+        // TODO: Figure out how to not have to use * (or maybe that's not actually possible).
+        assert_eq!(*r_dereferenced, Value::from(456f32));
+    }
+
+    // Test dereferenced_mut
+    {
+        let mut r_dereferenced = r.dereferenced_mut();
+        log::debug!("r_dereferenced (as Debug): {:#?}", r_dereferenced);
+        log::debug!("r_dereferenced.as_ref() (as Debug): {:#?}", r_dereferenced.as_ref());
+
+    //     use std::ops::Deref; // Is this somehow unnecessary?
+        log::debug!("r_dereferenced (as Display): {}", r_dereferenced);
+        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
+
+        // Now try modifying it
+        log::debug!("adding 1.0 to r...");
+        *r_dereferenced.as_mut().downcast_mut::<f32>().unwrap() += 1.0f32;
+
+        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
+        assert_eq!(*r_dereferenced, Value::from(457f32));
+    }
 
     Ok(())
 }
@@ -385,7 +417,7 @@ fn test_global_sym_ref_term() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_local_sym_ref_term() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::default()));
     local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32))?;
@@ -403,7 +435,7 @@ fn test_local_sym_ref_term() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_structs() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     log::debug!("STRUCT: {}", STRUCT.stringify());
     log::debug!("STRUCT_TYPE: {}", STRUCT_TYPE.stringify());
@@ -411,8 +443,7 @@ fn test_structs() -> Result<()> {
     assert!(STRUCT.inhabits(&STRUCT_TYPE));
 
     // Create the Hippo struct
-    RUNTIME_LA.write().unwrap()
-        .global_symbol_table
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap()
         .define_symbol(
             "Hippo",
             StructTerm::new(
@@ -420,18 +451,18 @@ fn test_structs() -> Result<()> {
                 vec![("age".into(), Uint8{}.into()), ("gravity".into(), Float64{}.into())].into()
             ).into()
         )?;
-    log::debug!("global_symbol_table: {:#?}", RUNTIME_LA.read().unwrap().global_symbol_table);
-    let hippo = GlobalSymRefTerm::from("Hippo");
+
+    let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+    log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
+    let hippo = GlobalSymRefTerm::new_unchecked("Hippo".into());
     log::debug!("hippo: {}", hippo.stringify());
 
-    let x = RUNTIME_LA.read().unwrap()
-        .global_symbol_table
+    let x = global_symbol_table_g
         .resolve_symbol("Hippo")?
         .downcast_ref::<StructTerm>()
         .unwrap()
         .construct(vec![23u8.into(), 999.0f64.into()].into())?;
-    let y = RUNTIME_LA.read().unwrap()
-        .global_symbol_table
+    let y = global_symbol_table_g
         .resolve_symbol("Hippo")?
         .downcast_ref::<StructTerm>()
         .unwrap()
@@ -863,25 +894,25 @@ fn eval_expr(expr: &Value) -> f64 {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ast() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     {
-        let mut rt = RUNTIME_LA.write().unwrap();
+        let mut runtime_g = RUNTIME_LA.write().unwrap();
 
-        rt.register_term::<Add>()?;
-        rt.register_term::<Sub>()?;
-        rt.register_term::<Mul>()?;
-        rt.register_term::<Div>()?;
-        rt.register_term::<Pow>()?;
-        rt.register_term::<Neg>()?;
+        runtime_g.register_term::<Add>()?;
+        runtime_g.register_term::<Sub>()?;
+        runtime_g.register_term::<Mul>()?;
+        runtime_g.register_term::<Div>()?;
+        runtime_g.register_term::<Pow>()?;
+        runtime_g.register_term::<Neg>()?;
 
-        rt.register_type::<BinOp>()?;
-        rt.register_type::<UnOp>()?;
-        rt.register_type::<Expr>()?;
+        runtime_g.register_type::<BinOp>()?;
+        runtime_g.register_type::<UnOp>()?;
+        runtime_g.register_type::<Expr>()?;
 
         // Non-uniform registrations.
-        rt.register_inhabits::<f64,Expr>().unwrap();
-        rt.register_inhabits::<TupleTerm,Expr>().unwrap();
+        runtime_g.register_inhabits::<f64,Expr>().unwrap();
+        runtime_g.register_inhabits::<TupleTerm,Expr>().unwrap();
     }
 
     let expr1 = TupleTerm::from(vec![123.0f64.into(), Add{}.into(), 456.0f64.into()]);
@@ -909,8 +940,7 @@ fn test_ast() -> Result<()> {
     // TEMP TESTING
     {
         // Create the BinOpExpr struct
-        RUNTIME_LA.write().unwrap()
-            .global_symbol_table
+        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap()
             .define_symbol(
                 "BinOpExpr",
                 StructTerm::new(
@@ -918,8 +948,8 @@ fn test_ast() -> Result<()> {
                     vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
                 ).into()
             )?;
-        log::debug!("global_symbol_table: {:#?}", RUNTIME_LA.read().unwrap().global_symbol_table);
-        let bin_op_expr = GlobalSymRefTerm::from("BinOpExpr");
+        log::debug!("global_symbol_table: {:#?}", dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap());
+        let bin_op_expr = GlobalSymRefTerm::new_unchecked("BinOpExpr".into());
         log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
 
 //         assert!(expr3.inhabits(&bin_op_expr));

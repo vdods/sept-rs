@@ -8,6 +8,8 @@ pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     /// should be represented by `...` or something.  For example, a term of type Array should have a
     /// label of "Array(...)"
     // NOTE: &'static str may change later.
+    // TODO: Maybe just use std::any::type_name, since the point of label is to identify Rust-specific
+    // implementation problems in the use of the sept runtime.
     fn label() -> &'static str;
     /// Defines if this term (which means an instance of the Rust type implementing this trait) has
     /// any parameters (i.e. "state variables").  If not, then this term is, by definition, a singleton.

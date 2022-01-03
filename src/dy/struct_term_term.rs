@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, GLOBAL_SYMBOL_TABLE_LA}, st::{self, Stringify, TermTrait}};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -22,8 +22,8 @@ pub struct StructTermTerm {
 // TEMP HACK: This should be Inhabits<Value> (once type_ is changed accordingly)
 impl st::Inhabits<dy::GlobalSymRefTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::GlobalSymRefTerm) -> bool {
-        let runtime_l = dy::RUNTIME_LA.read().unwrap();
-        let value: &dy::Value = match runtime_l.global_symbol_table.resolve_symbol(&self.type_.symbol_id) {
+        let global_symbol_table_g = GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+        let value: &dy::Value = match global_symbol_table_g.resolve_symbol(&self.type_.symbol_id) {
             Ok(value) => value,
             Err(e) => {
                 log::warn!("{} inhabitation in {} failed; {}; returning default value of false", Self::label(), rhs.stringify(), e);
@@ -53,8 +53,7 @@ impl StructTermTerm {
     pub fn new(type_: dy::GlobalSymRefTerm, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
         // Verify type inhabitation.
         // TODO: Use GlobalSymRefTermReadLock
-        dy::RUNTIME_LA.read().unwrap()
-            .global_symbol_table
+        dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap()
             .resolve_symbol(&type_.symbol_id)?
             .downcast_ref::<dy::StructTerm>()
             .expect("expected StructTerm")

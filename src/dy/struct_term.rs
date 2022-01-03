@@ -29,7 +29,7 @@ impl StructTerm {
     // TEMP HACK NAME -- this type-checks the contents.
     pub fn construct(&self, element_tuple_term: dy::TupleTerm) -> anyhow::Result<dy::StructTermTerm> {
         self.verify_inhabitation_by(&element_tuple_term)?;
-        Ok(dy::StructTermTerm::new(dy::GlobalSymRefTerm::from(self.symbol_id.clone()), element_tuple_term)?)
+        Ok(dy::StructTermTerm::new(dy::GlobalSymRefTerm::new_unchecked(self.symbol_id.clone()), element_tuple_term)?)
     }
     pub(crate) fn verify_inhabitation_by(&self, element_tuple_term: &dy::TupleTerm) -> anyhow::Result<()> {
         anyhow::ensure!(element_tuple_term.len() == self.ordered_type_v.len(), "mismatch in number of type elements in StructTerm (which was {}) and in element_tuple_term (which was {})", self.ordered_type_v.len(), element_tuple_term.len());
