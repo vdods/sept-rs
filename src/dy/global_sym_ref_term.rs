@@ -17,7 +17,13 @@ impl std::fmt::Display for GlobalSymRefTerm {
 
 impl st::Inhabits<dy::Value> for GlobalSymRefTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
-        dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolve_symbol(&self.symbol_id).unwrap().inhabits(rhs)
+        self.dereferenced().inhabits(rhs)
+    }
+}
+
+impl st::Inhabits<GlobalSymRefTerm> for GlobalSymRefTerm {
+    fn inhabits(&self, rhs: &GlobalSymRefTerm) -> bool {
+        self.symbol_id == rhs.symbol_id || self.dereferenced().inhabits(rhs.dereferenced().as_ref())
     }
 }
 
@@ -25,7 +31,7 @@ impl Stringify for GlobalSymRefTerm {
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn stringify(&self) -> String {
-        dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolve_symbol(&self.symbol_id).unwrap().stringify()
+        self.dereferenced().stringify()
     }
 }
 
@@ -38,17 +44,17 @@ impl TermTrait for GlobalSymRefTerm {
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn is_parametric_term(&self) -> bool {
-        GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolve_symbol(&self.symbol_id).unwrap().is_parametric_term()
+        self.dereferenced().is_parametric_term()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn is_type_term(&self) -> bool {
-        GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolve_symbol(&self.symbol_id).unwrap().is_type_term()
+        self.dereferenced().is_type_term()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolve_symbol(&self.symbol_id).unwrap().abstract_type()
+        self.dereferenced().abstract_type()
     }
 }
 
@@ -68,7 +74,7 @@ impl GlobalSymRefTerm {
     }
 
     /// Explicitly dereferences this ref.
-    // TODO: Should this somehow be implemented via Deref?
+    // TODO: Should this somehow be implemented via Deref? -- maybe not, otherwise there might be an infinite recursion.
     pub fn dereferenced<'a>(&'a self) -> dy::GlobalSymRefTermReadGuard<'a> {
         dy::GlobalSymRefTermReadGuard {
             global_sym_ref_term: self,
@@ -76,7 +82,7 @@ impl GlobalSymRefTerm {
         }
     }
     /// Explicitly dereferences this ref.
-    // TODO: Should this somehow be implemented via DerefMut?
+    // TODO: Should this somehow be implemented via DerefMut? -- maybe not, otherwise there might be an infinite recursion.
     pub fn dereferenced_mut<'a>(&'a self) -> dy::GlobalSymRefTermWriteGuard<'a> {
         dy::GlobalSymRefTermWriteGuard {
             global_sym_ref_term: self,

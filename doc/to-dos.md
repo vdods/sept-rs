@@ -35,3 +35,4 @@
     two analogous sides to the sept data model.  Then there would be compile-time and runtime versions of each
     trait, e.g. TermTrait, TypeTrait, etc.
 -   Implement macros for deriving traits, which will clean a ton of boilerplate up.
+-   Change StructTermTerm::type_ into a dy::Value to generalize.
