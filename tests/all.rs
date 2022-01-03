@@ -2,7 +2,7 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME, StructTerm, SymbolTable, TupleTerm, Value,
+        self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME_LA, StructTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
         self, ARRAY, ARRAY_TYPE,
@@ -14,7 +14,7 @@ use sept::{
         UINT8, Uint8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, Void, VOID_TYPE,
     },
 };
-use std::any::Any;
+use std::{any::Any, sync::{Arc, RwLock}};
 
 /// This will run once at load time (i.e. presumably before main function is called).
 #[ctor::ctor]
@@ -82,7 +82,7 @@ fn test_term_and_type() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_stringify() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     assert_eq!(rt.stringify(&true), "True");
     assert_eq!(rt.stringify(&false), "False");
@@ -93,7 +93,7 @@ fn test_runtime_stringify() -> Result<()> {
     assert_eq!(rt.stringify(&BOOL), "Bool");
     assert_eq!(rt.stringify(&BOOL_TYPE), "BoolType");
 
-    log::debug!("RUNTIME.stringify(&123): {:#?}", rt.stringify(&123));
+    log::debug!("RUNTIME_LA.stringify(&123): {:#?}", rt.stringify(&123));
 
     Ok(())
 }
@@ -101,7 +101,7 @@ fn test_runtime_stringify() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_eq() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     assert!(rt.eq(&true, &true));
     assert!(!rt.eq(&true, &false));
@@ -129,7 +129,7 @@ fn test_runtime_eq() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_runtime_inhabits() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     assert!(rt.inhabits(&true, &BOOL));
     assert!(rt.inhabits(&false, &BOOL));
@@ -152,7 +152,7 @@ fn test_runtime_inhabits() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ints() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     assert!(rt.inhabits(&123i8, &SINT8));
     assert!(rt.inhabits(&123i16, &SINT16));
@@ -180,7 +180,7 @@ fn test_ints() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_floats() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     assert!(rt.inhabits(&5.875f32, &FLOAT32));
     assert!(rt.inhabits(&5.875f64, &FLOAT64));
@@ -194,7 +194,7 @@ fn test_floats() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_arrays() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     // Note that Vec<Value> is ArrayTerm.
     // Note also that this is constructing a Vec with nonhomogeneous elements, because
@@ -238,7 +238,7 @@ fn test_tuples() -> Result<()> {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_abstract_type() -> Result<()> {
-    let rt = RUNTIME.read().unwrap();
+    let rt = RUNTIME_LA.read().unwrap();
 
     {
         let x = &VOID;
@@ -321,7 +321,7 @@ fn test_value() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_symbol_table() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME.write().unwrap().global_symbol_table.clear();
+    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
 
     let mut symbol_table = SymbolTable::default();
     assert!(!symbol_table.symbol_is_defined("blah"));
@@ -331,15 +331,15 @@ fn test_symbol_table() -> Result<()> {
 
     log::debug!("symbol_table: {:#?}", symbol_table);
 
-    // Now check RUNTIME.global_symbol_table
+    // Now check RUNTIME_LA.global_symbol_table
     {
-        assert!(!RUNTIME.read().unwrap().global_symbol_table.symbol_is_defined("bleh"));
+        assert!(!RUNTIME_LA.read().unwrap().global_symbol_table.symbol_is_defined("bleh"));
 
         // Have to acquire a separate write lock.
-        RUNTIME.write().unwrap().global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
+        RUNTIME_LA.write().unwrap().global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
 
         // Now acquire a read lock.
-        let global_symbol_table = &RUNTIME.read().unwrap().global_symbol_table;
+        let global_symbol_table = &RUNTIME_LA.read().unwrap().global_symbol_table;
         assert!(global_symbol_table.symbol_is_defined("bleh"));
         assert_eq!(*global_symbol_table.resolve_symbol("bleh")?, Value::from(456f32));
 
@@ -353,11 +353,11 @@ fn test_symbol_table() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_global_sym_ref_term() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME.write().unwrap().global_symbol_table.clear();
+    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
 
     // Write a bunch of stuff into the global_symbol_table
     {
-        let mut write_lock = RUNTIME.write().unwrap();
+        let mut write_lock = RUNTIME_LA.write().unwrap();
         write_lock.global_symbol_table.define_symbol("bleh", Value::from(456f32))?;
         write_lock.global_symbol_table.define_symbol("stuff", Value::from(True{}))?;
         write_lock.global_symbol_table.define_symbol("andthings", Value::from(Void{}))?;
@@ -383,9 +383,27 @@ fn test_global_sym_ref_term() -> Result<()> {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_local_sym_ref_term() -> Result<()> {
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
+
+    let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::default()));
+    local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32))?;
+    log::debug!("local_symbol_table_la: {:#?}", local_symbol_table_la.read().unwrap());
+
+    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la, "blah".into())?;
+    log::debug!("local_sym_ref_term: (as Debug) {:#?}", local_sym_ref_term);
+    log::debug!("local_sym_ref_term: (as Display) {}", local_sym_ref_term);
+    log::debug!("local_sym_ref_term: {}", local_sym_ref_term.stringify());
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_structs() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME.write().unwrap().global_symbol_table.clear();
+    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
 
     log::debug!("STRUCT: {}", STRUCT.stringify());
     log::debug!("STRUCT_TYPE: {}", STRUCT_TYPE.stringify());
@@ -393,7 +411,7 @@ fn test_structs() -> Result<()> {
     assert!(STRUCT.inhabits(&STRUCT_TYPE));
 
     // Create the Hippo struct
-    RUNTIME.write().unwrap()
+    RUNTIME_LA.write().unwrap()
         .global_symbol_table
         .define_symbol(
             "Hippo",
@@ -402,17 +420,17 @@ fn test_structs() -> Result<()> {
                 vec![("age".into(), Uint8{}.into()), ("gravity".into(), Float64{}.into())].into()
             ).into()
         )?;
-    log::debug!("global_symbol_table: {:#?}", RUNTIME.read().unwrap().global_symbol_table);
+    log::debug!("global_symbol_table: {:#?}", RUNTIME_LA.read().unwrap().global_symbol_table);
     let hippo = GlobalSymRefTerm::from("Hippo");
     log::debug!("hippo: {}", hippo.stringify());
 
-    let x = RUNTIME.read().unwrap()
+    let x = RUNTIME_LA.read().unwrap()
         .global_symbol_table
         .resolve_symbol("Hippo")?
         .downcast_ref::<StructTerm>()
         .unwrap()
         .construct(vec![23u8.into(), 999.0f64.into()].into())?;
-    let y = RUNTIME.read().unwrap()
+    let y = RUNTIME_LA.read().unwrap()
         .global_symbol_table
         .resolve_symbol("Hippo")?
         .downcast_ref::<StructTerm>()
@@ -845,10 +863,10 @@ fn eval_expr(expr: &Value) -> f64 {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_ast() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
-    RUNTIME.write().unwrap().global_symbol_table.clear();
+    RUNTIME_LA.write().unwrap().global_symbol_table.clear();
 
     {
-        let mut rt = RUNTIME.write().unwrap();
+        let mut rt = RUNTIME_LA.write().unwrap();
 
         rt.register_term::<Add>()?;
         rt.register_term::<Sub>()?;
@@ -891,7 +909,7 @@ fn test_ast() -> Result<()> {
     // TEMP TESTING
     {
         // Create the BinOpExpr struct
-        RUNTIME.write().unwrap()
+        RUNTIME_LA.write().unwrap()
             .global_symbol_table
             .define_symbol(
                 "BinOpExpr",
@@ -900,7 +918,7 @@ fn test_ast() -> Result<()> {
                     vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
                 ).into()
             )?;
-        log::debug!("global_symbol_table: {:#?}", RUNTIME.read().unwrap().global_symbol_table);
+        log::debug!("global_symbol_table: {:#?}", RUNTIME_LA.read().unwrap().global_symbol_table);
         let bin_op_expr = GlobalSymRefTerm::from("BinOpExpr");
         log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
 

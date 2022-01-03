@@ -15,6 +15,8 @@ mod inhabits_trait;
 mod int;
 mod int_term;
 mod int_type;
+mod local_sym_ref;
+mod local_sym_ref_type;
 mod non_parametric_term_trait;
 mod stringify_trait;
 mod r#struct;
@@ -49,6 +51,8 @@ pub use crate::st::{
     int::{IntN, SIGNED, SINT8, Sint8, SINT16, Sint16, SINT32, Sint32, SINT64, Sint64, UNSIGNED, UINT8, Uint8, UINT16, Uint16, UINT32, Uint32, UINT64, Uint64},
     int_term::{},
     int_type::{IntNType, SINT8_TYPE, Sint8Type, SINT16_TYPE, Sint16Type, SINT32_TYPE, Sint32Type, SINT64_TYPE, Sint64Type, UINT8_TYPE, Uint8Type, UINT16_TYPE, Uint16Type, UINT32_TYPE, Uint32Type, UINT64_TYPE, Uint64Type},
+    local_sym_ref::{LOCAL_SYM_REF, LocalSymRef},
+    local_sym_ref_type::{LOCAL_SYM_REF_TYPE, LocalSymRefType},
     non_parametric_term_trait::NonParametricTermTrait,
     stringify_trait::Stringify,
     r#struct::{STRUCT, Struct},

@@ -1,4 +1,4 @@
-use crate::{dy::{self, RUNTIME}, st::{self, /*GlobalSymRef, Inhabits, */Stringify, TermTrait}};
+use crate::{dy::{self, RUNTIME_LA}, st::{self, /*GlobalSymRef, Inhabits, */Stringify, TermTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
@@ -22,6 +22,7 @@ impl std::fmt::Display for GlobalSymRefTerm {
     }
 }
 
+// TODO: Maybe replace this with new_checked and new_unchecked.
 impl From<&str> for GlobalSymRefTerm {
     fn from(s: &str) -> Self {
         Self { symbol_id: s.into() }
@@ -45,7 +46,7 @@ impl Stringify for GlobalSymRefTerm {
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn stringify(&self) -> String {
-        RUNTIME.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().stringify()
+        RUNTIME_LA.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().stringify()
     }
 }
 
@@ -58,17 +59,17 @@ impl TermTrait for GlobalSymRefTerm {
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn is_parametric_term(&self) -> bool {
-        RUNTIME.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().is_parametric_term()
+        RUNTIME_LA.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().is_parametric_term()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn is_type_term(&self) -> bool {
-        RUNTIME.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().is_type_term()
+        RUNTIME_LA.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().is_type_term()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        RUNTIME.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().abstract_type()
+        RUNTIME_LA.read().unwrap().global_symbol_table.resolve_symbol(&self.symbol_id).unwrap().abstract_type()
     }
 }
 

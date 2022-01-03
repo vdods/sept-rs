@@ -1,4 +1,4 @@
-use crate::{dy::{IntoValue, RUNTIME}, st::{self, Stringify, TermTrait}};
+use crate::{dy::{IntoValue, RUNTIME_LA}, st::{self, Stringify, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -43,26 +43,26 @@ impl<T: TermTrait + IntoValue + 'static> From<T> for Value {
 
 impl st::Inhabits<Value> for Value {
     fn inhabits(&self, rhs: &Value) -> bool {
-        RUNTIME.read().unwrap().inhabits(self.as_ref(), rhs.as_ref())
+        RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs.as_ref())
     }
 }
 
 impl<T: st::TypeTrait + IntoValue + 'static> st::Inhabits<T> for Value {
     fn inhabits(&self, rhs: &T) -> bool {
         let rhs_: &ValueGuts = rhs;
-        RUNTIME.read().unwrap().inhabits(self.as_ref(), rhs_)
+        RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs_)
     }
 }
 
 impl PartialEq<Value> for Value {
     fn eq(&self, other: &Value) -> bool {
-        RUNTIME.read().unwrap().eq(self.as_ref(), other.as_ref())
+        RUNTIME_LA.read().unwrap().eq(self.as_ref(), other.as_ref())
     }
 }
 
 impl Stringify for Value {
     fn stringify(&self) -> String {
-        RUNTIME.read().unwrap().stringify(self.as_ref())
+        RUNTIME_LA.read().unwrap().stringify(self.as_ref())
     }
 }
 
@@ -73,13 +73,13 @@ impl TermTrait for Value {
         "Value"
     }
     fn is_parametric_term(&self) -> bool {
-        RUNTIME.read().unwrap().is_parametric_term(self.as_ref())
+        RUNTIME_LA.read().unwrap().is_parametric_term(self.as_ref())
     }
     fn is_type_term(&self) -> bool {
-        RUNTIME.read().unwrap().is_type_term(self.as_ref())
+        RUNTIME_LA.read().unwrap().is_type_term(self.as_ref())
     }
     fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Value(RUNTIME.read().unwrap().abstract_type_of(self.as_ref()))
+        Value(RUNTIME_LA.read().unwrap().abstract_type_of(self.as_ref()))
     }
 }
 

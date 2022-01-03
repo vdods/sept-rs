@@ -1,16 +1,16 @@
 use crate::{
-    dy::{ArrayTerm, GlobalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, SymbolTable, ValueGuts},
+    dy::{ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, SymbolTable, ValueGuts},
     st::{
         self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
-        GlobalSymRef, GlobalSymRefType,
-        Inhabits, Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
+        GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef, LocalSymRefType,
+        Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
         Struct, StructType, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
         Void, VoidType,
     },
 };
-use std::{any::TypeId, collections::{HashMap, HashSet}};
+use std::{any::TypeId, collections::{HashMap, HashSet}, sync::{Arc, RwLock}};
 
 pub type StringifyFn = fn(x: &ValueGuts) -> String;
 pub type LabelFn = fn() -> &'static str;
@@ -108,8 +108,11 @@ impl Runtime {
         runtime.register_type::<TupleType>().unwrap();
         // NOTE: This is a special type, and requires special handling (TODO)
 //         runtime.register_type::<GlobalSymRefTerm>().unwrap();
+//         runtime.register_type::<LocalSymRefTerm>().unwrap();
         runtime.register_type::<GlobalSymRef>().unwrap();
         runtime.register_type::<GlobalSymRefType>().unwrap();
+        runtime.register_type::<LocalSymRef>().unwrap();
+        runtime.register_type::<LocalSymRefType>().unwrap();
         runtime.register_type::<StructTerm>().unwrap();
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
@@ -120,6 +123,8 @@ impl Runtime {
 
         runtime.register_label::<GlobalSymRefTerm>().unwrap();
         runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
+        runtime.register_label::<LocalSymRefTerm>().unwrap();
+        runtime.register_stringify::<LocalSymRefTerm>().unwrap();
         runtime.register_eq::<bool, True>().unwrap();
         runtime.register_eq::<bool, False>().unwrap();
         // TODO: referential transparency has to be handled with special code
@@ -135,6 +140,10 @@ impl Runtime {
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_parametric_term::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_type_term::<GlobalSymRefTerm>().unwrap();
+
+        runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
+        runtime.register_is_parametric_term::<LocalSymRefTerm>().unwrap();
+        runtime.register_is_type_term::<LocalSymRefTerm>().unwrap();
 
         runtime
     }
@@ -303,7 +312,6 @@ impl Runtime {
     pub fn stringify(&self, x: &ValueGuts) -> String {
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
-            // None => Err(anyhow::anyhow!("no stringify fn found for {:?}", x.type_id())),
             None => {
                 // panic!("no stringify fn found for {:?}", x.type_id()),
                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
@@ -382,5 +390,5 @@ impl Runtime {
 lazy_static::lazy_static! {
     /// This is the static singleton Runtime.  TODO: This probably won't suffice once a program can
     /// add stuff to Runtime at runtime.  But maybe some kind of layering structure could work.
-    pub static ref RUNTIME: std::sync::RwLock<Runtime> = std::sync::RwLock::new(Runtime::new());
+    pub static ref RUNTIME_LA: Arc<RwLock<Runtime>> = Arc::new(RwLock::new(Runtime::new()));
 }

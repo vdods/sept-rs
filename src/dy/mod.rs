@@ -2,6 +2,7 @@ mod array_term;
 mod dyn_np_term;
 mod global_sym_ref_term;
 mod into_value;
+mod local_sym_ref_term;
 mod runtime;
 mod struct_term;
 mod struct_term_term;
@@ -15,7 +16,8 @@ pub use crate::dy::{
     dyn_np_term::DynNPTerm,
     global_sym_ref_term::GlobalSymRefTerm,
     into_value::IntoValue,
-    runtime::{BinaryPredicate, RUNTIME, Runtime, StringifyFn, UnaryPredicate},
+    local_sym_ref_term::LocalSymRefTerm,
+    runtime::{BinaryPredicate, RUNTIME_LA, Runtime, StringifyFn, UnaryPredicate},
     struct_term::StructTerm,
     struct_term_term::StructTermTerm,
     symbol_table::SymbolTable,
