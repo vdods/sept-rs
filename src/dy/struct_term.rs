@@ -22,6 +22,7 @@ impl dy::IntoValue for StructTerm {}
 /// TODO: Implement projection to TupleTerm of types.
 impl StructTerm {
     pub fn new(symbol_id: String, ordered_type_v: Vec<(String, dy::Value)>) -> Self {
+        // TODO: Check that all elements in ordered_type_v are actually types.
         // Generate name_index_m.
         let name_index_m: HashMap<String, usize> = ordered_type_v.iter().enumerate().map(|(i, (name, _))| (name.clone(), i)).collect();
         Self { symbol_id, ordered_type_v, name_index_m }

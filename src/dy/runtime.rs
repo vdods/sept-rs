@@ -117,6 +117,75 @@ impl Runtime {
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
 
+        // Have to go through and explicitly register the Eq types, since that can't be done
+        // (to my knowledge) using generics specialization.  There's probably another reasonable
+        // way to do this, but I don't know.
+        {
+            runtime.reregister_as_eq::<bool>().unwrap();
+            runtime.reregister_as_eq::<False>().unwrap();
+            runtime.reregister_as_eq::<True>().unwrap();
+            runtime.reregister_as_eq::<i8>().unwrap();
+            runtime.reregister_as_eq::<i16>().unwrap();
+            runtime.reregister_as_eq::<i32>().unwrap();
+            runtime.reregister_as_eq::<i64>().unwrap();
+            runtime.reregister_as_eq::<u8>().unwrap();
+            runtime.reregister_as_eq::<u16>().unwrap();
+            runtime.reregister_as_eq::<u32>().unwrap();
+            runtime.reregister_as_eq::<u64>().unwrap();
+            // Note that floating point types are NOT here, since they don't implelement Eq (e.g. NaN != NaN).
+            runtime.reregister_as_eq::<Void>().unwrap();
+            // ArrayTerm isn't Eq, because it might contain a float.
+    //         runtime.reregister_as_eq::<ArrayTerm>().unwrap();
+            // StructTermTerm isn't Eq, because it might contain a float.
+    //         runtime.reregister_as_eq::<StructTermTerm>().unwrap();
+
+            runtime.reregister_as_eq::<Term>().unwrap();
+            runtime.reregister_as_eq::<Type>().unwrap();
+            runtime.reregister_as_eq::<Bool>().unwrap();
+            runtime.reregister_as_eq::<BoolType>().unwrap();
+            runtime.reregister_as_eq::<EmptyType>().unwrap();
+            runtime.reregister_as_eq::<FalseType>().unwrap();
+            runtime.reregister_as_eq::<TrueType>().unwrap();
+            runtime.reregister_as_eq::<Sint8>().unwrap();
+            runtime.reregister_as_eq::<Sint16>().unwrap();
+            runtime.reregister_as_eq::<Sint32>().unwrap();
+            runtime.reregister_as_eq::<Sint64>().unwrap();
+            runtime.reregister_as_eq::<Sint8Type>().unwrap();
+            runtime.reregister_as_eq::<Sint16Type>().unwrap();
+            runtime.reregister_as_eq::<Sint32Type>().unwrap();
+            runtime.reregister_as_eq::<Sint64Type>().unwrap();
+            runtime.reregister_as_eq::<Uint8>().unwrap();
+            runtime.reregister_as_eq::<Uint16>().unwrap();
+            runtime.reregister_as_eq::<Uint32>().unwrap();
+            runtime.reregister_as_eq::<Uint64>().unwrap();
+            runtime.reregister_as_eq::<Uint8Type>().unwrap();
+            runtime.reregister_as_eq::<Uint16Type>().unwrap();
+            runtime.reregister_as_eq::<Uint32Type>().unwrap();
+            runtime.reregister_as_eq::<Uint64Type>().unwrap();
+            runtime.reregister_as_eq::<Float32>().unwrap();
+            runtime.reregister_as_eq::<Float64>().unwrap();
+            runtime.reregister_as_eq::<Float32Type>().unwrap();
+            runtime.reregister_as_eq::<Float64Type>().unwrap();
+            runtime.reregister_as_eq::<VoidType>().unwrap();
+            runtime.reregister_as_eq::<Array>().unwrap();
+            runtime.reregister_as_eq::<ArrayType>().unwrap();
+            // TupleTerm isn't Eq, because it might contain a float
+//             runtime.reregister_as_eq::<TupleTerm>().unwrap();
+            runtime.reregister_as_eq::<Tuple>().unwrap();
+            runtime.reregister_as_eq::<TupleType>().unwrap();
+            // NOTE: This is a special type, and requires special handling (TODO)
+    //         runtime.reregister_as_eq::<GlobalSymRefTerm>().unwrap();
+    //         runtime.reregister_as_eq::<LocalSymRefTerm>().unwrap();
+            runtime.reregister_as_eq::<GlobalSymRef>().unwrap();
+            runtime.reregister_as_eq::<GlobalSymRefType>().unwrap();
+            runtime.reregister_as_eq::<LocalSymRef>().unwrap();
+            runtime.reregister_as_eq::<LocalSymRefType>().unwrap();
+            // StructTerm isn't Eq because it's possible that a type might not implement Eq.
+//             runtime.reregister_as_eq::<StructTerm>().unwrap();
+            runtime.reregister_as_eq::<Struct>().unwrap();
+            runtime.reregister_as_eq::<StructType>().unwrap();
+        }
+
         // Other, non-uniform registrations.
         // TODO: Need to somehow make it so that everything inhabits Term
         // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
@@ -125,11 +194,11 @@ impl Runtime {
         runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
         runtime.register_label::<LocalSymRefTerm>().unwrap();
         runtime.register_stringify::<LocalSymRefTerm>().unwrap();
-        runtime.register_eq::<bool, True>().unwrap();
-        runtime.register_eq::<bool, False>().unwrap();
+        runtime.register_partial_eq::<bool, True>().unwrap();
+        runtime.register_partial_eq::<bool, False>().unwrap();
         // TODO: referential transparency has to be handled with special code
-        runtime.register_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
-        runtime.register_eq::<LocalSymRefTerm, LocalSymRefTerm>().unwrap();
+        runtime.register_partial_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime.register_partial_eq::<LocalSymRefTerm, LocalSymRefTerm>().unwrap();
         runtime.register_inhabits::<bool, FalseType>().unwrap();
         runtime.register_inhabits::<bool, TrueType>().unwrap();
         runtime.register_inhabits::<False, Bool>().unwrap();
@@ -165,7 +234,7 @@ impl Runtime {
         anyhow::ensure!(self.term_s.insert(type_id), "collision with already-registered term {}", self.label_of(type_id));
         self.register_label::<T>()?;
         self.register_stringify::<T>()?;
-        self.register_eq::<T, T>()?;
+        self.register_partial_eq::<T, T>()?;
         self.register_inhabits::<T, <T as TermTrait>::AbstractTypeFnReturnType>()?;
         self.register_abstract_type::<T>()?;
         self.register_is_parametric_term::<T>()?;
@@ -287,7 +356,24 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub fn register_eq<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
+    /// Note that this actually requires that there already be an eq_fn for T to itself, and it re-registers it
+    /// under the stronger condition that T implement Eq.
+    pub fn reregister_as_eq<T: Eq + 'static>(&mut self) -> Result<()> {
+        let type_id_pair = (TypeId::of::<T>(), TypeId::of::<T>());
+        anyhow::ensure!(self.eq_fn_m.contains_key(&type_id_pair), "reregister_as_eq can only be used if register_partial_eq has been used for ({}, {})", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+        // TODO: If the type is a non-parametric term (i.e. singletons), then we can just compare their TypeId values.
+        let eq_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
+            // Since the type is the same, and that type implements Eq, we can compare the references' pointer values directly.
+            std::ptr::eq(lhs, rhs) || *lhs.downcast_ref::<T>().unwrap() == *rhs.downcast_ref::<T>().unwrap()
+        };
+
+        let is_transposed = type_id_pair.0 > type_id_pair.1;
+        let type_id_pair_ = if is_transposed { (type_id_pair.1, type_id_pair.0) } else { type_id_pair };
+        // This unwrap won't panic because of the self.eq_fn_m.contains_key check above.
+        self.eq_fn_m.insert(type_id_pair_, RegisteredEqualsFn { eq_fn, is_transposed }).unwrap();
+        Ok(())
+    }
+    pub fn register_partial_eq<Lhs: PartialEq<Rhs> + 'static, Rhs: 'static>(&mut self) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
         let eq_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
             *lhs.downcast_ref::<Lhs>().unwrap() == *rhs.downcast_ref::<Rhs>().unwrap()
@@ -362,7 +448,6 @@ impl Runtime {
     }
     // This method does only the eq operation, not handling referential transparency.
     fn eq_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
-        // TODO: Check if the types are singletons (i.e. NonParametricTerm) and then can just compare their type id.
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
         let is_transposed = lhs_type_id > rhs_type_id;
