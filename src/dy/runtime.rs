@@ -1,5 +1,5 @@
 use crate::{
-    dy::{ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, TupleTerm, StructTerm, StructTermTerm, ValueGuts},
+    dy::{self, ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, StructTerm, StructTermTerm, TupleTerm, ValueGuts},
     st::{
         self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
@@ -17,6 +17,7 @@ pub type LabelFn = fn() -> &'static str;
 pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
+pub type DereferencedOnceFn = fn(x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>>;
 
 struct RegisteredEqualsFn {
     eq_fn: BinaryPredicate,
@@ -41,6 +42,7 @@ pub struct Runtime {
     is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
+    dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
 }
 
 impl Runtime {
@@ -126,13 +128,12 @@ impl Runtime {
         runtime.register_eq::<bool, True>().unwrap();
         runtime.register_eq::<bool, False>().unwrap();
         // TODO: referential transparency has to be handled with special code
-//         runtime.register_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime.register_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime.register_eq::<LocalSymRefTerm, LocalSymRefTerm>().unwrap();
         runtime.register_inhabits::<bool, FalseType>().unwrap();
         runtime.register_inhabits::<bool, TrueType>().unwrap();
         runtime.register_inhabits::<False, Bool>().unwrap();
         runtime.register_inhabits::<True, Bool>().unwrap();
-        // TODO: special handling for inhabitation of and by GlobalSymRefTerm
-//         runtime.register_inhabits::<GlobalSymRef, GlobalSymRefType>().unwrap();
         runtime.register_inhabits::<TupleTerm, StructTerm>().unwrap();
 
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
@@ -142,6 +143,9 @@ impl Runtime {
         runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
         runtime.register_is_parametric_term::<LocalSymRefTerm>().unwrap();
         runtime.register_is_type_term::<LocalSymRefTerm>().unwrap();
+
+        runtime.register_dereferenced_once::<GlobalSymRefTerm>().unwrap();
+        runtime.register_dereferenced_once::<LocalSymRefTerm>().unwrap();
 
         runtime
     }
@@ -300,6 +304,19 @@ impl Runtime {
             None => Ok(())
         }
     }
+    pub(crate) fn register_dereferenced_once_fn(&mut self, type_id: TypeId, dereferenced_once_fn: DereferencedOnceFn) -> Result<()> {
+        match self.dereferenced_once_fn_m.insert(type_id, dereferenced_once_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered deref fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub fn register_dereferenced_once<T: dy::TransparentRefTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let dereferenced_once_fn = |x: &ValueGuts| -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+            x.downcast_ref::<T>().unwrap().dereferenced_once()
+        };
+        Ok(self.register_dereferenced_once_fn(type_id, dereferenced_once_fn)?)
+    }
 
     /// This gives the [non-parametric] label of the concrete type.  For example, even though
     /// GlobalSymRefTerm is referentially transparent, its label is still GlobalSymRefTerm.
@@ -309,9 +326,8 @@ impl Runtime {
             None => format!("{:?}", type_id),
         }
     }
+    // Note that this does not use referential transparency.  Stringify should be renamed to ConcreteText or something.
     pub fn stringify(&self, x: &ValueGuts) -> String {
-        // TODO: Handle referential transparency here
-
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             None => {
@@ -322,8 +338,30 @@ impl Runtime {
         }
     }
     pub fn eq(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
-        // TODO: Handle referential transparency here
-
+        // Handle referential transparency.
+        let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
+        let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
+        match (lhs_dereferenced, rhs_dereferenced) {
+            (MaybeDereferencedValue::NonRef(lhs_value_guts), MaybeDereferencedValue::NonRef(rhs_value_guts)) => {
+                self.eq_impl(lhs_value_guts, rhs_value_guts)
+            },
+            (MaybeDereferencedValue::NonRef(lhs_value_guts), MaybeDereferencedValue::Ref(rhs_value_la)) => {
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.eq_impl(lhs_value_guts, rhs_value_g.as_ref())
+            }
+            (MaybeDereferencedValue::Ref(lhs_value_la), MaybeDereferencedValue::NonRef(rhs_value_guts)) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                self.eq_impl(lhs_value_g.as_ref(), rhs_value_guts)
+            },
+            (MaybeDereferencedValue::Ref(lhs_value_la), MaybeDereferencedValue::Ref(rhs_value_la)) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.eq_impl(lhs_value_g.as_ref(), rhs_value_g.as_ref())
+            },
+        }
+    }
+    // This method does only the eq operation, not handling referential transparency.
+    fn eq_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
         // TODO: Check if the types are singletons (i.e. NonParametricTerm) and then can just compare their type id.
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
@@ -346,8 +384,29 @@ impl Runtime {
         !self.eq(lhs, rhs)
     }
     pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
-        // TODO: Handle referential transparency here
-
+        // Handle referential transparency.
+        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        let t_dereferenced = self.dereferenced(t).expect("dereferenced failed");
+        match (x_dereferenced, t_dereferenced) {
+            (MaybeDereferencedValue::NonRef(x_value_guts), MaybeDereferencedValue::NonRef(t_value_guts)) => {
+                self.inhabits_impl(x_value_guts, t_value_guts)
+            },
+            (MaybeDereferencedValue::NonRef(x_value_guts), MaybeDereferencedValue::Ref(t_value_la)) => {
+                let t_value_g = t_value_la.read().unwrap();
+                self.inhabits_impl(x_value_guts, t_value_g.as_ref())
+            }
+            (MaybeDereferencedValue::Ref(x_value_la), MaybeDereferencedValue::NonRef(t_value_guts)) => {
+                let x_value_g = x_value_la.read().unwrap();
+                self.inhabits_impl(x_value_g.as_ref(), t_value_guts)
+            },
+            (MaybeDereferencedValue::Ref(x_value_la), MaybeDereferencedValue::Ref(t_value_la)) => {
+                let x_value_g = x_value_la.read().unwrap();
+                let t_value_g = t_value_la.read().unwrap();
+                self.inhabits_impl(x_value_g.as_ref(), t_value_g.as_ref())
+            },
+        }
+    }
+    fn inhabits_impl(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
         let type_id_pair = (x.type_id(), t.type_id());
         match self.inhabits_fn_m.get(&type_id_pair) {
             Some(inhabits_fn) => inhabits_fn(x, t),
@@ -359,8 +418,19 @@ impl Runtime {
         }
     }
     pub fn abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
-        // TODO: Handle referential transparency here
-
+        // Handle referential transparency.
+        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_dereferenced {
+            MaybeDereferencedValue::NonRef(x_value_guts) => {
+                self.abstract_type_of_impl(x_value_guts)
+            },
+            MaybeDereferencedValue::Ref(x_value_la) => {
+                let x_value_g = x_value_la.read().unwrap();
+                self.abstract_type_of_impl(x_value_g.as_ref())
+            },
+        }
+    }
+    fn abstract_type_of_impl(&self, x: &ValueGuts) -> Box<ValueGuts> {
         let type_id = x.type_id();
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
@@ -372,8 +442,19 @@ impl Runtime {
         }
     }
     pub fn is_parametric_term(&self, x: &ValueGuts) -> bool {
-        // TODO: Handle referential transparency here
-
+        // Handle referential transparency.
+        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_dereferenced {
+            MaybeDereferencedValue::NonRef(x_value_guts) => {
+                self.is_parametric_term_impl(x_value_guts)
+            },
+            MaybeDereferencedValue::Ref(x_value_la) => {
+                let x_value_g = x_value_la.read().unwrap();
+                self.is_parametric_term_impl(x_value_g.as_ref())
+            },
+        }
+    }
+    fn is_parametric_term_impl(&self, x: &ValueGuts) -> bool {
         match self.is_parametric_term_fn_m.get(&x.type_id()) {
             Some(is_parametric_term_fn) => is_parametric_term_fn(x),
             None => {
@@ -385,8 +466,19 @@ impl Runtime {
         }
     }
     pub fn is_type_term(&self, x: &ValueGuts) -> bool {
-        // TODO: Handle referential transparency here
-
+        // Handle referential transparency.
+        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_dereferenced {
+            MaybeDereferencedValue::NonRef(x_value_guts) => {
+                self.is_type_term_impl(x_value_guts)
+            },
+            MaybeDereferencedValue::Ref(x_value_la) => {
+                let x_value_g = x_value_la.read().unwrap();
+                self.is_type_term_impl(x_value_g.as_ref())
+            },
+        }
+    }
+    fn is_type_term_impl(&self, x: &ValueGuts) -> bool {
         match self.is_type_term_fn_m.get(&x.type_id()) {
             Some(is_type_term_fn) => is_type_term_fn(x),
             None => {
@@ -397,10 +489,45 @@ impl Runtime {
             }
         }
     }
+    pub fn is_transparent_ref_term(&self, x: &ValueGuts) -> bool {
+        self.dereferenced_once_fn_m.contains_key(&x.type_id())
+    }
+    pub fn dereferenced_once(&self, x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+        match self.dereferenced_once_fn_m.get(&x.type_id()) {
+            Some(dereferenced_once_fn) => Ok(dereferenced_once_fn(x)?),
+            None => {
+                panic!("no dereferenced_once fn found for {:?}", x.type_id());
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no dereferenced_once fn found for {:?}", x.type_id())
+            }
+        }
+    }
+    /// This fully dereferences a value.  If it's not a transparent reference, it just returns it,
+    /// otherwise it iterates dereferenced_once until it's not a transparent reference.
+    // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
+    pub fn dereferenced<'a>(&self, x: &'a ValueGuts) -> anyhow::Result<MaybeDereferencedValue<'a>> {
+        match self.dereferenced_once_fn_m.get(&x.type_id()) {
+            Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::Ref(self.dereferenced_inner(dereferenced_once_fn(x)?)?)),
+            None => Ok(MaybeDereferencedValue::NonRef(x))
+        }
+    }
+    // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
+    pub(crate) fn dereferenced_inner(&self, value_la: Arc<RwLock<dy::Value>>) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+        let value_g = value_la.read().unwrap();
+        match self.dereferenced_once_fn_m.get(&value_g.as_ref().type_id()) {
+            Some(dereferenced_once_fn) => Ok(self.dereferenced_inner(dereferenced_once_fn(value_g.as_ref())?)?),
+            None => Ok(value_la.clone())
+        }
+    }
+}
+
+// This sucks, and so does Runtime::dereferenced and dereferenced_inner, and all the call sites in this file.
+pub enum MaybeDereferencedValue<'a> {
+    NonRef(&'a ValueGuts),
+    Ref(Arc<RwLock<dy::Value>>),
 }
 
 lazy_static::lazy_static! {
-    /// This is the static singleton Runtime.  TODO: This probably won't suffice once a program can
-    /// add stuff to Runtime at runtime.  But maybe some kind of layering structure could work.
+    /// This is the static singleton Runtime, where terms and types should be registered for dynamic
+    /// operation of the sept data model.
     pub static ref RUNTIME_LA: Arc<RwLock<Runtime>> = Arc::new(RwLock::new(Runtime::new()));
 }

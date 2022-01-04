@@ -10,6 +10,7 @@ pub trait TermTrait: Any + Send + Sync + Debug + Sized {
     // NOTE: &'static str may change later.
     // TODO: Maybe just use std::any::type_name, since the point of label is to identify Rust-specific
     // implementation problems in the use of the sept runtime.
+    // TODO: Maybe call this concrete_type_name
     fn label() -> &'static str;
     /// Defines if this term (which means an instance of the Rust type implementing this trait) has
     /// any parameters (i.e. "state variables").  If not, then this term is, by definition, a singleton.

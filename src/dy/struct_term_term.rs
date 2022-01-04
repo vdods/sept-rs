@@ -23,14 +23,15 @@ pub struct StructTermTerm {
 impl st::Inhabits<dy::GlobalSymRefTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::GlobalSymRefTerm) -> bool {
         let global_symbol_table_g = GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
-        let value: &dy::Value = match global_symbol_table_g.resolve_symbol(&self.type_.symbol_id) {
-            Ok(value) => value,
+        let value_la = match global_symbol_table_g.resolved_symbol(&self.type_.symbol_id) {
+            Ok(value_la) => value_la,
             Err(e) => {
                 log::warn!("{} inhabitation in {} failed; {}; returning default value of false", Self::label(), rhs.stringify(), e);
                 return false;
             }
         };
-        let struct_term = match value.downcast_ref::<dy::StructTerm>() {
+        let value_g = value_la.read().unwrap();
+        let struct_term = match value_g.downcast_ref::<dy::StructTerm>() {
             Some(struct_term) => struct_term,
             None => {
                 log::warn!("{} inhabitation in {} failed because type is not a {}; returning default value of false", Self::label(), rhs.stringify(), dy::StructTerm::label());
@@ -54,7 +55,8 @@ impl StructTermTerm {
         // Verify type inhabitation.
         // TODO: Use GlobalSymRefTermReadLock
         dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap()
-            .resolve_symbol(&type_.symbol_id)?
+            .resolved_symbol(&type_.symbol_id)?
+            .read().unwrap()
             .downcast_ref::<dy::StructTerm>()
             .expect("expected StructTerm")
             .verify_inhabitation_by(&element_tuple_term)?;

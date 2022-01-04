@@ -327,7 +327,7 @@ fn test_symbol_table() -> Result<()> {
     assert!(!symbol_table.symbol_is_defined("blah"));
     symbol_table.define_symbol("blah", Value::from(123i32))?;
     assert!(symbol_table.symbol_is_defined("blah"));
-    assert_eq!(*symbol_table.resolve_symbol("blah")?, Value::from(123i32));
+    assert_eq!(*symbol_table.resolved_symbol("blah")?.read().unwrap(), Value::from(123i32));
 
     log::debug!("symbol_table: {:#?}", symbol_table);
 
@@ -341,7 +341,7 @@ fn test_symbol_table() -> Result<()> {
         // Now acquire a read lock.
         let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         assert!(global_symbol_table_g.symbol_is_defined("bleh"));
-        assert_eq!(*global_symbol_table_g.resolve_symbol("bleh")?, Value::from(456f32));
+        assert_eq!(*global_symbol_table_g.resolved_symbol("bleh")?.read().unwrap(), Value::from(456f32));
 
         log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
     }
@@ -380,34 +380,88 @@ fn test_global_sym_ref_term() -> Result<()> {
 
     // Test dereferenced
     {
-        let r_dereferenced = r.dereferenced();
-        log::debug!("r_dereferenced (as Debug): {:#?}", r_dereferenced);
-        log::debug!("r_dereferenced.as_ref() (as Debug): {:#?}", r_dereferenced.as_ref());
+        let r_resolved_la = r.resolved()?;
+        let r_resolved_g = r_resolved_la.read().unwrap();
+        log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
+        log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
 
     //     use std::ops::Deref; // Is this somehow unnecessary?
-        log::debug!("r_dereferenced (as Display): {}", r_dereferenced);
-        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
+        log::debug!("r_resolved_g (as Display): {}", r_resolved_g);
+        log::debug!("r_resolved_g: {}", r_resolved_g.stringify());
 
         // TODO: Figure out how to not have to use * (or maybe that's not actually possible).
-        assert_eq!(*r_dereferenced, Value::from(456f32));
+        assert_eq!(*r_resolved_g, Value::from(456f32));
     }
 
-    // Test dereferenced_mut
+    // Test mutation
     {
-        let mut r_dereferenced = r.dereferenced_mut();
-        log::debug!("r_dereferenced (as Debug): {:#?}", r_dereferenced);
-        log::debug!("r_dereferenced.as_ref() (as Debug): {:#?}", r_dereferenced.as_ref());
+        let r_resolved_la = r.resolved()?;
+        let mut r_resolved_g = r_resolved_la.write().unwrap();
+        log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
+        log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
 
     //     use std::ops::Deref; // Is this somehow unnecessary?
-        log::debug!("r_dereferenced (as Display): {}", r_dereferenced);
-        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
+        log::debug!("r_resolved_g (as Display): {}", r_resolved_g);
+        log::debug!("r_resolved_g: {}", r_resolved_g.stringify());
 
         // Now try modifying it
         log::debug!("adding 1.0 to r...");
-        *r_dereferenced.as_mut().downcast_mut::<f32>().unwrap() += 1.0f32;
+        *r_resolved_g.as_mut().downcast_mut::<f32>().unwrap() += 1.0f32;
 
-        log::debug!("r_dereferenced: {}", r_dereferenced.stringify());
-        assert_eq!(*r_dereferenced, Value::from(457f32));
+        log::debug!("r_resolved_g: {}", r_resolved_g.stringify());
+        assert_eq!(*r_resolved_g, Value::from(457f32));
+    }
+
+    // Test nested references
+    {
+        let test_value = Value::from(40404u32);
+
+        // Write more stuff into the global_symbol_table
+        {
+            let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
+            global_symbol_table_g.define_symbol("inner", Value::from(40404u32))?;
+            global_symbol_table_g.define_symbol("outer", Value::from(GlobalSymRefTerm::new_unchecked("inner".into())))?;
+            global_symbol_table_g.define_symbol("outerer", Value::from(GlobalSymRefTerm::new_unchecked("outer".into())))?;
+        }
+
+        {
+            let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+            log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
+        }
+
+        let inner_ref = GlobalSymRefTerm::new_unchecked("inner".into());
+        let outer_ref = GlobalSymRefTerm::new_unchecked("outer".into());
+        let outerer_ref = GlobalSymRefTerm::new_unchecked("outerer".into());
+
+        let runtime_g = dy::RUNTIME_LA.read().unwrap();
+
+        {
+            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref)?;
+            let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
+            log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
+            log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
+            assert_eq!(*inner_dereferenced_once_g, test_value);
+        }
+
+        {
+            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref)?;
+            let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
+            log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
+            log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
+            assert_eq!(*outer_dereferenced_once_g, Value::from(inner_ref.clone()));
+        }
+
+        {
+            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref)?;
+            let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
+            log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
+            log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
+            assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
+        }
+
+        assert_eq!(*inner_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*outer_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*outerer_ref.resolved()?.read().unwrap(), test_value);
     }
 
     Ok(())
@@ -423,10 +477,62 @@ fn test_local_sym_ref_term() -> Result<()> {
     local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32))?;
     log::debug!("local_symbol_table_la: {:#?}", local_symbol_table_la.read().unwrap());
 
-    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la, "blah".into())?;
+    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())?;
     log::debug!("local_sym_ref_term: (as Debug) {:#?}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: (as Display) {}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: {}", local_sym_ref_term.stringify());
+
+    // Test nested references
+    {
+        let test_value = Value::from(51515u32);
+
+        // Write more stuff into the local_symbol_table
+        {
+            let mut local_symbol_table_g = local_symbol_table_la.write().unwrap();
+            local_symbol_table_g.define_symbol("inner", Value::from(51515u32))?;
+            local_symbol_table_g.define_symbol("outer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into())))?;
+            local_symbol_table_g.define_symbol("outerer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into())))?;
+        }
+
+        {
+            let local_symbol_table_g = local_symbol_table_la.read().unwrap();
+            log::debug!("local_symbol_table_g: {:#?}", local_symbol_table_g);
+        }
+
+        let inner_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into());
+        let outer_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into());
+        let outerer_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outerer".into());
+
+        let runtime_g = dy::RUNTIME_LA.read().unwrap();
+
+        {
+            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref)?;
+            let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
+            log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
+            log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
+            assert_eq!(*inner_dereferenced_once_g, test_value);
+        }
+
+        {
+            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref)?;
+            let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
+            log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
+            log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
+            assert_eq!(*outer_dereferenced_once_g, Value::from(inner_ref.clone()));
+        }
+
+        {
+            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref)?;
+            let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
+            log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
+            log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
+            assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
+        }
+
+        assert_eq!(*inner_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*outer_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*outerer_ref.resolved()?.read().unwrap(), test_value);
+    }
 
     Ok(())
 }
@@ -458,12 +564,14 @@ fn test_structs() -> Result<()> {
     log::debug!("hippo: {}", hippo.stringify());
 
     let x = global_symbol_table_g
-        .resolve_symbol("Hippo")?
+        .resolved_symbol("Hippo")?
+        .read().unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
         .construct(vec![23u8.into(), 999.0f64.into()].into())?;
     let y = global_symbol_table_g
-        .resolve_symbol("Hippo")?
+        .resolved_symbol("Hippo")?
+        .read().unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
         .construct(vec![100u8.into(), (-3.0f64).into()].into())?;

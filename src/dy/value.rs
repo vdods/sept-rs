@@ -7,7 +7,7 @@ pub type ValueGuts = dyn Any + Send + Sync;
 /// methods of the runtime.
 // This really should be named Term (or more pedantically TermTerm), but that's already taken.
 // Maybe the naming scheme can be shifted around so that this can be named Term (or TermTerm).
-#[derive(derive_more::From, derive_more::Into)]
+#[derive(Debug, derive_more::From, derive_more::Into)]
 pub struct Value(Box<ValueGuts>);
 
 impl AsMut<ValueGuts> for Value {
@@ -35,11 +35,11 @@ impl std::ops::DerefMut for Value {
     }
 }
 
-impl std::fmt::Debug for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "Value({})", &self.stringify())
-    }
-}
+// impl std::fmt::Debug for Value {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+//         write!(f, "Value({})", &self.stringify())
+//     }
+// }
 
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
