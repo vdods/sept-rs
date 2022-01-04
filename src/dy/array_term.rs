@@ -2,7 +2,7 @@
 use crate::{dy, st::{Array, Inhabits, Stringify, TermTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct ArrayTerm(Vec<dy::Value>);
 
 impl dy::IntoValue for ArrayTerm {}

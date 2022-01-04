@@ -41,10 +41,11 @@
 
 -   Maybe split things up into a static types module `st` and dynamic types module `dy`, since there are essentially
     two analogous sides to the sept data model.  Then there would be compile-time and runtime versions of each
-    trait, e.g. TermTrait, TypeTrait, etc.
+    trait, e.g. `TermTrait`, `TypeTrait`, etc.
 -   Implement macros for deriving traits, which will clean a ton of boilerplate up.
--   Change StructTermTerm::type_ into a dy::Value to generalize.
--   Implement st::TransparentRefTrait (contrast with dy::TransparentRefTrait) where the dereferenced type
+-   Implement `st::TransparentRefTrait` (contrast with `dy::TransparentRefTrait`) where the dereferenced type
     is specified.  This would be suitable for typed references.  Implementing full dereference (of nested
     references) will be tricky because it requires knowing or specifying all the types in the deref sequence.
--   Implement `Clone` for `dy::Value`.
+-   A `StructTermTerm` is really a kind of typed `TupleTerm`.  Maybe this should be implemented using semantic
+    subtypes instead, where generic data is given additional semantic meaning via an associated semantic type
+    or marker.

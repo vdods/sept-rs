@@ -584,6 +584,21 @@ fn test_structs() -> Result<()> {
     assert!(x != y);
     assert!(y != x);
 
+    let x2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![23u8.into(), 999.0f64.into()].into())?;
+    let y2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![100u8.into(), (-3.0f64).into()].into())?;
+
+    log::debug!("x2: {}", x2.stringify());
+    log::debug!("y2: {}", y2.stringify());
+    log::debug!("x2 == y2: {}", x2 == y2);
+
+    assert_eq!(x2, x2);
+    assert_eq!(y2, y2);
+    assert!(x2 != y2);
+    assert!(y2 != x2);
+
+    assert_eq!(x, x2);
+    assert_eq!(y, y2);
+
     Ok(())
 }
 

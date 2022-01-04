@@ -1,4 +1,4 @@
-use crate::{dy::{IntoValue, RUNTIME_LA}, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, IntoValue, RUNTIME_LA}, st::{self, Stringify, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -19,6 +19,12 @@ impl AsMut<ValueGuts> for Value {
 impl AsRef<ValueGuts> for Value {
     fn as_ref(&self) -> &ValueGuts {
         self.0.as_ref()
+    }
+}
+
+impl Clone for Value {
+    fn clone(&self) -> Self {
+        Value(RUNTIME_LA.read().unwrap().clone(self.as_ref()))
     }
 }
 
@@ -96,3 +102,10 @@ impl TermTrait for Value {
 }
 
 impl st::TypeTrait for Value {}
+
+// TODO: These could become part of dy::TermTrait, since they reflect what's available via Runtime
+impl Value {
+    pub fn dereferenced<'a>(&'a self) -> anyhow::Result<dy::MaybeDereferencedValue<'a>> {
+        Ok(RUNTIME_LA.read().unwrap().dereferenced(self.as_ref())?)
+    }
+}

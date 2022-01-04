@@ -1,7 +1,7 @@
 use crate::{dy::{self, Value, IntoValue}, st::{Inhabits, Stringify, TermTrait, Tuple, TypeTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(derive_more::AsRef, Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, PartialEq)]
 pub struct TupleTerm(Vec<Value>);
 
 impl dy::IntoValue for TupleTerm {}

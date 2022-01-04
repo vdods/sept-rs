@@ -1,4 +1,4 @@
-use crate::{dy::{self, GLOBAL_SYMBOL_TABLE_LA}, st::{self, Stringify, TermTrait}};
+use crate::{dy, st::{self, Stringify}};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -6,60 +6,54 @@ use crate::{dy::{self, GLOBAL_SYMBOL_TABLE_LA}, st::{self, Stringify, TermTrait}
 // TODO: Figure out how to do this more efficiently, e.g. not having a full copy of type_ (which
 // is really just the symbol_id of the StructTerm), and instead have a direct reference to the
 // StructTerm itself.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StructTermTerm {
-    /// A StructTerm necessarily has a name and is declared in the global SymbolTable.
-    // TODO: Probably should use dy::Value here, since a dy::Value could be a GlobalSymRefTerm,
-    // or a StructTerm value, or a LocalSymRefTerm (when that exists), etc.
+    /// A StructTerm necessarily has a defined type.  Typically that would be declared in a symbol
+    /// table (probably the global symbol table), and type_ would be a GlobalSymRefTerm.
     // TODO: Use type-specifying GlobalSymRefTerm when possible
-    // TODO: Maybe this will eventually a direct reference to the StructTerm instance itself
-    // via some ref counted construction.
-    type_: dy::GlobalSymRefTerm,
+    // TODO: Maybe this will eventually use a direct reference to the StructTerm instance itself
+    // via some ref counted construction, i.e. a [reference-counted] MemRef
+    type_: dy::Value,
     // This is the ordered sequence of element values.
     pub(crate) element_tuple_term: dy::TupleTerm,
 }
 
-// TEMP HACK: This should be Inhabits<Value> (once type_ is changed accordingly)
-impl st::Inhabits<dy::GlobalSymRefTerm> for StructTermTerm {
-    fn inhabits(&self, rhs: &dy::GlobalSymRefTerm) -> bool {
-        let global_symbol_table_g = GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
-        let value_la = match global_symbol_table_g.resolved_symbol(&self.type_.symbol_id) {
-            Ok(value_la) => value_la,
-            Err(e) => {
-                log::warn!("{} inhabitation in {} failed; {}; returning default value of false", Self::label(), rhs.stringify(), e);
-                return false;
-            }
-        };
-        let value_g = value_la.read().unwrap();
-        let struct_term = match value_g.downcast_ref::<dy::StructTerm>() {
-            Some(struct_term) => struct_term,
-            None => {
-                log::warn!("{} inhabitation in {} failed because type is not a {}; returning default value of false", Self::label(), rhs.stringify(), dy::StructTerm::label());
-                return false;
-            }
-        };
-        // NOTE: This is a little wasteful because if this returns false, then it will have
-        // constructed and thrown away the explanation error message.
-        struct_term.verify_inhabitation_by(&self.element_tuple_term).is_ok()
+impl st::Inhabits<dy::StructTerm> for StructTermTerm {
+    fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
+        rhs.is_inhabited_by(&self.element_tuple_term)
+    }
+}
+
+// This implementation is necessary because StructTermTerm::AbstractTypeFnReturnType is dy::Value.
+impl st::Inhabits<dy::Value> for StructTermTerm {
+    fn inhabits(&self, rhs: &dy::Value) -> bool {
+        dy::RUNTIME_LA.read().unwrap().inhabits(self, rhs.as_ref())
     }
 }
 
 impl dy::IntoValue for StructTermTerm {}
 
 impl StructTermTerm {
-    // NOTE/TODO: This currently checks the type inhabitation of element_tuple_term with type_, but there will
-    // probably eventually be cases where it'll be necessary to construct a StructTermTerm before
-    // its StructTerm type_ exists, and therefore the type can't be checked.  On the other hand,
-    // maybe not.
-    pub fn new(type_: dy::GlobalSymRefTerm, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
-        // Verify type inhabitation.
-        // TODO: Use GlobalSymRefTermReadLock
-        dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap()
-            .resolved_symbol(&type_.symbol_id)?
-            .read().unwrap()
-            .downcast_ref::<dy::StructTerm>()
-            .expect("expected StructTerm")
-            .verify_inhabitation_by(&element_tuple_term)?;
+    pub fn new_unchecked(type_: dy::Value, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
+        Ok(Self { type_, element_tuple_term })
+    }
+    pub fn new_checked(type_: dy::Value, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
+        let type_maybe_dereferenced = type_.dereferenced()?;
+        match type_maybe_dereferenced {
+            dy::MaybeDereferencedValue::NonRef(type_value_guts) => {
+                match type_value_guts.downcast_ref::<dy::StructTerm>() {
+                    Some(struct_term) => { struct_term.verify_inhabitation_by(&element_tuple_term)?; },
+                    None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_guts.type_id())); }
+                }
+            },
+            dy::MaybeDereferencedValue::Ref(type_value_la) => {
+                let type_value_g = type_value_la.read().unwrap();
+                match type_value_g.downcast_ref::<dy::StructTerm>() {
+                    Some(struct_term) => { struct_term.verify_inhabitation_by(&element_tuple_term)?; },
+                    None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_g.type_id())); }
+                }
+            }
+        };
         Ok(Self { type_, element_tuple_term })
     }
 }
@@ -70,19 +64,13 @@ impl std::fmt::Display for StructTermTerm {
     }
 }
 
-impl st::Inhabits<dy::StructTerm> for StructTermTerm {
-    fn inhabits(&self, struct_term: &dy::StructTerm) -> bool {
-        self.element_tuple_term.inhabits(struct_term)
-    }
-}
-
 impl st::Stringify for StructTermTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         // NOTE: This doesn't guarantee any of:
         // -    self.type_.symbol_id is a C-style (i.e. Rust-style) identifier
         // -    self.type_.symbol_id doesn't collide with the other type names like "Array"
-        s.push_str(&format!("{}(", self.type_.symbol_id));
+        s.push_str(&format!("{}(", self.type_.stringify()));
         for (i, element) in self.element_tuple_term.iter().enumerate() {
             s.push_str(&element.stringify());
             if i+1 < self.element_tuple_term.len() {
@@ -95,7 +83,7 @@ impl st::Stringify for StructTermTerm {
 }
 
 impl st::TermTrait for StructTermTerm {
-    type AbstractTypeFnReturnType = dy::GlobalSymRefTerm;
+    type AbstractTypeFnReturnType = dy::Value;
 
     fn label() -> &'static str {
         "StructTermTerm"

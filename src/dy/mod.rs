@@ -20,7 +20,7 @@ pub use crate::dy::{
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,
     into_value::IntoValue,
     local_sym_ref_term::LocalSymRefTerm,
-    runtime::{BinaryPredicate, RUNTIME_LA, Runtime, StringifyFn, UnaryPredicate},
+    runtime::{BinaryPredicate, MaybeDereferencedValue, RUNTIME_LA, Runtime, StringifyFn, UnaryPredicate},
     struct_term::StructTerm,
     struct_term_term::StructTermTerm,
     symbol_table::SymbolTable,

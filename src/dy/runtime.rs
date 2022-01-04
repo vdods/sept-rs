@@ -15,6 +15,7 @@ use std::{any::TypeId, collections::{HashMap, HashSet}, sync::{Arc, RwLock}};
 pub type StringifyFn = fn(x: &ValueGuts) -> String;
 pub type LabelFn = fn() -> &'static str;
 pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
+pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
 pub type DereferencedOnceFn = fn(x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>>;
@@ -39,6 +40,7 @@ pub struct Runtime {
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
     abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
+    clone_fn_m: HashMap<TypeId, CloneFn>,
     is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
@@ -237,6 +239,7 @@ impl Runtime {
         self.register_partial_eq::<T, T>()?;
         self.register_inhabits::<T, <T as TermTrait>::AbstractTypeFnReturnType>()?;
         self.register_abstract_type::<T>()?;
+        self.register_clone::<T>()?;
         self.register_is_parametric_term::<T>()?;
         self.register_is_type_term::<T>()?;
         Ok(())
@@ -319,6 +322,42 @@ impl Runtime {
             Box::new(abstract_type)
         };
         Ok(self.register_abstract_type_fn(type_id, abstract_type_fn)?)
+    }
+    pub(crate) fn register_clone_fn(
+        &mut self,
+        type_id: TypeId,
+        clone_fn: AbstractTypeFn,
+    ) -> Result<()> {
+        match self.clone_fn_m.insert(type_id, clone_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered clone fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    // TODO: Rename this something different (this was copied and pasted from register_stringify
+    // and the semantics don't match).
+    pub(crate) fn register_clone<T: TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let clone_fn = |x: &ValueGuts| -> Box<ValueGuts> {
+            // TODO: if the return type is Box<ValueGuts>, then just return that,
+            // but otherwise use Box::new on the return value
+            let clone = x.downcast_ref::<T>().unwrap().clone();
+//             TODO start here
+//             if { let at: &ValueGuts = &clone; at.is::<Box<ValueGuts>>() } {
+//                 clone
+//             } else {
+//                 Box::new(clone)
+//             }
+            // TEMP HACK: If clone is already a Box<ValueGuts>, then this will make a double
+            // box, which is not what is wanted.  But for now, whateva.
+            // NOTE: I think because of the fixed Value::from situation (using dy::IntoValue to bound
+            // `impl From<T> for Value`), this is not a problem anymore, meaning that Box<Box<ValueGuts>>
+            // should not be possible, and all this can be cleaned up.
+            if { let at: &ValueGuts = &clone; at.is::<Box<ValueGuts>>() } {
+                panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<ValueGuts>>");
+            }
+            Box::new(clone)
+        };
+        Ok(self.register_clone_fn(type_id, clone_fn)?)
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
@@ -470,9 +509,9 @@ impl Runtime {
     }
     pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
         // Handle referential transparency.
-        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
-        let t_dereferenced = self.dereferenced(t).expect("dereferenced failed");
-        match (x_dereferenced, t_dereferenced) {
+        let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        let t_maybe_dereferenced = self.dereferenced(t).expect("dereferenced failed");
+        match (x_maybe_dereferenced, t_maybe_dereferenced) {
             (MaybeDereferencedValue::NonRef(x_value_guts), MaybeDereferencedValue::NonRef(t_value_guts)) => {
                 self.inhabits_impl(x_value_guts, t_value_guts)
             },
@@ -504,8 +543,8 @@ impl Runtime {
     }
     pub fn abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
         // Handle referential transparency.
-        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
-        match x_dereferenced {
+        let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
                 self.abstract_type_of_impl(x_value_guts)
             },
@@ -526,10 +565,23 @@ impl Runtime {
             }
         }
     }
+    // Note that clone doesn't use referential transparency.  TODO: Figure out if this is correct.
+    pub fn clone(&self, x: &ValueGuts) -> Box<ValueGuts> {
+        let type_id = x.type_id();
+        match self.clone_fn_m.get(&type_id) {
+            Some(clone_fn) => clone_fn(x),
+            None => {
+                panic!("no clone fn found for {}", self.label_of(type_id));
+                // There's probably no reasonable default.
+//                 log::warn!("no clone fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
+//                 Box::new(Type{})
+            }
+        }
+    }
     pub fn is_parametric_term(&self, x: &ValueGuts) -> bool {
         // Handle referential transparency.
-        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
-        match x_dereferenced {
+        let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
                 self.is_parametric_term_impl(x_value_guts)
             },
@@ -552,8 +604,8 @@ impl Runtime {
     }
     pub fn is_type_term(&self, x: &ValueGuts) -> bool {
         // Handle referential transparency.
-        let x_dereferenced = self.dereferenced(x).expect("dereferenced failed");
-        match x_dereferenced {
+        let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
+        match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
                 self.is_type_term_impl(x_value_guts)
             },
