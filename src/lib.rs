@@ -4,7 +4,11 @@
 mod dag;
 /// Contains the sept runtime and dynamic types.
 pub mod dy;
+mod poset;
 /// Contains static types and traits.
 pub mod st;
 
-pub use crate::dag::{DirectedAcyclicGraph, IncludeNode};
+pub use crate::{
+    dag::{DirectedAcyclicGraph, EdgeSetMap, IncludeNode, NodeSet},
+    poset::{PartialOrder, PartiallyOrderedSet},
+};
