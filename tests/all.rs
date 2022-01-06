@@ -323,7 +323,7 @@ fn test_symbol_table() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let mut symbol_table = SymbolTable::default();
+    let mut symbol_table = SymbolTable::new_with_parent(None);
     assert!(!symbol_table.symbol_is_defined("blah"));
     symbol_table.define_symbol("blah", Value::from(123i32))?;
     assert!(symbol_table.symbol_is_defined("blah"));
@@ -345,6 +345,23 @@ fn test_symbol_table() -> Result<()> {
 
         log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
     }
+
+    // Test out parent symbol tables.
+    let parent_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
+    let child_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(Some(parent_symbol_table_la.clone()))));
+
+    parent_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(200u32))?;
+    parent_symbol_table_la.write().unwrap().define_symbol("hippo", Value::from(300u32))?;
+
+    child_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(444u32))?;
+
+    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("stuff")?.read().unwrap(), Value::from(200u32));
+    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("hippo")?.read().unwrap(), Value::from(300u32));
+
+    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("stuff")?.read().unwrap(), Value::from(444u32));
+    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("hippo")?.read().unwrap(), Value::from(300u32));
+
+    log::debug!("child_symbol_table:\n{:#?}", child_symbol_table_la.read().unwrap());
 
     Ok(())
 }
@@ -473,7 +490,7 @@ fn test_local_sym_ref_term() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::default()));
+    let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
     local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32))?;
     log::debug!("local_symbol_table_la: {:#?}", local_symbol_table_la.read().unwrap());
 
