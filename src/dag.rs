@@ -1,6 +1,6 @@
 use std::{cmp::Eq, collections::{HashMap, HashSet}, fmt::Debug, hash::Hash};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum IncludeNode {
     False,
     True,
@@ -12,29 +12,31 @@ impl Into<bool> for IncludeNode {
     }
 }
 
+// TODO: Change <'a, T> to <T> and allow the caller to handle the lifetime stuff.
+pub type NodeSet<'a, T> = HashSet<&'a T>;
+pub type EdgeSetMap<'a, T> = HashMap<&'a T, NodeSet<'a, T>>;
+
 #[derive(Debug)]
 pub struct DirectedAcyclicGraph<'a, T: Debug + Eq + Hash + 'a> {
     /// This is the set of root nodes for the DAG.
-    pub root_node_s: HashSet<&'a T>,
+    pub root_node_s: NodeSet<'a, T>,
     /// This is the set of leaf nodes for the DAG.
-    pub leaf_node_s: HashSet<&'a T>,
+    pub leaf_node_s: NodeSet<'a, T>,
     /// This is the set of child edges for each node.
-    pub child_sm: HashMap<&'a T, HashSet<&'a T>>,
+    pub child_sm: EdgeSetMap<'a, T>,
     /// This is the set of parent edges for each node.
-    pub parent_sm: HashMap<&'a T, HashSet<&'a T>>,
+    pub parent_sm: EdgeSetMap<'a, T>,
 }
 
 impl<'a, T: Debug + Eq + Hash + 'a> DirectedAcyclicGraph<'a, T> {
     pub fn new() -> Self {
-        DirectedAcyclicGraph {
-            root_node_s: HashSet::new(),
-            leaf_node_s: HashSet::new(),
-            child_sm: HashMap::new(),
-            parent_sm: HashMap::new(),
+        Self {
+            root_node_s: NodeSet::new(),
+            leaf_node_s: NodeSet::new(),
+            child_sm: EdgeSetMap::new(),
+            parent_sm: EdgeSetMap::new(),
         }
     }
-
-    // TODO: Figure out if these are really necessary.
 
     /// Returns the number of member nodes in this DAG.
     pub fn len(&self) -> usize {
@@ -68,20 +70,24 @@ impl<'a, T: Debug + Eq + Hash + 'a> DirectedAcyclicGraph<'a, T> {
         }
     }
 
-//     // Convenience method which returns the NodeSet of children of the given node.
-//     // Will throw std::out_of_range if the given node is not present in the graph.
-//     NodeSet const &children_of (T_ const &node) const { return m_child_map.at(node); }
-//     // Convenience method which returns the NodeSet of parents of the given node.
-//     // Will throw std::out_of_range if the given node is not present in the graph.
-//     NodeSet const &parents_of (T_ const &node) const { return m_parent_map.at(node); }
+    /// Convenience method which returns the NodeSet of children of the given node.
+    /// Will panic if the given node is not present in the DAG.
+    pub fn children_of(&self, node: &'a T) -> &NodeSet<'a, T> {
+        &self.child_sm[node]
+    }
+    /// Convenience method which returns the NodeSet of parents of the given node.
+    /// Will panic if the given node is not present in the DAG.
+    pub fn parents_of(&self, node: &'a T) -> &NodeSet<'a, T> {
+        &self.parent_sm[node]
+    }
 
-    pub fn descendants_of(&self, node: &'a T, include_node: IncludeNode) -> HashSet<&'a T> {
-        let mut descendants: HashSet<&'a T> = HashSet::new();
+    pub fn descendants_of(&self, node: &'a T, include_node: IncludeNode) -> NodeSet<'a, T> {
+        let mut descendants = NodeSet::new();
         self.collect_descendants_of(node, &mut descendants, include_node);
         descendants
     }
-    pub fn ancestors_of(&self, node: &'a T, include_node: IncludeNode) -> HashSet<&'a T> {
-        let mut ancestors: HashSet<&'a T> = HashSet::new();
+    pub fn ancestors_of(&self, node: &'a T, include_node: IncludeNode) -> NodeSet<'a, T> {
+        let mut ancestors = NodeSet::new();
         self.collect_ancestors_of(node, &mut ancestors, include_node);
         ancestors
     }
@@ -119,8 +125,8 @@ impl<'a, T: Debug + Eq + Hash + 'a> DirectedAcyclicGraph<'a, T> {
         assert!(!self.parent_sm.contains_key(node));
         self.root_node_s.insert(node);
         self.leaf_node_s.insert(node);
-        self.child_sm.insert(node, HashSet::new());
-        self.parent_sm.insert(node, HashSet::new());
+        self.child_sm.insert(node, NodeSet::new());
+        self.parent_sm.insert(node, NodeSet::new());
     }
     /// Adds the given edge to the DAG.  Nothing is done if the edge is already present.
     pub fn insert_edge(&mut self, source: &'a T, target: &'a T) {
