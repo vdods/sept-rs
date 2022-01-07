@@ -15,6 +15,7 @@
             -   Map types
             -   Struct metatypes
             -   Tuple types
+            -   String type(s)
         -   Semantic subtypes
         -   Pointer/Reference types (references have referential transparency, pointers do not)
             -   In-memory

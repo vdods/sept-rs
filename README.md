@@ -39,9 +39,14 @@ Some measurable indicators of the success of `sept` are:
 -   Near-replacement of many domain-specific editors (e.g. spreadsheets, programming IDEs, article-style content) with the generic `sept` editing tool.  Closer-to-full or even full replacement can be achieved through use of domain-specific plugins in the `sept` editing tool.
 -   Qualitatively better command over creating/searching/editing data.  In particular, being able to alter the visible representation of the data in order to view/edit the specific aspects of the data.
 
+## Structure of This Repo
+
+Subdirs generally correspond to individual crates.
+-   [`sept`](sept) : The `sept` SDK itself.
+
 ## Links to Docs/Notes
 
-Generally, see [doc].
+Generally, see [sept/doc].
 
 Specifically:
--   [doc/to-dos.md]
+-   [doc/sept/to-dos.md]
