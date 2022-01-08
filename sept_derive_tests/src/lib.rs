@@ -1,4 +1,4 @@
-use sept::{dy::Value, st::{self, Sint32, TermTrait, VoidType}};
+use sept::{dy::Value, st::{self, Sint32, TermTrait, TypeTrait, VoidType}};
 
 /// This will run once at load time (i.e. presumably before main function is called).
 #[ctor::ctor]
@@ -7,10 +7,10 @@ fn overall_init() {
 }
 
 #[derive(Clone, Debug, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "true")]
-pub struct FancyType;
+#[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "false")]
+pub struct FancyTerm;
 
-#[derive(Clone, Debug, st::TermTrait)]
+#[derive(Clone, Debug, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Value")]
 #[st_term_trait(abstract_type_expr = "Value::from(Sint32{})")]
 #[st_term_trait(is_parametric = "false")]

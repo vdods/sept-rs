@@ -1,6 +1,6 @@
 use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct TrueType;
 
@@ -23,7 +23,5 @@ impl Stringify for TrueType {
         "TrueType".into()
     }
 }
-
-impl TypeTrait for TrueType {}
 
 pub const TRUE_TYPE: TrueType = TrueType{};

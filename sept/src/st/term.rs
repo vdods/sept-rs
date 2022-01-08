@@ -1,7 +1,7 @@
 use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Term;
 
@@ -31,7 +31,5 @@ impl Stringify for Term {
         "Term".into()
     }
 }
-
-impl TypeTrait for Term {}
 
 pub const TERM: Term = Term{};

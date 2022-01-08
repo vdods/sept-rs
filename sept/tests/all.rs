@@ -623,7 +623,7 @@ fn test_structs() -> Result<()> {
 // TEMP TESTING
 //
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
 
@@ -635,7 +635,7 @@ impl st::Inhabits<Type> for BinOp {
 
 impl dy::IntoValue for BinOp {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
 
@@ -767,9 +767,6 @@ impl Stringify for Neg {
     }
 }
 
-impl TypeTrait for BinOp {}
-impl TypeTrait for UnOp {}
-
 impl Inhabits<BinOp> for Add {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
@@ -817,7 +814,7 @@ impl Inhabits<UnOp> for Neg {
 // }
 
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
 
@@ -834,8 +831,6 @@ impl Stringify for Expr {
         "Expr".into()
     }
 }
-
-impl TypeTrait for Expr {}
 
 impl Inhabits<Expr> for f64 {
     fn inhabits(&self, _rhs: &Expr) -> bool {

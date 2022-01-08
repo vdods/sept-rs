@@ -1,7 +1,7 @@
 use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
 /// EmptyType is a Type that by definition has no inhabitants.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct EmptyType;
 
@@ -25,7 +25,5 @@ impl Stringify for EmptyType {
         "EmptyType".into()
     }
 }
-
-impl TypeTrait for EmptyType {}
 
 pub const EMPTY_TYPE: EmptyType = EmptyType{};

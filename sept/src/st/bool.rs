@@ -1,7 +1,7 @@
 use crate::{dy::{self, DynNPTerm}, st::{self, BoolType, NonParametricTermTrait, Inhabits, Stringify, TermTrait, TypeTrait}};
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "BoolType", is_parametric = "false", is_type = "true")]
 pub struct Bool;
 
@@ -24,7 +24,5 @@ impl Stringify for Bool {
         "Bool".into()
     }
 }
-
-impl TypeTrait for Bool {}
 
 pub const BOOL: Bool = Bool{};

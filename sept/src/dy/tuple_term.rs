@@ -1,7 +1,7 @@
-use crate::{dy::{self, Value, IntoValue}, st::{Inhabits, Stringify, TermTrait, Tuple, TypeTrait}};
+use crate::{dy::{self, Value, IntoValue}, st::{self, Inhabits, Stringify, TermTrait, Tuple, TypeTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, PartialEq, st::TypeTrait)]
 pub struct TupleTerm(Vec<Value>);
 
 impl dy::IntoValue for TupleTerm {}
@@ -146,5 +146,3 @@ impl TermTrait for TupleTerm {
         TupleTerm(type_element_v)
     }
 }
-
-impl TypeTrait for TupleTerm {}

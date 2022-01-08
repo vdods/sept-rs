@@ -1,7 +1,7 @@
 use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct StructType {}
 
@@ -24,7 +24,5 @@ impl Stringify for StructType {
         "StructType".into()
     }
 }
-
-impl TypeTrait for StructType {}
 
 pub const STRUCT_TYPE: StructType = StructType{};

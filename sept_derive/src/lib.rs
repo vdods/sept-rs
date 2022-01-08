@@ -3,6 +3,10 @@
 use darling::FromDeriveInput;
 use quote::quote;
 
+//
+// proc_macro for deriving sept::st::TermTrait (it's re-exported in that crate).
+//
+
 #[derive(FromDeriveInput, Default)]
 #[darling(default, attributes(st_term_trait))]
 struct StTermTraitArguments {
@@ -22,7 +26,7 @@ struct StTermTraitArguments {
 /// pub struct FancyTerm;
 /// ```
 #[proc_macro_derive(StTermTrait, attributes(st_term_trait))]
-pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let term_trait_arguments = StTermTraitArguments::from_derive_input(&input).expect("Wrong arguments");
     #[allow(unused_variables)]
@@ -60,6 +64,26 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             }
             #abstract_type_fn
         }
+    };
+    output.into()
+}
+
+//
+// proc_macro for deriving sept::st::TypeTrait (it's re-exported in that crate).
+//
+
+/// This will derive sept::st::TypeTrait, which for now has no additional attributes, e.g.
+/// ```
+/// #[derive(sept::st::TypeTrait)]
+/// pub struct FancyType;
+/// ```
+#[proc_macro_derive(StTypeTrait)]
+pub fn derive_st_type_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input);
+    let syn::DeriveInput { ident, .. } = input;
+
+    let output = quote! {
+        impl TypeTrait for #ident {}
     };
     output.into()
 }

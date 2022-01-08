@@ -1,6 +1,6 @@
 use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct VoidType;
 
@@ -17,7 +17,5 @@ impl Stringify for VoidType {
         "VoidType".into()
     }
 }
-
-impl TypeTrait for VoidType {}
 
 pub const VOID_TYPE: VoidType = VoidType{};

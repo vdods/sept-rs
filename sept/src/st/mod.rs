@@ -71,3 +71,4 @@ pub use crate::st::{
 
 // Trait derivation proc macros
 pub use sept_derive::StTermTrait as TermTrait;
+pub use sept_derive::StTypeTrait as TypeTrait;
