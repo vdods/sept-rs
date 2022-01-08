@@ -88,3 +88,5 @@
             }
             // This would have a blanket implementation of dy::IsType
         }
+
+-   In terms of construction/destructuring, printing/parsing and de/serialization, many or most terms should be decomposable into concrete terms such as `ArrayTerm` or `TupleTerm`, and vice versa with construction.  Thus defining those operations (construction, destructuring) would then allow printing/parsing and de/serialization to be implemented easily using the printing/parsing and de/serialization of the concrete terms.
