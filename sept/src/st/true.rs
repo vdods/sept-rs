@@ -33,5 +33,3 @@ impl Stringify for True {
         "True".into()
     }
 }
-
-pub const TRUE: True = True{};

@@ -24,5 +24,3 @@ impl Stringify for Type {
         "Type".into()
     }
 }
-
-pub const TYPE: Type = Type{};

@@ -33,5 +33,3 @@ impl Stringify for False {
         "False".into()
     }
 }
-
-pub const FALSE: False = False{};

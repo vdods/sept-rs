@@ -21,5 +21,3 @@ impl Stringify for TrueType {
         "TrueType".into()
     }
 }
-
-pub const TRUE_TYPE: TrueType = TrueType{};

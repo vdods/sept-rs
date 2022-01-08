@@ -22,5 +22,3 @@ impl Stringify for GlobalSymRef {
         "GlobalSymRef".into()
     }
 }
-
-pub const GLOBAL_SYM_REF: GlobalSymRef = GlobalSymRef{};

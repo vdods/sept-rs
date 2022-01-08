@@ -22,5 +22,3 @@ impl Stringify for Array {
         "Array".into()
     }
 }
-
-pub const ARRAY: Array = Array{};

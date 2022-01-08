@@ -5,13 +5,13 @@ use sept::{
         self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME_LA, StructTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
-        self, ARRAY, ARRAY_TYPE,
-        BOOL, Bool, BOOL_TYPE, BoolType, EMPTY_TYPE, FALSE, False, FALSE_TYPE, FalseType,
-        FLOAT32, FLOAT32_TYPE, FLOAT64, Float64, FLOAT64_TYPE, Inhabits, Result,
-        SINT8, SINT8_TYPE, SINT16, SINT16_TYPE, SINT32, Sint32, SINT32_TYPE, SINT64, SINT64_TYPE, Stringify,
-        STRUCT, Struct, STRUCT_TYPE, StructType,
-        TermTrait, TRUE, True, TRUE_TYPE, TrueType, TYPE, Type, TypeTrait,
-        UINT8, Uint8, UINT8_TYPE, UINT16, UINT16_TYPE, UINT32, UINT32_TYPE, UINT64, UINT64_TYPE, VOID, Void, VOID_TYPE,
+        self,
+        Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType,
+        Float32, Float32Type, Float64, Float64Type, Inhabits, Result,
+        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
+        Struct, StructType,
+        TermTrait, True, TrueType, Type, TypeTrait,
+        Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Void, VoidType,
     },
 };
 use std::{any::Any, sync::{Arc, RwLock}};
@@ -25,56 +25,56 @@ fn overall_init() {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_term_and_type() -> Result<()> {
-    log::debug!("TRUE: {:#?}", TRUE);
-    log::debug!("TRUE_TYPE: {:#?}", TRUE_TYPE);
+    log::debug!("True: {:#?}", True);
+    log::debug!("TrueType: {:#?}", TrueType);
 
     // NOTE: The commented out ones asserting non-inhabitation, if uncommented, would produce
     // compile errors to the effect of "Void doesn't implement Inhabits<FalseType>", which
     // is correct and desired, since these types are known at compile time.
 
-    assert!(VOID.inhabits(&VOID_TYPE));
-//     assert!(!VOID.inhabits(&FALSE_TYPE));
-//     assert!(!VOID.inhabits(&TYPE));
-//     assert!(!VOID.inhabits(&BOOL));
-//     assert!(!VOID.inhabits(&BOOL_TYPE));
+    assert!(Void.inhabits(&VoidType));
+//     assert!(!Void.inhabits(&FalseType));
+//     assert!(!Void.inhabits(&Type));
+//     assert!(!Void.inhabits(&Bool));
+//     assert!(!Void.inhabits(&BoolType));
 
-    assert!(VOID_TYPE.inhabits(&TYPE));
+    assert!(VoidType.inhabits(&Type));
 
-    assert!(TRUE.inhabits(&TRUE_TYPE));
-//     assert!(!TRUE.inhabits(&FALSE_TYPE));
-    assert!(TRUE.inhabits(&BOOL));
-//     assert!(!TRUE.inhabits(&BOOL_TYPE));
+    assert!(True.inhabits(&TrueType));
+//     assert!(!True.inhabits(&FalseType));
+    assert!(True.inhabits(&Bool));
+//     assert!(!True.inhabits(&BoolType));
 
-//     assert!(!FALSE.inhabits(&TRUE_TYPE));
-    assert!(FALSE.inhabits(&FALSE_TYPE));
-    assert!(FALSE.inhabits(&BOOL));
-//     assert!(!FALSE.inhabits(&BOOL_TYPE));
+//     assert!(!False.inhabits(&TrueType));
+    assert!(False.inhabits(&FalseType));
+    assert!(False.inhabits(&Bool));
+//     assert!(!False.inhabits(&BoolType));
 
-    assert!(TRUE_TYPE.inhabits(&BOOL_TYPE));
-    assert!(FALSE_TYPE.inhabits(&BOOL_TYPE));
-    assert!(BOOL.inhabits(&BOOL_TYPE));
-//     assert!(!BOOL.inhabits(&TRUE_TYPE));
-//     assert!(!BOOL.inhabits(&FALSE_TYPE));
+    assert!(TrueType.inhabits(&BoolType));
+    assert!(FalseType.inhabits(&BoolType));
+    assert!(Bool.inhabits(&BoolType));
+//     assert!(!Bool.inhabits(&TrueType));
+//     assert!(!Bool.inhabits(&FalseType));
 
 
-    assert!(!TRUE.is_parametric());
-    assert!(!TRUE.is_type());
-    assert!(!TRUE_TYPE.is_parametric());
-    assert!(TRUE_TYPE.is_type());
+    assert!(!True.is_parametric());
+    assert!(!True.is_type());
+    assert!(!TrueType.is_parametric());
+    assert!(TrueType.is_type());
 
-    assert!(!FALSE.is_parametric());
-    assert!(!FALSE.is_type());
-    assert!(!FALSE_TYPE.is_parametric());
-    assert!(FALSE_TYPE.is_type());
+    assert!(!False.is_parametric());
+    assert!(!False.is_type());
+    assert!(!FalseType.is_parametric());
+    assert!(FalseType.is_type());
 
     assert!(true.is_parametric());
     assert!(!true.is_type());
     assert!(false.is_parametric());
     assert!(!false.is_type());
-    assert!(!BOOL.is_parametric());
-    assert!(BOOL.is_type());
-    assert!(!BOOL_TYPE.is_parametric());
-    assert!(BOOL_TYPE.is_type());
+    assert!(!Bool.is_parametric());
+    assert!(Bool.is_type());
+    assert!(!BoolType.is_parametric());
+    assert!(BoolType.is_type());
 
     Ok(())
 }
@@ -86,12 +86,12 @@ fn test_runtime_stringify() -> Result<()> {
 
     assert_eq!(runtime_g.stringify(&true), "True");
     assert_eq!(runtime_g.stringify(&false), "False");
-    assert_eq!(runtime_g.stringify(&TRUE), "True");
-    assert_eq!(runtime_g.stringify(&FALSE), "False");
-    assert_eq!(runtime_g.stringify(&TRUE_TYPE), "TrueType");
-    assert_eq!(runtime_g.stringify(&FALSE_TYPE), "FalseType");
-    assert_eq!(runtime_g.stringify(&BOOL), "Bool");
-    assert_eq!(runtime_g.stringify(&BOOL_TYPE), "BoolType");
+    assert_eq!(runtime_g.stringify(&True), "True");
+    assert_eq!(runtime_g.stringify(&False), "False");
+    assert_eq!(runtime_g.stringify(&TrueType), "TrueType");
+    assert_eq!(runtime_g.stringify(&FalseType), "FalseType");
+    assert_eq!(runtime_g.stringify(&Bool), "Bool");
+    assert_eq!(runtime_g.stringify(&BoolType), "BoolType");
 
     log::debug!("RUNTIME_LA.stringify(&123): {:#?}", runtime_g.stringify(&123));
 
@@ -105,23 +105,23 @@ fn test_runtime_eq() -> Result<()> {
 
     assert!(runtime_g.eq(&true, &true));
     assert!(!runtime_g.eq(&true, &false));
-    assert!(runtime_g.eq(&true, &TRUE));
-    assert!(!runtime_g.eq(&true, &FALSE));
+    assert!(runtime_g.eq(&true, &True));
+    assert!(!runtime_g.eq(&true, &False));
 
     assert!(!runtime_g.eq(&false, &true));
     assert!(runtime_g.eq(&false, &false));
-    assert!(!runtime_g.eq(&false, &TRUE));
-    assert!(runtime_g.eq(&false, &FALSE));
+    assert!(!runtime_g.eq(&false, &True));
+    assert!(runtime_g.eq(&false, &False));
 
-    assert!(runtime_g.eq(&TRUE, &true));
-    assert!(!runtime_g.eq(&TRUE, &false));
-    assert!(runtime_g.eq(&TRUE, &TRUE));
-    assert!(!runtime_g.eq(&TRUE, &FALSE));
+    assert!(runtime_g.eq(&True, &true));
+    assert!(!runtime_g.eq(&True, &false));
+    assert!(runtime_g.eq(&True, &True));
+    assert!(!runtime_g.eq(&True, &False));
 
-    assert!(!runtime_g.eq(&FALSE, &true));
-    assert!(runtime_g.eq(&FALSE, &false));
-    assert!(!runtime_g.eq(&FALSE, &TRUE));
-    assert!(runtime_g.eq(&FALSE, &FALSE));
+    assert!(!runtime_g.eq(&False, &true));
+    assert!(runtime_g.eq(&False, &false));
+    assert!(!runtime_g.eq(&False, &True));
+    assert!(runtime_g.eq(&False, &False));
 
     Ok(())
 }
@@ -131,20 +131,20 @@ fn test_runtime_eq() -> Result<()> {
 fn test_runtime_inhabits() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(runtime_g.inhabits(&true, &BOOL));
-    assert!(runtime_g.inhabits(&false, &BOOL));
-    assert!(!runtime_g.inhabits(&true, &FALSE_TYPE));
-    assert!(runtime_g.inhabits(&false, &FALSE_TYPE));
-    assert!(runtime_g.inhabits(&true, &TRUE_TYPE));
-    assert!(!runtime_g.inhabits(&false, &TRUE_TYPE));
-    assert!(runtime_g.inhabits(&True, &BOOL));
-    assert!(runtime_g.inhabits(&False, &BOOL));
-    assert!(runtime_g.inhabits(&BOOL, &BOOL_TYPE));
-    assert!(!runtime_g.inhabits(&BOOL_TYPE, &BOOL));
-    assert!(runtime_g.inhabits(&VOID, &VOID_TYPE));
-    assert!(!runtime_g.inhabits(&VOID_TYPE, &VOID));
+    assert!(runtime_g.inhabits(&true, &Bool));
+    assert!(runtime_g.inhabits(&false, &Bool));
+    assert!(!runtime_g.inhabits(&true, &FalseType));
+    assert!(runtime_g.inhabits(&false, &FalseType));
+    assert!(runtime_g.inhabits(&true, &TrueType));
+    assert!(!runtime_g.inhabits(&false, &TrueType));
+    assert!(runtime_g.inhabits(&True, &Bool));
+    assert!(runtime_g.inhabits(&False, &Bool));
+    assert!(runtime_g.inhabits(&Bool, &BoolType));
+    assert!(!runtime_g.inhabits(&BoolType, &Bool));
+    assert!(runtime_g.inhabits(&Void, &VoidType));
+    assert!(!runtime_g.inhabits(&VoidType, &Void));
 
-    assert!(!runtime_g.inhabits(&BOOL, &EMPTY_TYPE));
+    assert!(!runtime_g.inhabits(&Bool, &EmptyType));
 
     Ok(())
 }
@@ -154,25 +154,25 @@ fn test_runtime_inhabits() -> Result<()> {
 fn test_ints() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(runtime_g.inhabits(&123i8, &SINT8));
-    assert!(runtime_g.inhabits(&123i16, &SINT16));
-    assert!(runtime_g.inhabits(&123i32, &SINT32));
-    assert!(runtime_g.inhabits(&123i64, &SINT64));
+    assert!(runtime_g.inhabits(&123i8, &Sint8{}));
+    assert!(runtime_g.inhabits(&123i16, &Sint16{}));
+    assert!(runtime_g.inhabits(&123i32, &Sint32{}));
+    assert!(runtime_g.inhabits(&123i64, &Sint64{}));
 
-    assert!(runtime_g.inhabits(&123u8, &UINT8));
-    assert!(runtime_g.inhabits(&123u16, &UINT16));
-    assert!(runtime_g.inhabits(&123u32, &UINT32));
-    assert!(runtime_g.inhabits(&123u64, &UINT64));
+    assert!(runtime_g.inhabits(&123u8, &Uint8{}));
+    assert!(runtime_g.inhabits(&123u16, &Uint16{}));
+    assert!(runtime_g.inhabits(&123u32, &Uint32{}));
+    assert!(runtime_g.inhabits(&123u64, &Uint64{}));
 
-    assert!(runtime_g.inhabits(&SINT8, &SINT8_TYPE));
-    assert!(runtime_g.inhabits(&SINT16, &SINT16_TYPE));
-    assert!(runtime_g.inhabits(&SINT32, &SINT32_TYPE));
-    assert!(runtime_g.inhabits(&SINT64, &SINT64_TYPE));
+    assert!(runtime_g.inhabits(&Sint8{}, &Sint8Type{}));
+    assert!(runtime_g.inhabits(&Sint16{}, &Sint16Type{}));
+    assert!(runtime_g.inhabits(&Sint32{}, &Sint32Type{}));
+    assert!(runtime_g.inhabits(&Sint64{}, &Sint64Type{}));
 
-    assert!(runtime_g.inhabits(&UINT8, &UINT8_TYPE));
-    assert!(runtime_g.inhabits(&UINT16, &UINT16_TYPE));
-    assert!(runtime_g.inhabits(&UINT32, &UINT32_TYPE));
-    assert!(runtime_g.inhabits(&UINT64, &UINT64_TYPE));
+    assert!(runtime_g.inhabits(&Uint8{}, &Uint8Type{}));
+    assert!(runtime_g.inhabits(&Uint16{}, &Uint16Type{}));
+    assert!(runtime_g.inhabits(&Uint32{}, &Uint32Type{}));
+    assert!(runtime_g.inhabits(&Uint64{}, &Uint64Type{}));
 
     Ok(())
 }
@@ -182,11 +182,11 @@ fn test_ints() -> Result<()> {
 fn test_floats() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(runtime_g.inhabits(&5.875f32, &FLOAT32));
-    assert!(runtime_g.inhabits(&5.875f64, &FLOAT64));
+    assert!(runtime_g.inhabits(&5.875f32, &Float32{}));
+    assert!(runtime_g.inhabits(&5.875f64, &Float64{}));
 
-    assert!(runtime_g.inhabits(&FLOAT32, &FLOAT32_TYPE));
-    assert!(runtime_g.inhabits(&FLOAT64, &FLOAT64_TYPE));
+    assert!(runtime_g.inhabits(&Float32{}, &Float32Type{}));
+    assert!(runtime_g.inhabits(&Float64{}, &Float64Type{}));
 
     Ok(())
 }
@@ -204,14 +204,14 @@ fn test_arrays() -> Result<()> {
     log::debug!("a0 (as Debug): {:?}", a0);
     log::debug!("a0.stringify(): {}", a0.stringify());
 
-    assert!(runtime_g.inhabits(&a0, &ARRAY));
-    assert!(runtime_g.inhabits(&ARRAY, &ARRAY_TYPE));
+    assert!(runtime_g.inhabits(&a0, &Array));
+    assert!(runtime_g.inhabits(&Array, &ArrayType));
 
 //     let a1 = vec![100i8, 101i8, 99i8, 10i8];
 //     log::debug!("a1: {:?}", a1);
 //     log::debug!("a1.stringify(): {}", a1.stringify());
 //
-//     assert!(a1.inhabits(&ARRAY));
+//     assert!(a1.inhabits(&Array));
 
     Ok(())
 }
@@ -220,7 +220,7 @@ fn test_arrays() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_tuples() -> Result<()> {
     let t1 = TupleTerm::from(vec![3i32.into(), 5.5f32.into()]);
-    let t2 = TupleTerm::from(vec![SINT32.into(), FLOAT32.into()]);
+    let t2 = TupleTerm::from(vec![Sint32{}.into(), Float32{}.into()]);
     log::debug!("t1: {}", t1);
     log::debug!("t2: {}", t2);
     log::debug!("t1.abstract_type(): {}", t1.abstract_type());
@@ -241,45 +241,45 @@ fn test_abstract_type() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     {
-        let x = &VOID;
+        let x = &Void;
         log::debug!("runtime_g.abstract_type_of({}): {}", runtime_g.stringify(x), runtime_g.stringify(runtime_g.abstract_type_of(x).as_ref()));
     }
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Type).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&VOID).as_ref(), &VOID_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&VOID_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Void).as_ref(), &VoidType));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&VoidType).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&BOOL).as_ref(), &BOOL_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&BOOL_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Bool).as_ref(), &BoolType));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&BoolType).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TRUE).as_ref(), &TRUE_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TRUE_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FALSE).as_ref(), &FALSE_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FALSE_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&True).as_ref(), &TrueType));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&TrueType).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&False).as_ref(), &FalseType));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FalseType).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT8).as_ref(), &SINT8_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT8_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT16).as_ref(), &SINT16_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT16_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT32).as_ref(), &SINT32_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT32_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT64).as_ref(), &SINT64_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&SINT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8{}).as_ref(), &Sint8Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16{}).as_ref(), &Sint16Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32{}).as_ref(), &Sint32Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64{}).as_ref(), &Sint64Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64Type{}).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT8).as_ref(), &UINT8_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT8_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT16).as_ref(), &UINT16_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT16_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT32).as_ref(), &UINT32_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT32_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT64).as_ref(), &UINT64_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&UINT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8{}).as_ref(), &Uint8Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16{}).as_ref(), &Uint16Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32{}).as_ref(), &Uint32Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64{}).as_ref(), &Uint64Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64Type{}).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT32).as_ref(), &FLOAT32_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT32_TYPE).as_ref(), &TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT64).as_ref(), &FLOAT64_TYPE));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&FLOAT64_TYPE).as_ref(), &TYPE));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32{}).as_ref(), &Float32Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64{}).as_ref(), &Float64Type{}));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64Type{}).as_ref(), &Type));
 
     Ok(())
 }
@@ -295,12 +295,12 @@ fn test_value() -> Result<()> {
     log::debug!("v2.stringify(): {:?}", v2.stringify());
     log::debug!("v1.abstract_type(): {:?}", v1.abstract_type());
 
-    log::debug!("v1.inhabits(&SINT32): {:?}", v1.inhabits(&SINT32));
-    log::debug!("v1.inhabits(&BOOL): {:?}", v1.inhabits(&BOOL));
-    log::debug!("v1.inhabits(&Value::from(SINT32)): {:?}", v1.inhabits(&Value::from(SINT32)));
-    log::debug!("v1.inhabits(&Value::from(BOOL)): {:?}", v1.inhabits(&Value::from(BOOL)));
+    log::debug!("v1.inhabits(&Sint32): {:?}", v1.inhabits(&Sint32{}));
+    log::debug!("v1.inhabits(&Bool): {:?}", v1.inhabits(&Bool));
+    log::debug!("v1.inhabits(&Value::from(Sint32)): {:?}", v1.inhabits(&Value::from(Sint32{})));
+    log::debug!("v1.inhabits(&Value::from(Bool)): {:?}", v1.inhabits(&Value::from(Bool)));
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
-    let v3 = Value::from(SINT32);
+    let v3 = Value::from(Sint32{});
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
 
     log::debug!("v1: {}", v1);
@@ -560,10 +560,10 @@ fn test_structs() -> Result<()> {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    log::debug!("STRUCT: {}", STRUCT.stringify());
-    log::debug!("STRUCT_TYPE: {}", STRUCT_TYPE.stringify());
+    log::debug!("Struct: {}", Struct.stringify());
+    log::debug!("StructType: {}", StructType.stringify());
 
-    assert!(STRUCT.inhabits(&STRUCT_TYPE));
+    assert!(Struct.inhabits(&StructType));
 
     // Create the Hippo struct
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap()
@@ -844,7 +844,7 @@ fn eval_expr(expr: &Value) -> f64 {
     let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
 
     // TODO: This should be a poset search under Expr (which is really a Union of types)
-    if expr.inhabits(&FLOAT64) {
+    if expr.inhabits(&Float64{}) {
         *expr.downcast_ref::<f64>().unwrap()
     } else if expr.inhabits(&bin_op_expr) {
         let inner_tuple_term = expr.downcast_ref::<TupleTerm>().unwrap();

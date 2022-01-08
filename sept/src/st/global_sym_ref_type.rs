@@ -23,5 +23,3 @@ impl Stringify for GlobalSymRefType {
         "GlobalSymRefType".into()
     }
 }
-
-pub const GLOBAL_SYM_REF_TYPE: GlobalSymRefType = GlobalSymRefType{};

@@ -23,5 +23,3 @@ impl Stringify for EmptyType {
         "EmptyType".into()
     }
 }
-
-pub const EMPTY_TYPE: EmptyType = EmptyType{};

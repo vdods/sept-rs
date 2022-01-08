@@ -21,5 +21,3 @@ impl Stringify for FalseType {
         "FalseType".into()
     }
 }
-
-pub const FALSE_TYPE: FalseType = FalseType{};

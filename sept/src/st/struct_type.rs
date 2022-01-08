@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
-pub struct StructType {}
+pub struct StructType;
 
 impl st::Inhabits<Type> for StructType {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -22,5 +22,3 @@ impl Stringify for StructType {
         "StructType".into()
     }
 }
-
-pub const STRUCT_TYPE: StructType = StructType{};

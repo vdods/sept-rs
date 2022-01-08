@@ -29,5 +29,3 @@ impl Stringify for Term {
         "Term".into()
     }
 }
-
-pub const TERM: Term = Term{};

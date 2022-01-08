@@ -22,5 +22,3 @@ impl Stringify for Tuple {
         "Tuple".into()
     }
 }
-
-pub const TUPLE: Tuple = Tuple{};

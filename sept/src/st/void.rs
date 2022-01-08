@@ -22,5 +22,3 @@ impl NonParametricTermTrait for Void {
         DynNPTerm::Void
     }
 }
-
-pub const VOID: Void = Void{};

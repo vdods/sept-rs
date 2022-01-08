@@ -22,5 +22,3 @@ impl Stringify for TupleType {
         "TupleType".into()
     }
 }
-
-pub const TUPLE_TYPE: TupleType = TupleType{};

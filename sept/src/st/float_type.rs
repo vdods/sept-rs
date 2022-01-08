@@ -46,6 +46,3 @@ impl<const N: usize> TypeTrait for FloatNType<N> {}
 
 pub type Float32Type = FloatNType<32>;
 pub type Float64Type = FloatNType<64>;
-
-pub const FLOAT32_TYPE: Float32Type = Float32Type{};
-pub const FLOAT64_TYPE: Float64Type = Float64Type{};

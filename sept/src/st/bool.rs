@@ -22,5 +22,3 @@ impl Stringify for Bool {
         "Bool".into()
     }
 }
-
-pub const BOOL: Bool = Bool{};

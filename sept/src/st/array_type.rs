@@ -4,7 +4,7 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 // TODO: AbstractTypeType could/should actually be "FormalTypeOf(ArrayType)"
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
-pub struct ArrayType {}
+pub struct ArrayType;
 
 impl st::Inhabits<Type> for ArrayType {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -23,5 +23,3 @@ impl Stringify for ArrayType {
         "ArrayType".into()
     }
 }
-
-pub const ARRAY_TYPE: ArrayType = ArrayType{};

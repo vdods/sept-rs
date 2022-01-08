@@ -15,5 +15,3 @@ impl Stringify for BoolType {
         "BoolType".into()
     }
 }
-
-pub const BOOL_TYPE: BoolType = BoolType{};

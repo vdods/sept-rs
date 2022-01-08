@@ -22,5 +22,3 @@ impl Stringify for Struct {
         "Struct".into()
     }
 }
-
-pub const STRUCT: Struct = Struct{};

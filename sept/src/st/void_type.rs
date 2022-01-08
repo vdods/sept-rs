@@ -15,5 +15,3 @@ impl Stringify for VoidType {
         "VoidType".into()
     }
 }
-
-pub const VOID_TYPE: VoidType = VoidType{};

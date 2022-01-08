@@ -22,5 +22,3 @@ impl Stringify for LocalSymRefType {
         "LocalSymRefType".into()
     }
 }
-
-pub const LOCAL_SYM_REF_TYPE: LocalSymRefType = LocalSymRefType{};

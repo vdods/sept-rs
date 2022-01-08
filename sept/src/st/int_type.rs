@@ -67,13 +67,3 @@ pub type Uint8Type = IntNType<UNSIGNED, 8>;
 pub type Uint16Type = IntNType<UNSIGNED, 16>;
 pub type Uint32Type = IntNType<UNSIGNED, 32>;
 pub type Uint64Type = IntNType<UNSIGNED, 64>;
-
-pub const SINT8_TYPE: Sint8Type = Sint8Type{};
-pub const SINT16_TYPE: Sint16Type = Sint16Type{};
-pub const SINT32_TYPE: Sint32Type = Sint32Type{};
-pub const SINT64_TYPE: Sint64Type = Sint64Type{};
-
-pub const UINT8_TYPE: Uint8Type = Uint8Type{};
-pub const UINT16_TYPE: Uint16Type = Uint16Type{};
-pub const UINT32_TYPE: Uint32Type = Uint32Type{};
-pub const UINT64_TYPE: Uint64Type = Uint64Type{};
