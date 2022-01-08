@@ -42,21 +42,21 @@ impl Stringify for ArrayTerm {
 }
 
 impl TermTrait for ArrayTerm {
-    type AbstractTypeFnReturnType = Array;
+    type AbstractTypeType = Array;
 
     fn label() -> &'static str {
         "ArrayTerm"
     }
     /// An Array term is parametric if there is at least one parameter.
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         self.0.len() > 0
     }
-    fn is_type_term(&self) -> bool {
-        // TODO: Think about if this should return the AND of is_type_term for all elements.
+    fn is_type(&self) -> bool {
+        // TODO: Think about if this should return the AND of is_type for all elements.
         // NOTE: Probably not, that particular semantic is meant for Tuple.
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }

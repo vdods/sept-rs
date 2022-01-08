@@ -68,3 +68,6 @@ pub use crate::st::{
     void::{VOID, Void},
     void_type::{VOID_TYPE, VoidType},
 };
+
+// Trait derivation proc macros
+pub use sept_derive::StTermTrait as TermTrait;

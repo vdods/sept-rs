@@ -39,18 +39,18 @@ impl Stringify for bool {
 }
 
 impl TermTrait for bool {
-    type AbstractTypeFnReturnType = Bool;
+    type AbstractTypeType = Bool;
 
     fn label() -> &'static str {
         "bool"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         true
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }

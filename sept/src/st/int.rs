@@ -5,7 +5,7 @@ pub const SIGNED: bool = true;
 pub const UNSIGNED: bool = false;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct IntN<const IS_SIGNED: bool, const N: usize> {}
+pub struct IntN<const IS_SIGNED: bool, const N: usize>;
 
 impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
 
@@ -46,19 +46,19 @@ impl<const IS_SIGNED: bool, const N: usize> Stringify for IntN<IS_SIGNED, N> {
 }
 
 impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntN<IS_SIGNED, N> {
-    type AbstractTypeFnReturnType = IntNType<IS_SIGNED, N>;
+    type AbstractTypeType = IntNType<IS_SIGNED, N>;
 
     fn label() -> &'static str {
         "IntN"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

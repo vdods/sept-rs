@@ -50,3 +50,41 @@
 -   A `StructTermTerm` is really a kind of typed `TupleTerm`.  Maybe this should be implemented using semantic
     subtypes instead, where generic data is given additional semantic meaning via an associated semantic type
     or marker.
+-   Apparently if a rust type is declared as `pub struct X;` then it can be instantiated as `let x = X;` instead
+    of `let x = X{};`.  Though apparently this doesn't work for type aliases (error is "can't use a type alias
+    as a constructor").  In particular, `Float32`, `Float64`, `Sint8`, `Uint8`, etc are type aliases, so this
+    wouldn't work for them.
+-   Decompose `st::TermTrait` into traits `st::AbstractTypeOf`, `st::IsParametric`, and `st::IsType`, where
+    they don't depend on any `&self` parameter.  Also define `dy` versions of each of these.  Jamming:
+
+        trait dy::AbstractTypeOf {
+            fn abstract_type(&self) -> dy::Value;
+        }
+        trait st::AbstractTypeOf {
+            type AbstractTypeFnReturnType;
+            fn abstract_type(&self) -> Self::AbstractTypeFnReturnType;
+            // This would have a blanket implementation of dy::AbstractTypeOf
+        }
+        trait st::NonParametricAbstractTypeOf {
+            type NonParametricAbstractTypeFnReturnType;
+            fn non_parametric_abstract_type() -> Self::NonParametricAbstractTypeFnReturnType;
+            // This would have a blanket implementation of st::AbstractTypeOf
+        }
+        trait dy::IsParametric {
+            fn is_parametric(&self) -> bool;
+        }
+        trait st::IsParametric<const IS_PARAMETRIC: bool> {
+            fn is_parametric(&self) -> bool {
+                IS_PARAMETRIC
+            }
+            // This would have a blanked implementation of dy::IsParametric
+        }
+        trait dy::IsType {
+            fn is_type(&self) -> bool;
+        }
+        trait st::IsType<const IS_TYPE: bool> {
+            fn is_type(&self) -> bool {
+                IS_TYPE
+            }
+            // This would have a blanket implementation of dy::IsType
+        }

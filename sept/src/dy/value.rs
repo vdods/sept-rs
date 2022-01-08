@@ -85,18 +85,18 @@ impl Stringify for Value {
 }
 
 impl TermTrait for Value {
-    type AbstractTypeFnReturnType = Value;
+    type AbstractTypeType = Value;
 
     fn label() -> &'static str {
         "Value"
     }
-    fn is_parametric_term(&self) -> bool {
-        RUNTIME_LA.read().unwrap().is_parametric_term(self.as_ref())
+    fn is_parametric(&self) -> bool {
+        RUNTIME_LA.read().unwrap().is_parametric(self.as_ref())
     }
-    fn is_type_term(&self) -> bool {
-        RUNTIME_LA.read().unwrap().is_type_term(self.as_ref())
+    fn is_type(&self) -> bool {
+        RUNTIME_LA.read().unwrap().is_type(self.as_ref())
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+    fn abstract_type(&self) -> Self::AbstractTypeType {
         Value(RUNTIME_LA.read().unwrap().abstract_type_of(self.as_ref()))
     }
 }

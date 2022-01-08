@@ -26,19 +26,19 @@ impl Stringify for ArrayType {
 
 impl TermTrait for ArrayType {
     // TODO: This could/should actually be FormalTypeOf(ArrayType)
-    type AbstractTypeFnReturnType = Type;
+    type AbstractTypeType = Type;
 
     fn label() -> &'static str {
         "ArrayType"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

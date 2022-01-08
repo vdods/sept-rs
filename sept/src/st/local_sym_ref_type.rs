@@ -26,19 +26,19 @@ impl Stringify for LocalSymRefType {
 
 impl TermTrait for LocalSymRefType {
     // TODO: This could/should actually be FormalTypeOf(LocalSymRefType)
-    type AbstractTypeFnReturnType = Type;
+    type AbstractTypeType = Type;
 
     fn label() -> &'static str {
         "LocalSymRefType"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

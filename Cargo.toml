@@ -1,4 +1,6 @@
 [workspace]
 members = [
     "sept",
+    "sept_derive",
+    "sept_derive_tests",
 ]

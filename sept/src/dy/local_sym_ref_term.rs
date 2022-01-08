@@ -42,24 +42,24 @@ impl Stringify for LocalSymRefTerm {
 }
 
 impl TermTrait for LocalSymRefTerm {
-    type AbstractTypeFnReturnType = dy::Value;
+    type AbstractTypeType = dy::Value;
 
     fn label() -> &'static str {
         "LocalSymRefTerm"
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
-    fn is_parametric_term(&self) -> bool {
-        self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().is_parametric_term()
+    fn is_parametric(&self) -> bool {
+        self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().is_parametric()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
-    fn is_type_term(&self) -> bool {
-        self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().is_type_term()
+    fn is_type(&self) -> bool {
+        self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().is_type()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+    fn abstract_type(&self) -> Self::AbstractTypeType {
         self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().abstract_type()
     }
 }

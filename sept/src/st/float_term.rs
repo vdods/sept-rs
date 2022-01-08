@@ -28,35 +28,35 @@ impl Stringify for f64 {
 }
 
 impl TermTrait for f32 {
-    type AbstractTypeFnReturnType = Float32;
+    type AbstractTypeType = Float32;
 
     fn label() -> &'static str {
         "f32"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for f64 {
-    type AbstractTypeFnReturnType = Float64;
+    type AbstractTypeType = Float64;
 
     fn label() -> &'static str {
         "f64"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }

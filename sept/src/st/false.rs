@@ -36,19 +36,19 @@ impl Stringify for False {
 }
 
 impl TermTrait for False {
-    type AbstractTypeFnReturnType = FalseType;
+    type AbstractTypeType = FalseType;
 
     fn label() -> &'static str {
         "False"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

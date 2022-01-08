@@ -41,8 +41,8 @@ pub struct Runtime {
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
     abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
     clone_fn_m: HashMap<TypeId, CloneFn>,
-    is_parametric_term_fn_m: HashMap<TypeId, UnaryPredicate>,
-    is_type_term_fn_m: HashMap<TypeId, UnaryPredicate>,
+    is_parametric_fn_m: HashMap<TypeId, UnaryPredicate>,
+    is_type_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
     dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
 }
@@ -208,12 +208,12 @@ impl Runtime {
         runtime.register_inhabits::<TupleTerm, StructTerm>().unwrap();
 
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
-        runtime.register_is_parametric_term::<GlobalSymRefTerm>().unwrap();
-        runtime.register_is_type_term::<GlobalSymRefTerm>().unwrap();
+        runtime.register_is_parametric::<GlobalSymRefTerm>().unwrap();
+        runtime.register_is_type::<GlobalSymRefTerm>().unwrap();
 
         runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
-        runtime.register_is_parametric_term::<LocalSymRefTerm>().unwrap();
-        runtime.register_is_type_term::<LocalSymRefTerm>().unwrap();
+        runtime.register_is_parametric::<LocalSymRefTerm>().unwrap();
+        runtime.register_is_type::<LocalSymRefTerm>().unwrap();
 
         runtime.register_dereferenced_once::<GlobalSymRefTerm>().unwrap();
         runtime.register_dereferenced_once::<LocalSymRefTerm>().unwrap();
@@ -228,20 +228,20 @@ impl Runtime {
         T:  st::TermTrait +
             Stringify +
             std::cmp::PartialEq +
-            Inhabits<<T as TermTrait>::AbstractTypeFnReturnType> +
+            Inhabits<<T as TermTrait>::AbstractTypeType> +
             'static,
-        <T as TermTrait>::AbstractTypeFnReturnType: st::TypeTrait
+        <T as TermTrait>::AbstractTypeType: st::TypeTrait
     {
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(self.term_s.insert(type_id), "collision with already-registered term {}", self.label_of(type_id));
         self.register_label::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
-        self.register_inhabits::<T, <T as TermTrait>::AbstractTypeFnReturnType>()?;
+        self.register_inhabits::<T, <T as TermTrait>::AbstractTypeType>()?;
         self.register_abstract_type::<T>()?;
         self.register_clone::<T>()?;
-        self.register_is_parametric_term::<T>()?;
-        self.register_is_type_term::<T>()?;
+        self.register_is_parametric::<T>()?;
+        self.register_is_type::<T>()?;
         Ok(())
     }
     pub fn register_type<T>(&mut self) -> Result<()>
@@ -249,9 +249,9 @@ impl Runtime {
         T:  st::TypeTrait +
             Stringify +
             std::cmp::PartialEq +
-            Inhabits<<T as TermTrait>::AbstractTypeFnReturnType> +
+            Inhabits<<T as TermTrait>::AbstractTypeType> +
             'static,
-        <T as TermTrait>::AbstractTypeFnReturnType: st::TypeTrait
+        <T as TermTrait>::AbstractTypeType: st::TypeTrait
     {
         self.register_term::<T>()?;
         let type_id = TypeId::of::<T>();
@@ -361,25 +361,25 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_parametric_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_parametric<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let is_parametric_term_fn = |x: &ValueGuts| -> bool {
-            x.downcast_ref::<T>().unwrap().is_parametric_term()
+        let is_parametric_fn = |x: &ValueGuts| -> bool {
+            x.downcast_ref::<T>().unwrap().is_parametric()
         };
-        match self.is_parametric_term_fn_m.insert(type_id, is_parametric_term_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric_term fn for {}", self.label_of(type_id))),
+        match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_type_term<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let is_type_term_fn = |x: &ValueGuts| -> bool {
-            x.downcast_ref::<T>().unwrap().is_type_term()
+        let is_type_fn = |x: &ValueGuts| -> bool {
+            x.downcast_ref::<T>().unwrap().is_type()
         };
-        match self.is_type_term_fn_m.insert(type_id, is_type_term_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_type_term fn for {}", self.label_of(type_id))),
+        match self.is_type_fn_m.insert(type_id, is_type_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_type fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
@@ -578,50 +578,50 @@ impl Runtime {
             }
         }
     }
-    pub fn is_parametric_term(&self, x: &ValueGuts) -> bool {
+    pub fn is_parametric(&self, x: &ValueGuts) -> bool {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
-                self.is_parametric_term_impl(x_value_guts)
+                self.is_parametric_impl(x_value_guts)
             },
             MaybeDereferencedValue::Ref(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
-                self.is_parametric_term_impl(x_value_g.as_ref())
+                self.is_parametric_impl(x_value_g.as_ref())
             },
         }
     }
-    fn is_parametric_term_impl(&self, x: &ValueGuts) -> bool {
-        match self.is_parametric_term_fn_m.get(&x.type_id()) {
-            Some(is_parametric_term_fn) => is_parametric_term_fn(x),
+    fn is_parametric_impl(&self, x: &ValueGuts) -> bool {
+        match self.is_parametric_fn_m.get(&x.type_id()) {
+            Some(is_parametric_fn) => is_parametric_fn(x),
             None => {
-                panic!("no is_parametric_term fn found for {:?}", x.type_id());
+                panic!("no is_parametric fn found for {:?}", x.type_id());
                 // NOTE: A default here probably doesn't make any sense.
-//                 log::warn!("no is_parametric_term fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+//                 log::warn!("no is_parametric fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
 //                 false
             }
         }
     }
-    pub fn is_type_term(&self, x: &ValueGuts) -> bool {
+    pub fn is_type(&self, x: &ValueGuts) -> bool {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
-                self.is_type_term_impl(x_value_guts)
+                self.is_type_impl(x_value_guts)
             },
             MaybeDereferencedValue::Ref(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
-                self.is_type_term_impl(x_value_g.as_ref())
+                self.is_type_impl(x_value_g.as_ref())
             },
         }
     }
-    fn is_type_term_impl(&self, x: &ValueGuts) -> bool {
-        match self.is_type_term_fn_m.get(&x.type_id()) {
-            Some(is_type_term_fn) => is_type_term_fn(x),
+    fn is_type_impl(&self, x: &ValueGuts) -> bool {
+        match self.is_type_fn_m.get(&x.type_id()) {
+            Some(is_type_fn) => is_type_fn(x),
             None => {
-                panic!("no is_type_term fn found for {:?}", x.type_id());
+                panic!("no is_type fn found for {:?}", x.type_id());
                 // NOTE: A default here probably doesn't make any sense.
-//                 log::warn!("no is_type_term fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+//                 log::warn!("no is_type fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
 //                 false
             }
         }

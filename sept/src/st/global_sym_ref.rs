@@ -25,19 +25,19 @@ impl Stringify for GlobalSymRef {
 }
 
 impl TermTrait for GlobalSymRef {
-    type AbstractTypeFnReturnType = GlobalSymRefType;
+    type AbstractTypeType = GlobalSymRefType;
 
     fn label() -> &'static str {
         "GlobalSymRef"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

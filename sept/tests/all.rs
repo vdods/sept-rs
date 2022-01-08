@@ -57,24 +57,24 @@ fn test_term_and_type() -> Result<()> {
 //     assert!(!BOOL.inhabits(&FALSE_TYPE));
 
 
-    assert!(!TRUE.is_parametric_term());
-    assert!(!TRUE.is_type_term());
-    assert!(!TRUE_TYPE.is_parametric_term());
-    assert!(TRUE_TYPE.is_type_term());
+    assert!(!TRUE.is_parametric());
+    assert!(!TRUE.is_type());
+    assert!(!TRUE_TYPE.is_parametric());
+    assert!(TRUE_TYPE.is_type());
 
-    assert!(!FALSE.is_parametric_term());
-    assert!(!FALSE.is_type_term());
-    assert!(!FALSE_TYPE.is_parametric_term());
-    assert!(FALSE_TYPE.is_type_term());
+    assert!(!FALSE.is_parametric());
+    assert!(!FALSE.is_type());
+    assert!(!FALSE_TYPE.is_parametric());
+    assert!(FALSE_TYPE.is_type());
 
-    assert!(true.is_parametric_term());
-    assert!(!true.is_type_term());
-    assert!(false.is_parametric_term());
-    assert!(!false.is_type_term());
-    assert!(!BOOL.is_parametric_term());
-    assert!(BOOL.is_type_term());
-    assert!(!BOOL_TYPE.is_parametric_term());
-    assert!(BOOL_TYPE.is_type_term());
+    assert!(true.is_parametric());
+    assert!(!true.is_type());
+    assert!(false.is_parametric());
+    assert!(!false.is_type());
+    assert!(!BOOL.is_parametric());
+    assert!(BOOL.is_type());
+    assert!(!BOOL_TYPE.is_parametric());
+    assert!(BOOL_TYPE.is_type());
 
     Ok(())
 }
@@ -227,10 +227,10 @@ fn test_tuples() -> Result<()> {
     log::debug!("t2.abstract_type(): {}", t2.abstract_type());
 
     assert!(t1.inhabits(&t2));
-    assert!(t1.is_parametric_term());
-    assert!(t2.is_parametric_term());
-    assert!(!t1.is_type_term());
-    assert!(t2.is_type_term());
+    assert!(t1.is_parametric());
+    assert!(t2.is_parametric());
+    assert!(!t1.is_type());
+    assert!(t2.is_type());
 
     Ok(())
 }
@@ -760,138 +760,138 @@ impl Stringify for Neg {
 }
 
 impl TermTrait for BinOp {
-    type AbstractTypeFnReturnType = Type;
+    type AbstractTypeType = Type;
 
     fn label() -> &'static str {
         "BinOp"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for UnOp {
-    type AbstractTypeFnReturnType = Type;
+    type AbstractTypeType = Type;
 
     fn label() -> &'static str {
         "UnOp"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Add {
-    type AbstractTypeFnReturnType = BinOp;
+    type AbstractTypeType = BinOp;
 
     fn label() -> &'static str {
         "Add"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Sub {
-    type AbstractTypeFnReturnType = BinOp;
+    type AbstractTypeType = BinOp;
 
     fn label() -> &'static str {
         "Sub"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Mul {
-    type AbstractTypeFnReturnType = BinOp;
+    type AbstractTypeType = BinOp;
 
     fn label() -> &'static str {
         "Mul"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Div {
-    type AbstractTypeFnReturnType = BinOp;
+    type AbstractTypeType = BinOp;
 
     fn label() -> &'static str {
         "Div"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Pow {
-    type AbstractTypeFnReturnType = BinOp;
+    type AbstractTypeType = BinOp;
 
     fn label() -> &'static str {
         "Pow"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
 impl TermTrait for Neg {
-    type AbstractTypeFnReturnType = UnOp;
+    type AbstractTypeType = UnOp;
 
     fn label() -> &'static str {
         "Neg"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
@@ -963,19 +963,19 @@ impl Stringify for Expr {
 }
 
 impl TermTrait for Expr {
-    type AbstractTypeFnReturnType = Type;
+    type AbstractTypeType = Type;
 
     fn label() -> &'static str {
         "Expr"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

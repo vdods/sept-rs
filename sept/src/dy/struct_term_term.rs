@@ -24,7 +24,7 @@ impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     }
 }
 
-// This implementation is necessary because StructTermTerm::AbstractTypeFnReturnType is dy::Value.
+// This implementation is necessary because StructTermTerm::AbstractTypeType is dy::Value.
 impl st::Inhabits<dy::Value> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         dy::RUNTIME_LA.read().unwrap().inhabits(self, rhs.as_ref())
@@ -83,19 +83,19 @@ impl st::Stringify for StructTermTerm {
 }
 
 impl st::TermTrait for StructTermTerm {
-    type AbstractTypeFnReturnType = dy::Value;
+    type AbstractTypeType = dy::Value;
 
     fn label() -> &'static str {
         "StructTermTerm"
     }
     /// A StructTermTerm term is parametric if there is at least one element.
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         self.element_tuple_term.len() > 0
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+    fn abstract_type(&self) -> Self::AbstractTypeType {
         self.type_.clone()
     }
 }

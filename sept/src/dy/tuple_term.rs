@@ -128,20 +128,20 @@ impl Stringify for TupleTerm {
 }
 
 impl TermTrait for TupleTerm {
-    type AbstractTypeFnReturnType = TupleTerm;
+    type AbstractTypeType = TupleTerm;
 
     fn label() -> &'static str {
         "TupleTerm"
     }
     /// A Tuple term is parametric if there is at least one parameter.
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         self.0.len() > 0
     }
     /// A Tuple term is a type if all of its elements are types.
-    fn is_type_term(&self) -> bool {
-        self.0.iter().all(|element| element.is_type_term())
+    fn is_type(&self) -> bool {
+        self.0.iter().all(|element| element.is_type())
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
+    fn abstract_type(&self) -> Self::AbstractTypeType {
         let mut type_element_v = Vec::new();
         for self_element in self.0.iter() {
             type_element_v.push(self_element.abstract_type());

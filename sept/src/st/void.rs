@@ -19,19 +19,19 @@ impl Stringify for Void {
 }
 
 impl TermTrait for Void {
-    type AbstractTypeFnReturnType = VoidType;
+    type AbstractTypeType = VoidType;
 
     fn label() -> &'static str {
         "Void"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         false
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 

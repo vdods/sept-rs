@@ -25,19 +25,19 @@ impl Stringify for Struct {
 }
 
 impl TermTrait for Struct {
-    type AbstractTypeFnReturnType = StructType;
+    type AbstractTypeType = StructType;
 
     fn label() -> &'static str {
         "Struct"
     }
-    fn is_parametric_term(&self) -> bool {
+    fn is_parametric(&self) -> bool {
         false
     }
-    fn is_type_term(&self) -> bool {
+    fn is_type(&self) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeFnReturnType {
-        Self::AbstractTypeFnReturnType{}
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType{}
     }
 }
 
