@@ -1,10 +1,8 @@
-use crate::{dy, st::{self, Bool, Inhabits, False, Stringify, TermTrait, TrueType}};
+use crate::{dy, st::{self, Bool, Inhabits, False, Stringify, TrueType}};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "TrueType", is_parametric = "false", is_type = "false")]
 pub struct True;
-
-impl dy::IntoValue for True {}
 
 impl Inhabits<Bool> for True {
     fn inhabits(&self, _rhs: &Bool) -> bool {

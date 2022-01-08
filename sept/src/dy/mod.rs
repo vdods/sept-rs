@@ -28,3 +28,6 @@ pub use crate::dy::{
     tuple_term::TupleTerm,
     value::{Value, ValueGuts},
 };
+
+// Trait derivation proc macros
+pub use sept_derive::DyIntoValue as IntoValue;

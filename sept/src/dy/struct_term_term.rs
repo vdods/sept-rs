@@ -6,7 +6,7 @@ use crate::{dy, st::{self, Stringify}};
 // TODO: Figure out how to do this more efficiently, e.g. not having a full copy of type_ (which
 // is really just the symbol_id of the StructTerm), and instead have a direct reference to the
 // StructTerm itself.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, dy::IntoValue, PartialEq)]
 pub struct StructTermTerm {
     /// A StructTerm necessarily has a defined type.  Typically that would be declared in a symbol
     /// table (probably the global symbol table), and type_ would be a GlobalSymRefTerm.
@@ -30,8 +30,6 @@ impl st::Inhabits<dy::Value> for StructTermTerm {
         dy::RUNTIME_LA.read().unwrap().inhabits(self, rhs.as_ref())
     }
 }
-
-impl dy::IntoValue for StructTermTerm {}
 
 impl StructTermTerm {
     pub fn new_unchecked(type_: dy::Value, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {

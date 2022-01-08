@@ -1,11 +1,9 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "GlobalSymRefType", is_parametric = "false", is_type = "true")]
 pub struct GlobalSymRef;
-
-impl dy::IntoValue for GlobalSymRef {}
 
 impl Inhabits<GlobalSymRefType> for GlobalSymRef {
     fn inhabits(&self, _: &GlobalSymRefType) -> bool {

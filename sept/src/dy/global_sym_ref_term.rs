@@ -3,12 +3,10 @@ use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, dy::IntoValue)]
 pub struct GlobalSymRefTerm {
     pub symbol_id: String,
 }
-
-impl dy::IntoValue for GlobalSymRefTerm {}
 
 impl std::fmt::Display for GlobalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {

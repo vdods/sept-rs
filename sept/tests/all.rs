@@ -623,7 +623,7 @@ fn test_structs() -> Result<()> {
 // TEMP TESTING
 //
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
 
@@ -633,9 +633,7 @@ impl st::Inhabits<Type> for BinOp {
     }
 }
 
-impl dy::IntoValue for BinOp {}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
 
@@ -644,8 +642,6 @@ impl st::Inhabits<Type> for UnOp {
         true
     }
 }
-
-impl dy::IntoValue for UnOp {}
 
 trait BinOpTermTrait {
     // TODO: A BinOp whose character is defined at runtime (analogous to DynNPTerm) would need
@@ -656,36 +652,29 @@ trait BinOpTermTrait {
 
 trait UnOpTermTrait {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Add;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Sub;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Mul;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Div;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Pow;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
-
-impl dy::IntoValue for Add {}
-impl dy::IntoValue for Sub {}
-impl dy::IntoValue for Mul {}
-impl dy::IntoValue for Div {}
-impl dy::IntoValue for Pow {}
-impl dy::IntoValue for Neg {}
 
 impl BinOpTermTrait for Add {
     fn is_commutative() -> bool {

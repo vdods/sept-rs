@@ -1,12 +1,10 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 // TODO: AbstractTypeType could/should actually be "FormalTypeOf(ArrayType)"
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct ArrayType {}
-
-impl dy::IntoValue for ArrayType {}
 
 impl st::Inhabits<Type> for ArrayType {
     fn inhabits(&self, _rhs: &Type) -> bool {

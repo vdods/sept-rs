@@ -53,7 +53,7 @@ pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::Token
     };
 
     let output = quote! {
-        impl TermTrait for #ident {
+        impl st::TermTrait for #ident {
             type AbstractTypeType = #AbstractTypeType;
 
             fn is_parametric(&self) -> bool {
@@ -83,7 +83,27 @@ pub fn derive_st_type_trait(input: proc_macro::TokenStream) -> proc_macro::Token
     let syn::DeriveInput { ident, .. } = input;
 
     let output = quote! {
-        impl TypeTrait for #ident {}
+        impl st::TypeTrait for #ident {}
+    };
+    output.into()
+}
+
+//
+// proc_macro for deriving sept::dy::IntoValue (it's re-exported in that crate).
+//
+
+/// This will derive sept::dy::IntoValue, which for now has no additional attributes, e.g.
+/// ```
+/// #[derive(sept::dy::IntoValue)]
+/// pub struct FancyType;
+/// ```
+#[proc_macro_derive(DyIntoValue)]
+pub fn derive_dy_into_value(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input);
+    let syn::DeriveInput { ident, .. } = input;
+
+    let output = quote! {
+        impl dy::IntoValue for #ident {}
     };
     output.into()
 }

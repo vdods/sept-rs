@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq, st::TermTrait)]
+#[derive(Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "Struct", is_parametric = "self.ordered_type_v.len() > 0", is_type = "true")]
 pub struct StructTerm {
     // NOTE: This is probably temporary, since constructing a term of this type won't necessarily
@@ -17,8 +17,6 @@ pub struct StructTerm {
     /// This is a cache for the quick lookup of the element index based on a name.
     name_index_m: HashMap<String, usize>,
 }
-
-impl dy::IntoValue for StructTerm {}
 
 /// TODO: Implement projection to TupleTerm of types.
 impl StructTerm {

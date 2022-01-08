@@ -1,11 +1,9 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, BoolType, NonParametricTermTrait, Inhabits, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, BoolType, NonParametricTermTrait, Inhabits, Stringify}};
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "BoolType", is_parametric = "false", is_type = "true")]
 pub struct Bool;
-
-impl dy::IntoValue for Bool {}
 
 impl Inhabits<BoolType> for Bool {
     fn inhabits(&self, _: &BoolType) -> bool {

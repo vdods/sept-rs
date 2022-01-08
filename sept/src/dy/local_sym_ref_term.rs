@@ -3,15 +3,13 @@ use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, dy::IntoValue)]
 pub struct LocalSymRefTerm {
     /// This is the symbol table to which this sym ref refers.
     local_symbol_table_la: Arc<RwLock<dy::SymbolTable>>,
     /// This is the symbol name for the reference.
     pub symbol_id: String,
 }
-
-impl dy::IntoValue for LocalSymRefTerm {}
 
 impl std::fmt::Display for LocalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {

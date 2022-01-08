@@ -1,7 +1,7 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 // TODO: AbstractTypeType could/should actually be FormalTypeOf(GlobalSymRefType)
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct GlobalSymRefType {}
@@ -11,8 +11,6 @@ impl st::Inhabits<Type> for GlobalSymRefType {
         true
     }
 }
-
-impl dy::IntoValue for GlobalSymRefType {}
 
 impl NonParametricTermTrait for GlobalSymRefType {
     fn as_dyn_npterm(&self) -> DynNPTerm {

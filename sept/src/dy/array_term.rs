@@ -1,12 +1,9 @@
-// use crate::{Array, dy, Inhabits, Stringify, TermTrait};
-use crate::{dy, st::{self, Array, Inhabits, Stringify, TermTrait}};
+use crate::{dy, st::{self, Array, Inhabits, Stringify}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq, st::TermTrait)]
+#[derive(Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "Array", is_parametric = "self.0.len() > 0", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
-
-impl dy::IntoValue for ArrayTerm {}
 
 impl std::ops::Deref for ArrayTerm {
     type Target = Vec<dy::Value>;
