@@ -52,9 +52,6 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         impl TermTrait for #ident {
             type AbstractTypeType = #AbstractTypeType;
 
-            fn label() -> &'static str {
-                std::any::type_name::<#ident>()
-            }
             fn is_parametric(&self) -> bool {
                 #is_parametric
             }

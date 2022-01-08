@@ -31,9 +31,6 @@ impl<const N: usize> Stringify for FloatNType<N> {
 impl<const N: usize> TermTrait for FloatNType<N> {
     type AbstractTypeType = Type;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }

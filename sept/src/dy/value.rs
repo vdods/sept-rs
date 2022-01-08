@@ -87,9 +87,6 @@ impl Stringify for Value {
 impl TermTrait for Value {
     type AbstractTypeType = Value;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         RUNTIME_LA.read().unwrap().is_parametric(self.as_ref())
     }

@@ -48,9 +48,6 @@ impl<const IS_SIGNED: bool, const N: usize> Stringify for IntN<IS_SIGNED, N> {
 impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntN<IS_SIGNED, N> {
     type AbstractTypeType = IntNType<IS_SIGNED, N>;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }

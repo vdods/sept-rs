@@ -108,9 +108,6 @@ impl Stringify for u64 {
 impl TermTrait for i8 {
     type AbstractTypeType = Sint8;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -125,9 +122,6 @@ impl TermTrait for i8 {
 impl TermTrait for i16 {
     type AbstractTypeType = Sint16;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -142,9 +136,6 @@ impl TermTrait for i16 {
 impl TermTrait for i32 {
     type AbstractTypeType = Sint32;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -159,9 +150,6 @@ impl TermTrait for i32 {
 impl TermTrait for i64 {
     type AbstractTypeType = Sint64;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -176,9 +164,6 @@ impl TermTrait for i64 {
 impl TermTrait for u8 {
     type AbstractTypeType = Uint8;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -193,9 +178,6 @@ impl TermTrait for u8 {
 impl TermTrait for u16 {
     type AbstractTypeType = Uint16;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -210,9 +192,6 @@ impl TermTrait for u16 {
 impl TermTrait for u32 {
     type AbstractTypeType = Uint32;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }
@@ -227,9 +206,6 @@ impl TermTrait for u32 {
 impl TermTrait for u64 {
     type AbstractTypeType = Uint64;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     fn is_parametric(&self) -> bool {
         false
     }

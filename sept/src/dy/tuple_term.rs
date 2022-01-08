@@ -130,9 +130,6 @@ impl Stringify for TupleTerm {
 impl TermTrait for TupleTerm {
     type AbstractTypeType = TupleTerm;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     /// A Tuple term is parametric if there is at least one parameter.
     fn is_parametric(&self) -> bool {
         self.0.len() > 0

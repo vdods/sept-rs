@@ -85,9 +85,6 @@ impl st::Stringify for StructTermTerm {
 impl st::TermTrait for StructTermTerm {
     type AbstractTypeType = dy::Value;
 
-    fn label() -> &'static str {
-        std::any::type_name::<Self>()
-    }
     /// A StructTermTerm instance is parametric if there is at least one element.
     fn is_parametric(&self) -> bool {
         self.element_tuple_term.len() > 0
