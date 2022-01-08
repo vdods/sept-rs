@@ -1,7 +1,8 @@
-use crate::{dy::{self, DynNPTerm}, st::{GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "GlobalSymRefType", is_parametric = "false", is_type = "true")]
 pub struct GlobalSymRef;
 
 impl dy::IntoValue for GlobalSymRef {}
@@ -21,23 +22,6 @@ impl NonParametricTermTrait for GlobalSymRef {
 impl Stringify for GlobalSymRef {
     fn stringify(&self) -> String {
         "GlobalSymRef".into()
-    }
-}
-
-impl TermTrait for GlobalSymRef {
-    type AbstractTypeType = GlobalSymRefType;
-
-    fn label() -> &'static str {
-        "GlobalSymRef"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

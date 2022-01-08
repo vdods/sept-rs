@@ -86,9 +86,9 @@ impl st::TermTrait for StructTermTerm {
     type AbstractTypeType = dy::Value;
 
     fn label() -> &'static str {
-        "StructTermTerm"
+        std::any::type_name::<Self>()
     }
-    /// A StructTermTerm term is parametric if there is at least one element.
+    /// A StructTermTerm instance is parametric if there is at least one element.
     fn is_parametric(&self) -> bool {
         self.element_tuple_term.len() > 0
     }

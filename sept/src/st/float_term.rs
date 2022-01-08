@@ -31,7 +31,7 @@ impl TermTrait for f32 {
     type AbstractTypeType = Float32;
 
     fn label() -> &'static str {
-        "f32"
+        std::any::type_name::<Self>()
     }
     fn is_parametric(&self) -> bool {
         false
@@ -48,7 +48,7 @@ impl TermTrait for f64 {
     type AbstractTypeType = Float64;
 
     fn label() -> &'static str {
-        "f64"
+        std::any::type_name::<Self>()
     }
     fn is_parametric(&self) -> bool {
         false

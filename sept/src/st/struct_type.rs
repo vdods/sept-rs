@@ -1,7 +1,8 @@
 use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct StructType {}
 
 impl st::Inhabits<Type> for StructType {
@@ -21,24 +22,6 @@ impl NonParametricTermTrait for StructType {
 impl Stringify for StructType {
     fn stringify(&self) -> String {
         "StructType".into()
-    }
-}
-
-impl TermTrait for StructType {
-    // TODO: This could/should actually be FormalTypeOf(StructType)
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "StructType"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

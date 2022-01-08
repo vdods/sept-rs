@@ -42,7 +42,7 @@ impl TermTrait for bool {
     type AbstractTypeType = Bool;
 
     fn label() -> &'static str {
-        "bool"
+        std::any::type_name::<Self>()
     }
     fn is_parametric(&self) -> bool {
         true

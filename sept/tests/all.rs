@@ -623,7 +623,8 @@ fn test_structs() -> Result<()> {
 // TEMP TESTING
 //
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
 
 impl st::Inhabits<Type> for BinOp {
@@ -634,7 +635,8 @@ impl st::Inhabits<Type> for BinOp {
 
 impl dy::IntoValue for BinOp {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
 
 impl st::Inhabits<Type> for UnOp {
@@ -654,22 +656,28 @@ trait BinOpTermTrait {
 
 trait UnOpTermTrait {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Add;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Sub;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Mul;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Div;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Pow;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
 
 impl dy::IntoValue for Add {}
@@ -759,142 +767,6 @@ impl Stringify for Neg {
     }
 }
 
-impl TermTrait for BinOp {
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "BinOp"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for UnOp {
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "UnOp"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Add {
-    type AbstractTypeType = BinOp;
-
-    fn label() -> &'static str {
-        "Add"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Sub {
-    type AbstractTypeType = BinOp;
-
-    fn label() -> &'static str {
-        "Sub"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Mul {
-    type AbstractTypeType = BinOp;
-
-    fn label() -> &'static str {
-        "Mul"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Div {
-    type AbstractTypeType = BinOp;
-
-    fn label() -> &'static str {
-        "Div"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Pow {
-    type AbstractTypeType = BinOp;
-
-    fn label() -> &'static str {
-        "Pow"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
-impl TermTrait for Neg {
-    type AbstractTypeType = UnOp;
-
-    fn label() -> &'static str {
-        "Neg"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
-    }
-}
-
 impl TypeTrait for BinOp {}
 impl TypeTrait for UnOp {}
 
@@ -945,7 +817,8 @@ impl Inhabits<UnOp> for Neg {
 // }
 
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
 
 impl st::Inhabits<Type> for Expr {
@@ -959,23 +832,6 @@ impl dy::IntoValue for Expr {}
 impl Stringify for Expr {
     fn stringify(&self) -> String {
         "Expr".into()
-    }
-}
-
-impl TermTrait for Expr {
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "Expr"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

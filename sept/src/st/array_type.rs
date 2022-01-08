@@ -1,7 +1,9 @@
 use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+// TODO: AbstractTypeType could/should actually be "FormalTypeOf(ArrayType)"
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct ArrayType {}
 
 impl dy::IntoValue for ArrayType {}
@@ -21,24 +23,6 @@ impl NonParametricTermTrait for ArrayType {
 impl Stringify for ArrayType {
     fn stringify(&self) -> String {
         "ArrayType".into()
-    }
-}
-
-impl TermTrait for ArrayType {
-    // TODO: This could/should actually be FormalTypeOf(ArrayType)
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "ArrayType"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

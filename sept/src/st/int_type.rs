@@ -46,7 +46,7 @@ impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntNType<IS_SIGNED, N>
     type AbstractTypeType = Type;
 
     fn label() -> &'static str {
-        "IntNType"
+        std::any::type_name::<Self>()
     }
     fn is_parametric(&self) -> bool {
         false

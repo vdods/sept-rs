@@ -1,7 +1,8 @@
-use crate::{dy::{self, DynNPTerm}, st::{LocalSymRefType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, LocalSymRefType, Inhabits, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "LocalSymRefType", is_parametric = "false", is_type = "true")]
 pub struct LocalSymRef;
 
 impl dy::IntoValue for LocalSymRef {}
@@ -21,23 +22,6 @@ impl NonParametricTermTrait for LocalSymRef {
 impl Stringify for LocalSymRef {
     fn stringify(&self) -> String {
         "LocalSymRef".into()
-    }
-}
-
-impl TermTrait for LocalSymRef {
-    type AbstractTypeType = LocalSymRefType;
-
-    fn label() -> &'static str {
-        "LocalSymRef"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

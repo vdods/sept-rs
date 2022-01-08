@@ -1,7 +1,8 @@
-use crate::{dy::{self, DynNPTerm}, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Term;
 
 impl dy::IntoValue for Term {}
@@ -28,23 +29,6 @@ impl NonParametricTermTrait for Term {
 impl Stringify for Term {
     fn stringify(&self) -> String {
         "Term".into()
-    }
-}
-
-impl TermTrait for Term {
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "Term"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

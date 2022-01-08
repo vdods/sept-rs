@@ -45,7 +45,7 @@ impl TermTrait for LocalSymRefTerm {
     type AbstractTypeType = dy::Value;
 
     fn label() -> &'static str {
-        "LocalSymRefTerm"
+        std::any::type_name::<Self>()
     }
     /// Forwards via referential transparency.
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.

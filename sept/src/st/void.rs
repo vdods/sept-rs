@@ -1,7 +1,8 @@
-use crate::{dy::{self, DynNPTerm}, st::{Inhabits, NonParametricTermTrait, Stringify, TermTrait, VoidType}};
+use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify, TermTrait, VoidType}};
 
 /// This represents the Void term itself.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "false")]
 pub struct Void;
 
 impl dy::IntoValue for Void {}
@@ -15,23 +16,6 @@ impl Inhabits<VoidType> for Void {
 impl Stringify for Void {
     fn stringify(&self) -> String {
         "Void".into()
-    }
-}
-
-impl TermTrait for Void {
-    type AbstractTypeType = VoidType;
-
-    fn label() -> &'static str {
-        "Void"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

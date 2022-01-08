@@ -7,14 +7,14 @@ fn overall_init() {
 }
 
 #[derive(Clone, Debug, st::TermTrait)]
-#[term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "true")]
+#[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "true")]
 pub struct FancyType;
 
 #[derive(Clone, Debug, st::TermTrait)]
-#[term_trait(AbstractTypeType = "Value")]
-#[term_trait(abstract_type_expr = "Value::from(Sint32{})")]
-#[term_trait(is_parametric = "false")]
-#[term_trait(is_type = "true")]
+#[st_term_trait(AbstractTypeType = "Value")]
+#[st_term_trait(abstract_type_expr = "Value::from(Sint32{})")]
+#[st_term_trait(is_parametric = "false")]
+#[st_term_trait(is_type = "true")]
 pub struct DumbType;
 
 #[test]

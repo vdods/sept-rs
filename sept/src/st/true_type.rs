@@ -1,6 +1,7 @@
 use crate::{dy, st::{self, Stringify, TermTrait, Type, TypeTrait}};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct TrueType;
 
 impl st::Inhabits<Type> for TrueType {
@@ -20,23 +21,6 @@ impl st::Inhabits<st::BoolType> for TrueType {
 impl Stringify for TrueType {
     fn stringify(&self) -> String {
         "TrueType".into()
-    }
-}
-
-impl TermTrait for TrueType {
-    type AbstractTypeType = Type;
-
-    fn label() -> &'static str {
-        "TrueType"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

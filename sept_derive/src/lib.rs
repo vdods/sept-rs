@@ -4,7 +4,7 @@ use darling::FromDeriveInput;
 use quote::quote;
 
 #[derive(FromDeriveInput, Default)]
-#[darling(default, attributes(term_trait))]
+#[darling(default, attributes(st_term_trait))]
 struct StTermTraitArguments {
     AbstractTypeType: String,
     abstract_type_expr: Option<String>,
@@ -12,16 +12,16 @@ struct StTermTraitArguments {
     is_type: String,
 }
 
-/// This will derive sept::st::TermTrait; trait implementation details should be given via `term_trait`, e.g.
+/// This will derive sept::st::TermTrait; trait implementation details should be given via `st_term_trait`, e.g.
 /// ```
 /// #[derive(sept::st::TermTrait)]
-/// #[term_trait(AbstractTypeType = "<type>")] // Defines return type of `fn abstract_type(&self)`
-/// #[term_trait(abstract_type_expr = "<expr>")] // Optional; default is "Self::AbstractTypeType{}"
-/// #[term_trait(is_parametric = "<expr>")]
-/// #[term_trait(is_type = "<expr>")]
+/// #[st_term_trait(AbstractTypeType = "<type>")] // Defines return type of `fn abstract_type(&self)`
+/// #[st_term_trait(abstract_type_expr = "<expr>")] // Optional; default is "Self::AbstractTypeType{}"
+/// #[st_term_trait(is_parametric = "<expr>")]
+/// #[st_term_trait(is_type = "<expr>")]
 /// pub struct FancyTerm;
 /// ```
-#[proc_macro_derive(StTermTrait, attributes(term_trait))]
+#[proc_macro_derive(StTermTrait, attributes(st_term_trait))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let term_trait_arguments = StTermTraitArguments::from_derive_input(&input).expect("Wrong arguments");

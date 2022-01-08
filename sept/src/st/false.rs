@@ -1,6 +1,7 @@
-use crate::{dy, st::{Bool, FalseType, Inhabits, Stringify, TermTrait, True}};
+use crate::{dy, st::{self, Bool, FalseType, Inhabits, Stringify, TermTrait, True}};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "FalseType", is_parametric = "false", is_type = "false")]
 pub struct False;
 
 impl dy::IntoValue for False {}
@@ -32,23 +33,6 @@ impl PartialEq<True> for False {
 impl Stringify for False {
     fn stringify(&self) -> String {
         "False".into()
-    }
-}
-
-impl TermTrait for False {
-    type AbstractTypeType = FalseType;
-
-    fn label() -> &'static str {
-        "False"
-    }
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 

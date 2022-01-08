@@ -1,8 +1,9 @@
 // use crate::{Array, dy, Inhabits, Stringify, TermTrait};
-use crate::{dy, st::{Array, Inhabits, Stringify, TermTrait}};
+use crate::{dy, st::{self, Array, Inhabits, Stringify, TermTrait}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Array", is_parametric = "self.0.len() > 0", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
 
 impl dy::IntoValue for ArrayTerm {}
@@ -38,25 +39,5 @@ impl Stringify for ArrayTerm {
         }
         s.push_str(")");
         s
-    }
-}
-
-impl TermTrait for ArrayTerm {
-    type AbstractTypeType = Array;
-
-    fn label() -> &'static str {
-        "ArrayTerm"
-    }
-    /// An Array term is parametric if there is at least one parameter.
-    fn is_parametric(&self) -> bool {
-        self.0.len() > 0
-    }
-    fn is_type(&self) -> bool {
-        // TODO: Think about if this should return the AND of is_type for all elements.
-        // NOTE: Probably not, that particular semantic is meant for Tuple.
-        false
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }

@@ -3,7 +3,8 @@ use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq)]
+#[derive(Clone, Debug, derive_more::From, derive_more::Into, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Struct", is_parametric = "self.ordered_type_v.len() > 0", is_type = "true")]
 pub struct StructTerm {
     // NOTE: This is probably temporary, since constructing a term of this type won't necessarily
     // use GlobalSymRefTerm.
@@ -84,25 +85,6 @@ impl Stringify for StructTerm {
         }
         s.push_str(")");
         s
-    }
-}
-
-impl TermTrait for StructTerm {
-    type AbstractTypeType = Struct;
-
-    fn label() -> &'static str {
-        "StructTerm"
-    }
-    /// An Struct term is parametric if there is at least one parameter.
-    fn is_parametric(&self) -> bool {
-        self.ordered_type_v.len() > 0
-    }
-    fn is_type(&self) -> bool {
-        // A StructTerm is always a type.
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
     }
 }
 
