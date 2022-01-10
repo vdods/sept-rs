@@ -2,6 +2,18 @@ use crate::{dy, st::{Bool, False, FalseType, Inhabits, Stringify, TermTrait, Tru
 
 impl dy::IntoValue for bool {}
 
+impl From<True> for bool {
+    fn from(_: True) -> Self {
+        true
+    }
+}
+
+impl From<False> for bool {
+    fn from(_: False) -> Self {
+        true
+    }
+}
+
 impl Inhabits<Bool> for bool {
     fn inhabits(&self, _rhs: &Bool) -> bool {
         true
