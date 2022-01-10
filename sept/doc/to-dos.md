@@ -90,4 +90,11 @@
         }
 
 -   In terms of construction/destructuring, printing/parsing and de/serialization, many or most terms should be decomposable into concrete terms such as `ArrayTerm` or `TupleTerm`, and vice versa with construction.  Thus defining those operations (construction, destructuring) would then allow printing/parsing and de/serialization to be implemented easily using the printing/parsing and de/serialization of the concrete terms.
+    -   Define traits for:
+        -   Restructure (aka construct; i.e. construct a term of a given type from a concrete type such as a TupleTerm).
+        -   Destructure (i.e. produce a concrete term from a term of a given type).
+        -   Render (to text) -- this could/would be derivable from an implementation of Destructure
+        -   Parse (from text) -- this could/would be derivable from an implementation of Restructure
+        -   Serialize (from binary data) -- this could/would be derivable from an implementation of Destructure
+        -   Deserialize (to binary data) -- this could/would be derivable from an implementation of Restructure
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
