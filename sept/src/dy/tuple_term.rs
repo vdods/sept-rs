@@ -1,4 +1,4 @@
-use crate::{dy::{self, Value, IntoValue}, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
+use crate::{dy::{self, Value}, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 #[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
@@ -27,7 +27,7 @@ impl From<()> for TupleTerm {
 }
 
 impl<T0> From<(T0,)> for TupleTerm
-where T0: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>
 {
     fn from(t: (T0,)) -> Self {
         vec![t.0.into()].into()
@@ -35,7 +35,7 @@ where T0: TermTrait + IntoValue
 }
 
 impl<T0, T1> From<(T0, T1)> for TupleTerm
-where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>
 {
     fn from(t: (T0, T1)) -> Self {
         vec![t.0.into(), t.1.into()].into()
@@ -43,7 +43,7 @@ where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue
 }
 
 impl<T0, T1, T2> From<(T0, T1, T2)> for TupleTerm
-where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>
 {
     fn from(t: (T0, T1, T2)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into()].into()
@@ -51,7 +51,7 @@ where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + Into
 }
 
 impl<T0, T1, T2, T3> From<(T0, T1, T2, T3)> for TupleTerm
-where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + IntoValue, T3: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>
 {
     fn from(t: (T0, T1, T2, T3)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into()].into()
@@ -59,7 +59,7 @@ where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + Into
 }
 
 impl<T0, T1, T2, T3, T4> From<(T0, T1, T2, T3, T4)> for TupleTerm
-where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + IntoValue, T3: TermTrait + IntoValue, T4: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>, T4: TermTrait + Into<Value>
 {
     fn from(t: (T0, T1, T2, T3, T4)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into()].into()
@@ -67,7 +67,7 @@ where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + Into
 }
 
 impl<T0, T1, T2, T3, T4, T5> From<(T0, T1, T2, T3, T4, T5)> for TupleTerm
-where T0: TermTrait + IntoValue, T1: TermTrait + IntoValue, T2: TermTrait + IntoValue, T3: TermTrait + IntoValue, T4: TermTrait + IntoValue, T5: TermTrait + IntoValue
+where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>, T4: TermTrait + Into<Value>, T5: TermTrait + Into<Value>
 {
     fn from(t: (T0, T1, T2, T3, T4, T5)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into(), t.5.into()].into()

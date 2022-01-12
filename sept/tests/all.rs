@@ -232,6 +232,17 @@ fn test_tuples() -> Result<()> {
     assert!(!t1.is_type());
     assert!(t2.is_type());
 
+    let t3 = TupleTerm::from((147u32, 5.67f32));
+    let t4 = TupleTerm::from((147u32, Value::from(5.67f32)));
+    let t5 = TupleTerm::from((Value::from(147u32), Value::from(5.67f32)));
+    log::debug!("t3: {}", t3.stringify());
+    log::debug!("t4: {}", t4.stringify());
+    log::debug!("t5: {}", t5.stringify());
+
+    assert_eq!(t3, t4);
+    assert_eq!(t3, t5);
+    assert_eq!(t4, t5);
+
     Ok(())
 }
 
