@@ -7,6 +7,12 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
 
+impl<const IS_SIGNED: bool, const N: usize>  dy::Deconstruct for IntNType<IS_SIGNED, N> {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl<const IS_SIGNED: bool, const N: usize> st::Inhabits<Type> for IntNType<IS_SIGNED, N> {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true

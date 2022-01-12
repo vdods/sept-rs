@@ -5,6 +5,15 @@ use crate::{dy, st::{self, Array, Inhabits, Stringify}};
 #[st_term_trait(AbstractTypeType = "Array", is_parametric = "self.0.len() > 0", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
 
+impl dy::Deconstruct for ArrayTerm {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: Array.into(),
+            parameters: self.0.into(),
+        }.into()
+    }
+}
+
 impl std::ops::Deref for ArrayTerm {
     type Target = Vec<dy::Value>;
     fn deref(&self) -> &Self::Target {

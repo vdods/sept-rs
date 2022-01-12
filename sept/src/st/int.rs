@@ -7,16 +7,19 @@ pub const UNSIGNED: bool = false;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IntN<const IS_SIGNED: bool, const N: usize>;
 
-impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
-
-unsafe impl<const IS_SIGNED: bool, const N: usize> Send for IntN<IS_SIGNED, N> {}
-unsafe impl<const IS_SIGNED: bool, const N: usize> Sync for IntN<IS_SIGNED, N> {}
+impl<const IS_SIGNED: bool, const N: usize> dy::Deconstruct for IntN<IS_SIGNED, N> {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
 
 impl<const IS_SIGNED: bool, const N: usize> Inhabits<IntNType<IS_SIGNED, N>> for IntN<IS_SIGNED, N> {
     fn inhabits(&self, _: &IntNType<IS_SIGNED, N>) -> bool {
         true
     }
 }
+
+impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
 
 impl<const IS_SIGNED: bool, const N: usize> NonParametricTermTrait for IntN<IS_SIGNED, N> {
     fn as_dyn_npterm(&self) -> DynNPTerm {

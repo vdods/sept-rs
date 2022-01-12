@@ -1,4 +1,5 @@
 mod array_term;
+mod deconstruct;
 mod dyn_np_term;
 mod global_sym_ref_term;
 mod global_symbol_table;
@@ -15,6 +16,7 @@ mod value;
 pub use anyhow::{Error, Result};
 pub use crate::dy::{
     array_term::ArrayTerm,
+    deconstruct::{Deconstruct, Deconstruction, Parameterization},
     dyn_np_term::DynNPTerm,
     global_sym_ref_term::GlobalSymRefTerm,
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,

@@ -5,6 +5,12 @@ use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, 
 #[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "false")]
 pub struct Void;
 
+impl dy::Deconstruct for Void {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<VoidType> for Void {
     fn inhabits(&self, _: &VoidType) -> bool {
         true

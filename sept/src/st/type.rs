@@ -7,6 +7,12 @@ use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, 
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Type;
 
+impl dy::Deconstruct for Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<Type> for Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true

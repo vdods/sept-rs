@@ -5,6 +5,12 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct LocalSymRefType {}
 
+impl dy::Deconstruct for LocalSymRefType {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl st::Inhabits<Type> for LocalSymRefType {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true

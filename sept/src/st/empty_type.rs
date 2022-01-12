@@ -5,6 +5,12 @@ use crate::{dy, st::{self, Stringify, TermTrait, Type}};
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct EmptyType;
 
+impl dy::Deconstruct for EmptyType {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl st::Inhabits<Type> for EmptyType {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true

@@ -5,6 +5,12 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "StructType", is_parametric = "false", is_type = "true")]
 pub struct Struct;
 
+impl dy::Deconstruct for Struct {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<StructType> for Struct {
     fn inhabits(&self, _: &StructType) -> bool {
         true

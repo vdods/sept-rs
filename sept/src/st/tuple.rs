@@ -5,6 +5,12 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "TupleType", is_parametric = "false", is_type = "true")]
 pub struct Tuple;
 
+impl dy::Deconstruct for Tuple {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<TupleType> for Tuple {
     fn inhabits(&self, _: &TupleType) -> bool {
         true

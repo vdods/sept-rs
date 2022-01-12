@@ -4,6 +4,12 @@ use crate::{dy, st::{self, Bool, FalseType, Inhabits, Stringify, True}};
 #[st_term_trait(AbstractTypeType = "FalseType", is_parametric = "false", is_type = "false")]
 pub struct False;
 
+impl dy::Deconstruct for False {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<Bool> for False {
     fn inhabits(&self, _rhs: &Bool) -> bool {
         true

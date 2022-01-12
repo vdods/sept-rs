@@ -5,6 +5,12 @@ use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, 
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Term;
 
+impl dy::Deconstruct for Term {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 /// Everything inhabits Term.
 impl<T: TermTrait + dy::IntoValue + 'static> Inhabits<Term> for T {
     fn inhabits(&self, _: &Term) -> bool {

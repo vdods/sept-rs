@@ -18,6 +18,16 @@ pub struct StructTermTerm {
     pub(crate) element_tuple_term: dy::TupleTerm,
 }
 
+/// StructTermTerm's canonical implementation of Deconstruct could not be simpler.
+impl dy::Deconstruct for StructTermTerm {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: self.type_,
+            parameters: self.element_tuple_term,
+        }.into()
+    }
+}
+
 impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
         rhs.is_inhabited_by(&self.element_tuple_term)

@@ -4,6 +4,12 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatNType<const N: usize> {}
 
+impl<const N: usize> dy::Deconstruct for FloatNType<N> {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl<const N: usize> st::Inhabits<Type> for FloatNType<N> {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true

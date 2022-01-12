@@ -4,6 +4,15 @@ use crate::{dy::{self, Value}, st::{self, Inhabits, Stringify, TermTrait, Tuple}
 #[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
 pub struct TupleTerm(Vec<Value>);
 
+impl dy::Deconstruct for TupleTerm {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: st::Tuple.into(),
+            parameters: self,
+        }.into()
+    }
+}
+
 impl std::ops::Deref for TupleTerm {
     type Target = Vec<Value>;
     fn deref(&self) -> &Self::Target {

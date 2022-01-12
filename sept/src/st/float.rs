@@ -4,13 +4,19 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FloatN<const N: usize> {}
 
-impl<const N: usize> dy::IntoValue for FloatN<N> {}
+impl<const N: usize> dy::Deconstruct for FloatN<N> {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
 
 impl<const N: usize> Inhabits<FloatNType<N>> for FloatN<N> {
     fn inhabits(&self, _: &FloatNType<N>) -> bool {
         true
     }
 }
+
+impl<const N: usize> dy::IntoValue for FloatN<N> {}
 
 impl<const N: usize> NonParametricTermTrait for FloatN<N> {
     fn as_dyn_npterm(&self) -> DynNPTerm {

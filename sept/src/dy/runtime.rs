@@ -7,7 +7,7 @@ use crate::{
         Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
         Struct, StructType, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
-        Void, VoidType,
+        Utf8String, Utf8StringType, Void, VoidType,
     },
 };
 use std::{any::TypeId, collections::{HashMap, HashSet}, sync::{Arc, RwLock}};
@@ -19,6 +19,7 @@ pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
 pub type DereferencedOnceFn = fn(x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>>;
+pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 
 struct RegisteredEqualsFn {
     eq_fn: BinaryPredicate,
@@ -45,6 +46,7 @@ pub struct Runtime {
     is_type_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
     dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
+    deconstruct_fn_m: HashMap<TypeId, DeconstructFn>,
 }
 
 impl Runtime {
@@ -70,6 +72,7 @@ impl Runtime {
         runtime.register_term::<u64>().unwrap();
         runtime.register_term::<f32>().unwrap();
         runtime.register_term::<f64>().unwrap();
+        runtime.register_term::<String>().unwrap();
         runtime.register_term::<Void>().unwrap();
         runtime.register_term::<ArrayTerm>().unwrap();
         runtime.register_term::<StructTermTerm>().unwrap();
@@ -102,6 +105,8 @@ impl Runtime {
         runtime.register_type::<Float64>().unwrap();
         runtime.register_type::<Float32Type>().unwrap();
         runtime.register_type::<Float64Type>().unwrap();
+        runtime.register_type::<Utf8String>().unwrap();
+        runtime.register_type::<Utf8StringType>().unwrap();
         runtime.register_type::<VoidType>().unwrap();
         runtime.register_type::<Array>().unwrap();
         runtime.register_type::<ArrayType>().unwrap();
@@ -208,10 +213,12 @@ impl Runtime {
         runtime.register_inhabits::<TupleTerm, StructTerm>().unwrap();
 
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
+        runtime.register_clone::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_parametric::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_type::<GlobalSymRefTerm>().unwrap();
 
         runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
+        runtime.register_clone::<LocalSymRefTerm>().unwrap();
         runtime.register_is_parametric::<LocalSymRefTerm>().unwrap();
         runtime.register_is_type::<LocalSymRefTerm>().unwrap();
 
@@ -226,6 +233,7 @@ impl Runtime {
     pub fn register_term<T>(&mut self) -> Result<()>
     where
         T:  st::TermTrait +
+            dy::Deconstruct +
             Stringify +
             std::cmp::PartialEq +
             Inhabits<<T as TermTrait>::AbstractTypeType> +
@@ -242,11 +250,13 @@ impl Runtime {
         self.register_clone::<T>()?;
         self.register_is_parametric::<T>()?;
         self.register_is_type::<T>()?;
+        self.register_deconstruct::<T>()?;
         Ok(())
     }
     pub fn register_type<T>(&mut self) -> Result<()>
     where
         T:  st::TypeTrait +
+            dy::Deconstruct +
             Stringify +
             std::cmp::PartialEq +
             Inhabits<<T as TermTrait>::AbstractTypeType> +
@@ -264,6 +274,7 @@ impl Runtime {
         type_id: TypeId,
         label_fn: LabelFn,
     ) -> Result<()> {
+        // log::debug!("register_label_fn; type_id: {:?}; label_fn(): {:?}", type_id, label_fn());
         match self.label_fn_m.insert(type_id, label_fn) {
             Some(_) => Err(anyhow::anyhow!("collision with already-registered label fn for {}", self.label_of(type_id))),
             None => Ok(())
@@ -431,7 +442,7 @@ impl Runtime {
     }
     pub(crate) fn register_dereferenced_once_fn(&mut self, type_id: TypeId, dereferenced_once_fn: DereferencedOnceFn) -> Result<()> {
         match self.dereferenced_once_fn_m.insert(type_id, dereferenced_once_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered deref fn for {}", self.label_of(type_id))),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered dereferenced_once fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
@@ -441,6 +452,19 @@ impl Runtime {
             x.downcast_ref::<T>().unwrap().dereferenced_once()
         };
         Ok(self.register_dereferenced_once_fn(type_id, dereferenced_once_fn)?)
+    }
+    pub(crate) fn register_deconstruct_fn(&mut self, type_id: TypeId, deconstruct_fn: DeconstructFn) -> Result<()> {
+        match self.deconstruct_fn_m.insert(type_id, deconstruct_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered deconstruct fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub fn register_deconstruct<T: dy::Deconstruct + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let deconstruct_fn = |x: &ValueGuts| -> dy::Deconstruction {
+            x.downcast_ref::<T>().unwrap().deconstruct()
+        };
+        Ok(self.register_deconstruct_fn(type_id, deconstruct_fn)?)
     }
 
     /// This gives the [non-parametric] label of the concrete type.  For example, even though
@@ -559,7 +583,7 @@ impl Runtime {
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
             None => {
-                // panic!("no abstract_type fn found for {:?}", (lhs_type_id, rhs_type_id)),
+                // panic!("no abstract_type fn found for ({}, ())", self.label_of(lhs_type_id), self.label_of(rhs_type_id)),
                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 Box::new(Type{})
             }
@@ -595,7 +619,7 @@ impl Runtime {
         match self.is_parametric_fn_m.get(&x.type_id()) {
             Some(is_parametric_fn) => is_parametric_fn(x),
             None => {
-                panic!("no is_parametric fn found for {:?}", x.type_id());
+                panic!("no is_parametric fn found for {}", self.label_of(x.type_id()));
                 // NOTE: A default here probably doesn't make any sense.
 //                 log::warn!("no is_parametric fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
 //                 false
@@ -619,7 +643,7 @@ impl Runtime {
         match self.is_type_fn_m.get(&x.type_id()) {
             Some(is_type_fn) => is_type_fn(x),
             None => {
-                panic!("no is_type fn found for {:?}", x.type_id());
+                panic!("no is_type fn found for {}", self.label_of(x.type_id()));
                 // NOTE: A default here probably doesn't make any sense.
 //                 log::warn!("no is_type fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
 //                 false
@@ -633,8 +657,8 @@ impl Runtime {
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
             Some(dereferenced_once_fn) => Ok(dereferenced_once_fn(x)?),
             None => {
-                panic!("no dereferenced_once fn found for {:?}", x.type_id());
-                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no dereferenced_once fn found for {:?}", x.type_id())
+                panic!("no dereferenced_once fn found for {}", self.label_of(x.type_id()));
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no dereferenced_once fn found for {}", self.label_of(x.type_id()))
             }
         }
     }
@@ -653,6 +677,15 @@ impl Runtime {
         match self.dereferenced_once_fn_m.get(&value_g.as_ref().type_id()) {
             Some(dereferenced_once_fn) => Ok(self.dereferenced_inner(dereferenced_once_fn(value_g.as_ref())?)?),
             None => Ok(value_la.clone())
+        }
+    }
+    pub fn deconstruct(&self, x: &ValueGuts) -> dy::Deconstruction {
+        match self.deconstruct_fn_m.get(&x.type_id()) {
+            Some(deconstruct_fn) => deconstruct_fn(x),
+            None => {
+                panic!("no deconstruct fn found for {}", self.label_of(x.type_id()));
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstruct fn found for {}", self.label_of(x.type_id()))
+            }
         }
     }
 }

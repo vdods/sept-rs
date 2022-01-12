@@ -1,3 +1,6 @@
+#[macro_use] extern crate enum_derive;
+#[macro_use] extern crate macro_attr;
+
 // #![feature(iter_zip)]
 // #![feature(adt_const_params)] -- TODO: Would be nice to use this, so that enums can be used as const generic params
 

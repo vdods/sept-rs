@@ -28,6 +28,12 @@ impl Clone for Value {
     }
 }
 
+impl dy::Deconstruct for Value {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        RUNTIME_LA.read().unwrap().deconstruct(self.as_ref())
+    }
+}
+
 impl std::ops::Deref for Value {
     type Target = ValueGuts;
     fn deref(&self) -> &Self::Target {

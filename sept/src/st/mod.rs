@@ -29,6 +29,9 @@ mod tuple;
 mod tuple_type;
 mod r#type;
 mod type_trait;
+mod utf8_string;
+mod utf8_string_term;
+mod utf8_string_type;
 mod void;
 mod void_type;
 
@@ -65,6 +68,9 @@ pub use crate::st::{
     type_trait::TypeTrait,
     r#true::True,
     true_type::TrueType,
+    utf8_string::Utf8String,
+    utf8_string_term::{},
+    utf8_string_type::Utf8StringType,
     void::Void,
     void_type::VoidType,
 };

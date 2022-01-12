@@ -1,6 +1,6 @@
 # sept_derive
 
-This crate was implemented using https://github.com/dtolnay/cargo-expand as a guide.
+This crate was implemented using https://github.com/imbolc/rust-derive-macro-guide as a guide.
 
 ## Tests
 

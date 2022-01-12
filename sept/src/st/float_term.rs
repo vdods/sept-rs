@@ -1,7 +1,22 @@
 use crate::{dy, st::{Float32, Float64, Inhabits, Stringify, TermTrait}};
 
-impl dy::IntoValue for f32 {}
-impl dy::IntoValue for f64 {}
+impl dy::Deconstruct for f32 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: Float32{}.into(),
+            parameters: (self,).into(),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for f64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: Float64{}.into(),
+            parameters: (self,).into(),
+        }.into()
+    }
+}
 
 impl Inhabits<Float32> for f32 {
     fn inhabits(&self, _: &Float32) -> bool {
@@ -15,15 +30,20 @@ impl Inhabits<Float64> for f64 {
     }
 }
 
+impl dy::IntoValue for f32 {}
+impl dy::IntoValue for f64 {}
+
 impl Stringify for f32 {
     fn stringify(&self) -> String {
-        format!("Float32({})", self)
+        // Apparently Rust, by default, formats floats with enough digits to make them unique.
+        self.to_string()
     }
 }
 
 impl Stringify for f64 {
     fn stringify(&self) -> String {
-        format!("Float64({})", self)
+        // Apparently Rust, by default, formats floats with enough digits to make them unique.
+        self.to_string()
     }
 }
 

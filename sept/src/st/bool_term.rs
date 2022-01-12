@@ -1,6 +1,13 @@
 use crate::{dy, st::{Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
 
-impl dy::IntoValue for bool {}
+impl dy::Deconstruct for bool {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: Bool.into(),
+            parameters: (self,).into(),
+        }.into()
+    }
+}
 
 impl From<True> for bool {
     fn from(_: True) -> Self {
@@ -32,6 +39,8 @@ impl Inhabits<TrueType> for bool {
     }
 }
 
+impl dy::IntoValue for bool {}
+
 impl PartialEq<True> for bool {
     fn eq(&self, _other: &True) -> bool {
         *self == true
@@ -46,7 +55,7 @@ impl PartialEq<False> for bool {
 
 impl Stringify for bool {
     fn stringify(&self) -> String {
-        if *self { "True".into() } else { "False".into() }
+        self.to_string()
     }
 }
 

@@ -5,6 +5,12 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "GlobalSymRefType", is_parametric = "false", is_type = "true")]
 pub struct GlobalSymRef;
 
+impl dy::Deconstruct for GlobalSymRef {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<GlobalSymRefType> for GlobalSymRef {
     fn inhabits(&self, _: &GlobalSymRefType) -> bool {
         true

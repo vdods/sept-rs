@@ -57,51 +57,123 @@ impl Inhabits<Uint64> for u64 {
     }
 }
 
+impl dy::Deconstruct for i8 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Sint8{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for i16 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Sint16{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for i32 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Sint32{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for i64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Sint64{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for u8 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Uint8{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for u16 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Uint16{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for u32 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Uint32{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
+impl dy::Deconstruct for u64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Parameterization {
+            constructor: dy::Value::from(Uint64{}),
+            parameters: dy::TupleTerm::from((self,)),
+        }.into()
+    }
+}
+
 impl Stringify for i8 {
     fn stringify(&self) -> String {
-        format!("Sint8({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for i16 {
     fn stringify(&self) -> String {
-        format!("Sint16({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for i32 {
     fn stringify(&self) -> String {
-        format!("Sint32({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for i64 {
     fn stringify(&self) -> String {
-        format!("Sint64({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for u8 {
     fn stringify(&self) -> String {
-        format!("Uint8({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for u16 {
     fn stringify(&self) -> String {
-        format!("Uint16({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for u32 {
     fn stringify(&self) -> String {
-        format!("Uint32({})", self)
+        self.to_string()
     }
 }
 
 impl Stringify for u64 {
     fn stringify(&self) -> String {
-        format!("Uint64({})", self)
+        self.to_string()
     }
 }
 

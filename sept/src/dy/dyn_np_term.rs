@@ -57,6 +57,9 @@ pub enum DynNPTerm {
     Float64Type, // Sole inhabitant is Float64
 //     AsciiCharType, // Sole inhabitant is AsciiChar
 
+    Utf8String,
+    Utf8StringType,
+
     // Other Types related to POD Types
     SintType, // Isomorphic to Union(Sint8Type,Sint16Type,Sint32Type,Sint64Type)
     Sint, // Isomorphic to Union(Sint8,Sint16,Sint32,Sint64)

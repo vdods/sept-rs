@@ -5,6 +5,12 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "ArrayType", is_parametric = "false", is_type = "true")]
 pub struct Array;
 
+impl dy::Deconstruct for Array {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<ArrayType> for Array {
     fn inhabits(&self, _: &ArrayType) -> bool {
         true

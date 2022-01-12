@@ -9,12 +9,12 @@ pub struct StructTerm {
     // NOTE: This is probably temporary, since constructing a term of this type won't necessarily
     // use GlobalSymRefTerm.
     symbol_id: String,
-    /// This stores the actual `elem: Type` pairs in a particular order.  TODO: Check that each is a type.
+    /// This stores the actual `field: Type` pairs in a particular order.  TODO: Check that each is a type.
     /// Theoretically this could store non-types, but that is feature creep for structs.
     // TODO: Maybe separate this out into name_v (and eventually name_tuple_term) and type_tuple_term,
     // which would simplify various checks and projections into TupleTerm.
     pub(crate) ordered_type_v: Vec<(String, dy::Value)>,
-    /// This is a cache for the quick lookup of the element index based on a name.
+    /// This is a cache for the quick lookup of the element index based on a field name.
     name_index_m: HashMap<String, usize>,
 }
 
@@ -55,6 +55,23 @@ impl StructTerm {
             }
         }
         true
+    }
+}
+
+impl dy::Deconstruct for StructTerm {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        // TEMP HACK implementation; how to incorporate symbol_id?
+        dy::Parameterization {
+            constructor: Struct.into(),
+            parameters:
+                self.ordered_type_v
+                    .into_iter()
+                    .map(|(field_name, field_type)| {
+                        dy::Value::from(dy::TupleTerm::from(vec![field_name.into(), field_type]))
+                    })
+                    .collect::<Vec<dy::Value>>()
+                    .into(),
+        }.into()
     }
 }
 

@@ -5,6 +5,12 @@ use crate::{dy::{self, DynNPTerm}, st::{self, BoolType, NonParametricTermTrait, 
 #[st_term_trait(AbstractTypeType = "BoolType", is_parametric = "false", is_type = "true")]
 pub struct Bool;
 
+impl dy::Deconstruct for Bool {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
 impl Inhabits<BoolType> for Bool {
     fn inhabits(&self, _: &BoolType) -> bool {
         true

@@ -2,7 +2,8 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, GlobalSymRefTerm, IntoValue, RUNTIME_LA, StructTerm, SymbolTable, TupleTerm, Value,
+        self, ArrayTerm, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
+        StructTerm, StructTermTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
         self,
@@ -11,7 +12,8 @@ use sept::{
         Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
         Struct, StructType,
         TermTrait, True, TrueType, Type, TypeTrait,
-        Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Void, VoidType,
+        Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
+        Utf8String, Void, VoidType,
     },
 };
 use std::{any::Any, sync::{Arc, RwLock}};
@@ -84,8 +86,8 @@ fn test_term_and_type() -> Result<()> {
 fn test_runtime_stringify() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert_eq!(runtime_g.stringify(&true), "True");
-    assert_eq!(runtime_g.stringify(&false), "False");
+    assert_eq!(runtime_g.stringify(&true), "true");
+    assert_eq!(runtime_g.stringify(&false), "false");
     assert_eq!(runtime_g.stringify(&True), "True");
     assert_eq!(runtime_g.stringify(&False), "False");
     assert_eq!(runtime_g.stringify(&TrueType), "TrueType");
@@ -630,6 +632,84 @@ fn test_structs() -> Result<()> {
     Ok(())
 }
 
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_deconstruct() -> Result<()> {
+    let n = 123u32;
+    {
+        log::debug!("n (stringify): {}", n.stringify());
+        let deconstruction = n.deconstruct();
+        log::debug!("n.deconstruct(): {}", deconstruction);
+    }
+
+    let x = 5.67f64;
+    {
+        log::debug!("x (stringify): {}", x.stringify());
+        let deconstruction = x.deconstruct();
+        log::debug!("x.deconstruct(): {}", deconstruction);
+    }
+
+    let b = true;
+    {
+        log::debug!("b (stringify): {}", b.stringify());
+        let deconstruction = b.deconstruct();
+        log::debug!("b.deconstruct(): {}", deconstruction);
+    }
+
+    let a = Array;
+    {
+        log::debug!("a (stringify): {}", a.stringify());
+        let deconstruction = a.deconstruct();
+        log::debug!("a.deconstruct(): {}", deconstruction);
+    }
+
+    {
+        let dy_tt = TupleTerm::from(vec![n.into(), x.into(), b.into(), a.into()]);
+        log::debug!("dy_tt (stringify): {}", dy_tt.stringify());
+        let deconstruction = dy_tt.deconstruct();
+        log::debug!("dy_tt.deconstruct(): {}", deconstruction);
+    }
+
+
+    {
+        let st_tt = TupleTerm::from((n, x, b, a));
+        log::debug!("st_tt (stringify): {}", st_tt.stringify());
+        let deconstruction = st_tt.deconstruct();
+        log::debug!("st_tt.deconstruct(): {}", deconstruction);
+    }
+
+//     {
+//         let st2_tt = (n, x, b, a);
+// //         log::debug!("st2_tt (as Debug): {:#?}", st2_tt);
+//         log::debug!("st2_tt (stringify): {}", st2_tt.stringify());
+//         let deconstruction = st2_tt.deconstruct();
+//         log::debug!("st2_tt.deconstruct() (as Debug): {:#?}", deconstruction);
+//         log::debug!("st2_tt.deconstruct(): {}", deconstruction);
+//     }
+
+    {
+        let at = ArrayTerm::from(vec![n.into(), x.into(), b.into(), a.into()]);
+        log::debug!("at (stringify): {}", at.stringify());
+        let deconstruction = at.deconstruct();
+        log::debug!("at.deconstruct(): {}", deconstruction);
+    }
+
+
+    {
+        let s = StructTerm::new("S".into(), vec![("name".into(), Utf8String.into()), ("age".into(), Uint8{}.into())]);
+        log::debug!("s (stringify): {}", s.stringify());
+        let deconstruction = s.deconstruct();
+        log::debug!("s.deconstruct(): {}", deconstruction);
+
+        let s_term = StructTermTerm::new_checked(s.clone().into(), TupleTerm::from((String::from("Hippo"), 99u8)))?;
+        log::debug!("s_term (stringify): {}", s_term.stringify());
+        let deconstruction = s_term.deconstruct();
+        log::debug!("s_term.deconstruct(): {}", deconstruction);
+    }
+
+    Ok(())
+}
+
 //
 // TEMP TESTING
 //
@@ -637,6 +717,12 @@ fn test_structs() -> Result<()> {
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
+
+impl dy::Deconstruct for BinOp {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
 
 impl st::Inhabits<Type> for BinOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -647,6 +733,12 @@ impl st::Inhabits<Type> for BinOp {
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
+
+impl dy::Deconstruct for UnOp {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
 
 impl st::Inhabits<Type> for UnOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -686,6 +778,42 @@ pub struct Pow;
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
+
+impl dy::Deconstruct for Add {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Sub {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Mul {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Div {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Pow {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Neg {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
 
 impl BinOpTermTrait for Add {
     fn is_commutative() -> bool {
@@ -817,6 +945,12 @@ impl Inhabits<UnOp> for Neg {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
+
+impl dy::Deconstruct for Expr {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        Value::from(self).into()
+    }
+}
 
 impl st::Inhabits<Type> for Expr {
     fn inhabits(&self, _rhs: &Type) -> bool {
