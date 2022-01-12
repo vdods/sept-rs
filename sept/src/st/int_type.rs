@@ -1,75 +1,229 @@
 use crate::{
     dy::{self, DynNPTerm},
-    st::{self, NonParametricTermTrait, SIGNED, Stringify, TermTrait, Type, TypeTrait, UNSIGNED},
+    st::{self, NonParametricTermTrait, Stringify, Type},
 };
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct IntNType<const IS_SIGNED: bool, const N: usize> {}
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Sint8Type;
 
-impl<const IS_SIGNED: bool, const N: usize>  dy::Deconstruct for IntNType<IS_SIGNED, N> {
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Sint16Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Sint32Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Sint64Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Uint8Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Uint16Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Uint32Type;
+
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Uint64Type;
+
+impl dy::Deconstruct for Sint8Type {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Value::from(self).into()
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> st::Inhabits<Type> for IntNType<IS_SIGNED, N> {
+impl dy::Deconstruct for Sint16Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Sint32Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Sint64Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint8Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint16Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint32Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint64Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl st::Inhabits<Type> for Sint8Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntNType<IS_SIGNED, N> {}
-
-impl<const IS_SIGNED: bool, const N: usize> NonParametricTermTrait for IntNType<IS_SIGNED, N> {
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        match IS_SIGNED {
-            SIGNED => match N {
-                8 => DynNPTerm::Sint8Type,
-                16 => DynNPTerm::Sint16Type,
-                32 => DynNPTerm::Sint32Type,
-                64 => DynNPTerm::Sint64Type,
-                n => panic!("unsupported Sint size: {}", n),
-            },
-            UNSIGNED => match N {
-                8 => DynNPTerm::Uint8Type,
-                16 => DynNPTerm::Uint16Type,
-                32 => DynNPTerm::Uint32Type,
-                64 => DynNPTerm::Uint64Type,
-                n => panic!("unsupported Uint size: {}", n),
-            },
-        }
-    }
-}
-
-impl<const IS_SIGNED: bool, const N: usize> Stringify for IntNType<IS_SIGNED, N> {
-    fn stringify(&self) -> String {
-        format!("{}int{}Type", if IS_SIGNED { "S" } else { "U" }, N)
-    }
-}
-
-impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntNType<IS_SIGNED, N> {
-    type AbstractTypeType = Type;
-
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
+impl st::Inhabits<Type> for Sint16Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+}
+
+impl st::Inhabits<Type> for Sint32Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntNType<IS_SIGNED, N> {}
+impl st::Inhabits<Type> for Sint64Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
-pub type Sint8Type = IntNType<SIGNED, 8>;
-pub type Sint16Type = IntNType<SIGNED, 16>;
-pub type Sint32Type = IntNType<SIGNED, 32>;
-pub type Sint64Type = IntNType<SIGNED, 64>;
+impl st::Inhabits<Type> for Uint8Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
 
-pub type Uint8Type = IntNType<UNSIGNED, 8>;
-pub type Uint16Type = IntNType<UNSIGNED, 16>;
-pub type Uint32Type = IntNType<UNSIGNED, 32>;
-pub type Uint64Type = IntNType<UNSIGNED, 64>;
+impl st::Inhabits<Type> for Uint16Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<Type> for Uint32Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<Type> for Uint64Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
+        true
+    }
+}
+
+impl NonParametricTermTrait for Sint8Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint8Type
+    }
+}
+
+impl NonParametricTermTrait for Sint16Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint16Type
+    }
+}
+
+impl NonParametricTermTrait for Sint32Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint32Type
+    }
+}
+
+impl NonParametricTermTrait for Sint64Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint64Type
+    }
+}
+
+impl NonParametricTermTrait for Uint8Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint8Type
+    }
+}
+
+impl NonParametricTermTrait for Uint16Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint16Type
+    }
+}
+
+impl NonParametricTermTrait for Uint32Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint32Type
+    }
+}
+
+impl NonParametricTermTrait for Uint64Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint64Type
+    }
+}
+
+impl Stringify for Sint8Type {
+    fn stringify(&self) -> String {
+        "Sint8Type".into()
+    }
+}
+
+impl Stringify for Sint16Type {
+    fn stringify(&self) -> String {
+        "Sint16Type".into()
+    }
+}
+
+impl Stringify for Sint32Type {
+    fn stringify(&self) -> String {
+        "Sint32Type".into()
+    }
+}
+
+impl Stringify for Sint64Type {
+    fn stringify(&self) -> String {
+        "Sint64Type".into()
+    }
+}
+
+impl Stringify for Uint8Type {
+    fn stringify(&self) -> String {
+        "Uint8Type".into()
+    }
+}
+
+impl Stringify for Uint16Type {
+    fn stringify(&self) -> String {
+        "Uint16Type".into()
+    }
+}
+
+impl Stringify for Uint32Type {
+    fn stringify(&self) -> String {
+        "Uint32Type".into()
+    }
+}
+
+impl Stringify for Uint64Type {
+    fn stringify(&self) -> String {
+        "Uint64Type".into()
+    }
+}

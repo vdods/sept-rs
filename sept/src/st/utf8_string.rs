@@ -5,6 +5,19 @@ use crate::{dy::{self, DynNPTerm}, st::{self, Utf8StringType, NonParametricTermT
 #[st_term_trait(AbstractTypeType = "Utf8StringType", is_parametric = "false", is_type = "true")]
 pub struct Utf8String;
 
+impl dy::Constructor for Utf8String {
+    type ConstructedType = String;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<String>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
 impl dy::Deconstruct for Utf8String {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Value::from(self).into()

@@ -22,6 +22,12 @@ impl st::Inhabits<st::BoolType> for FalseType {
     }
 }
 
+impl st::NonParametricTermTrait for FalseType {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::FalseType
+    }
+}
+
 impl Stringify for FalseType {
     fn stringify(&self) -> String {
         "FalseType".into()

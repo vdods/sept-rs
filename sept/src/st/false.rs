@@ -22,6 +22,12 @@ impl Inhabits<FalseType> for False {
     }
 }
 
+impl st::NonParametricTermTrait for False {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::False
+    }
+}
+
 impl PartialEq<bool> for False {
     fn eq(&self, other: &bool) -> bool {
         *other == false

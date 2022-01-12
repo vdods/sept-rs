@@ -17,14 +17,14 @@ impl Inhabits<VoidType> for Void {
     }
 }
 
-impl Stringify for Void {
-    fn stringify(&self) -> String {
-        "Void".into()
-    }
-}
-
 impl NonParametricTermTrait for Void {
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Void
+    }
+}
+
+impl Stringify for Void {
+    fn stringify(&self) -> String {
+        "Void".into()
     }
 }

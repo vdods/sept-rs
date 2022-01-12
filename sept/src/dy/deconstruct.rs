@@ -23,6 +23,53 @@ macro_attr! {
     }
 }
 
+// TODO: Figure out how to derive this using some proc macro crate
+impl Deconstruction {
+    pub fn kind(&self) -> DeconstructionKind {
+        self.into()
+    }
+    pub fn is_non_parametric(&self) -> bool {
+        match self {
+            Deconstruction::NonParametric(_) => true,
+            _ => false
+        }
+    }
+    pub fn is_parametric(&self) -> bool {
+        match self {
+            Deconstruction::Parametric(_) => true,
+            _ => false
+        }
+    }
+    pub fn into_non_parametric(self) -> Option<dy::Value> {
+        match self {
+            Deconstruction::NonParametric(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn into_parametric(self) -> Option<dy::Parameterization> {
+        match self {
+            Deconstruction::Parametric(parameterization) => Some(parameterization),
+            _ => None,
+        }
+    }
+}
+
+// TODO: Figure out how to derive this using some proc macro crate
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeconstructionKind {
+    NonParametric,
+    Parametric,
+}
+
+impl From<&Deconstruction> for DeconstructionKind {
+    fn from(deconstruction: &Deconstruction) -> Self {
+        match deconstruction {
+            Deconstruction::NonParametric(_) => DeconstructionKind::NonParametric,
+            Deconstruction::Parametric(_) => DeconstructionKind::Parametric,
+        }
+    }
+}
+
 impl std::fmt::Display for Deconstruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         use crate::st::Stringify;

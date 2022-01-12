@@ -16,6 +16,12 @@ impl st::Inhabits<st::Type> for VoidType {
     }
 }
 
+impl st::NonParametricTermTrait for VoidType {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::VoidType
+    }
+}
+
 impl Stringify for VoidType {
     fn stringify(&self) -> String {
         "VoidType".into()

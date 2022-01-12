@@ -16,6 +16,12 @@ impl st::Inhabits<Type> for BoolType {
     }
 }
 
+impl st::NonParametricTermTrait for BoolType {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::BoolType
+    }
+}
+
 impl Stringify for BoolType {
     fn stringify(&self) -> String {
         "BoolType".into()

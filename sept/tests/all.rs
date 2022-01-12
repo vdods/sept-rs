@@ -2,7 +2,7 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
+        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
         StructTerm, StructTermTerm, SymbolTable, TupleTerm, Value,
     },
     st::{
@@ -156,25 +156,25 @@ fn test_runtime_inhabits() -> Result<()> {
 fn test_ints() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(runtime_g.inhabits(&123i8, &Sint8{}));
-    assert!(runtime_g.inhabits(&123i16, &Sint16{}));
-    assert!(runtime_g.inhabits(&123i32, &Sint32{}));
-    assert!(runtime_g.inhabits(&123i64, &Sint64{}));
+    assert!(runtime_g.inhabits(&123i8, &Sint8));
+    assert!(runtime_g.inhabits(&123i16, &Sint16));
+    assert!(runtime_g.inhabits(&123i32, &Sint32));
+    assert!(runtime_g.inhabits(&123i64, &Sint64));
 
-    assert!(runtime_g.inhabits(&123u8, &Uint8{}));
-    assert!(runtime_g.inhabits(&123u16, &Uint16{}));
-    assert!(runtime_g.inhabits(&123u32, &Uint32{}));
-    assert!(runtime_g.inhabits(&123u64, &Uint64{}));
+    assert!(runtime_g.inhabits(&123u8, &Uint8));
+    assert!(runtime_g.inhabits(&123u16, &Uint16));
+    assert!(runtime_g.inhabits(&123u32, &Uint32));
+    assert!(runtime_g.inhabits(&123u64, &Uint64));
 
-    assert!(runtime_g.inhabits(&Sint8{}, &Sint8Type{}));
-    assert!(runtime_g.inhabits(&Sint16{}, &Sint16Type{}));
-    assert!(runtime_g.inhabits(&Sint32{}, &Sint32Type{}));
-    assert!(runtime_g.inhabits(&Sint64{}, &Sint64Type{}));
+    assert!(runtime_g.inhabits(&Sint8, &Sint8Type));
+    assert!(runtime_g.inhabits(&Sint16, &Sint16Type));
+    assert!(runtime_g.inhabits(&Sint32, &Sint32Type));
+    assert!(runtime_g.inhabits(&Sint64, &Sint64Type));
 
-    assert!(runtime_g.inhabits(&Uint8{}, &Uint8Type{}));
-    assert!(runtime_g.inhabits(&Uint16{}, &Uint16Type{}));
-    assert!(runtime_g.inhabits(&Uint32{}, &Uint32Type{}));
-    assert!(runtime_g.inhabits(&Uint64{}, &Uint64Type{}));
+    assert!(runtime_g.inhabits(&Uint8, &Uint8Type));
+    assert!(runtime_g.inhabits(&Uint16, &Uint16Type));
+    assert!(runtime_g.inhabits(&Uint32, &Uint32Type));
+    assert!(runtime_g.inhabits(&Uint64, &Uint64Type));
 
     Ok(())
 }
@@ -184,11 +184,11 @@ fn test_ints() -> Result<()> {
 fn test_floats() -> Result<()> {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
-    assert!(runtime_g.inhabits(&5.875f32, &Float32{}));
-    assert!(runtime_g.inhabits(&5.875f64, &Float64{}));
+    assert!(runtime_g.inhabits(&5.875f32, &Float32));
+    assert!(runtime_g.inhabits(&5.875f64, &Float64));
 
-    assert!(runtime_g.inhabits(&Float32{}, &Float32Type{}));
-    assert!(runtime_g.inhabits(&Float64{}, &Float64Type{}));
+    assert!(runtime_g.inhabits(&Float32, &Float32Type));
+    assert!(runtime_g.inhabits(&Float64, &Float64Type));
 
     Ok(())
 }
@@ -222,7 +222,7 @@ fn test_arrays() -> Result<()> {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_tuples() -> Result<()> {
     let t1 = TupleTerm::from(vec![3i32.into(), 5.5f32.into()]);
-    let t2 = TupleTerm::from(vec![Sint32{}.into(), Float32{}.into()]);
+    let t2 = TupleTerm::from(vec![Sint32.into(), Float32.into()]);
     log::debug!("t1: {}", t1);
     log::debug!("t2: {}", t2);
     log::debug!("t1.abstract_type(): {}", t1.abstract_type());
@@ -271,28 +271,28 @@ fn test_abstract_type() -> Result<()> {
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&False).as_ref(), &FalseType));
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&FalseType).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8{}).as_ref(), &Sint8Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16{}).as_ref(), &Sint16Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32{}).as_ref(), &Sint32Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64{}).as_ref(), &Sint64Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8).as_ref(), &Sint8Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint8Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16).as_ref(), &Sint16Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint16Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32).as_ref(), &Sint32Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint32Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64).as_ref(), &Sint64Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Sint64Type).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8{}).as_ref(), &Uint8Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16{}).as_ref(), &Uint16Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32{}).as_ref(), &Uint32Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64{}).as_ref(), &Uint64Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8).as_ref(), &Uint8Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint8Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16).as_ref(), &Uint16Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint16Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32).as_ref(), &Uint32Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint32Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64).as_ref(), &Uint64Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Uint64Type).as_ref(), &Type));
 
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32{}).as_ref(), &Float32Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32Type{}).as_ref(), &Type));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64{}).as_ref(), &Float64Type{}));
-    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64Type{}).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32).as_ref(), &Float32Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32Type).as_ref(), &Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64).as_ref(), &Float64Type));
+    assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64Type).as_ref(), &Type));
 
     Ok(())
 }
@@ -308,12 +308,12 @@ fn test_value() -> Result<()> {
     log::debug!("v2.stringify(): {:?}", v2.stringify());
     log::debug!("v1.abstract_type(): {:?}", v1.abstract_type());
 
-    log::debug!("v1.inhabits(&Sint32): {:?}", v1.inhabits(&Sint32{}));
+    log::debug!("v1.inhabits(&Sint32): {:?}", v1.inhabits(&Sint32));
     log::debug!("v1.inhabits(&Bool): {:?}", v1.inhabits(&Bool));
-    log::debug!("v1.inhabits(&Value::from(Sint32)): {:?}", v1.inhabits(&Value::from(Sint32{})));
+    log::debug!("v1.inhabits(&Value::from(Sint32)): {:?}", v1.inhabits(&Value::from(Sint32)));
     log::debug!("v1.inhabits(&Value::from(Bool)): {:?}", v1.inhabits(&Value::from(Bool)));
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
-    let v3 = Value::from(Sint32{});
+    let v3 = Value::from(Sint32);
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
 
     log::debug!("v1: {}", v1);
@@ -584,7 +584,7 @@ fn test_structs() -> Result<()> {
             "Hippo",
             StructTerm::new(
                 "Hippo".into(),
-                vec![("age".into(), Uint8{}.into()), ("gravity".into(), Float64{}.into())].into()
+                vec![("age".into(), Uint8.into()), ("gravity".into(), Float64.into())].into()
             ).into()
         )?;
 
@@ -696,7 +696,7 @@ fn test_deconstruct() -> Result<()> {
 
 
     {
-        let s = StructTerm::new("S".into(), vec![("name".into(), Utf8String.into()), ("age".into(), Uint8{}.into())]);
+        let s = StructTerm::new("S".into(), vec![("name".into(), Utf8String.into()), ("age".into(), Uint8.into())]);
         log::debug!("s (stringify): {}", s.stringify());
         let deconstruction = s.deconstruct();
         log::debug!("s.deconstruct(): {}", deconstruction);
@@ -706,6 +706,45 @@ fn test_deconstruct() -> Result<()> {
         let deconstruction = s_term.deconstruct();
         log::debug!("s_term.deconstruct(): {}", deconstruction);
     }
+
+    Ok(())
+}
+
+fn test_deconstruct_construct_roundtrip<T, C>(x: T) -> Result<()>
+where
+    T: Deconstruct + Stringify,
+    C: Constructor + Stringify,
+    <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>
+{
+    log::debug!("x: {}", x.stringify());
+    let x_deconstruction = x.deconstruct();
+    log::debug!("x_deconstruction: {}", x_deconstruction);
+    assert_eq!(x_deconstruction.kind(), dy::DeconstructionKind::Parametric);
+    let parameterization = x_deconstruction.into_parametric().unwrap();
+    assert!(parameterization.constructor.is::<C>());
+    let x_reconstructed = parameterization.constructor.downcast_ref::<C>().unwrap().construct(parameterization.parameters)?;
+    log::debug!("x_reconstructed: {}", x_reconstructed);
+    assert_eq!(x_reconstructed, x);
+
+    Ok(())
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_constructor() -> Result<()> {
+    test_deconstruct_construct_roundtrip::<bool, Bool>(true)?;
+    test_deconstruct_construct_roundtrip::<bool, Bool>(false)?;
+    test_deconstruct_construct_roundtrip::<i8, Sint8>(123i8)?;
+    test_deconstruct_construct_roundtrip::<i16, Sint16>(123i16)?;
+    test_deconstruct_construct_roundtrip::<i32, Sint32>(123i32)?;
+    test_deconstruct_construct_roundtrip::<i64, Sint64>(123i64)?;
+    test_deconstruct_construct_roundtrip::<u8, Uint8>(99u8)?;
+    test_deconstruct_construct_roundtrip::<u16, Uint16>(99u16)?;
+    test_deconstruct_construct_roundtrip::<u32, Uint32>(99u32)?;
+    test_deconstruct_construct_roundtrip::<u64, Uint64>(99u64)?;
+    test_deconstruct_construct_roundtrip::<f32, Float32>(100.25f32)?;
+    test_deconstruct_construct_roundtrip::<f64, Float64>(100.25f64)?;
+    test_deconstruct_construct_roundtrip::<String, Utf8String>("BLAH".into())?;
 
     Ok(())
 }
@@ -935,10 +974,10 @@ impl Inhabits<UnOp> for Neg {
 // NOTE: In order to have this in lazy_static, Value would need to use `dyn Any + Sync`, but that's
 // a pretty big bump in type requirement.
 // lazy_static::lazy_static!{
-//     static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32{}.into(), BinOp{}.into(), Sint32{}.into()]);
+//     static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32.into(), BinOp.into(), Sint32.into()]);
 // }
 // std::thread_local!{
-//     pub static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32{}.into(), BinOp{}.into(), Sint32{}.into()]);
+//     pub static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32.into(), BinOp.into(), Sint32.into()]);
 // }
 
 
@@ -989,7 +1028,7 @@ fn eval_expr(expr: &Value) -> f64 {
     let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
 
     // TODO: This should be a poset search under Expr (which is really a Union of types)
-    if expr.inhabits(&Float64{}) {
+    if expr.inhabits(&Float64) {
         *expr.downcast_ref::<f64>().unwrap()
     } else if expr.inhabits(&bin_op_expr) {
         let inner_tuple_term = expr.downcast_ref::<TupleTerm>().unwrap();

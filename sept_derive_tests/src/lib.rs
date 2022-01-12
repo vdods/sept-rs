@@ -12,7 +12,7 @@ pub struct FancyTerm;
 
 #[derive(Clone, Debug, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Value")]
-#[st_term_trait(abstract_type_expr = "Value::from(Sint32{})")]
+#[st_term_trait(abstract_type_expr = "Value::from(Sint32)")]
 #[st_term_trait(is_parametric = "false")]
 #[st_term_trait(is_type = "true")]
 pub struct DumbType;
@@ -26,12 +26,9 @@ fn blah() {
     let v = Value::from(f);
     log::debug!("v (as Debug): {:?}", v);
 
-    let x = Sint32{};
+    let x = Sint32;
     use sept::st::Stringify;
     log::debug!("x: {}", x.stringify());
     let d = DumbType;
     log::debug!("d.abstract_type(): {}", d.abstract_type().stringify());
-
-    let i = sept::st::IntN::<true,32>;
-    log::debug!("i: {}", i.stringify());
 }

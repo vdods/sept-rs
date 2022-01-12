@@ -24,6 +24,12 @@ impl<T: TermTrait + dy::IntoValue + 'static> st::Inhabits<EmptyType> for T {
     }
 }
 
+impl st::NonParametricTermTrait for EmptyType {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::EmptyType
+    }
+}
+
 impl Stringify for EmptyType {
     fn stringify(&self) -> String {
         "EmptyType".into()

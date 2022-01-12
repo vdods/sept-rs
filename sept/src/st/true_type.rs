@@ -22,6 +22,12 @@ impl st::Inhabits<st::BoolType> for TrueType {
     }
 }
 
+impl st::NonParametricTermTrait for TrueType {
+    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
+        dy::DynNPTerm::TrueType
+    }
+}
+
 impl Stringify for TrueType {
     fn stringify(&self) -> String {
         "TrueType".into()

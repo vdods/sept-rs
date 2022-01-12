@@ -585,7 +585,7 @@ impl Runtime {
             None => {
                 // panic!("no abstract_type fn found for ({}, ())", self.label_of(lhs_type_id), self.label_of(rhs_type_id)),
                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
-                Box::new(Type{})
+                Box::new(Type)
             }
         }
     }
@@ -598,7 +598,7 @@ impl Runtime {
                 panic!("no clone fn found for {}", self.label_of(type_id));
                 // There's probably no reasonable default.
 //                 log::warn!("no clone fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
-//                 Box::new(Type{})
+//                 Box::new(Type)
             }
         }
     }

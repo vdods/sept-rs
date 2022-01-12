@@ -1,54 +1,86 @@
-use crate::{dy::{self, DynNPTerm}, st::{Inhabits, FloatNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FloatN<const N: usize> {}
+/// This represents the Float32 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Float32Type", is_parametric = "false", is_type = "true")]
+pub struct Float32;
 
-impl<const N: usize> dy::Deconstruct for FloatN<N> {
+/// This represents the Float64 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Float64Type", is_parametric = "false", is_type = "true")]
+pub struct Float64;
+
+impl dy::Constructor for Float32 {
+    type ConstructedType = f32;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<f32>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Float64 {
+    type ConstructedType = f64;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<f64>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Deconstruct for Float32 {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Value::from(self).into()
     }
 }
 
-impl<const N: usize> Inhabits<FloatNType<N>> for FloatN<N> {
-    fn inhabits(&self, _: &FloatNType<N>) -> bool {
+impl dy::Deconstruct for Float64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl Inhabits<st::Float32Type> for Float32 {
+    fn inhabits(&self, _: &st::Float32Type) -> bool {
         true
     }
 }
 
-impl<const N: usize> dy::IntoValue for FloatN<N> {}
+impl Inhabits<st::Float64Type> for Float64 {
+    fn inhabits(&self, _: &st::Float64Type) -> bool {
+        true
+    }
+}
 
-impl<const N: usize> NonParametricTermTrait for FloatN<N> {
+impl NonParametricTermTrait for Float32 {
     fn as_dyn_npterm(&self) -> DynNPTerm {
-        match N {
-            32 => DynNPTerm::Float32,
-            64 => DynNPTerm::Float64,
-            n => panic!("unsupported Float size: {}", n),
-        }
+        DynNPTerm::Float32
     }
 }
 
-impl<const N: usize> Stringify for FloatN<N> {
+impl NonParametricTermTrait for Float64 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Float64
+    }
+}
+
+impl Stringify for Float32 {
     fn stringify(&self) -> String {
-        format!("Float{}", N)
+        "Float32".into()
     }
 }
 
-impl<const N: usize> TermTrait for FloatN<N> {
-    type AbstractTypeType = FloatNType<N>;
-
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+impl Stringify for Float64 {
+    fn stringify(&self) -> String {
+        "Float64".into()
     }
 }
-
-impl<const N: usize> TypeTrait for FloatN<N> {}
-
-pub type Float32 = FloatN<32>;
-pub type Float64 = FloatN<64>;

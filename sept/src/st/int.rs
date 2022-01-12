@@ -1,75 +1,338 @@
-use crate::{dy::{self, DynNPTerm}, st::{Inhabits, IntNType, NonParametricTermTrait, Stringify, TermTrait, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
-pub const SIGNED: bool = true;
-pub const UNSIGNED: bool = false;
+/// This represents the Sint8 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Sint8Type", is_parametric = "false", is_type = "true")]
+pub struct Sint8;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct IntN<const IS_SIGNED: bool, const N: usize>;
+/// This represents the Sint16 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Sint16Type", is_parametric = "false", is_type = "true")]
+pub struct Sint16;
 
-impl<const IS_SIGNED: bool, const N: usize> dy::Deconstruct for IntN<IS_SIGNED, N> {
+/// This represents the Sint32 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Sint32Type", is_parametric = "false", is_type = "true")]
+pub struct Sint32;
+
+/// This represents the Sint64 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Sint64Type", is_parametric = "false", is_type = "true")]
+pub struct Sint64;
+
+/// This represents the Uint8 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Uint8Type", is_parametric = "false", is_type = "true")]
+pub struct Uint8;
+
+/// This represents the Uint16 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Uint16Type", is_parametric = "false", is_type = "true")]
+pub struct Uint16;
+
+/// This represents the Uint32 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Uint32Type", is_parametric = "false", is_type = "true")]
+pub struct Uint32;
+
+/// This represents the Uint64 type itself.
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "st::Uint64Type", is_parametric = "false", is_type = "true")]
+pub struct Uint64;
+
+impl dy::Constructor for Sint8 {
+    type ConstructedType = i8;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<i8>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Sint16 {
+    type ConstructedType = i16;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<i16>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Sint32 {
+    type ConstructedType = i32;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<i32>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Sint64 {
+    type ConstructedType = i64;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<i64>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Uint8 {
+    type ConstructedType = u8;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<u8>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Uint16 {
+    type ConstructedType = u16;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<u16>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Uint32 {
+    type ConstructedType = u32;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<u32>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Constructor for Uint64 {
+    type ConstructedType = u64;
+    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
+        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
+        let mut parameter_v: Vec<dy::Value> = parameters.into();
+        let mut parameter: dy::Value = parameter_v.pop().unwrap();
+        match parameter.downcast_mut::<u64>() {
+            Some(string) => Ok(std::mem::take(string)),
+            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+        }
+    }
+}
+
+impl dy::Deconstruct for Sint8 {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Value::from(self).into()
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> Inhabits<IntNType<IS_SIGNED, N>> for IntN<IS_SIGNED, N> {
-    fn inhabits(&self, _: &IntNType<IS_SIGNED, N>) -> bool {
+impl dy::Deconstruct for Sint16 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Sint32 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Sint64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint8 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint16 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint32 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl dy::Deconstruct for Uint64 {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl Inhabits<st::Sint8Type> for Sint8 {
+    fn inhabits(&self, _: &st::Sint8Type) -> bool {
         true
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> dy::IntoValue for IntN<IS_SIGNED, N> {}
+impl Inhabits<st::Sint16Type> for Sint16 {
+    fn inhabits(&self, _: &st::Sint16Type) -> bool {
+        true
+    }
+}
 
-impl<const IS_SIGNED: bool, const N: usize> NonParametricTermTrait for IntN<IS_SIGNED, N> {
+impl Inhabits<st::Sint32Type> for Sint32 {
+    fn inhabits(&self, _: &st::Sint32Type) -> bool {
+        true
+    }
+}
+
+impl Inhabits<st::Sint64Type> for Sint64 {
+    fn inhabits(&self, _: &st::Sint64Type) -> bool {
+        true
+    }
+}
+
+impl Inhabits<st::Uint8Type> for Uint8 {
+    fn inhabits(&self, _: &st::Uint8Type) -> bool {
+        true
+    }
+}
+
+impl Inhabits<st::Uint16Type> for Uint16 {
+    fn inhabits(&self, _: &st::Uint16Type) -> bool {
+        true
+    }
+}
+
+impl Inhabits<st::Uint32Type> for Uint32 {
+    fn inhabits(&self, _: &st::Uint32Type) -> bool {
+        true
+    }
+}
+
+impl Inhabits<st::Uint64Type> for Uint64 {
+    fn inhabits(&self, _: &st::Uint64Type) -> bool {
+        true
+    }
+}
+
+impl NonParametricTermTrait for Sint8 {
     fn as_dyn_npterm(&self) -> DynNPTerm {
-        match IS_SIGNED {
-            SIGNED => match N {
-                8 => DynNPTerm::Sint8,
-                16 => DynNPTerm::Sint16,
-                32 => DynNPTerm::Sint32,
-                64 => DynNPTerm::Sint64,
-                n => panic!("unsupported Sint size: {}", n),
-            },
-            UNSIGNED => match N {
-                8 => DynNPTerm::Uint8,
-                16 => DynNPTerm::Uint16,
-                32 => DynNPTerm::Uint32,
-                64 => DynNPTerm::Uint64,
-                n => panic!("unsupported Uint size: {}", n),
-            },
-        }
+        DynNPTerm::Sint8
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> Stringify for IntN<IS_SIGNED, N> {
+impl NonParametricTermTrait for Sint16 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint16
+    }
+}
+
+impl NonParametricTermTrait for Sint32 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint32
+    }
+}
+
+impl NonParametricTermTrait for Sint64 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Sint64
+    }
+}
+
+impl NonParametricTermTrait for Uint8 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint8
+    }
+}
+
+impl NonParametricTermTrait for Uint16 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint16
+    }
+}
+
+impl NonParametricTermTrait for Uint32 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint32
+    }
+}
+
+impl NonParametricTermTrait for Uint64 {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Uint64
+    }
+}
+
+impl Stringify for Sint8 {
     fn stringify(&self) -> String {
-        format!("{}int{}", if IS_SIGNED { "S" } else { "U" }, N)
+        "Sint8".into()
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> TermTrait for IntN<IS_SIGNED, N> {
-    type AbstractTypeType = IntNType<IS_SIGNED, N>;
-
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
-        true
-    }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+impl Stringify for Sint16 {
+    fn stringify(&self) -> String {
+        "Sint16".into()
     }
 }
 
-impl<const IS_SIGNED: bool, const N: usize> TypeTrait for IntN<IS_SIGNED, N> {}
+impl Stringify for Sint32 {
+    fn stringify(&self) -> String {
+        "Sint32".into()
+    }
+}
 
-pub type Sint8 = IntN<SIGNED, 8>;
-pub type Sint16 = IntN<SIGNED, 16>;
-pub type Sint32 = IntN<SIGNED, 32>;
-pub type Sint64 = IntN<SIGNED, 64>;
+impl Stringify for Sint64 {
+    fn stringify(&self) -> String {
+        "Sint64".into()
+    }
+}
 
-pub type Uint8 = IntN<UNSIGNED, 8>;
-pub type Uint16 = IntN<UNSIGNED, 16>;
-pub type Uint32 = IntN<UNSIGNED, 32>;
-pub type Uint64 = IntN<UNSIGNED, 64>;
+impl Stringify for Uint8 {
+    fn stringify(&self) -> String {
+        "Uint8".into()
+    }
+}
+
+impl Stringify for Uint16 {
+    fn stringify(&self) -> String {
+        "Uint16".into()
+    }
+}
+
+impl Stringify for Uint32 {
+    fn stringify(&self) -> String {
+        "Uint32".into()
+    }
+}
+
+impl Stringify for Uint64 {
+    fn stringify(&self) -> String {
+        "Uint64".into()
+    }
+}

@@ -1,54 +1,58 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, TermTrait, Type, TypeTrait}};
+use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FloatNType<const N: usize> {}
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Float32Type;
 
-impl<const N: usize> dy::Deconstruct for FloatNType<N> {
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+pub struct Float64Type;
+
+impl dy::Deconstruct for Float32Type {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Value::from(self).into()
     }
 }
 
-impl<const N: usize> st::Inhabits<Type> for FloatNType<N> {
+impl dy::Deconstruct for Float64Type {
+    fn deconstruct_into(self) -> dy::Deconstruction {
+        dy::Value::from(self).into()
+    }
+}
+
+impl st::Inhabits<Type> for Float32Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl<const N: usize> dy::IntoValue for FloatNType<N> {}
-
-impl<const N: usize> NonParametricTermTrait for FloatNType<N> {
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        match N {
-            32 => DynNPTerm::Float32Type,
-            64 => DynNPTerm::Float64Type,
-            n => panic!("unsupported Float size: {}", n),
-        }
-    }
-}
-
-impl<const N: usize> Stringify for FloatNType<N> {
-    fn stringify(&self) -> String {
-        format!("Float{}Type", N)
-    }
-}
-
-impl<const N: usize> TermTrait for FloatNType<N> {
-    type AbstractTypeType = Type;
-
-    fn is_parametric(&self) -> bool {
-        false
-    }
-    fn is_type(&self) -> bool {
+impl st::Inhabits<Type> for Float64Type {
+    fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
-    fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+}
+
+impl NonParametricTermTrait for Float32Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Float32Type
     }
 }
 
-impl<const N: usize> TypeTrait for FloatNType<N> {}
+impl NonParametricTermTrait for Float64Type {
+    fn as_dyn_npterm(&self) -> DynNPTerm {
+        DynNPTerm::Float64Type
+    }
+}
 
-pub type Float32Type = FloatNType<32>;
-pub type Float64Type = FloatNType<64>;
+impl Stringify for Float32Type {
+    fn stringify(&self) -> String {
+        "Float32Type".into()
+    }
+}
+
+impl Stringify for Float64Type {
+    fn stringify(&self) -> String {
+        "Float64Type".into()
+    }
+}

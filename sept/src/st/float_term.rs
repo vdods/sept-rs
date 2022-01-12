@@ -3,7 +3,7 @@ use crate::{dy, st::{Float32, Float64, Inhabits, Stringify, TermTrait}};
 impl dy::Deconstruct for f32 {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Parameterization {
-            constructor: Float32{}.into(),
+            constructor: Float32.into(),
             parameters: (self,).into(),
         }.into()
     }
@@ -12,7 +12,7 @@ impl dy::Deconstruct for f32 {
 impl dy::Deconstruct for f64 {
     fn deconstruct_into(self) -> dy::Deconstruction {
         dy::Parameterization {
-            constructor: Float64{}.into(),
+            constructor: Float64.into(),
             parameters: (self,).into(),
         }.into()
     }
