@@ -5,6 +5,7 @@ use sept::{
         self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
         StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value,
     },
+    scan,
     st::{
         self,
         Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType,
@@ -795,6 +796,223 @@ fn test_textify() {
         ),
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
     );
+}
+
+fn test_try_scanning_case(token_kind: scan::TokenKind, input: &str, expected_token_o: Option<scan::Token>) {
+    let token_o = scan::try_scanning(token_kind, input).map(|(token, _match_stats)| token);
+    assert_eq!(token_o, expected_token_o);
+}
+
+fn test_try_scanning_case_ascii_string_literal(input: &str) {
+    // NOTE: Not 100% sure if Rust's string literals match this.  That isn't the design requirement though,
+    // it should be somewhat platform agnostic, but generally should work with C and Rust.
+    let input_str_literal = format!("{:?}", input);
+    test_try_scanning_case(
+        scan::TokenKind::AsciiStringLiteral,
+        &input_str_literal,
+        Some(scan::Token::AsciiStringLiteral(&input_str_literal)),
+    );
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_try_scanning() {
+    use scan::{Token, TokenKind};
+
+    test_try_scanning_case(TokenKind::EndOfInput, "", Some(Token::EndOfInput));
+    test_try_scanning_case(TokenKind::EndOfInput, "x", None);
+
+    test_try_scanning_case(TokenKind::OpenParen, "(", Some(Token::OpenParen));
+    test_try_scanning_case(TokenKind::OpenParen, "(x", Some(Token::OpenParen));
+    test_try_scanning_case(TokenKind::OpenParen, "((", Some(Token::OpenParen));
+    test_try_scanning_case(TokenKind::OpenParen, "x", None);
+    test_try_scanning_case(TokenKind::OpenParen, ")", None);
+    test_try_scanning_case(TokenKind::OpenParen, "", None);
+    test_try_scanning_case(TokenKind::OpenParen, "\x7F", None);
+
+    test_try_scanning_case(TokenKind::CloseParen, ")", Some(Token::CloseParen));
+    test_try_scanning_case(TokenKind::CloseParen, ")x", Some(Token::CloseParen));
+    test_try_scanning_case(TokenKind::CloseParen, "))", Some(Token::CloseParen));
+    test_try_scanning_case(TokenKind::CloseParen, "(", None);
+    test_try_scanning_case(TokenKind::CloseParen, "x", None);
+    test_try_scanning_case(TokenKind::CloseParen, "", None);
+    test_try_scanning_case(TokenKind::CloseParen, "\x7F", None);
+
+    test_try_scanning_case(TokenKind::Comma, ",", Some(Token::Comma));
+    test_try_scanning_case(TokenKind::Comma, ",x", Some(Token::Comma));
+    test_try_scanning_case(TokenKind::Comma, ",,", Some(Token::Comma));
+    test_try_scanning_case(TokenKind::Comma, "x", None);
+    test_try_scanning_case(TokenKind::Comma, "", None);
+    test_try_scanning_case(TokenKind::Comma, "\x7F", None);
+
+    test_try_scanning_case(TokenKind::Whitespace, " ", Some(Token::Whitespace(" ")));
+    test_try_scanning_case(TokenKind::Whitespace, "\t", Some(Token::Whitespace("\t")));
+    test_try_scanning_case(TokenKind::Whitespace, "\n", Some(Token::Whitespace("\n")));
+    test_try_scanning_case(TokenKind::Whitespace, "    \t  \n\n\n", Some(Token::Whitespace("    \t  \n\n\n")));
+    test_try_scanning_case(TokenKind::Whitespace, "    \t  \n\n\n!", Some(Token::Whitespace("    \t  \n\n\n")));
+    test_try_scanning_case(TokenKind::Whitespace, "x", None);
+    test_try_scanning_case(TokenKind::Whitespace, "", None);
+    test_try_scanning_case(TokenKind::Whitespace, "\x7F", None);
+
+    test_try_scanning_case(TokenKind::CIdentifier, "xyz", Some(Token::CIdentifier("xyz")));
+    test_try_scanning_case(TokenKind::CIdentifier, "ABC__123", Some(Token::CIdentifier("ABC__123")));
+    test_try_scanning_case(TokenKind::CIdentifier, "_x_100y_z", Some(Token::CIdentifier("_x_100y_z")));
+    test_try_scanning_case(TokenKind::CIdentifier, "_x_100y_z.", Some(Token::CIdentifier("_x_100y_z")));
+    test_try_scanning_case(TokenKind::CIdentifier, ".", None);
+    test_try_scanning_case(TokenKind::CIdentifier, "1", None);
+    test_try_scanning_case(TokenKind::CIdentifier, "(", None);
+    test_try_scanning_case(TokenKind::CIdentifier, ")", None);
+    test_try_scanning_case(TokenKind::CIdentifier, "", None);
+    test_try_scanning_case(TokenKind::CIdentifier, "\x7F", None);
+
+
+    test_try_scanning_case(TokenKind::DecimalLiteral, "0.", Some(Token::DecimalLiteral("0.")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, ".0", Some(Token::DecimalLiteral(".0")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "1.", Some(Token::DecimalLiteral("1.")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, ".2", Some(Token::DecimalLiteral(".2")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "3.4", Some(Token::DecimalLiteral("3.4")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.4", Some(Token::DecimalLiteral("-3.4")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.", Some(Token::DecimalLiteral("-3.")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-.4", Some(Token::DecimalLiteral("-.4")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.4", Some(Token::DecimalLiteral("+3.4")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.", Some(Token::DecimalLiteral("+3.")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4", Some(Token::DecimalLiteral("+.4")));
+
+    test_try_scanning_case(TokenKind::DecimalLiteral, "0.e0", Some(Token::DecimalLiteral("0.e0")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, ".0e1", Some(Token::DecimalLiteral(".0e1")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "1.e100", Some(Token::DecimalLiteral("1.e100")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, ".2e-0", Some(Token::DecimalLiteral(".2e-0")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "3.4e-10", Some(Token::DecimalLiteral("3.4e-10")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.4e8", Some(Token::DecimalLiteral("-3.4e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.e8", Some(Token::DecimalLiteral("-3.e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "-.4e8", Some(Token::DecimalLiteral("-.4e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.4e8", Some(Token::DecimalLiteral("+3.4e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.e8", Some(Token::DecimalLiteral("+3.e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8", Some(Token::DecimalLiteral("+.4e8")));
+
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8xyz", Some(Token::DecimalLiteral("+.4e8")));
+    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8)", Some(Token::DecimalLiteral("+.4e8")));
+
+    test_try_scanning_case(TokenKind::DecimalLiteral, ".", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "0", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "1", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "4e100", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "abcxyz", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "__", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "(", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, ")", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "", None);
+    test_try_scanning_case(TokenKind::DecimalLiteral, "\x7F", None);
+
+
+
+    test_try_scanning_case(TokenKind::IntegerLiteral, "0", Some(Token::IntegerLiteral("0")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "1", Some(Token::IntegerLiteral("1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "1234", Some(Token::IntegerLiteral("1234")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "99999999999999999999999", Some(Token::IntegerLiteral("99999999999999999999999")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "-0", Some(Token::IntegerLiteral("-0")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "-1", Some(Token::IntegerLiteral("-1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "-1234", Some(Token::IntegerLiteral("-1234")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "-99999999999999999999999", Some(Token::IntegerLiteral("-99999999999999999999999")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "+0", Some(Token::IntegerLiteral("+0")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "+1", Some(Token::IntegerLiteral("+1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "+1234", Some(Token::IntegerLiteral("+1234")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "+99999999999999999999999", Some(Token::IntegerLiteral("+99999999999999999999999")));
+    // Note that this doesn't try to match the whole string.
+    test_try_scanning_case(TokenKind::IntegerLiteral, "1.", Some(Token::IntegerLiteral("1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "1x", Some(Token::IntegerLiteral("1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "1)", Some(Token::IntegerLiteral("1")));
+    test_try_scanning_case(TokenKind::IntegerLiteral, "abcxyz", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, "__", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, ".", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, ".1", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, "(", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, ")", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, "", None);
+    test_try_scanning_case(TokenKind::IntegerLiteral, "\x7F", None);
+
+
+    for input in vec![
+        r#""""#,
+        r#""\0""#, r#""\a""#, r#""\b""#, r#""\t""#, r#""\n""#, r#""\v""#, r#""\f""#, r#""\r""#, r#""\"""#, r#""\\""#,
+        r#""\x00""#, r#""\xAA""#, r#""\x93""#, r#""\x7f""#, r#""\xee""#, r#""\xFf""#,
+        r#"" ""#,
+        // TODO: More test cases
+    ] {
+        test_try_scanning_case(
+            scan::TokenKind::AsciiStringLiteral,
+            &input,
+            Some(scan::Token::AsciiStringLiteral(&input)),
+        );
+    }
+    test_try_scanning_case_ascii_string_literal("");
+    test_try_scanning_case_ascii_string_literal("");
+    test_try_scanning_case_ascii_string_literal("\n  ");
+    test_try_scanning_case_ascii_string_literal("blah");
+    test_try_scanning_case_ascii_string_literal("\"thingy'\\");
+//     test_try_scanning_case_ascii_string_literal("\t\f\v\n\r\a\b");
+    // TODO: More exhaustive test cases where Rust's format("{:?}", s) isn't getting in the way.
+}
+
+
+fn test_detextify_case(input: &str, expected_token_v: Vec<scan::Token>) {
+    let token_v = scan::scan(input).expect("test");
+    log::debug!("dy::scan({:?}):\n{:?}", input, token_v);
+    assert_eq!(token_v, expected_token_v);
+}
+
+fn test_detextify_case_negative(input: &str) {
+    scan::scan(input).expect_err("negative test");
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_detextify() {
+    use scan::Token;
+    test_detextify_case(
+        "",
+        vec![],
+    );
+    test_detextify_case(
+        "blah, (thing, hippo)",
+        vec![
+            Token::CIdentifier("blah"),
+            Token::Comma,
+            Token::OpenParen,
+                Token::CIdentifier("thing"),
+                Token::Comma,
+                Token::CIdentifier("hippo"),
+            Token::CloseParen,
+        ],
+    );
+    for input in vec!["3", "+8", "-9", "10", "0", "+0", "-0", "-1000", "999999999999999999999999999999999999999999999999999999999999999999"] {
+        test_detextify_case(input, vec![Token::IntegerLiteral(input)]);
+    }
+    for input in vec!["4.", ".5", "6.7", "0.0", "+8.", "-9.", "4.e0", "4.e+0", "4.e-0", ".5e1", "1.6e10", "8.05e-20", "-999999.1010101010e+666666666"] {
+        test_detextify_case(input, vec![Token::DecimalLiteral(input)]);
+    }
+    for input in vec![
+        r#""""#,
+        r#""\0""#, r#""\a""#, r#""\b""#, r#""\t""#, r#""\n""#, r#""\v""#, r#""\f""#, r#""\r""#, r#""\"""#, r#""\\""#,
+        r#""\x00""#, r#""\xAA""#, r#""\x93""#, r#""\x7f""#, r#""\xee""#, r#""\xFf""#,
+        r#"" "!""#,
+        r#"" "!#""#,
+        r#"" "!#$""#,
+        r#"" "!#$%&'""#,
+        r#"" "!#$%&'()*+,-""#,
+        r#"" "!#$%&'()*+,-./0123456789:;<=>""#,
+        r#"" "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]""#,
+        r#"" "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~""#,
+    ] {
+        test_detextify_case(input, vec![Token::AsciiStringLiteral(input)]);
+    }
+
+    //
+    // Negative test cases; expected error.
+    //
+
+    test_detextify_case_negative(")");
+    test_detextify_case_negative(".");
 }
 
 //

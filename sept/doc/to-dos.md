@@ -137,6 +137,18 @@
                     }
 
         -   Also interesting is adaptive deconstruction which would be used in destructuring contexts where a particular destructuring pattern is desired, one that doesn't necessarily correspond to a uniform number of layers (i.e. some of the branches of the AST are deconstructed more deeply).
+    -   Notes on `Detextify`, i.e. the canonical parsing of a term's textifaction.
+        -   Need to implement a basic pushdown automaton, meaning there's a state machine which operates using a stack of states.
+        -   Open-delimiters push the stack, close-delimiters pop the stack.
+        -   Commas delimit separate elements in a tuple of parameters.
+        -   String/char quotes don't have separate open/close versions (at least not in ASCII), so those require slightly different.
+        -   Primitives:
+            -   String literals
+            -   Char literals
+            -   Identifiers (maybe relax this and make it less restrictive than just C-style identifiers)
+            -   Integer literals
+            -   Decimal literals (numeric literals having a decimal point)
+            -   Numeric literals with a radix suffix
 
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
 -   Could maybe use https://docs.rs/tuple_list/latest/tuple_list/ to implement a `st::TupleTerm`.

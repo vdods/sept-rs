@@ -6,11 +6,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# TODO: features, such as textify, detextify, serialize, deserialize.
+
 [dependencies]
 anyhow = "1.0.44"
 derive_more = "0.99.17"
+enum-map = "2.0.0"
 lazy_static = "1.4.0"
 log = "0.4.14"
+regex = "1.5.4"
 sept_derive = { path = "../sept_derive" }
 
 [dev-dependencies]
