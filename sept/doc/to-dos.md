@@ -139,3 +139,4 @@
         -   Also interesting is adaptive deconstruction which would be used in destructuring contexts where a particular destructuring pattern is desired, one that doesn't necessarily correspond to a uniform number of layers (i.e. some of the branches of the AST are deconstructed more deeply).
 
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
+-   Could maybe use https://docs.rs/tuple_list/latest/tuple_list/ to implement a `st::TupleTerm`.
