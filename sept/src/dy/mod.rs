@@ -21,7 +21,7 @@ pub use anyhow::{Error, Result};
 pub use crate::dy::{
     array_term::ArrayTerm,
     constructor::Constructor,
-    deconstruct::Deconstruct,
+    deconstruct::{Deconstruct, Textifier},
     deconstruction::{Deconstruction, DeconstructionKind},
     dyn_np_term::DynNPTerm,
     global_sym_ref_term::GlobalSymRefTerm,

@@ -3,7 +3,7 @@
 use sept::{
     dy::{
         self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
-        StructTerm, StructTermTerm, SymbolTable, TupleTerm, Value,
+        StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value,
     },
     st::{
         self,
@@ -756,6 +756,45 @@ fn test_constructor() {
     test_deconstruct_reconstruct_roundtrip::<String, Utf8String>("BLAH".into());
 
     test_deconstruct_reconstruct_roundtrip::<TupleTerm, st::Tuple>(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))));
+}
+
+fn test_textify_case<T: std::fmt::Debug + dy::Deconstruct>(value: T, expected_text: &str) {
+    let text = value.textified();
+    log::debug!("value `{:?}` textified: {}", value, text);
+    assert_eq!(text, expected_text);
+
+    let text2 = format!("{}", Textifier::from(&value));
+    assert_eq!(text2, expected_text);
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_textify() {
+    test_textify_case(true, "Bool(true)");
+    test_textify_case(false, "Bool(false)");
+    test_textify_case(True, "True");
+    test_textify_case(False, "False");
+    test_textify_case(Void, "Void");
+    test_textify_case(VoidType, "VoidType");
+    test_textify_case(123i8, "Sint8(123)");
+    test_textify_case(123i16, "Sint16(123)");
+    test_textify_case(123i32, "Sint32(123)");
+    test_textify_case(123i64, "Sint64(123)");
+    test_textify_case(123u8, "Uint8(123)");
+    test_textify_case(123u16, "Uint16(123)");
+    test_textify_case(123u32, "Uint32(123)");
+    test_textify_case(123u64, "Uint64(123)");
+    test_textify_case(4.75f32, "Float32(4.75)");
+    test_textify_case(4.75f64, "Float64(4.75)");
+    test_textify_case(String::from("Hippos and Hippas"), "Utf8String(\"Hippos and Hippas\")");
+    test_textify_case(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))), "Tuple(Sint8(123), Uint32(99), Float32(100.25), Utf8String(\"HIPPO\"))");
+    test_textify_case(
+        StructTerm::new(
+            String::from("S"),
+            vec![("name".into(), Utf8String.into()), ("score".into(), Uint64.into())],
+        ),
+        "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
+    );
 }
 
 //
