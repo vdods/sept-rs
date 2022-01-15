@@ -8,7 +8,7 @@ use sept::{
     st::{
         self,
         Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType,
-        Float32, Float32Type, Float64, Float64Type, Inhabits, Result,
+        Float32, Float32Type, Float64, Float64Type, Inhabits,
         Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
         Struct, StructType,
         TermTrait, True, TrueType, Type, TypeTrait,
@@ -26,7 +26,7 @@ fn overall_init() {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_term_and_type() -> Result<()> {
+fn test_term_and_type() {
     log::debug!("True: {:#?}", True);
     log::debug!("TrueType: {:#?}", TrueType);
 
@@ -77,13 +77,11 @@ fn test_term_and_type() -> Result<()> {
     assert!(Bool.is_type());
     assert!(!BoolType.is_parametric());
     assert!(BoolType.is_type());
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_runtime_stringify() -> Result<()> {
+fn test_runtime_stringify() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     assert_eq!(runtime_g.stringify(&true), "true");
@@ -96,13 +94,11 @@ fn test_runtime_stringify() -> Result<()> {
     assert_eq!(runtime_g.stringify(&BoolType), "BoolType");
 
     log::debug!("RUNTIME_LA.stringify(&123): {:#?}", runtime_g.stringify(&123));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_runtime_eq() -> Result<()> {
+fn test_runtime_eq() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     assert!(runtime_g.eq(&true, &true));
@@ -124,13 +120,11 @@ fn test_runtime_eq() -> Result<()> {
     assert!(runtime_g.eq(&False, &false));
     assert!(!runtime_g.eq(&False, &True));
     assert!(runtime_g.eq(&False, &False));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_runtime_inhabits() -> Result<()> {
+fn test_runtime_inhabits() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     assert!(runtime_g.inhabits(&true, &Bool));
@@ -147,13 +141,11 @@ fn test_runtime_inhabits() -> Result<()> {
     assert!(!runtime_g.inhabits(&VoidType, &Void));
 
     assert!(!runtime_g.inhabits(&Bool, &EmptyType));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_ints() -> Result<()> {
+fn test_ints() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     assert!(runtime_g.inhabits(&123i8, &Sint8));
@@ -175,13 +167,11 @@ fn test_ints() -> Result<()> {
     assert!(runtime_g.inhabits(&Uint16, &Uint16Type));
     assert!(runtime_g.inhabits(&Uint32, &Uint32Type));
     assert!(runtime_g.inhabits(&Uint64, &Uint64Type));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_floats() -> Result<()> {
+fn test_floats() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     assert!(runtime_g.inhabits(&5.875f32, &Float32));
@@ -189,13 +179,11 @@ fn test_floats() -> Result<()> {
 
     assert!(runtime_g.inhabits(&Float32, &Float32Type));
     assert!(runtime_g.inhabits(&Float64, &Float64Type));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_arrays() -> Result<()> {
+fn test_arrays() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     // Note that Vec<Value> is ArrayTerm.
@@ -214,13 +202,11 @@ fn test_arrays() -> Result<()> {
 //     log::debug!("a1.stringify(): {}", a1.stringify());
 //
 //     assert!(a1.inhabits(&Array));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_tuples() -> Result<()> {
+fn test_tuples() {
     let t1 = TupleTerm::from(vec![3i32.into(), 5.5f32.into()]);
     let t2 = TupleTerm::from(vec![Sint32.into(), Float32.into()]);
     log::debug!("t1: {}", t1);
@@ -244,13 +230,11 @@ fn test_tuples() -> Result<()> {
     assert_eq!(t3, t4);
     assert_eq!(t3, t5);
     assert_eq!(t4, t5);
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_abstract_type() -> Result<()> {
+fn test_abstract_type() {
     let runtime_g = RUNTIME_LA.read().unwrap();
 
     {
@@ -293,13 +277,11 @@ fn test_abstract_type() -> Result<()> {
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float32Type).as_ref(), &Type));
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64).as_ref(), &Float64Type));
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&Float64Type).as_ref(), &Type));
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_value() -> Result<()> {
+fn test_value() {
     let v1 = Value::from(3i32);
     let v2 = Value::from(7i32);
 
@@ -326,21 +308,19 @@ fn test_value() -> Result<()> {
     log::debug!("v1 == v2: {:?}", v1 == v2);
     log::debug!("v2 == v1: {:?}", v2 == v1);
     log::debug!("v2 == v2: {:?}", v2 == v2);
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_symbol_table() -> Result<()> {
+fn test_symbol_table() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     let mut symbol_table = SymbolTable::new_with_parent(None);
     assert!(!symbol_table.symbol_is_defined("blah"));
-    symbol_table.define_symbol("blah", Value::from(123i32))?;
+    symbol_table.define_symbol("blah", Value::from(123i32)).expect("test");
     assert!(symbol_table.symbol_is_defined("blah"));
-    assert_eq!(*symbol_table.resolved_symbol("blah")?.read().unwrap(), Value::from(123i32));
+    assert_eq!(*symbol_table.resolved_symbol("blah").expect("test").read().unwrap(), Value::from(123i32));
 
     log::debug!("symbol_table: {:#?}", symbol_table);
 
@@ -349,12 +329,12 @@ fn test_symbol_table() -> Result<()> {
         assert!(!dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().symbol_is_defined("bleh"));
 
         // Have to acquire a separate write lock.
-        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bleh", Value::from(456f32))?;
+        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bleh", Value::from(456f32)).expect("test");
 
         // Now acquire a read lock.
         let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         assert!(global_symbol_table_g.symbol_is_defined("bleh"));
-        assert_eq!(*global_symbol_table_g.resolved_symbol("bleh")?.read().unwrap(), Value::from(456f32));
+        assert_eq!(*global_symbol_table_g.resolved_symbol("bleh").expect("test").read().unwrap(), Value::from(456f32));
 
         log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
     }
@@ -363,34 +343,32 @@ fn test_symbol_table() -> Result<()> {
     let parent_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
     let child_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(Some(parent_symbol_table_la.clone()))));
 
-    parent_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(200u32))?;
-    parent_symbol_table_la.write().unwrap().define_symbol("hippo", Value::from(300u32))?;
+    parent_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(200u32)).expect("test");
+    parent_symbol_table_la.write().unwrap().define_symbol("hippo", Value::from(300u32)).expect("test");
 
-    child_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(444u32))?;
+    child_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(444u32)).expect("test");
 
-    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("stuff")?.read().unwrap(), Value::from(200u32));
-    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("hippo")?.read().unwrap(), Value::from(300u32));
+    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("stuff").expect("test").read().unwrap(), Value::from(200u32));
+    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("hippo").expect("test").read().unwrap(), Value::from(300u32));
 
-    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("stuff")?.read().unwrap(), Value::from(444u32));
-    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("hippo")?.read().unwrap(), Value::from(300u32));
+    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("stuff").expect("test").read().unwrap(), Value::from(444u32));
+    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("hippo").expect("test").read().unwrap(), Value::from(300u32));
 
     log::debug!("child_symbol_table:\n{:#?}", child_symbol_table_la.read().unwrap());
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_global_sym_ref_term() -> Result<()> {
+fn test_global_sym_ref_term() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     // Write a bunch of stuff into the global_symbol_table
     {
         let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
-        global_symbol_table_g.define_symbol("bleh", Value::from(456f32))?;
-        global_symbol_table_g.define_symbol("stuff", Value::from(True{}))?;
-        global_symbol_table_g.define_symbol("andthings", Value::from(Void{}))?;
+        global_symbol_table_g.define_symbol("bleh", Value::from(456f32)).expect("test");
+        global_symbol_table_g.define_symbol("stuff", Value::from(True{})).expect("test");
+        global_symbol_table_g.define_symbol("andthings", Value::from(Void{})).expect("test");
     }
 
     // Now check GlobalSymRefTerm.
@@ -410,7 +388,7 @@ fn test_global_sym_ref_term() -> Result<()> {
 
     // Test dereferenced
     {
-        let r_resolved_la = r.resolved()?;
+        let r_resolved_la = r.resolved().expect("test");
         let r_resolved_g = r_resolved_la.read().unwrap();
         log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
         log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
@@ -425,7 +403,7 @@ fn test_global_sym_ref_term() -> Result<()> {
 
     // Test mutation
     {
-        let r_resolved_la = r.resolved()?;
+        let r_resolved_la = r.resolved().expect("test");
         let mut r_resolved_g = r_resolved_la.write().unwrap();
         log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
         log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
@@ -449,9 +427,9 @@ fn test_global_sym_ref_term() -> Result<()> {
         // Write more stuff into the global_symbol_table
         {
             let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
-            global_symbol_table_g.define_symbol("inner", Value::from(40404u32))?;
-            global_symbol_table_g.define_symbol("outer", Value::from(GlobalSymRefTerm::new_unchecked("inner".into())))?;
-            global_symbol_table_g.define_symbol("outerer", Value::from(GlobalSymRefTerm::new_unchecked("outer".into())))?;
+            global_symbol_table_g.define_symbol("inner", Value::from(40404u32)).expect("test");
+            global_symbol_table_g.define_symbol("outer", Value::from(GlobalSymRefTerm::new_unchecked("inner".into()))).expect("test");
+            global_symbol_table_g.define_symbol("outerer", Value::from(GlobalSymRefTerm::new_unchecked("outer".into()))).expect("test");
         }
 
         {
@@ -466,7 +444,7 @@ fn test_global_sym_ref_term() -> Result<()> {
         let runtime_g = dy::RUNTIME_LA.read().unwrap();
 
         {
-            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref)?;
+            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref).expect("test");
             let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
             log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
             log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
@@ -474,7 +452,7 @@ fn test_global_sym_ref_term() -> Result<()> {
         }
 
         {
-            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref)?;
+            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref).expect("test");
             let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
             log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
             log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
@@ -482,32 +460,30 @@ fn test_global_sym_ref_term() -> Result<()> {
         }
 
         {
-            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref)?;
+            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref).expect("test");
             let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
             log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
             log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
             assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
-        assert_eq!(*inner_ref.resolved()?.read().unwrap(), test_value);
-        assert_eq!(*outer_ref.resolved()?.read().unwrap(), test_value);
-        assert_eq!(*outerer_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*inner_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(*outer_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(*outerer_ref.resolved().expect("test").read().unwrap(), test_value);
     }
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_local_sym_ref_term() -> Result<()> {
+fn test_local_sym_ref_term() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
-    local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32))?;
+    local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32)).expect("test");
     log::debug!("local_symbol_table_la: {:#?}", local_symbol_table_la.read().unwrap());
 
-    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())?;
+    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into()).expect("test");
     log::debug!("local_sym_ref_term: (as Debug) {:#?}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: (as Display) {}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: {}", local_sym_ref_term.stringify());
@@ -519,9 +495,9 @@ fn test_local_sym_ref_term() -> Result<()> {
         // Write more stuff into the local_symbol_table
         {
             let mut local_symbol_table_g = local_symbol_table_la.write().unwrap();
-            local_symbol_table_g.define_symbol("inner", Value::from(51515u32))?;
-            local_symbol_table_g.define_symbol("outer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into())))?;
-            local_symbol_table_g.define_symbol("outerer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into())))?;
+            local_symbol_table_g.define_symbol("inner", Value::from(51515u32)).expect("test");
+            local_symbol_table_g.define_symbol("outer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into()))).expect("test");
+            local_symbol_table_g.define_symbol("outerer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into()))).expect("test");
         }
 
         {
@@ -536,7 +512,7 @@ fn test_local_sym_ref_term() -> Result<()> {
         let runtime_g = dy::RUNTIME_LA.read().unwrap();
 
         {
-            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref)?;
+            let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref).expect("test");
             let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
             log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
             log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
@@ -544,7 +520,7 @@ fn test_local_sym_ref_term() -> Result<()> {
         }
 
         {
-            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref)?;
+            let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref).expect("test");
             let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
             log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
             log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
@@ -552,24 +528,22 @@ fn test_local_sym_ref_term() -> Result<()> {
         }
 
         {
-            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref)?;
+            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref).expect("test");
             let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
             log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
             log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
             assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
-        assert_eq!(*inner_ref.resolved()?.read().unwrap(), test_value);
-        assert_eq!(*outer_ref.resolved()?.read().unwrap(), test_value);
-        assert_eq!(*outerer_ref.resolved()?.read().unwrap(), test_value);
+        assert_eq!(*inner_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(*outer_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(*outerer_ref.resolved().expect("test").read().unwrap(), test_value);
     }
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_structs() -> Result<()> {
+fn test_structs() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
@@ -586,7 +560,7 @@ fn test_structs() -> Result<()> {
                 "Hippo".into(),
                 vec![("age".into(), Uint8.into()), ("gravity".into(), Float64.into())].into()
             ).into()
-        )?;
+        ).expect("test");
 
     let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
     log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
@@ -594,17 +568,17 @@ fn test_structs() -> Result<()> {
     log::debug!("hippo: {}", hippo.stringify());
 
     let x = global_symbol_table_g
-        .resolved_symbol("Hippo")?
+        .resolved_symbol("Hippo").expect("test")
         .read().unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
-        .construct(vec![23u8.into(), 999.0f64.into()].into())?;
+        .construct(vec![23u8.into(), 999.0f64.into()].into()).expect("test");
     let y = global_symbol_table_g
-        .resolved_symbol("Hippo")?
+        .resolved_symbol("Hippo").expect("test")
         .read().unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
-        .construct(vec![100u8.into(), (-3.0f64).into()].into())?;
+        .construct(vec![100u8.into(), (-3.0f64).into()].into()).expect("test");
     log::debug!("x: {}", x.stringify());
     log::debug!("y: {}", y.stringify());
     log::debug!("x == y: {}", x == y);
@@ -614,8 +588,8 @@ fn test_structs() -> Result<()> {
     assert!(x != y);
     assert!(y != x);
 
-    let x2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![23u8.into(), 999.0f64.into()].into())?;
-    let y2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![100u8.into(), (-3.0f64).into()].into())?;
+    let x2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![23u8.into(), 999.0f64.into()].into()).expect("test");
+    let y2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![100u8.into(), (-3.0f64).into()].into()).expect("test");
 
     log::debug!("x2: {}", x2.stringify());
     log::debug!("y2: {}", y2.stringify());
@@ -628,125 +602,160 @@ fn test_structs() -> Result<()> {
 
     assert_eq!(x, x2);
     assert_eq!(y, y2);
-
-    Ok(())
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_deconstruct() -> Result<()> {
+fn test_deconstruct() {
     let n = 123u32;
+    log::debug!("n (stringify): {}", n.stringify());
     {
-        log::debug!("n (stringify): {}", n.stringify());
+        let deconstruction = n.deconstructed();
+        log::debug!("n.deconstructed(): {:#?}", deconstruction);
+    }
+    {
         let deconstruction = n.deconstruct();
-        log::debug!("n.deconstruct(): {}", deconstruction);
+        log::debug!("n.deconstruct(): {:#?}", deconstruction);
     }
 
     let x = 5.67f64;
+    log::debug!("x (stringify): {}", x.stringify());
     {
-        log::debug!("x (stringify): {}", x.stringify());
+        let deconstruction = x.deconstructed();
+        log::debug!("x.deconstructed(): {:#?}", deconstruction);
+    }
+    {
         let deconstruction = x.deconstruct();
-        log::debug!("x.deconstruct(): {}", deconstruction);
+        log::debug!("x.deconstruct(): {:#?}", deconstruction);
     }
 
     let b = true;
+    log::debug!("b (stringify): {}", b.stringify());
     {
-        log::debug!("b (stringify): {}", b.stringify());
+        let deconstruction = b.deconstructed();
+        log::debug!("b.deconstructed(): {:#?}", deconstruction);
+    }
+    {
         let deconstruction = b.deconstruct();
-        log::debug!("b.deconstruct(): {}", deconstruction);
+        log::debug!("b.deconstruct(): {:#?}", deconstruction);
     }
 
     let a = Array;
+    log::debug!("a (stringify): {}", a.stringify());
     {
-        log::debug!("a (stringify): {}", a.stringify());
+        let deconstruction = a.deconstructed();
+        log::debug!("a.deconstructed(): {:#?}", deconstruction);
+    }
+    {
         let deconstruction = a.deconstruct();
-        log::debug!("a.deconstruct(): {}", deconstruction);
+        log::debug!("a.deconstruct(): {:#?}", deconstruction);
     }
 
     {
         let dy_tt = TupleTerm::from(vec![n.into(), x.into(), b.into(), a.into()]);
         log::debug!("dy_tt (stringify): {}", dy_tt.stringify());
-        let deconstruction = dy_tt.deconstruct();
-        log::debug!("dy_tt.deconstruct(): {}", deconstruction);
+        {
+            let deconstruction = dy_tt.deconstructed();
+            log::debug!("dy_tt.deconstructed(): {:#?}", deconstruction);
+        }
+        {
+            let deconstruction = dy_tt.deconstruct();
+            log::debug!("dy_tt.deconstruct(): {:#?}", deconstruction);
+        }
     }
 
 
     {
         let st_tt = TupleTerm::from((n, x, b, a));
         log::debug!("st_tt (stringify): {}", st_tt.stringify());
-        let deconstruction = st_tt.deconstruct();
-        log::debug!("st_tt.deconstruct(): {}", deconstruction);
+        {
+            let deconstruction = st_tt.deconstructed();
+            log::debug!("st_tt.deconstructed(): {:#?}", deconstruction);
+        }
+        {
+            let deconstruction = st_tt.deconstruct();
+            log::debug!("st_tt.deconstruct(): {:#?}", deconstruction);
+        }
     }
-
-//     {
-//         let st2_tt = (n, x, b, a);
-// //         log::debug!("st2_tt (as Debug): {:#?}", st2_tt);
-//         log::debug!("st2_tt (stringify): {}", st2_tt.stringify());
-//         let deconstruction = st2_tt.deconstruct();
-//         log::debug!("st2_tt.deconstruct() (as Debug): {:#?}", deconstruction);
-//         log::debug!("st2_tt.deconstruct(): {}", deconstruction);
-//     }
 
     {
         let at = ArrayTerm::from(vec![n.into(), x.into(), b.into(), a.into()]);
         log::debug!("at (stringify): {}", at.stringify());
-        let deconstruction = at.deconstruct();
-        log::debug!("at.deconstruct(): {}", deconstruction);
+        {
+            let deconstruction = at.deconstructed();
+            log::debug!("at.deconstructed(): {:#?}", deconstruction);
+        }
+        {
+            let deconstruction = at.deconstruct();
+            log::debug!("at.deconstruct(): {:#?}", deconstruction);
+        }
     }
 
 
     {
         let s = StructTerm::new("S".into(), vec![("name".into(), Utf8String.into()), ("age".into(), Uint8.into())]);
         log::debug!("s (stringify): {}", s.stringify());
-        let deconstruction = s.deconstruct();
-        log::debug!("s.deconstruct(): {}", deconstruction);
+        {
+            let deconstruction = s.deconstructed();
+            log::debug!("s.deconstructed(): {:#?}", deconstruction);
+        }
+        {
+            let deconstruction = s.clone().deconstruct();
+            log::debug!("s.deconstruct(): {:#?}", deconstruction);
+        }
 
-        let s_term = StructTermTerm::new_checked(s.clone().into(), TupleTerm::from((String::from("Hippo"), 99u8)))?;
+        let s_term = StructTermTerm::new_checked(s.clone().into(), TupleTerm::from((String::from("Hippo"), 99u8))).expect("test");
         log::debug!("s_term (stringify): {}", s_term.stringify());
-        let deconstruction = s_term.deconstruct();
-        log::debug!("s_term.deconstruct(): {}", deconstruction);
+        {
+            let deconstruction = s_term.deconstructed();
+            log::debug!("s_term.deconstructed(): {:#?}", deconstruction);
+        }
+        {
+            let deconstruction = s_term.deconstruct();
+            log::debug!("s_term.deconstruct(): {:#?}", deconstruction);
+        }
     }
-
-    Ok(())
 }
 
-fn test_deconstruct_construct_roundtrip<T, C>(x: T) -> Result<()>
+fn test_deconstruct_reconstruct_roundtrip<T, C>(x: T)
 where
-    T: Deconstruct + Stringify,
+    T: Deconstruct + Stringify + PartialEq,
     C: Constructor + Stringify,
     <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>
 {
     log::debug!("x: {}", x.stringify());
-    let x_deconstruction = x.deconstruct();
-    log::debug!("x_deconstruction: {}", x_deconstruction);
+    log::debug!("x (as Debug): {:#?}", x);
+    let x_deconstruction = x.deconstructed();
+    log::debug!("x_deconstruction (as Debug): {:#?}", x_deconstruction);
     assert_eq!(x_deconstruction.kind(), dy::DeconstructionKind::Parametric);
-    let parameterization = x_deconstruction.into_parametric().unwrap();
-    assert!(parameterization.constructor.is::<C>());
-    let x_reconstructed = parameterization.constructor.downcast_ref::<C>().unwrap().construct(parameterization.parameters)?;
-    log::debug!("x_reconstructed: {}", x_reconstructed);
-    assert_eq!(x_reconstructed, x);
-
-    Ok(())
+    let parameterization = x_deconstruction.clone().into_parametric().unwrap();
+    log::debug!("parameterization (as Debug): {:#?}", parameterization);
+    assert!(parameterization.constructor_d.reconstruct().expect("test").is::<C>());
+    let x_reconstructed = x_deconstruction.reconstruct().expect("test");
+    log::debug!("x_reconstructed (as Debug): {:#?}", x_reconstructed);
+    log::debug!("x_reconstructed: {:#?}", x_reconstructed.stringify());
+    assert!(x_reconstructed.is::<T>());
+    assert_eq!(*x_reconstructed.downcast_ref::<T>().unwrap(), x);
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_constructor() -> Result<()> {
-    test_deconstruct_construct_roundtrip::<bool, Bool>(true)?;
-    test_deconstruct_construct_roundtrip::<bool, Bool>(false)?;
-    test_deconstruct_construct_roundtrip::<i8, Sint8>(123i8)?;
-    test_deconstruct_construct_roundtrip::<i16, Sint16>(123i16)?;
-    test_deconstruct_construct_roundtrip::<i32, Sint32>(123i32)?;
-    test_deconstruct_construct_roundtrip::<i64, Sint64>(123i64)?;
-    test_deconstruct_construct_roundtrip::<u8, Uint8>(99u8)?;
-    test_deconstruct_construct_roundtrip::<u16, Uint16>(99u16)?;
-    test_deconstruct_construct_roundtrip::<u32, Uint32>(99u32)?;
-    test_deconstruct_construct_roundtrip::<u64, Uint64>(99u64)?;
-    test_deconstruct_construct_roundtrip::<f32, Float32>(100.25f32)?;
-    test_deconstruct_construct_roundtrip::<f64, Float64>(100.25f64)?;
-    test_deconstruct_construct_roundtrip::<String, Utf8String>("BLAH".into())?;
+fn test_constructor() {
+    test_deconstruct_reconstruct_roundtrip::<bool, Bool>(true);
+    test_deconstruct_reconstruct_roundtrip::<bool, Bool>(false);
+    test_deconstruct_reconstruct_roundtrip::<i8, Sint8>(123i8);
+    test_deconstruct_reconstruct_roundtrip::<i16, Sint16>(123i16);
+    test_deconstruct_reconstruct_roundtrip::<i32, Sint32>(123i32);
+    test_deconstruct_reconstruct_roundtrip::<i64, Sint64>(123i64);
+    test_deconstruct_reconstruct_roundtrip::<u8, Uint8>(99u8);
+    test_deconstruct_reconstruct_roundtrip::<u16, Uint16>(99u16);
+    test_deconstruct_reconstruct_roundtrip::<u32, Uint32>(99u32);
+    test_deconstruct_reconstruct_roundtrip::<u64, Uint64>(99u64);
+    test_deconstruct_reconstruct_roundtrip::<f32, Float32>(100.25f32);
+    test_deconstruct_reconstruct_roundtrip::<f64, Float64>(100.25f64);
+    test_deconstruct_reconstruct_roundtrip::<String, Utf8String>("BLAH".into());
 
-    Ok(())
+    test_deconstruct_reconstruct_roundtrip::<TupleTerm, st::Tuple>(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))));
 }
 
 //
@@ -758,8 +767,8 @@ fn test_constructor() -> Result<()> {
 pub struct BinOp;
 
 impl dy::Deconstruct for BinOp {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -774,8 +783,8 @@ impl st::Inhabits<Type> for BinOp {
 pub struct UnOp;
 
 impl dy::Deconstruct for UnOp {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -819,38 +828,38 @@ pub struct Pow;
 pub struct Neg;
 
 impl dy::Deconstruct for Add {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Sub {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Mul {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Div {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Pow {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Neg {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -986,8 +995,8 @@ impl Inhabits<UnOp> for Neg {
 pub struct Expr;
 
 impl dy::Deconstruct for Expr {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -1056,23 +1065,23 @@ fn eval_expr(expr: &Value) -> f64 {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_ast() -> Result<()> {
+fn test_ast() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
     {
         let mut runtime_g = RUNTIME_LA.write().unwrap();
 
-        runtime_g.register_term::<Add>()?;
-        runtime_g.register_term::<Sub>()?;
-        runtime_g.register_term::<Mul>()?;
-        runtime_g.register_term::<Div>()?;
-        runtime_g.register_term::<Pow>()?;
-        runtime_g.register_term::<Neg>()?;
+        runtime_g.register_term::<Add>().expect("test");
+        runtime_g.register_term::<Sub>().expect("test");
+        runtime_g.register_term::<Mul>().expect("test");
+        runtime_g.register_term::<Div>().expect("test");
+        runtime_g.register_term::<Pow>().expect("test");
+        runtime_g.register_term::<Neg>().expect("test");
 
-        runtime_g.register_type::<BinOp>()?;
-        runtime_g.register_type::<UnOp>()?;
-        runtime_g.register_type::<Expr>()?;
+        runtime_g.register_type::<BinOp>().expect("test");
+        runtime_g.register_type::<UnOp>().expect("test");
+        runtime_g.register_type::<Expr>().expect("test");
 
         // Non-uniform registrations.
         runtime_g.register_inhabits::<f64,Expr>().unwrap();
@@ -1111,13 +1120,11 @@ fn test_ast() -> Result<()> {
                     "BinOpExpr".into(),
                     vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
                 ).into()
-            )?;
+            ).expect("test");
         log::debug!("global_symbol_table: {:#?}", dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap());
         let bin_op_expr = GlobalSymRefTerm::new_unchecked("BinOpExpr".into());
         log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
 
 //         assert!(expr3.inhabits(&bin_op_expr));
     }
-
-    Ok(())
 }

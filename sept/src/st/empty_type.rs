@@ -6,8 +6,8 @@ use crate::{dy, st::{self, Stringify, TermTrait, Type}};
 pub struct EmptyType;
 
 impl dy::Deconstruct for EmptyType {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

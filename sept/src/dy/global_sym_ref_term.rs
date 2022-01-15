@@ -1,4 +1,4 @@
-use crate::{dy::{self, TransparentRefTrait}, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringify, TermTrait}};
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -7,6 +7,9 @@ use std::sync::{Arc, RwLock};
 pub struct GlobalSymRefTerm {
     pub symbol_id: String,
 }
+
+// TODO: Implement Constructor
+// TODO: Implement Deconstruct
 
 impl std::fmt::Display for GlobalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -57,7 +60,7 @@ impl TermTrait for GlobalSymRefTerm {
 impl st::TypeTrait for GlobalSymRefTerm {}
 
 impl TransparentRefTrait for GlobalSymRefTerm {
-    fn dereferenced_once(&self) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    fn dereferenced_once(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolved_symbol(&self.symbol_id)?)
     }
 }
@@ -65,7 +68,7 @@ impl TransparentRefTrait for GlobalSymRefTerm {
 impl GlobalSymRefTerm {
     /// This constructor ensures the symbolic reference resolves before returning.
     // TODO: Maybe add new_checked_typed which also checks the type of the referred value.
-    pub fn new_checked(symbol_id: String) -> anyhow::Result<Self> {
+    pub fn new_checked(symbol_id: String) -> Result<Self> {
         dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().resolved_symbol(&symbol_id)?;
         Ok(Self { symbol_id })
     }
@@ -76,7 +79,7 @@ impl GlobalSymRefTerm {
     }
 
     /// Explicitly resolves (dereferences) this ref.
-    pub fn resolved(&self) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub fn resolved(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(dy::RUNTIME_LA.read().unwrap().dereferenced_inner(self.dereferenced_once()?)?)
     }
 }

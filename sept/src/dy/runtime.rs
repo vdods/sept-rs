@@ -1,10 +1,11 @@
 use crate::{
     dy::{self, ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, StructTerm, StructTermTerm, TupleTerm, ValueGuts},
+    Result,
     st::{
         self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
         GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef, LocalSymRefType,
-        Result, Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
+        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
         Struct, StructType, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
         Utf8String, Utf8StringType, Void, VoidType,
@@ -12,13 +13,15 @@ use crate::{
 };
 use std::{any::TypeId, collections::{HashMap, HashSet}, sync::{Arc, RwLock}};
 
+pub type DebugFn = fn(x: &ValueGuts, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error>;
 pub type StringifyFn = fn(x: &ValueGuts) -> String;
 pub type LabelFn = fn() -> &'static str;
 pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
-pub type DereferencedOnceFn = fn(x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>>;
+pub type DereferencedOnceFn = fn(x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>>;
+pub type ConstructorFn = fn(constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 
 struct RegisteredEqualsFn {
@@ -33,10 +36,14 @@ pub struct Runtime {
     // TODO: [po]set of types (poset based on which relationship?)
     // TODO: [po]set of terms(?)
 
+    // TODO: See about collecting many of these into a common map, since many of them will have
+    // identical indexes.
+
     term_s: HashSet<TypeId>,
     type_s: HashSet<TypeId>,
     // TODO: This is silly, just map to &'static str
     label_fn_m: HashMap<TypeId, LabelFn>,
+    debug_fn_m: HashMap<TypeId, DebugFn>,
     stringify_fn_m: HashMap<TypeId, StringifyFn>,
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
@@ -46,6 +53,7 @@ pub struct Runtime {
     is_type_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
     dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
+    constructor_fn_m: HashMap<TypeId, ConstructorFn>,
     deconstruct_fn_m: HashMap<TypeId, DeconstructFn>,
 }
 
@@ -123,6 +131,26 @@ impl Runtime {
         runtime.register_type::<StructTerm>().unwrap();
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
+
+        // Have to go through and explicitly register the Constructor types, until ParametricType
+        // is a thing.
+        runtime.register_constructor::<Bool>().unwrap();
+        runtime.register_constructor::<Sint8>().unwrap();
+        runtime.register_constructor::<Sint16>().unwrap();
+        runtime.register_constructor::<Sint32>().unwrap();
+        runtime.register_constructor::<Sint64>().unwrap();
+        runtime.register_constructor::<Uint8>().unwrap();
+        runtime.register_constructor::<Uint16>().unwrap();
+        runtime.register_constructor::<Uint32>().unwrap();
+        runtime.register_constructor::<Uint64>().unwrap();
+        runtime.register_constructor::<Float32>().unwrap();
+        runtime.register_constructor::<Float64>().unwrap();
+        runtime.register_constructor::<Utf8String>().unwrap();
+        runtime.register_constructor::<Array>().unwrap();
+        runtime.register_constructor::<Tuple>().unwrap();
+        runtime.register_constructor::<TupleTerm>().unwrap();
+//         runtime.register_constructor::<Struct>().unwrap();
+        runtime.register_constructor::<StructTerm>().unwrap();
 
         // Have to go through and explicitly register the Eq types, since that can't be done
         // (to my knowledge) using generics specialization.  There's probably another reasonable
@@ -234,6 +262,7 @@ impl Runtime {
     where
         T:  st::TermTrait +
             dy::Deconstruct +
+            std::fmt::Debug +
             Stringify +
             std::cmp::PartialEq +
             Inhabits<<T as TermTrait>::AbstractTypeType> +
@@ -243,6 +272,7 @@ impl Runtime {
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(self.term_s.insert(type_id), "collision with already-registered term {}", self.label_of(type_id));
         self.register_label::<T>()?;
+        self.register_debug::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
         self.register_inhabits::<T, <T as TermTrait>::AbstractTypeType>()?;
@@ -257,6 +287,7 @@ impl Runtime {
     where
         T:  st::TypeTrait +
             dy::Deconstruct +
+            std::fmt::Debug +
             Stringify +
             std::cmp::PartialEq +
             Inhabits<<T as TermTrait>::AbstractTypeType> +
@@ -282,6 +313,23 @@ impl Runtime {
     }
     pub(crate) fn register_label<T: TermTrait + 'static>(&mut self) -> Result<()> {
         Ok(self.register_label_fn(TypeId::of::<T>(), T::label)?)
+    }
+    pub(crate) fn register_debug_fn(
+        &mut self,
+        type_id: TypeId,
+        debug_fn: DebugFn,
+    ) -> Result<()> {
+        match self.debug_fn_m.insert(type_id, debug_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered debug fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub(crate) fn register_debug<S: std::fmt::Debug + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<S>();
+        let debug_fn = |x: &ValueGuts, f: &mut std::fmt::Formatter<'_>| -> std::result::Result<(), std::fmt::Error> {
+            Ok(x.downcast_ref::<S>().unwrap().fmt(f)?)
+        };
+        Ok(self.register_debug_fn(type_id, debug_fn)?)
     }
     pub(crate) fn register_stringify_fn(
         &mut self,
@@ -448,23 +496,36 @@ impl Runtime {
     }
     pub fn register_dereferenced_once<T: dy::TransparentRefTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let dereferenced_once_fn = |x: &ValueGuts| -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+        let dereferenced_once_fn = |x: &ValueGuts| -> Result<Arc<RwLock<dy::Value>>> {
             x.downcast_ref::<T>().unwrap().dereferenced_once()
         };
         Ok(self.register_dereferenced_once_fn(type_id, dereferenced_once_fn)?)
     }
     pub(crate) fn register_deconstruct_fn(&mut self, type_id: TypeId, deconstruct_fn: DeconstructFn) -> Result<()> {
         match self.deconstruct_fn_m.insert(type_id, deconstruct_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered deconstruct fn for {}", self.label_of(type_id))),
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered deconstructed fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
     pub fn register_deconstruct<T: dy::Deconstruct + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let deconstruct_fn = |x: &ValueGuts| -> dy::Deconstruction {
-            x.downcast_ref::<T>().unwrap().deconstruct()
+            x.downcast_ref::<T>().unwrap().deconstructed()
         };
         Ok(self.register_deconstruct_fn(type_id, deconstruct_fn)?)
+    }
+    pub(crate) fn register_constructor_fn(&mut self, type_id: TypeId, constructor_fn: ConstructorFn) -> Result<()> {
+        match self.constructor_fn_m.insert(type_id, constructor_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered constructor fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub fn register_constructor<T: dy::Constructor + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let constructor_fn = |constructor: &ValueGuts, parameter_t: dy::TupleTerm| -> Result<dy::Value> {
+            Ok(constructor.downcast_ref::<T>().unwrap().construct(parameter_t)?.into())
+        };
+        Ok(self.register_constructor_fn(type_id, constructor_fn)?)
     }
 
     /// This gives the [non-parametric] label of the concrete type.  For example, even though
@@ -473,6 +534,17 @@ impl Runtime {
         match self.label_fn_m.get(&type_id) {
             Some(label_fn) => label_fn().into(),
             None => format!("{:?}", type_id),
+        }
+    }
+    // Note that this does not use referential transparency.
+    pub fn debug(&self, x: &ValueGuts, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        match self.debug_fn_m.get(&x.type_id()) {
+            Some(debug_fn) => Ok(debug_fn(x, f)?),
+            None => {
+                // panic!("no debug fn found for {:?}", x.type_id()),
+                log::warn!("no debug fn found for {}; returning generic default", self.label_of(x.type_id()));
+                Ok(write!(f, "!InstanceOf!({})", self.label_of(x.type_id()))?)
+            }
         }
     }
     // Note that this does not use referential transparency.  Stringify should be renamed to ConcreteText or something.
@@ -653,7 +725,7 @@ impl Runtime {
     pub fn is_transparent_ref_term(&self, x: &ValueGuts) -> bool {
         self.dereferenced_once_fn_m.contains_key(&x.type_id())
     }
-    pub fn dereferenced_once(&self, x: &ValueGuts) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub fn dereferenced_once(&self, x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>> {
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
             Some(dereferenced_once_fn) => Ok(dereferenced_once_fn(x)?),
             None => {
@@ -665,26 +737,35 @@ impl Runtime {
     /// This fully dereferences a value.  If it's not a transparent reference, it just returns it,
     /// otherwise it iterates dereferenced_once until it's not a transparent reference.
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
-    pub fn dereferenced<'a>(&self, x: &'a ValueGuts) -> anyhow::Result<MaybeDereferencedValue<'a>> {
+    pub fn dereferenced<'a>(&self, x: &'a ValueGuts) -> Result<MaybeDereferencedValue<'a>> {
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
             Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::Ref(self.dereferenced_inner(dereferenced_once_fn(x)?)?)),
             None => Ok(MaybeDereferencedValue::NonRef(x))
         }
     }
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
-    pub(crate) fn dereferenced_inner(&self, value_la: Arc<RwLock<dy::Value>>) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub(crate) fn dereferenced_inner(&self, value_la: Arc<RwLock<dy::Value>>) -> Result<Arc<RwLock<dy::Value>>> {
         let value_g = value_la.read().unwrap();
         match self.dereferenced_once_fn_m.get(&value_g.as_ref().type_id()) {
             Some(dereferenced_once_fn) => Ok(self.dereferenced_inner(dereferenced_once_fn(value_g.as_ref())?)?),
             None => Ok(value_la.clone())
         }
     }
-    pub fn deconstruct(&self, x: &ValueGuts) -> dy::Deconstruction {
+    pub fn construct(&self, constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value> {
+        match self.constructor_fn_m.get(&constructor.type_id()) {
+            Some(constructor_fn) => Ok(constructor_fn(constructor, parameter_t)?),
+            None => {
+                panic!("no constructor fn found for {}", self.label_of(constructor.type_id()));
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no construct fn found for {}", self.label_of(constructor.type_id()))
+            }
+        }
+    }
+    pub fn deconstructed(&self, x: &ValueGuts) -> dy::Deconstruction {
         match self.deconstruct_fn_m.get(&x.type_id()) {
             Some(deconstruct_fn) => deconstruct_fn(x),
             None => {
-                panic!("no deconstruct fn found for {}", self.label_of(x.type_id()));
-                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstruct fn found for {}", self.label_of(x.type_id()))
+                panic!("no deconstructed fn found for {}", self.label_of(x.type_id()));
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstructed fn found for {}", self.label_of(x.type_id()))
             }
         }
     }

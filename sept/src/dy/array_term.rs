@@ -6,11 +6,8 @@ use crate::{dy, st::{self, Array, Inhabits, Stringify}};
 pub struct ArrayTerm(Vec<dy::Value>);
 
 impl dy::Deconstruct for ArrayTerm {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: Array.into(),
-            parameters: self.0.into(),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::ParametricDeconstruction::new_recursive(Array.into(), self.0.into()).into()
     }
 }
 

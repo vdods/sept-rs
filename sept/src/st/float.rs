@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, DynNPTerm}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 /// This represents the Float32 type itself.
@@ -13,39 +13,39 @@ pub struct Float64;
 
 impl dy::Constructor for Float32 {
     type ConstructedType = f32;
-    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
-        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
-        let mut parameter_v: Vec<dy::Value> = parameters.into();
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        anyhow::ensure!(parameter_t.len() == 1, "{}.construct expected 1 parameter, got {}", self.stringify(), parameter_t.len());
+        let mut parameter_v: Vec<dy::Value> = parameter_t.into();
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<f32>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
 
 impl dy::Constructor for Float64 {
     type ConstructedType = f64;
-    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
-        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
-        let mut parameter_v: Vec<dy::Value> = parameters.into();
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        anyhow::ensure!(parameter_t.len() == 1, "{}.construct expected 1 parameter, got {}", self.stringify(), parameter_t.len());
+        let mut parameter_v: Vec<dy::Value> = parameter_t.into();
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<f64>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
 
 impl dy::Deconstruct for Float32 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Float64 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

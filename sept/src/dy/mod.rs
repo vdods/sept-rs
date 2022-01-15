@@ -1,11 +1,14 @@
 mod array_term;
 mod constructor;
 mod deconstruct;
+mod deconstruction;
 mod dyn_np_term;
 mod global_sym_ref_term;
 mod global_symbol_table;
 mod into_value;
 mod local_sym_ref_term;
+mod non_parametric_deconstruction;
+mod parametric_deconstruction;
 mod runtime;
 mod struct_term;
 mod struct_term_term;
@@ -18,12 +21,15 @@ pub use anyhow::{Error, Result};
 pub use crate::dy::{
     array_term::ArrayTerm,
     constructor::Constructor,
-    deconstruct::{Deconstruct, Deconstruction, DeconstructionKind, Parameterization},
+    deconstruct::Deconstruct,
+    deconstruction::{Deconstruction, DeconstructionKind},
     dyn_np_term::DynNPTerm,
     global_sym_ref_term::GlobalSymRefTerm,
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,
     into_value::IntoValue,
     local_sym_ref_term::LocalSymRefTerm,
+    non_parametric_deconstruction::NonParametricDeconstruction,
+    parametric_deconstruction::ParametricDeconstruction,
     runtime::{BinaryPredicate, MaybeDereferencedValue, RUNTIME_LA, Runtime, StringifyFn, UnaryPredicate},
     struct_term::StructTerm,
     struct_term_term::StructTermTerm,

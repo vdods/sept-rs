@@ -1,4 +1,4 @@
-use crate::{dy, st};
+use crate::{dy, Result, st};
 
 /// This trait defines a constructor.  In particular, a constructor is a term that transforms
 /// a tuple of parameters into a term potentially of another type.  E.g. `Array` is a constructor,
@@ -9,8 +9,8 @@ use crate::{dy, st};
 // be ParameterizedConstructor and TabularConstructor, etc, and maybe even NonParametricConstructor,
 // which would necessarily return itself.
 pub trait Constructor: st::TermTrait {
-    type ConstructedType: st::TermTrait;
+    type ConstructedType: st::TermTrait + Into<dy::Value>;
 
     /// Perform the construction using the given tuple of parameters.
-    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType>;
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType>;
 }

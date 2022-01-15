@@ -1,4 +1,4 @@
-use crate::{dy::{self, IntoValue, RUNTIME_LA}, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, IntoValue, RUNTIME_LA}, Result, st::{self, Stringify, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -7,7 +7,7 @@ pub type ValueGuts = dyn Any + Send + Sync;
 /// methods of the runtime.
 // This really should be named Term (or more pedantically TermTerm), but that's already taken.
 // Maybe the naming scheme can be shifted around so that this can be named Term (or TermTerm).
-#[derive(Debug, derive_more::From, derive_more::Into)]
+#[derive(derive_more::From, derive_more::Into)]
 pub struct Value(Box<ValueGuts>);
 
 impl AsMut<ValueGuts> for Value {
@@ -28,9 +28,29 @@ impl Clone for Value {
     }
 }
 
+impl dy::Constructor for Value {
+    type ConstructedType = Value;
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        Ok(RUNTIME_LA.read().unwrap().construct(self.as_ref(), parameter_t)?)
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "Value(")?;
+        RUNTIME_LA.read().unwrap().debug(self.as_ref(), f)?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
 impl dy::Deconstruct for Value {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        RUNTIME_LA.read().unwrap().deconstruct(self.as_ref())
+    fn deconstruct(self) -> dy::Deconstruction {
+        // TODO: Implement self-consuming deconstruct in Runtime.
+        RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
+    }
+    fn deconstructed(&self) -> dy::Deconstruction {
+        RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
     }
 }
 
@@ -108,7 +128,24 @@ impl st::TypeTrait for Value {}
 
 // TODO: These could become part of dy::TermTrait, since they reflect what's available via Runtime
 impl Value {
-    pub fn dereferenced<'a>(&'a self) -> anyhow::Result<dy::MaybeDereferencedValue<'a>> {
+    pub fn dereferenced<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(RUNTIME_LA.read().unwrap().dereferenced(self.as_ref())?)
+    }
+    /// If this Value contains dy::Deconstruction, then it calls reconstruct on it, otherwise
+    /// returns an error.  The call to reconstruct may return an error.
+    pub fn reconstruct_in_place(&mut self) -> Result<()> {
+        if self.is::<dy::Deconstruction>() {
+            // This is a bit silly, but I don't want to bother with unsafe code at this point.
+            // The point is to swap out self with a dummy, operate on the dummy (self's former
+            // value), and then swap back into place.
+            let mut dummy = Value::from(st::Void);
+            std::mem::swap(self, &mut dummy);
+            // Ideally we would use Box::into_inner here instead of *, but that's somehow still unstable.
+            let deconstruction: dy::Deconstruction = *dummy.0.downcast::<dy::Deconstruction>().unwrap();
+            self.0 = Box::new(deconstruction.reconstruct()?);
+        } else {
+            // No need to reconstruct anything.
+        }
+        Ok(())
     }
 }

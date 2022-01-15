@@ -1,13 +1,22 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, ArrayType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, DynNPTerm}, Result, st::{self, ArrayType, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "ArrayType", is_parametric = "false", is_type = "true")]
 pub struct Array;
 
+impl dy::Constructor for Array {
+    type ConstructedType = dy::ArrayTerm;
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        // Take the parameter elements directly.
+        let parameter_v: Vec<dy::Value> = parameter_t.into();
+        Ok(dy::ArrayTerm::from(parameter_v))
+    }
+}
+
 impl dy::Deconstruct for Array {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

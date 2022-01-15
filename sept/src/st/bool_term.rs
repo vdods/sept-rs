@@ -1,11 +1,12 @@
-use crate::{dy, st::{Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
+use crate::{dy, st::{self, Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
 
 impl dy::Deconstruct for bool {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: Bool.into(),
-            parameters: (self,).into(),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Bool.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 

@@ -10,14 +10,14 @@ pub struct Float32Type;
 pub struct Float64Type;
 
 impl dy::Deconstruct for Float32Type {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
 impl dy::Deconstruct for Float64Type {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

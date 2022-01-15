@@ -1,4 +1,4 @@
-use crate::dy;
+use crate::{dy, Result};
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 
 pub struct SymbolTable {
@@ -13,7 +13,7 @@ impl SymbolTable {
         Self { symbol_map: HashMap::new(), parent_symbol_table_lao }
     }
 
-    pub fn resolved_symbol(&self, symbol_id: &str) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub fn resolved_symbol(&self, symbol_id: &str) -> Result<Arc<RwLock<dy::Value>>> {
         match self.symbol_map.get(symbol_id) {
             Some(value) => Ok(value.clone()),
             None => match &self.parent_symbol_table_lao {
@@ -22,7 +22,7 @@ impl SymbolTable {
             }
         }
     }
-    pub fn resolved_symbol_mut(&mut self, symbol_id: &str) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub fn resolved_symbol_mut(&mut self, symbol_id: &str) -> Result<Arc<RwLock<dy::Value>>> {
         match self.symbol_map.get_mut(symbol_id) {
             Some(value) => Ok(value.clone()),
             None => match &self.parent_symbol_table_lao {
@@ -42,7 +42,7 @@ impl SymbolTable {
             None => false,
         }
     }
-    pub fn define_symbol(&mut self, symbol_id: impl Into<String>, value: dy::Value) -> anyhow::Result<()> {
+    pub fn define_symbol(&mut self, symbol_id: impl Into<String>, value: dy::Value) -> Result<()> {
         let symbol_id_string: String = symbol_id.into();
         // TODO: Use HashMap::try_insert whenever that becomes a stabilized feature.
         anyhow::ensure!(!self.symbol_map.contains_key(&symbol_id_string), "symbol {:?} is already defined; can't redefine", symbol_id_string);

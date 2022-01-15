@@ -5,8 +5,8 @@ use crate::{dy, st::{self, Bool, Inhabits, False, Stringify, TrueType}};
 pub struct True;
 
 impl dy::Deconstruct for True {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

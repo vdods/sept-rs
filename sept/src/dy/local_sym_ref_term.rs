@@ -1,4 +1,4 @@
-use crate::{dy::{self, TransparentRefTrait}, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringify, TermTrait}};
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -10,6 +10,9 @@ pub struct LocalSymRefTerm {
     /// This is the symbol name for the reference.
     pub symbol_id: String,
 }
+
+// TODO: Implement Constructor
+// TODO: Implement Deconstruct
 
 impl std::fmt::Display for LocalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -62,7 +65,7 @@ impl TermTrait for LocalSymRefTerm {
 impl st::TypeTrait for LocalSymRefTerm {}
 
 impl dy::TransparentRefTrait for LocalSymRefTerm {
-    fn dereferenced_once(&self) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    fn dereferenced_once(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(self.local_symbol_table_la.read().unwrap().resolved_symbol(&self.symbol_id)?)
     }
 }
@@ -73,7 +76,7 @@ impl LocalSymRefTerm {
     pub fn new_checked(
         local_symbol_table_la: Arc<RwLock<dy::SymbolTable>>,
         symbol_id: String,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self> {
         local_symbol_table_la.read().unwrap().resolved_symbol(&symbol_id)?;
         Ok(Self { local_symbol_table_la, symbol_id })
     }
@@ -84,7 +87,7 @@ impl LocalSymRefTerm {
     }
 
     /// Explicitly resolves (dereferences) this ref.
-    pub fn resolved(&self) -> anyhow::Result<Arc<RwLock<dy::Value>>> {
+    pub fn resolved(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(dy::RUNTIME_LA.read().unwrap().dereferenced_inner(self.dereferenced_once()?)?)
     }
 }

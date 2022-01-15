@@ -1,15 +1,26 @@
-use crate::{dy::{self, Value}, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
+use crate::{dy::{self, Value}, Result, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 #[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
 pub struct TupleTerm(Vec<Value>);
 
+impl dy::Constructor for TupleTerm {
+    type ConstructedType = TupleTerm;
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        anyhow::ensure!(parameter_t.len() == self.len(), "{}.construct expected {} parameter(s), got {}", self.stringify(), self.len(), parameter_t.len());
+        // TODO: Use zip iterator when available.
+        for i in 0..self.len() {
+            anyhow::ensure!(parameter_t[i].inhabits(&self[i]), "{}.construct expected {}th parameter (which was {}) to inhabit {}, but it did not", self.stringify(), i, parameter_t[i], self[i]);
+        }
+        // Passed type check, now can use the parameter_t tuple directly.
+        Ok(parameter_t)
+    }
+}
+
 impl dy::Deconstruct for TupleTerm {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: st::Tuple.into(),
-            parameters: self,
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // This looks like it might incur infinite recursion, but it won't.
+        dy::ParametricDeconstruction::new_recursive(st::Tuple.into(), self).into()
     }
 }
 
@@ -20,9 +31,28 @@ impl std::ops::Deref for TupleTerm {
     }
 }
 
+impl std::ops::DerefMut for TupleTerm {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+// impl std::fmt::Display for TupleTerm {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+//         write!(f, "{}", &self.stringify())
+//     }
+// }
+
 impl std::fmt::Display for TupleTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}", &self.stringify())
+        write!(f, "Tuple(")?;
+        for (i, element) in self.0.iter().enumerate() {
+            write!(f, "{}", element)?;
+            if i+1 < self.0.len() {
+                write!(f, ", ")?;
+            }
+        }
+        write!(f, ")")
     }
 }
 
@@ -107,11 +137,11 @@ impl Inhabits<TupleTerm> for TupleTerm {
 // Because a StructTerm is effectively an (ordered) tuple of types, TupleTerm can naturally inhabit StructTerm.
 impl Inhabits<dy::StructTerm> for TupleTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
-        if self.len() != rhs.ordered_type_v.len() {
+        if self.len() != rhs.field_decl_v.len() {
             return false;
         }
         for (i, datum) in self.iter().enumerate() {
-            if !datum.inhabits(&rhs.ordered_type_v[i].1) {
+            if !datum.inhabits(&rhs.field_decl_v[i].1) {
                 return false;
             }
         }
@@ -151,5 +181,11 @@ impl TermTrait for TupleTerm {
             type_element_v.push(self_element.abstract_type());
         }
         TupleTerm(type_element_v)
+    }
+}
+
+impl TupleTerm {
+    pub fn into_inner(self) -> Vec<Value> {
+        self.0
     }
 }

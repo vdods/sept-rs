@@ -97,4 +97,45 @@
         -   Parse (from text) -- this could/would be derivable from an implementation of Restructure
         -   Serialize (from binary data) -- this could/would be derivable from an implementation of Destructure
         -   Deserialize (to binary data) -- this could/would be derivable from an implementation of Restructure
+    -   Notes on Deconstruct
+        -   There are two interesting kinds of deconstruction
+            -   A semantic kind, which performs a single level of deconstruction, in which
+
+                    TupleTerm(1u32, 4.5f64, true, TupleTerm("abc"))
+
+                turns into
+
+                    ParametricDeconstruction { constructor: Tuple, parameters: (1u32, 4.5f64, true, TupleTerm("abc")) }
+
+            -   A concrete kind, which performs deconstruction recursively, which renders
+
+                    ParametricDeconstruction {
+                        constructor: NonParametricDeconstruction(Tuple),
+                        parameters: (
+                            ParametricDeconstruction {
+                                constructor: NonParametricDeconstruction(Uint32),
+                                parameters: (NonParametricDeconstruction(1u32)),
+                            },
+                            ParametricDeconstruction {
+                                constructor: NonParametricDeconstruction(Float64),
+                                parameters: (NonParametricDeconstruction(4.5f64)),
+                            },
+                            ParametricDeconstruction {
+                                constructor: NonParametricDeconstruction(Bool),
+                                parameters: (NonParametricDeconstruction(true)),
+                            },
+                            ParametricDeconstruction {
+                                constructor: NonParametricDeconstruction(Tuple),
+                                parameters: (
+                                    ParametricDeconstruction {
+                                        constructor: NonParametricDeconstruction(Utf8String),
+                                        parameters: (NonParametricDeconstruction("abc")),
+                                    },
+                                ),
+                            },
+                        ),
+                    }
+
+        -   Also interesting is adaptive deconstruction which would be used in destructuring contexts where a particular destructuring pattern is desired, one that doesn't necessarily correspond to a uniform number of layers (i.e. some of the branches of the AST are deconstructed more deeply).
+
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.

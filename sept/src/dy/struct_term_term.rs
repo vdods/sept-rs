@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify}};
+use crate::{dy, Result, st::{self, Stringify}};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -15,22 +15,19 @@ pub struct StructTermTerm {
     // via some ref counted construction, i.e. a [reference-counted] MemRef
     type_: dy::Value,
     // This is the ordered sequence of element values.
-    pub(crate) element_tuple_term: dy::TupleTerm,
+    pub(crate) field_t: dy::TupleTerm,
 }
 
 /// StructTermTerm's canonical implementation of Deconstruct could not be simpler.
 impl dy::Deconstruct for StructTermTerm {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: self.type_,
-            parameters: self.element_tuple_term,
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::ParametricDeconstruction::new_recursive(self.type_, self.field_t).into()
     }
 }
 
 impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
-        rhs.is_inhabited_by(&self.element_tuple_term)
+        rhs.is_inhabited_by(&self.field_t)
     }
 }
 
@@ -42,27 +39,27 @@ impl st::Inhabits<dy::Value> for StructTermTerm {
 }
 
 impl StructTermTerm {
-    pub fn new_unchecked(type_: dy::Value, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
-        Ok(Self { type_, element_tuple_term })
+    pub fn new_unchecked(type_: dy::Value, field_t: dy::TupleTerm) -> Self {
+        Self { type_, field_t }
     }
-    pub fn new_checked(type_: dy::Value, element_tuple_term: dy::TupleTerm) -> anyhow::Result<Self> {
+    pub fn new_checked(type_: dy::Value, field_t: dy::TupleTerm) -> Result<Self> {
         let type_maybe_dereferenced = type_.dereferenced()?;
         match type_maybe_dereferenced {
             dy::MaybeDereferencedValue::NonRef(type_value_guts) => {
                 match type_value_guts.downcast_ref::<dy::StructTerm>() {
-                    Some(struct_term) => { struct_term.verify_inhabitation_by(&element_tuple_term)?; },
+                    Some(struct_term) => { struct_term.verify_inhabitation_by(&field_t)?; },
                     None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_guts.type_id())); }
                 }
             },
             dy::MaybeDereferencedValue::Ref(type_value_la) => {
                 let type_value_g = type_value_la.read().unwrap();
                 match type_value_g.downcast_ref::<dy::StructTerm>() {
-                    Some(struct_term) => { struct_term.verify_inhabitation_by(&element_tuple_term)?; },
+                    Some(struct_term) => { struct_term.verify_inhabitation_by(&field_t)?; },
                     None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_g.type_id())); }
                 }
             }
         };
-        Ok(Self { type_, element_tuple_term })
+        Ok(Self { type_, field_t })
     }
 }
 
@@ -79,9 +76,9 @@ impl st::Stringify for StructTermTerm {
         // -    self.type_.symbol_id is a C-style (i.e. Rust-style) identifier
         // -    self.type_.symbol_id doesn't collide with the other type names like "Array"
         s.push_str(&format!("{}(", self.type_.stringify()));
-        for (i, element) in self.element_tuple_term.iter().enumerate() {
+        for (i, element) in self.field_t.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.element_tuple_term.len() {
+            if i+1 < self.field_t.len() {
                 s.push_str(", ");
             }
         }
@@ -95,7 +92,7 @@ impl st::TermTrait for StructTermTerm {
 
     /// A StructTermTerm instance is parametric if there is at least one element.
     fn is_parametric(&self) -> bool {
-        self.element_tuple_term.len() > 0
+        self.field_t.len() > 0
     }
     fn is_type(&self) -> bool {
         false

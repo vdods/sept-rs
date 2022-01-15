@@ -1,20 +1,22 @@
-use crate::{dy, st::{Float32, Float64, Inhabits, Stringify, TermTrait}};
+use crate::{dy, st::{self, Float32, Float64, Inhabits, Stringify, TermTrait}};
 
 impl dy::Deconstruct for f32 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: Float32.into(),
-            parameters: (self,).into(),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Float32.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for f64 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: Float64.into(),
-            parameters: (self,).into(),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Float64.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 

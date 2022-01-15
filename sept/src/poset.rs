@@ -171,6 +171,7 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
 #[cfg(test)]
 mod tests {
 
+use crate::Result;
 use super::*;
 
 /// The partial order on positive u32 values is defined as:
@@ -193,7 +194,7 @@ fn pos_u32_divisibility_partial_order(lhs: u32, rhs: u32) -> PartialOrder {
 }
 
 #[test]
-fn test_poset_u32() -> anyhow::Result<()> {
+fn test_poset_u32() -> Result<()> {
     let _ = env_logger::try_init();
 
     let mut poset: PartiallyOrderedSet<u32> = PartiallyOrderedSet::new(pos_u32_divisibility_partial_order);

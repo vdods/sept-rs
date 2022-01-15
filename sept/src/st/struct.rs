@@ -6,8 +6,8 @@ use std::fmt::Debug;
 pub struct Struct;
 
 impl dy::Deconstruct for Struct {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

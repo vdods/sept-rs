@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
+use crate::{dy::{self, DynNPTerm}, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -7,20 +7,20 @@ pub struct Utf8String;
 
 impl dy::Constructor for Utf8String {
     type ConstructedType = String;
-    fn construct(&self, parameters: dy::TupleTerm) -> anyhow::Result<Self::ConstructedType> {
-        anyhow::ensure!(parameters.len() == 1, "{} expected 1 parameter, got {}", self.stringify(), parameters.len());
-        let mut parameter_v: Vec<dy::Value> = parameters.into();
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        anyhow::ensure!(parameter_t.len() == 1, "{}.construct expected 1 parameter, got {}", self.stringify(), parameter_t.len());
+        let mut parameter_v: Vec<dy::Value> = parameter_t.into();
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<String>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{} expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
 
 impl dy::Deconstruct for Utf8String {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

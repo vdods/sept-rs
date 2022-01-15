@@ -5,8 +5,8 @@ use crate::{dy, st::{self, Stringify, Type}};
 pub struct VoidType;
 
 impl dy::Deconstruct for VoidType {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

@@ -5,8 +5,8 @@ use crate::{dy, st::{self, Stringify, Type}};
 pub struct Utf8StringType;
 
 impl dy::Deconstruct for Utf8StringType {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Value::from(self).into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 

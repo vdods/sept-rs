@@ -58,74 +58,82 @@ impl Inhabits<st::Uint64> for u64 {
 }
 
 impl dy::Deconstruct for i8 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Sint8),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Sint8.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for i16 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Sint16),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Sint16.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for i32 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Sint32),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Sint32.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for i64 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Sint64),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Sint64.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for u8 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Uint8),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Uint8.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for u16 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Uint16),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Uint16.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for u32 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Uint32),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Uint32.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 
 impl dy::Deconstruct for u64 {
-    fn deconstruct_into(self) -> dy::Deconstruction {
-        dy::Parameterization {
-            constructor: dy::Value::from(st::Uint64),
-            parameters: dy::TupleTerm::from((self,)),
-        }.into()
+    fn deconstruct(self) -> dy::Deconstruction {
+        // Deconstruct only the constructor, otherwise infinite recursion!
+        dy::ParametricDeconstruction::new(
+            st::Uint64.deconstruct(),
+            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+        ).into()
     }
 }
 

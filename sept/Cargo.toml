@@ -9,10 +9,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.44"
 derive_more = "0.99.17"
-enum_derive = "0.1.7"
 lazy_static = "1.4.0"
 log = "0.4.14"
-macro-attr = "0.2.0"
 sept_derive = { path = "../sept_derive" }
 
 [dev-dependencies]

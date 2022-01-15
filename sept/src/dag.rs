@@ -1,3 +1,4 @@
+use crate::Result;
 use std::{cmp::Eq, collections::{HashMap, HashSet}, fmt::Debug, hash::Hash};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -164,7 +165,7 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
 
     /// Generate a dot (see graphviz) source file of this DAG, optionally specifying node_to_string_o
     /// to define how to render each node into text.  If None is specified, then format!("{:?}") will be used.
-    pub fn generate_dot_graph(&self, title: &str, node_to_string_o: Option<fn(T) -> String>) -> anyhow::Result<String> {
+    pub fn generate_dot_graph(&self, title: &str, node_to_string_o: Option<fn(T) -> String>) -> Result<String> {
         use std::fmt::Write as FmtWrite;
 
         let node_to_string = match node_to_string_o {
@@ -194,7 +195,7 @@ use super::*;
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_dag_i32() -> anyhow::Result<()> {
+fn test_dag_i32() -> Result<()> {
     let _ = env_logger::try_init();
 
     let mut dag: DirectedAcyclicGraph<i32> = DirectedAcyclicGraph::new();
@@ -222,7 +223,7 @@ fn test_dag_i32() -> anyhow::Result<()> {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_dag_ref_str() -> anyhow::Result<()> {
+fn test_dag_ref_str() -> Result<()> {
     let _ = env_logger::try_init();
 
     let thing_v = vec!["blah", "hippo", "splunge", "affaffa", "burnk"];

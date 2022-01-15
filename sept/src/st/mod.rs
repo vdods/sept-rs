@@ -35,7 +35,6 @@ mod utf8_string_type;
 mod void;
 mod void_type;
 
-pub use anyhow::{Error, Result};
 pub use crate::st::{
     array::Array,
     array_type::ArrayType,
