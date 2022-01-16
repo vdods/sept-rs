@@ -5,7 +5,7 @@ mod dag;
 /// Contains the sept runtime and dynamic types.
 pub mod dy;
 mod poset;
-pub mod scan;
+pub mod scanner;
 /// Contains static types and traits.
 pub mod st;
 

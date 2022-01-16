@@ -1,21 +1,81 @@
 use crate::Result;
 
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct Whitespace<'a>(&'a str);
+
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct CIdentifier<'a>(&'a str);
+
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct DecimalLiteral<'a>(&'a str);
+
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct IntegerLiteral<'a>(&'a str);
+
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct AsciiStringLiteral<'a>(&'a str);
+
+#[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
+pub struct UnrecognizedInput<'a>(&'a str);
+
 // TODO: Could include line number, and maybe char range within line
 /// Note that these have to be in order that the matches will be tried in.
 /// Start with the quick/simple ones, then go to the slow/complex ones.  It's important
 /// that try_scanning_decimal_literal happens before try_scanning_integer_literal.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token<'a> {
     EndOfInput,
     OpenParen,
     CloseParen,
     Comma,
-    Whitespace(&'a str),
-    CIdentifier(&'a str),
-    DecimalLiteral(&'a str),
-    IntegerLiteral(&'a str),
-    AsciiStringLiteral(&'a str),
-    UnrecognizedInput(&'a str),
+    Whitespace(Whitespace<'a>),
+    CIdentifier(CIdentifier<'a>),
+    DecimalLiteral(DecimalLiteral<'a>),
+    IntegerLiteral(IntegerLiteral<'a>),
+    AsciiStringLiteral(AsciiStringLiteral<'a>),
+    UnrecognizedInput(UnrecognizedInput<'a>),
+}
+
+// TODO: Derive these
+impl<'a> From<Whitespace<'a>> for Token<'a> {
+    fn from(whitespace: Whitespace<'a>) -> Self {
+        Token::Whitespace(whitespace)
+    }
+}
+
+// TODO: Derive these
+impl<'a> From<CIdentifier<'a>> for Token<'a> {
+    fn from(c_identifier: CIdentifier<'a>) -> Self {
+        Token::CIdentifier(c_identifier)
+    }
+}
+
+// TODO: Derive these
+impl<'a> From<DecimalLiteral<'a>> for Token<'a> {
+    fn from(decimal_literal: DecimalLiteral<'a>) -> Self {
+        Token::DecimalLiteral(decimal_literal)
+    }
+}
+
+// TODO: Derive these
+impl<'a> From<IntegerLiteral<'a>> for Token<'a> {
+    fn from(integer_literal: IntegerLiteral<'a>) -> Self {
+        Token::IntegerLiteral(integer_literal)
+    }
+}
+
+// TODO: Derive these
+impl<'a> From<AsciiStringLiteral<'a>> for Token<'a> {
+    fn from(ascii_string_literal: AsciiStringLiteral<'a>) -> Self {
+        Token::AsciiStringLiteral(ascii_string_literal)
+    }
+}
+
+// TODO: Derive these
+impl<'a> From<UnrecognizedInput<'a>> for Token<'a> {
+    fn from(unrecognized_input: UnrecognizedInput<'a>) -> Self {
+        Token::UnrecognizedInput(unrecognized_input)
+    }
 }
 
 impl<'a> Token<'a> {
@@ -25,13 +85,16 @@ impl<'a> Token<'a> {
             TokenKind::OpenParen => Token::OpenParen,
             TokenKind::CloseParen => Token::CloseParen,
             TokenKind::Comma => Token::Comma,
-            TokenKind::Whitespace => Token::Whitespace(input),
-            TokenKind::CIdentifier => Token::CIdentifier(input),
-            TokenKind::DecimalLiteral => Token::DecimalLiteral(input),
-            TokenKind::IntegerLiteral => Token::IntegerLiteral(input),
-            TokenKind::AsciiStringLiteral => Token::AsciiStringLiteral(input),
-            TokenKind::UnrecognizedInput => Token::UnrecognizedInput(input),
+            TokenKind::Whitespace => Token::Whitespace(Whitespace(input)),
+            TokenKind::CIdentifier => Token::CIdentifier(CIdentifier(input)),
+            TokenKind::DecimalLiteral => Token::DecimalLiteral(DecimalLiteral(input)),
+            TokenKind::IntegerLiteral => Token::IntegerLiteral(IntegerLiteral(input)),
+            TokenKind::AsciiStringLiteral => Token::AsciiStringLiteral(AsciiStringLiteral(input)),
+            TokenKind::UnrecognizedInput => Token::UnrecognizedInput(UnrecognizedInput(input)),
         }
+    }
+    pub fn kind(&self) -> TokenKind {
+        TokenKind::from(self)
     }
 }
 
@@ -67,22 +130,27 @@ impl<'a> From<&Token<'a>> for TokenKind {
     }
 }
 
-pub struct MatchStats {
+pub struct ScanStats {
     pub len: usize,
     pub newline_count: usize,
 }
 
-impl MatchStats {
+impl ScanStats {
     pub fn from(matched_input: &str) -> Self {
         Self { len: matched_input.len(), newline_count: matched_input.matches('\n').count() }
     }
 }
 
-pub fn try_scanning<'a>(token_kind: TokenKind, input: &'a str) -> Option<(Token<'a>, MatchStats)> {
+/// Note that TokenKind::UnrecognizedInput must not be passed as token_kind (it's not a well-defined
+/// operation relative to this implementation); it will panic.
+pub fn try_scanning<'a>(token_kind: TokenKind, input: &'a str) -> Option<(Token<'a>, ScanStats)> {
+    if token_kind == TokenKind::UnrecognizedInput {
+        panic!("TokenKind::UnrecognizedInput is not a valid parameter to this function");
+    }
     TOKEN_KIND_REGEX_M[token_kind].find(input).map(
         |matched_input| {
             log::trace!("scanner found {:?} having matched input {:?}", token_kind, matched_input.as_str());
-            (Token::new(token_kind, matched_input.as_str()), MatchStats::from(matched_input.as_str()))
+            (Token::new(token_kind, matched_input.as_str()), ScanStats::from(matched_input.as_str()))
         }
     )
 }
@@ -95,16 +163,20 @@ fn get_leading_current_input_as_string_literal(current_input: &str) -> String {
     }
 }
 
-pub fn scan_token<'a>(input: &'a str) -> (Token<'a>, MatchStats) {
+pub fn scan_token<'a>(input: &'a str) -> (Token<'a>, ScanStats) {
     for (token_kind, _) in TOKEN_KIND_REGEX_M.iter() {
+        if token_kind == TokenKind::UnrecognizedInput {
+            // UnrecognizedInput is not a valid token_kind for try_scanning; so skip it.  It's handled below.
+            continue;
+        }
         if let Some(x) = try_scanning(token_kind, input) {
             return x;
         }
     }
-    log::warn!("There is an error in the definition of UnrecognizedInput's regex vs the others, and a case has slipped through.  Returning UnrecognizedInput as a safe default");
+    // Handle UnrecognizedInput as the fallthrough.
     assert!(input.len() > 0, "try_scanning_end_of_input already being called should have guaranteed this condition");
     let unrecognized_input = &input[0..1];
-    (Token::UnrecognizedInput(unrecognized_input), MatchStats::from(unrecognized_input))
+    (UnrecognizedInput(unrecognized_input).into(), ScanStats::from(unrecognized_input))
 }
 
 pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
@@ -117,7 +189,7 @@ pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
     loop {
         let current_input = &input[cursor..];
         log::trace!("current_input: {}", get_leading_current_input_as_string_literal(current_input));
-        let (token, match_stats) = scan_token(current_input);
+        let (token, scan_stats) = scan_token(current_input);
         // Special handling for different tokens.
         match token {
             Token::EndOfInput => {
@@ -146,8 +218,8 @@ pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
             _ => { token_v.push(token); }
         }
         // Update line_number and cursor.
-        line_number += match_stats.newline_count;
-        cursor += match_stats.len;
+        line_number += scan_stats.newline_count;
+        cursor += scan_stats.len;
     }
 }
 
@@ -182,7 +254,8 @@ lazy_static::lazy_static! {
         // TODO: Try using concat!(r#"^"("#, r"[ -!]", "|", etc) with newlines to visually break things up and
         // allow comments to be interspersed.
         TokenKind::AsciiStringLiteral => regex::Regex::new(r#"^"([ -!]|[#-[]|[\]-~]|\\[0abtnvfr"\\]|\\x[0-9A-Fa-f]{2})*""#).unwrap(),
-        // A single unrecognized char.
+        // This regex is just a stand-in.  It should probably never actually be used.  But theoretically
+        // it would be defined as a regex that matches a single-char complement of all of the above regexes.
         TokenKind::UnrecognizedInput => regex::Regex::new("^([\0-\x1F]|\x7F)").unwrap(),
     };
 }
