@@ -19,7 +19,7 @@ impl dy::Constructor for Float32 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<f32>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Float32, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -32,7 +32,7 @@ impl dy::Constructor for Float64 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<f64>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Float64, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -61,13 +61,37 @@ impl Inhabits<st::Float64Type> for Float64 {
     }
 }
 
+impl st::Inhabits<st::Type> for Float32 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Float64 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Float32 {
+    fn identifier() -> &'static str {
+        "Float32"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Float32
     }
 }
 
 impl NonParametricTermTrait for Float64 {
+    fn identifier() -> &'static str {
+        "Float64"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Float64
     }

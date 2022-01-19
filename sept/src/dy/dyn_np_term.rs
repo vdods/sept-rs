@@ -3,6 +3,8 @@
 // here, as this enum is simply meant for serialization representation purposes.  In
 // deserialization, Values containing the "real" terms would be used instead, so that
 // there isn't a need to check for multiple alternate representations of various types.
+// TODO: Rename this to something else, since this type itself is not a first class term,
+// but only represents the fixed, known non-paremetric terms.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DynNPTerm {

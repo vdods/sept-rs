@@ -128,6 +128,10 @@ impl st::TypeTrait for Value {}
 
 // TODO: These could become part of dy::TermTrait, since they reflect what's available via Runtime
 impl Value {
+    /// This will return the downcasted value, consuming self, or panic if the cast fails.
+    pub fn downcast_into<T: st::TermTrait>(self) -> T {
+        *self.0.downcast::<T>().unwrap()
+    }
     pub fn dereferenced<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(RUNTIME_LA.read().unwrap().dereferenced(self.as_ref())?)
     }

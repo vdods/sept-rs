@@ -18,6 +18,12 @@ impl st::Inhabits<Type> for StructType {
 }
 
 impl NonParametricTermTrait for StructType {
+    fn identifier() -> &'static str {
+        "StructType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::StructType
     }

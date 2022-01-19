@@ -23,6 +23,12 @@ impl st::Inhabits<st::BoolType> for FalseType {
 }
 
 impl st::NonParametricTermTrait for FalseType {
+    fn identifier() -> &'static str {
+        "FalseType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::FalseType
     }

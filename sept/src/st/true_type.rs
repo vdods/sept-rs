@@ -23,6 +23,12 @@ impl st::Inhabits<st::BoolType> for TrueType {
 }
 
 impl st::NonParametricTermTrait for TrueType {
+    fn identifier() -> &'static str {
+        "TrueType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::TrueType
     }

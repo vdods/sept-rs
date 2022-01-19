@@ -49,7 +49,7 @@ impl dy::Constructor for Sint8 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<i8>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Sint8, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -62,7 +62,7 @@ impl dy::Constructor for Sint16 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<i16>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Sint16, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -75,7 +75,7 @@ impl dy::Constructor for Sint32 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<i32>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Sint32, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -88,7 +88,7 @@ impl dy::Constructor for Sint64 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<i64>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Sint64, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -101,7 +101,7 @@ impl dy::Constructor for Uint8 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<u8>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Uint8, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -114,7 +114,7 @@ impl dy::Constructor for Uint16 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<u16>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Uint16, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -127,7 +127,7 @@ impl dy::Constructor for Uint32 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<u32>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Uint32, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -140,7 +140,7 @@ impl dy::Constructor for Uint64 {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<u64>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Uint64, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -241,49 +241,145 @@ impl Inhabits<st::Uint64Type> for Uint64 {
     }
 }
 
+impl st::Inhabits<st::Type> for Sint8 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Sint16 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Sint32 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Sint64 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Uint8 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Uint16 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Uint32 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for Uint64 {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Sint8 {
+    fn identifier() -> &'static str {
+        "Sint8"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint8
     }
 }
 
 impl NonParametricTermTrait for Sint16 {
+    fn identifier() -> &'static str {
+        "Sint16"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint16
     }
 }
 
 impl NonParametricTermTrait for Sint32 {
+    fn identifier() -> &'static str {
+        "Sint32"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint32
     }
 }
 
 impl NonParametricTermTrait for Sint64 {
+    fn identifier() -> &'static str {
+        "Sint64"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint64
     }
 }
 
 impl NonParametricTermTrait for Uint8 {
+    fn identifier() -> &'static str {
+        "Uint8"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint8
     }
 }
 
 impl NonParametricTermTrait for Uint16 {
+    fn identifier() -> &'static str {
+        "Uint16"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint16
     }
 }
 
 impl NonParametricTermTrait for Uint32 {
+    fn identifier() -> &'static str {
+        "Uint32"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint32
     }
 }
 
 impl NonParametricTermTrait for Uint64 {
+    fn identifier() -> &'static str {
+        "Uint64"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint64
     }

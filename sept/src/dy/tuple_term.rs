@@ -134,6 +134,18 @@ impl Inhabits<TupleTerm> for TupleTerm {
     }
 }
 
+impl st::Inhabits<st::Type> for TupleTerm {
+    /// A TupleTerm is a type only if each of its elements are types.
+    fn inhabits(&self, t: &st::Type) -> bool {
+        for tuple_term_element in self.0.iter() {
+            if !tuple_term_element.inhabits(t) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 // Because a StructTerm is effectively an (ordered) tuple of types, TupleTerm can naturally inhabit StructTerm.
 impl Inhabits<dy::StructTerm> for TupleTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {

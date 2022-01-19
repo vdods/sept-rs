@@ -25,6 +25,12 @@ impl<T: TermTrait + dy::IntoValue + 'static> st::Inhabits<EmptyType> for T {
 }
 
 impl st::NonParametricTermTrait for EmptyType {
+    fn identifier() -> &'static str {
+        "EmptyType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::EmptyType
     }

@@ -133,48 +133,96 @@ impl st::Inhabits<Type> for Uint64Type {
 }
 
 impl NonParametricTermTrait for Sint8Type {
+    fn identifier() -> &'static str {
+        "Sint8Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint8Type
     }
 }
 
 impl NonParametricTermTrait for Sint16Type {
+    fn identifier() -> &'static str {
+        "Sint16Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint16Type
     }
 }
 
 impl NonParametricTermTrait for Sint32Type {
+    fn identifier() -> &'static str {
+        "Sint32Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint32Type
     }
 }
 
 impl NonParametricTermTrait for Sint64Type {
+    fn identifier() -> &'static str {
+        "Sint64Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Sint64Type
     }
 }
 
 impl NonParametricTermTrait for Uint8Type {
+    fn identifier() -> &'static str {
+        "Uint8Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint8Type
     }
 }
 
 impl NonParametricTermTrait for Uint16Type {
+    fn identifier() -> &'static str {
+        "Uint16Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint16Type
     }
 }
 
 impl NonParametricTermTrait for Uint32Type {
+    fn identifier() -> &'static str {
+        "Uint32Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint32Type
     }
 }
 
 impl NonParametricTermTrait for Uint64Type {
+    fn identifier() -> &'static str {
+        "Uint64Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Uint64Type
     }

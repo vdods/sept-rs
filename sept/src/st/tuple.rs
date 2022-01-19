@@ -27,7 +27,19 @@ impl Inhabits<TupleType> for Tuple {
     }
 }
 
+impl st::Inhabits<st::Type> for Tuple {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Tuple {
+    fn identifier() -> &'static str {
+        "Tuple"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Tuple
     }

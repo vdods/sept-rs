@@ -6,9 +6,6 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "Struct", is_parametric = "self.field_decl_v.len() > 0", is_type = "true")]
 pub struct StructTerm {
-    // NOTE: This is probably temporary, since constructing a term of this type won't necessarily
-    // use GlobalSymRefTerm.
-    symbol_id: String,
     /// This stores the field declarations (i.e. `field: Type`) in a particular order.
     // TODO: Check that each is a type.
     // TODO: Maybe separate this out into name_v (and eventually name_tuple_term) and type_tuple_term,
@@ -22,11 +19,14 @@ pub struct StructTerm {
 
 /// TODO: Implement projection to TupleTerm of types.
 impl StructTerm {
-    pub fn new(symbol_id: String, field_decl_v: Vec<(String, dy::Value)>) -> Self {
-        // TODO: Check that all elements in field_decl_v are actually types.
+    pub fn new(field_decl_v: Vec<(String, dy::Value)>) -> Result<Self> {
+        // Check that all elements in field_decl_v are actually types.
+        for (i, field_decl) in field_decl_v.iter().enumerate() {
+            anyhow::ensure!(field_decl.1.inhabits(&st::Type), "expected {}th StructTerm field type (which was {:?}) to inhabit Type, but it did not", i, field_decl.1);
+        }
         // Generate name_index_m.
         let name_index_m: HashMap<String, usize> = field_decl_v.iter().enumerate().map(|(i, (name, _))| (name.clone(), i)).collect();
-        Self { symbol_id, field_decl_v, name_index_m }
+        Ok(Self { field_decl_v, name_index_m })
     }
     /// Verifies inhabitation by field_t (which is a kind of untyped StructTermTerm), otherwise
     /// returns an error describing the failure.
@@ -85,6 +85,12 @@ impl std::fmt::Display for StructTerm {
 
 impl Inhabits<Struct> for StructTerm {
     fn inhabits(&self, _: &Struct) -> bool {
+        true
+    }
+}
+
+impl st::Inhabits<st::Type> for StructTerm {
+    fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }

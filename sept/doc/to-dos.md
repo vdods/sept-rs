@@ -152,3 +152,5 @@
 
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
 -   Could maybe use https://docs.rs/tuple_list/latest/tuple_list/ to implement a `st::TupleTerm`.
+-   The notion of type is related to the `Constructor` trait.  In particular, a type is a term that has a notion of inhabitation by other terms (even if it may be inhabited by no terms, such as `EmptyType`).  This is really a declaration that something exists.  But `Constructor` is more specific, because it actually defines how a term can be used to construct another term, and defines what the parameterization is.
+-   Implement destructuring of sept `dy::Value` into Rust types, especially tuples and structs.

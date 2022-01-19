@@ -15,6 +15,64 @@ pub struct IntegerLiteral<'a>(&'a str);
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct AsciiStringLiteral<'a>(&'a str);
 
+impl<'a> AsciiStringLiteral<'a> {
+    /// This will turn an escaped string "\"...\"" into an unescaped string, where escape codes are
+    /// transformed into the chars they represent.
+    // TODO: Implement this better by implementing an iterator for "next char slice" which will account
+    // for escaped chars.
+    pub fn unescaped(&self) -> Result<String> {
+        assert!(self.len() >= 2 && self.starts_with('"') && self.ends_with('"'), "expected the AsciiStringLiteral to have the form \"...\"");
+        // TODO: Pre-compute the length of the result to pre-allocate it.
+        let mut retval = String::new();
+        // This is a slice to the interior bytes of the string, in particular, not including the
+        // enclosing outer double-quotes.
+        let str_as_u8_slice: &[u8] = self.0.as_ref();
+        let str_interior_as_u8_slice: &[u8] = &str_as_u8_slice[1..self.len()-1];
+        let mut cursor = 0usize;
+        while cursor < str_interior_as_u8_slice.len() {
+            let first_char = str_interior_as_u8_slice[cursor] as char;
+            let c = match first_char {
+                '\\' => {
+                    cursor += 1;
+                    anyhow::ensure!(cursor < str_interior_as_u8_slice.len(), "malformed AsciiStringLiteral; expected escape char after \\");
+                    let second_char = str_interior_as_u8_slice[cursor] as char;
+                    match second_char {
+                        '0' => { cursor += 1; '\0' },
+                        'a' => { cursor += 1; '\x07' }, // \a
+                        'b' => { cursor += 1; '\x08' }, // \b
+                        't' => { cursor += 1; '\t' },
+                        'n' => { cursor += 1; '\n' },
+                        'v' => { cursor += 1; '\x0B' }, // \v
+                        'f' => { cursor += 1; '\x0C' }, // \f
+                        'r' => { cursor += 1; '\r' },
+                        '"' => { cursor += 1; '"' },
+                        '\\' => { cursor += 1; '\\' },
+                        'x' => {
+                            cursor += 1;
+                            anyhow::ensure!(cursor+2 <= str_interior_as_u8_slice.len(), "malformed AsciiStringLiteral; expected two hex digits after \\x");
+                            let first_hex_char = str_interior_as_u8_slice[cursor] as char;
+                            let second_hex_char = str_interior_as_u8_slice[cursor] as char;
+                            anyhow::ensure!(first_hex_char.is_ascii_hexdigit() && second_hex_char.is_ascii_hexdigit(), "malformed AsciiStringLiteral; expected two hex digits after \\x but got {:?}", &str_interior_as_u8_slice[cursor..cursor+2]);
+                            let unescaped_hex_char = str_interior_as_u8_slice[cursor]*0x10u8 + str_interior_as_u8_slice[cursor+1];
+                            cursor += 2;
+                            unescaped_hex_char as char
+                        }
+                        _ => {
+                            anyhow::bail!("malformed AsciiStringLiteral; invalid escape char code: {:?}", second_char);
+                        }
+                    }
+                }
+                '\0' | '\x07' | '\x08' | '\t' | '\n' | '\x0B' | '\x0C' | '\r' | '"' => {
+                    anyhow::bail!("malformed AsciiStringLiteral; found an unescaped char: {:?}", first_char);
+                }
+                c => { cursor += 1; c }
+            };
+            retval.push(c);
+        }
+        Ok(retval)
+    }
+}
+
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct UnrecognizedInput<'a>(&'a str);
 

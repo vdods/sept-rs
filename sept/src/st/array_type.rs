@@ -12,13 +12,19 @@ impl dy::Deconstruct for ArrayType {
     }
 }
 
-impl st::Inhabits<Type> for ArrayType {
-    fn inhabits(&self, _rhs: &Type) -> bool {
+impl st::Inhabits<st::Type> for ArrayType {
+    fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
 impl NonParametricTermTrait for ArrayType {
+    fn identifier() -> &'static str {
+        "ArrayType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::ArrayType
     }

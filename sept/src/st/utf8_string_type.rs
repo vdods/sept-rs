@@ -17,6 +17,12 @@ impl st::Inhabits<Type> for Utf8StringType {
 }
 
 impl st::NonParametricTermTrait for Utf8StringType {
+    fn identifier() -> &'static str {
+        "Utf8StringType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::Utf8StringType
     }

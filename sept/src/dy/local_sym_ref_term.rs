@@ -20,6 +20,12 @@ impl std::fmt::Display for LocalSymRefTerm {
     }
 }
 
+impl st::Inhabits<st::Type> for LocalSymRefTerm {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().is_type()
+    }
+}
+
 impl st::Inhabits<dy::Value> for LocalSymRefTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         self.resolved().expect("LocalSymRefTerm failed to resolve").read().unwrap().inhabits(rhs)

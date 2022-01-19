@@ -25,6 +25,12 @@ impl Inhabits<Type> for Term {
 }
 
 impl NonParametricTermTrait for Term {
+    fn identifier() -> &'static str {
+        "Term"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Term
     }

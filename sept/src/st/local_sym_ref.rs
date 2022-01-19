@@ -17,7 +17,19 @@ impl Inhabits<LocalSymRefType> for LocalSymRef {
     }
 }
 
+impl st::Inhabits<st::Type> for LocalSymRef {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for LocalSymRef {
+    fn identifier() -> &'static str {
+        "LocalSymRef"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::LocalSymRef
     }

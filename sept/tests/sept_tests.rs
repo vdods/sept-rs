@@ -5,6 +5,7 @@ use sept::{
         self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
         StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value,
     },
+    parser,
     scanner,
     st::{
         self,
@@ -558,9 +559,8 @@ fn test_structs() {
         .define_symbol(
             "Hippo",
             StructTerm::new(
-                "Hippo".into(),
                 vec![("age".into(), Uint8.into()), ("gravity".into(), Float64.into())].into()
-            ).into()
+            ).expect("test").into()
         ).expect("test");
 
     let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
@@ -694,7 +694,7 @@ fn test_deconstruct() {
 
 
     {
-        let s = StructTerm::new("S".into(), vec![("name".into(), Utf8String.into()), ("age".into(), Uint8.into())]);
+        let s = StructTerm::new(vec![("name".into(), Utf8String.into()), ("age".into(), Uint8.into())]).expect("test");
         log::debug!("s (stringify): {}", s.stringify());
         {
             let deconstruction = s.deconstructed();
@@ -791,9 +791,8 @@ fn test_textify() {
     test_textify_case(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))), "Tuple(Sint8(123), Uint32(99), Float32(100.25), Utf8String(\"HIPPO\"))");
     test_textify_case(
         StructTerm::new(
-            String::from("S"),
             vec![("name".into(), Utf8String.into()), ("score".into(), Uint64.into())],
-        ),
+        ).expect("test"),
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
     );
 }
@@ -1014,6 +1013,71 @@ fn test_scan() {
 
     test_scan_case_negative(")");
     test_scan_case_negative(".");
+}
+
+fn test_parse_case(input: &str) {
+    log::debug!("input: {:?}", input);
+    let token_v = scanner::scan(input).expect("test");
+    log::debug!("token_v ({} elements): {:?}", token_v.len(), token_v);
+    let (expr_sequence, parse_stats) = parser::parse_expr_sequence(&token_v, parser::ExprSequenceEnd::OnlyOnEndOfInput).expect("test");
+    log::debug!("expr_sequence:\n{:#?}", expr_sequence);
+    log::debug!("parse_stats: {:?}", parse_stats);
+    assert_eq!(parse_stats.scanner_token_count, token_v.len());
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_parse() {
+    test_parse_case("Tuple");
+    test_parse_case("123");
+    test_parse_case("Float64 34.002e10");
+    test_parse_case("(Float64 34.002e10)");
+    test_parse_case(" (Float64, 34.002e10) ");
+    test_parse_case(" (Float64, 34.002e10 ()) ");
+    test_parse_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
+    test_parse_case("ArrayES(Float32, 4)(100.0, 8.9, 0.0, 1.0)");
+}
+
+fn test_detextify_case(input: &str, expected_value: dy::Value) {
+    log::debug!("test_detextify_case; input: {}", input);
+    let deconstruction = dy::detextify(input).expect("test");
+    log::debug!("deconstruction: {:?}", deconstruction);
+    let reconstructed_value = deconstruction.reconstruct().expect("test");
+    log::debug!("reconstructed_value: {:?}", reconstructed_value);
+    assert_eq!(reconstructed_value, expected_value);
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_detextify() {
+    test_detextify_case("true", dy::Value::from(true));
+    test_detextify_case("false", dy::Value::from(false));
+    test_detextify_case("True", dy::Value::from(st::True));
+    test_detextify_case("False", dy::Value::from(st::False));
+    test_detextify_case("Tuple", dy::Value::from(st::Tuple));
+    test_detextify_case("Tuple()", dy::Value::from(dy::TupleTerm::from(vec![])));
+    test_detextify_case("Tuple(true, false)", dy::Value::from(dy::TupleTerm::from((true, false))));
+
+    test_detextify_case("Float64(4.5)", dy::Value::from(4.5f64));
+    test_detextify_case("Float64(4.e10)", dy::Value::from(4.0e10f64));
+    test_detextify_case("Float64(-.01)", dy::Value::from(-0.01f64));
+
+//     test_detextify_case("Float32(4.5)", dy::Value::from(4.5f32));
+//     test_detextify_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
+//     test_detextify_case("Float32(-.01)", dy::Value::from(-0.01f32));
+
+    test_detextify_case("Utf8String(\"blah\\n\\thh\")", dy::Value::from(String::from("blah\n\thh")));
+
+    test_detextify_case(
+        "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
+        dy::Value::from(
+            StructTerm::new(
+                vec![("name".into(), Utf8String.into()), ("score".into(), Uint64.into())],
+            ).expect("test")
+        )
+    );
+
+
 }
 
 //
@@ -1375,9 +1439,8 @@ fn test_ast() {
             .define_symbol(
                 "BinOpExpr",
                 StructTerm::new(
-                    "BinOpExpr".into(),
                     vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
-                ).into()
+                ).expect("test").into()
             ).expect("test");
         log::debug!("global_symbol_table: {:#?}", dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap());
         let bin_op_expr = GlobalSymRefTerm::new_unchecked("BinOpExpr".into());

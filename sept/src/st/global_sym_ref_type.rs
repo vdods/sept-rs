@@ -12,13 +12,19 @@ impl dy::Deconstruct for GlobalSymRefType {
     }
 }
 
-impl st::Inhabits<Type> for GlobalSymRefType {
-    fn inhabits(&self, _rhs: &Type) -> bool {
+impl st::Inhabits<st::Type> for GlobalSymRefType {
+    fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
 impl NonParametricTermTrait for GlobalSymRefType {
+    fn identifier() -> &'static str {
+        "GlobalSymRefType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::GlobalSymRefType
     }

@@ -18,6 +18,12 @@ impl st::Inhabits<Type> for LocalSymRefType {
 }
 
 impl NonParametricTermTrait for LocalSymRefType {
+    fn identifier() -> &'static str {
+        "LocalSymRefType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::LocalSymRefType
     }

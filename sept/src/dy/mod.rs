@@ -2,6 +2,7 @@ mod array_term;
 mod constructor;
 mod deconstruct;
 mod deconstruction;
+mod detextify;
 mod dyn_np_term;
 mod global_sym_ref_term;
 mod global_symbol_table;
@@ -23,6 +24,7 @@ pub use crate::dy::{
     constructor::Constructor,
     deconstruct::{Deconstruct, Textifier},
     deconstruction::{Deconstruction, DeconstructionKind},
+    detextify::detextify,
     dyn_np_term::DynNPTerm,
     global_sym_ref_term::GlobalSymRefTerm,
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,

@@ -52,7 +52,7 @@ impl SymbolTable {
 
     // TODO: Figure out what this should do with parent
     pub fn clear(&mut self) {
-        log::warn!("not clearing parent symbol table, if any; this is a somewhat arbitrary decision, though this clear method is probably only for testing purposes");
+        log::warn!("Clearing symbol table but NOT clearing its parent symbol table, if any; this is a somewhat arbitrary decision, though this clear method is probably only for testing purposes");
         self.symbol_map.clear()
     }
 }

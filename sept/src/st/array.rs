@@ -26,7 +26,19 @@ impl Inhabits<ArrayType> for Array {
     }
 }
 
+impl st::Inhabits<st::Type> for Array {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Array {
+    fn identifier() -> &'static str {
+        "Array"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Array
     }

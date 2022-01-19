@@ -17,6 +17,12 @@ impl st::Inhabits<st::Type> for VoidType {
 }
 
 impl st::NonParametricTermTrait for VoidType {
+    fn identifier() -> &'static str {
+        "VoidType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::VoidType
     }

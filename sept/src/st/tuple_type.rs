@@ -18,6 +18,12 @@ impl st::Inhabits<Type> for TupleType {
 }
 
 impl NonParametricTermTrait for TupleType {
+    fn identifier() -> &'static str {
+        "TupleType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::TupleType
     }

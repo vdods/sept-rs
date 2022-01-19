@@ -10,13 +10,19 @@ impl dy::Deconstruct for BoolType {
     }
 }
 
-impl st::Inhabits<Type> for BoolType {
-    fn inhabits(&self, _rhs: &Type) -> bool {
+impl st::Inhabits<st::Type> for BoolType {
+    fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
 impl st::NonParametricTermTrait for BoolType {
+    fn identifier() -> &'static str {
+        "BoolType"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> dy::DynNPTerm {
         dy::DynNPTerm::BoolType
     }

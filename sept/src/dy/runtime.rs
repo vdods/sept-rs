@@ -23,6 +23,7 @@ pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
 pub type DereferencedOnceFn = fn(x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>>;
 pub type ConstructorFn = fn(constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
+pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
 
 struct RegisteredEqualsFn {
     eq_fn: BinaryPredicate,
@@ -39,6 +40,7 @@ pub struct Runtime {
     // TODO: See about collecting many of these into a common map, since many of them will have
     // identical indexes.
 
+    non_parametric_term_s: HashSet<TypeId>,
     term_s: HashSet<TypeId>,
     type_s: HashSet<TypeId>,
     // TODO: This is silly, just map to &'static str
@@ -55,6 +57,7 @@ pub struct Runtime {
     dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
     constructor_fn_m: HashMap<TypeId, ConstructorFn>,
     deconstruct_fn_m: HashMap<TypeId, DeconstructFn>,
+    non_parametric_term_instantiate_fn_m: HashMap<&'static str, NonParametricTermInstantiateFn>,
 }
 
 impl Runtime {
@@ -132,6 +135,57 @@ impl Runtime {
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
 
+        // Register non-parametric term instantiate functions.
+        runtime.register_non_parametric_term::<Term>().unwrap();
+//         runtime.register_non_parametric_term::<NonParametricTerm>().unwrap();
+//         runtime.register_non_parametric_term::<ParametricTerm>().unwrap();
+        runtime.register_non_parametric_term::<Type>().unwrap();
+//         runtime.register_non_parametric_term::<NonType>().unwrap();
+//         runtime.register_non_parametric_term::<NonParametricType>().unwrap();
+//         runtime.register_non_parametric_term::<ParametricType>().unwrap();
+        runtime.register_non_parametric_term::<Void>().unwrap();
+        runtime.register_non_parametric_term::<True>().unwrap();
+        runtime.register_non_parametric_term::<False>().unwrap();
+        runtime.register_non_parametric_term::<VoidType>().unwrap();
+        runtime.register_non_parametric_term::<TrueType>().unwrap();
+        runtime.register_non_parametric_term::<FalseType>().unwrap();
+        runtime.register_non_parametric_term::<EmptyType>().unwrap();
+//         runtime.register_non_parametric_term::<FormalTypeOf>().unwrap();
+        runtime.register_non_parametric_term::<Bool>().unwrap();
+        runtime.register_non_parametric_term::<Sint8>().unwrap();
+        runtime.register_non_parametric_term::<Sint16>().unwrap();
+        runtime.register_non_parametric_term::<Sint32>().unwrap();
+        runtime.register_non_parametric_term::<Sint64>().unwrap();
+        runtime.register_non_parametric_term::<Uint8>().unwrap();
+        runtime.register_non_parametric_term::<Uint16>().unwrap();
+        runtime.register_non_parametric_term::<Uint32>().unwrap();
+        runtime.register_non_parametric_term::<Uint64>().unwrap();
+        runtime.register_non_parametric_term::<Float32>().unwrap();
+        runtime.register_non_parametric_term::<Float64>().unwrap();
+        runtime.register_non_parametric_term::<BoolType>().unwrap();
+        runtime.register_non_parametric_term::<Sint8Type>().unwrap();
+        runtime.register_non_parametric_term::<Sint16Type>().unwrap();
+        runtime.register_non_parametric_term::<Sint32Type>().unwrap();
+        runtime.register_non_parametric_term::<Sint64Type>().unwrap();
+        runtime.register_non_parametric_term::<Uint8Type>().unwrap();
+        runtime.register_non_parametric_term::<Uint16Type>().unwrap();
+        runtime.register_non_parametric_term::<Uint32Type>().unwrap();
+        runtime.register_non_parametric_term::<Uint64Type>().unwrap();
+        runtime.register_non_parametric_term::<Float32Type>().unwrap();
+        runtime.register_non_parametric_term::<Float64Type>().unwrap();
+        runtime.register_non_parametric_term::<Utf8String>().unwrap();
+        runtime.register_non_parametric_term::<Utf8StringType>().unwrap();
+        runtime.register_non_parametric_term::<ArrayType>().unwrap();
+        runtime.register_non_parametric_term::<Array>().unwrap();
+        runtime.register_non_parametric_term::<TupleType>().unwrap();
+        runtime.register_non_parametric_term::<Tuple>().unwrap();
+        runtime.register_non_parametric_term::<StructType>().unwrap();
+        runtime.register_non_parametric_term::<Struct>().unwrap();
+        runtime.register_non_parametric_term::<GlobalSymRefType>().unwrap();
+        runtime.register_non_parametric_term::<GlobalSymRef>().unwrap();
+        runtime.register_non_parametric_term::<LocalSymRefType>().unwrap();
+        runtime.register_non_parametric_term::<LocalSymRef>().unwrap();
+
         // Have to go through and explicitly register the Constructor types, until ParametricType
         // is a thing.
         runtime.register_constructor::<Bool>().unwrap();
@@ -149,7 +203,7 @@ impl Runtime {
         runtime.register_constructor::<Array>().unwrap();
         runtime.register_constructor::<Tuple>().unwrap();
         runtime.register_constructor::<TupleTerm>().unwrap();
-//         runtime.register_constructor::<Struct>().unwrap();
+        runtime.register_constructor::<Struct>().unwrap();
         runtime.register_constructor::<StructTerm>().unwrap();
 
         // Have to go through and explicitly register the Eq types, since that can't be done
@@ -291,10 +345,14 @@ impl Runtime {
             Stringify +
             std::cmp::PartialEq +
             Inhabits<<T as TermTrait>::AbstractTypeType> +
+            Inhabits<st::Type> +
             'static,
         <T as TermTrait>::AbstractTypeType: st::TypeTrait
     {
         self.register_term::<T>()?;
+        if self.inhabits_fn::<T, st::Type>().is_none() {
+            self.register_inhabits::<T, st::Type>()?;
+        }
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(self.type_s.insert(type_id), "collision with already-registered type {}", self.label_of(type_id));
         Ok(())
@@ -527,9 +585,28 @@ impl Runtime {
         };
         Ok(self.register_constructor_fn(type_id, constructor_fn)?)
     }
+    pub(crate) fn register_non_parametric_term_instantiate_fn(&mut self, identifier: &'static str, non_parametric_term_instantiate_fn: NonParametricTermInstantiateFn) -> Result<()> {
+        match self.non_parametric_term_instantiate_fn_m.insert(identifier, non_parametric_term_instantiate_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate fn for {}", identifier)),
+            None => Ok(())
+        }
+    }
+    pub fn register_non_parametric_term<T: st::NonParametricTermTrait + 'static>(&mut self) -> Result<()> {
+        self.non_parametric_term_s.insert(TypeId::of::<T>());
+        let non_parametric_term_instantiate_fn = || -> dy::Value {
+            dy::Value::from(T::instantiate())
+        };
+        Ok(self.register_non_parametric_term_instantiate_fn(T::identifier(), non_parametric_term_instantiate_fn)?)
+    }
+
+    pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&'a self) -> Option<&'a BinaryPredicate> {
+        let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
+        self.inhabits_fn_m.get(&type_id_pair)
+    }
 
     /// This gives the [non-parametric] label of the concrete type.  For example, even though
     /// GlobalSymRefTerm is referentially transparent, its label is still GlobalSymRefTerm.
+    // TODO: Maybe make `pub fn label_of<T>(&self) -> String` which uses TypeId::of::<T>() and forwards.
     pub fn label_of(&self, type_id: TypeId) -> String {
         match self.label_fn_m.get(&type_id) {
             Some(label_fn) => label_fn().into(),
@@ -722,6 +799,9 @@ impl Runtime {
             }
         }
     }
+    pub fn is_non_parametric_term(&self, x: &ValueGuts) -> bool {
+        self.non_parametric_term_s.contains(&x.type_id())
+    }
     pub fn is_transparent_ref_term(&self, x: &ValueGuts) -> bool {
         self.dereferenced_once_fn_m.contains_key(&x.type_id())
     }
@@ -767,6 +847,12 @@ impl Runtime {
                 panic!("no deconstructed fn found for {}", self.label_of(x.type_id()));
                 // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstructed fn found for {}", self.label_of(x.type_id()))
             }
+        }
+    }
+    pub fn non_parametric_term(&self, identifier: &str) -> Result<dy::Value> {
+        match self.non_parametric_term_instantiate_fn_m.get(identifier) {
+            Some(non_parametric_term_instantiate_fn) => Ok(non_parametric_term_instantiate_fn()),
+            None => Err(anyhow::anyhow!("NonParametricTerm `{}` not found", identifier))
         }
     }
 }

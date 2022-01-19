@@ -17,7 +17,19 @@ impl Inhabits<GlobalSymRefType> for GlobalSymRef {
     }
 }
 
+impl st::Inhabits<st::Type> for GlobalSymRef {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for GlobalSymRef {
+    fn identifier() -> &'static str {
+        "GlobalSymRef"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::GlobalSymRef
     }

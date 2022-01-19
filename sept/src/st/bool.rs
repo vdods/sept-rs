@@ -13,7 +13,7 @@ impl dy::Constructor for Bool {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<bool>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Bool, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -30,7 +30,19 @@ impl Inhabits<BoolType> for Bool {
     }
 }
 
+impl st::Inhabits<st::Type> for Bool {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl NonParametricTermTrait for Bool {
+    fn identifier() -> &'static str {
+        "Bool"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Bool
     }

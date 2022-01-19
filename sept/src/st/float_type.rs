@@ -34,12 +34,24 @@ impl st::Inhabits<Type> for Float64Type {
 }
 
 impl NonParametricTermTrait for Float32Type {
+    fn identifier() -> &'static str {
+        "Float32Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Float32Type
     }
 }
 
 impl NonParametricTermTrait for Float64Type {
+    fn identifier() -> &'static str {
+        "Float64Type"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Float64Type
     }

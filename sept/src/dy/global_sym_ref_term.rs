@@ -17,6 +17,12 @@ impl std::fmt::Display for GlobalSymRefTerm {
     }
 }
 
+impl st::Inhabits<st::Type> for GlobalSymRefTerm {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().is_type()
+    }
+}
+
 impl st::Inhabits<dy::Value> for GlobalSymRefTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().inhabits(rhs)

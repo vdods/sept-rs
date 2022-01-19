@@ -13,7 +13,7 @@ impl dy::Constructor for Utf8String {
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<String>() {
             Some(string) => Ok(std::mem::take(string)),
-            None => Err(anyhow::anyhow!("{}.construct expected parameter of type String, but got one of type {:?}", self.stringify(), parameter.type_id()))
+            None => Err(anyhow::anyhow!("{}.construct expected parameter of type Utf8String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
 }
@@ -24,6 +24,12 @@ impl dy::Deconstruct for Utf8String {
     }
 }
 
+impl st::Inhabits<st::Type> for Utf8String {
+    fn inhabits(&self, _: &st::Type) -> bool {
+        true
+    }
+}
+
 impl Inhabits<Utf8StringType> for Utf8String {
     fn inhabits(&self, _: &Utf8StringType) -> bool {
         true
@@ -31,6 +37,12 @@ impl Inhabits<Utf8StringType> for Utf8String {
 }
 
 impl NonParametricTermTrait for Utf8String {
+    fn identifier() -> &'static str {
+        "Utf8String"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
     fn as_dyn_npterm(&self) -> DynNPTerm {
         DynNPTerm::Utf8String
     }
