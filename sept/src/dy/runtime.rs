@@ -201,6 +201,7 @@ impl Runtime {
         runtime.register_constructor::<Float64>().unwrap();
         runtime.register_constructor::<Utf8String>().unwrap();
         runtime.register_constructor::<Array>().unwrap();
+        runtime.register_constructor::<GlobalSymRefTerm>().unwrap();
         runtime.register_constructor::<Tuple>().unwrap();
         runtime.register_constructor::<TupleTerm>().unwrap();
         runtime.register_constructor::<Struct>().unwrap();
@@ -296,11 +297,13 @@ impl Runtime {
 
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
         runtime.register_clone::<GlobalSymRefTerm>().unwrap();
+        runtime.register_debug::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_parametric::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_type::<GlobalSymRefTerm>().unwrap();
 
         runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
         runtime.register_clone::<LocalSymRefTerm>().unwrap();
+        runtime.register_debug::<LocalSymRefTerm>().unwrap();
         runtime.register_is_parametric::<LocalSymRefTerm>().unwrap();
         runtime.register_is_type::<LocalSymRefTerm>().unwrap();
 

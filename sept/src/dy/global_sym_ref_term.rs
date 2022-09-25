@@ -8,8 +8,23 @@ pub struct GlobalSymRefTerm {
     pub symbol_id: String,
 }
 
-// TODO: Implement Constructor
-// TODO: Implement Deconstruct
+impl dy::Constructor for GlobalSymRefTerm {
+    type ConstructedType = dy::Value;
+    fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
+        Ok(self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().construct(parameter_t)?)
+    }
+}
+
+/// GlobalSymRefTerm's impl for dy::Deconstruct does not use referential transparency, because
+/// the goal is to represent the thing exactly as it is.
+impl dy::Deconstruct for GlobalSymRefTerm {
+    fn deconstruct(self) -> dy::Deconstruction {
+        dy::ParametricDeconstruction::new(st::GlobalSymRef.deconstructed(), vec![self.symbol_id.deconstructed()]).into()
+    }
+    fn deconstructed(&self) -> dy::Deconstruction {
+        dy::ParametricDeconstruction::new(st::GlobalSymRef.deconstructed(), vec![self.symbol_id.deconstructed()]).into()
+    }
+}
 
 impl std::fmt::Display for GlobalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
