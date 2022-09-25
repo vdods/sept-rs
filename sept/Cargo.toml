@@ -10,6 +10,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.44"
+bind_match = "0.1.2"
 derive_more = "0.99.17"
 enum-map = "2.0.0"
 lazy_static = "1.4.0"

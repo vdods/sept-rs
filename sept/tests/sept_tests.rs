@@ -608,6 +608,9 @@ fn test_structs() {
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_deconstruct() {
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
+
     let n = 123u32;
     log::debug!("n (stringify): {}", n.stringify());
     {
@@ -716,6 +719,13 @@ fn test_deconstruct() {
             log::debug!("s_term.deconstruct(): {:#?}", deconstruction);
         }
     }
+
+    {
+        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("thingy", 1234.5678f64.into()).expect("test");
+        let g = GlobalSymRefTerm::new_unchecked("thingy".into());
+        let deconstruction = g.deconstructed();
+        log::debug!("g.deconstructed(): {:#?}", deconstruction);
+    }
 }
 
 fn test_deconstruct_reconstruct_roundtrip<T, C>(x: T)
@@ -795,6 +805,7 @@ fn test_textify() {
         ).expect("test"),
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
     );
+    test_textify_case(GlobalSymRefTerm::new_unchecked("fancyfancy".into()), "GlobalSymRef(Utf8String(\"fancyfancy\"))");
 }
 
 fn test_try_scanning_case(token_kind: scanner::TokenKind, input: &str, expected_token_o: Option<scanner::Token>) {
@@ -865,43 +876,43 @@ fn test_try_scanning() {
     test_try_scanning_case(TokenKind::CIdentifier, "\x7F", None);
 
 
-    test_try_scanning_case(TokenKind::DecimalLiteral, "0.", Some(Token::DecimalLiteral("0.".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, ".0", Some(Token::DecimalLiteral(".0".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "1.", Some(Token::DecimalLiteral("1.".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, ".2", Some(Token::DecimalLiteral(".2".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "3.4", Some(Token::DecimalLiteral("3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.4", Some(Token::DecimalLiteral("-3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.", Some(Token::DecimalLiteral("-3.".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-.4", Some(Token::DecimalLiteral("-.4".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.4", Some(Token::DecimalLiteral("+3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.", Some(Token::DecimalLiteral("+3.".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4", Some(Token::DecimalLiteral("+.4".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "0.", Some(Token::DecimalPointLiteral("0.".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".0", Some(Token::DecimalPointLiteral(".0".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "1.", Some(Token::DecimalPointLiteral("1.".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".2", Some(Token::DecimalPointLiteral(".2".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "3.4", Some(Token::DecimalPointLiteral("3.4".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.4", Some(Token::DecimalPointLiteral("-3.4".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.", Some(Token::DecimalPointLiteral("-3.".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-.4", Some(Token::DecimalPointLiteral("-.4".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.4", Some(Token::DecimalPointLiteral("+3.4".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.", Some(Token::DecimalPointLiteral("+3.".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4", Some(Token::DecimalPointLiteral("+.4".into())));
 
-    test_try_scanning_case(TokenKind::DecimalLiteral, "0.e0", Some(Token::DecimalLiteral("0.e0".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, ".0e1", Some(Token::DecimalLiteral(".0e1".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "1.e100", Some(Token::DecimalLiteral("1.e100".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, ".2e-0", Some(Token::DecimalLiteral(".2e-0".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "3.4e-10", Some(Token::DecimalLiteral("3.4e-10".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.4e8", Some(Token::DecimalLiteral("-3.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-3.e8", Some(Token::DecimalLiteral("-3.e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "-.4e8", Some(Token::DecimalLiteral("-.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.4e8", Some(Token::DecimalLiteral("+3.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+3.e8", Some(Token::DecimalLiteral("+3.e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8", Some(Token::DecimalLiteral("+.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "0.e0", Some(Token::DecimalPointLiteral("0.e0".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".0e1", Some(Token::DecimalPointLiteral(".0e1".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "1.e100", Some(Token::DecimalPointLiteral("1.e100".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".2e-0", Some(Token::DecimalPointLiteral(".2e-0".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "3.4e-10", Some(Token::DecimalPointLiteral("3.4e-10".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.4e8", Some(Token::DecimalPointLiteral("-3.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.e8", Some(Token::DecimalPointLiteral("-3.e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-.4e8", Some(Token::DecimalPointLiteral("-.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.4e8", Some(Token::DecimalPointLiteral("+3.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.e8", Some(Token::DecimalPointLiteral("+3.e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8", Some(Token::DecimalPointLiteral("+.4e8".into())));
 
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8xyz", Some(Token::DecimalLiteral("+.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalLiteral, "+.4e8)", Some(Token::DecimalLiteral("+.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8xyz", Some(Token::DecimalPointLiteral("+.4e8".into())));
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8)", Some(Token::DecimalPointLiteral("+.4e8".into())));
 
-    test_try_scanning_case(TokenKind::DecimalLiteral, ".", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "0", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "1", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "4e100", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "abcxyz", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "__", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "(", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, ")", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "", None);
-    test_try_scanning_case(TokenKind::DecimalLiteral, "\x7F", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "0", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "1", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "4e100", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "abcxyz", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "__", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "(", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, ")", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "", None);
+    test_try_scanning_case(TokenKind::DecimalPointLiteral, "\x7F", None);
 
 
 
@@ -989,7 +1000,7 @@ fn test_scan() {
         test_scan_case(input, vec![Token::IntegerLiteral(input.into())]);
     }
     for input in vec!["4.", ".5", "6.7", "0.0", "+8.", "-9.", "4.e0", "4.e+0", "4.e-0", ".5e1", "1.6e10", "8.05e-20", "-999999.1010101010e+666666666"] {
-        test_scan_case(input, vec![Token::DecimalLiteral(input.into())]);
+        test_scan_case(input, vec![Token::DecimalPointLiteral(input.into())]);
     }
     for input in vec![
         r#""""#,
@@ -1015,32 +1026,49 @@ fn test_scan() {
     test_scan_case_negative(".");
 }
 
-fn test_parse_case(input: &str) {
+fn test_parse_value_case(input: &str, expected_value: dy::Value) {
     log::debug!("input: {:?}", input);
-    let token_v = scanner::scan(input).expect("test");
-    log::debug!("token_v ({} elements): {:?}", token_v.len(), token_v);
-    let (expr_sequence, parse_stats) = parser::parse_expr_sequence(&token_v, parser::ExprSequenceEnd::OnlyOnEndOfInput).expect("test");
-    log::debug!("expr_sequence:\n{:#?}", expr_sequence);
-    log::debug!("parse_stats: {:?}", parse_stats);
-    assert_eq!(parse_stats.scanner_token_count, token_v.len());
+    let actual_value = parser::parse_value(input).expect("test");
+    log::debug!("actual_value: {:?}", actual_value);
+    // TODO: Also do an equality check that prevents referential transparency, so that symbolic
+    // refs can be tested on a non-referenced level.
+    assert_eq!(actual_value, expected_value);
 }
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_parse() {
-    test_parse_case("Tuple");
-    test_parse_case("123");
-    test_parse_case("Float64 34.002e10");
-    test_parse_case("(Float64 34.002e10)");
-    test_parse_case(" (Float64, 34.002e10) ");
-    test_parse_case(" (Float64, 34.002e10 ()) ");
-    test_parse_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
-    test_parse_case("ArrayES(Float32, 4)(100.0, 8.9, 0.0, 1.0)");
+fn test_parse_value() {
+    // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("thingy", true.into()).expect("test");
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bloppy", 123u32.into()).expect("test");
+    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("Tuple", st::Tuple.into()).expect("test");
+
+    test_parse_value_case("Tuple", st::Tuple.into());
+    test_parse_value_case(
+        "Tuple(thingy, bloppy)",
+        dy::TupleTerm::from(vec![dy::Value::from(true), dy::Value::from(123u32)]).into(),
+    );
+//     test_parse_value_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
+
+//     test_parse_value_case(
+//         "ArrayES(Float64, 4)(100.0, 8.9, 0.0, 1.0)",
+//         st::ArrayES
+//             .construct(dy::TupleTerm::from(vec![st::Float64, 4]))
+//             .construct(dy::TupleTerm::from(vec![100.0f64, 8.9f64, 0.0f64, 1.0f64])),
+//     );
+    test_parse_value_case(
+        "Tuple(Float64, Uint64)(100.0, 89)",
+        dy::TupleTerm::from(vec![dy::Value::from(100.0f64), dy::Value::from(89u64)]).into(),
+    );
+
+//     test_parse_value_case("GlobalSymRef(Utf8String(\"weewoo\"))");
+    test_parse_value_case("thingy", dy::GlobalSymRefTerm::new_unchecked("thingy".into()).into());
 }
 
-fn test_detextify_case(input: &str, expected_value: dy::Value) {
-    log::debug!("test_detextify_case; input: {}", input);
-    let deconstruction = dy::detextify(input).expect("test");
+fn test_parse_deconstruction_case(input: &str, expected_value: dy::Value) {
+    log::debug!("test_parse_deconstruction_case; input: {}", input);
+    let deconstruction = parser::parse_deconstruction(input).expect("test");
     log::debug!("deconstruction: {:?}", deconstruction);
     let reconstructed_value = deconstruction.reconstruct().expect("test");
     log::debug!("reconstructed_value: {:?}", reconstructed_value);
@@ -1049,26 +1077,26 @@ fn test_detextify_case(input: &str, expected_value: dy::Value) {
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_detextify() {
-    test_detextify_case("true", dy::Value::from(true));
-    test_detextify_case("false", dy::Value::from(false));
-    test_detextify_case("True", dy::Value::from(st::True));
-    test_detextify_case("False", dy::Value::from(st::False));
-    test_detextify_case("Tuple", dy::Value::from(st::Tuple));
-    test_detextify_case("Tuple()", dy::Value::from(dy::TupleTerm::from(vec![])));
-    test_detextify_case("Tuple(true, false)", dy::Value::from(dy::TupleTerm::from((true, false))));
+fn test_parse_deconstruction() {
+    test_parse_deconstruction_case("true", dy::Value::from(true));
+    test_parse_deconstruction_case("false", dy::Value::from(false));
+    test_parse_deconstruction_case("True", dy::Value::from(st::True));
+    test_parse_deconstruction_case("False", dy::Value::from(st::False));
+    test_parse_deconstruction_case("Tuple", dy::Value::from(st::Tuple));
+    test_parse_deconstruction_case("Tuple()", dy::Value::from(dy::TupleTerm::from(vec![])));
+    test_parse_deconstruction_case("Tuple(True, False)", dy::Value::from(dy::TupleTerm::from((true, false))));
 
-    test_detextify_case("Float64(4.5)", dy::Value::from(4.5f64));
-    test_detextify_case("Float64(4.e10)", dy::Value::from(4.0e10f64));
-    test_detextify_case("Float64(-.01)", dy::Value::from(-0.01f64));
+    test_parse_deconstruction_case("Float64(4.5)", dy::Value::from(4.5f64));
+    test_parse_deconstruction_case("Float64(4.e10)", dy::Value::from(4.0e10f64));
+    test_parse_deconstruction_case("Float64(-.01)", dy::Value::from(-0.01f64));
 
-//     test_detextify_case("Float32(4.5)", dy::Value::from(4.5f32));
-//     test_detextify_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
-//     test_detextify_case("Float32(-.01)", dy::Value::from(-0.01f32));
+//     test_parse_deconstruction_case("Float32(4.5)", dy::Value::from(4.5f32));
+//     test_parse_deconstruction_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
+//     test_parse_deconstruction_case("Float32(-.01)", dy::Value::from(-0.01f32));
 
-    test_detextify_case("Utf8String(\"blah\\n\\thh\")", dy::Value::from(String::from("blah\n\thh")));
+    test_parse_deconstruction_case("Utf8String(\"blah\\n\\thh\")", dy::Value::from(String::from("blah\n\thh")));
 
-    test_detextify_case(
+    test_parse_deconstruction_case(
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
         dy::Value::from(
             StructTerm::new(
@@ -1447,5 +1475,10 @@ fn test_ast() {
         log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
 
 //         assert!(expr3.inhabits(&bin_op_expr));
+    }
+
+    // Now test parsing something involving the defined symbols, and then evaluating it.
+    {
+
     }
 }

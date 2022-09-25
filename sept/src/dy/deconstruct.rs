@@ -9,6 +9,7 @@ pub trait Deconstruct: st::TermTrait + Clone {
     /// term; aka a terminal) or a ParametricDeconstruction (which has a constructor and a vector of
     /// parameters, each of which are deconstructed; see ParametricDeconstruction::new_recursive).
     fn deconstruct(self) -> dy::Deconstruction;
+    /// Fallback impl of deconstructed which clones self instead of leveraging references.
     fn deconstructed(&self) -> dy::Deconstruction {
         self.clone().deconstruct()
     }

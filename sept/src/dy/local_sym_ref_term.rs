@@ -12,7 +12,20 @@ pub struct LocalSymRefTerm {
 }
 
 // TODO: Implement Constructor
-// TODO: Implement Deconstruct
+
+/// LocalSymRefTerm's impl for dy::Deconstruct does not use referential transparency, because
+/// the goal is to represent the thing exactly as it is.
+impl dy::Deconstruct for LocalSymRefTerm {
+    fn deconstruct(self) -> dy::Deconstruction {
+        unimplemented!("not sure how to represent the local symbol table unless it's somehow named and has a deconstruction");
+//         dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
+    }
+    fn deconstructed(&self) -> dy::Deconstruction {
+        unimplemented!("not sure how to represent the local symbol table unless it's somehow named and has a deconstruction");
+//         dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
+    }
+}
+
 
 impl std::fmt::Display for LocalSymRefTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {

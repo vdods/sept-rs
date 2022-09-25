@@ -3,19 +3,46 @@ use crate::Result;
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct Whitespace<'a>(&'a str);
 
+impl<'a> Whitespace<'a> {
+    pub fn as_str(&self) -> &'a str {
+        self.0
+    }
+}
+
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct CIdentifier<'a>(&'a str);
 
+impl<'a> CIdentifier<'a> {
+    pub fn as_str(&self) -> &'a str {
+        self.0
+    }
+}
+
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
-pub struct DecimalLiteral<'a>(&'a str);
+pub struct DecimalPointLiteral<'a>(&'a str);
+
+impl<'a> DecimalPointLiteral<'a> {
+    pub fn as_str(&self) -> &'a str {
+        self.0
+    }
+}
 
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct IntegerLiteral<'a>(&'a str);
+
+impl<'a> IntegerLiteral<'a> {
+    pub fn as_str(&self) -> &'a str {
+        self.0
+    }
+}
 
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
 pub struct AsciiStringLiteral<'a>(&'a str);
 
 impl<'a> AsciiStringLiteral<'a> {
+    pub fn as_str(&self) -> &'a str {
+        self.0
+    }
     /// This will turn an escaped string "\"...\"" into an unescaped string, where escape codes are
     /// transformed into the chars they represent.
     // TODO: Implement this better by implementing an iterator for "next char slice" which will account
@@ -79,8 +106,8 @@ pub struct UnrecognizedInput<'a>(&'a str);
 // TODO: Could include line number, and maybe char range within line
 /// Note that these have to be in order that the matches will be tried in.
 /// Start with the quick/simple ones, then go to the slow/complex ones.  It's important
-/// that try_scanning_decimal_literal happens before try_scanning_integer_literal.
-#[derive(Clone, Debug, PartialEq)]
+/// that try_scanning_decimal_point_literal happens before try_scanning_integer_literal.
+#[derive(Clone, Debug, derive_more::From, PartialEq)]
 pub enum Token<'a> {
     EndOfInput,
     OpenParen,
@@ -88,53 +115,53 @@ pub enum Token<'a> {
     Comma,
     Whitespace(Whitespace<'a>),
     CIdentifier(CIdentifier<'a>),
-    DecimalLiteral(DecimalLiteral<'a>),
+    DecimalPointLiteral(DecimalPointLiteral<'a>),
     IntegerLiteral(IntegerLiteral<'a>),
     AsciiStringLiteral(AsciiStringLiteral<'a>),
     UnrecognizedInput(UnrecognizedInput<'a>),
 }
 
-// TODO: Derive these
-impl<'a> From<Whitespace<'a>> for Token<'a> {
-    fn from(whitespace: Whitespace<'a>) -> Self {
-        Token::Whitespace(whitespace)
-    }
-}
-
-// TODO: Derive these
-impl<'a> From<CIdentifier<'a>> for Token<'a> {
-    fn from(c_identifier: CIdentifier<'a>) -> Self {
-        Token::CIdentifier(c_identifier)
-    }
-}
-
-// TODO: Derive these
-impl<'a> From<DecimalLiteral<'a>> for Token<'a> {
-    fn from(decimal_literal: DecimalLiteral<'a>) -> Self {
-        Token::DecimalLiteral(decimal_literal)
-    }
-}
-
-// TODO: Derive these
-impl<'a> From<IntegerLiteral<'a>> for Token<'a> {
-    fn from(integer_literal: IntegerLiteral<'a>) -> Self {
-        Token::IntegerLiteral(integer_literal)
-    }
-}
-
-// TODO: Derive these
-impl<'a> From<AsciiStringLiteral<'a>> for Token<'a> {
-    fn from(ascii_string_literal: AsciiStringLiteral<'a>) -> Self {
-        Token::AsciiStringLiteral(ascii_string_literal)
-    }
-}
-
-// TODO: Derive these
-impl<'a> From<UnrecognizedInput<'a>> for Token<'a> {
-    fn from(unrecognized_input: UnrecognizedInput<'a>) -> Self {
-        Token::UnrecognizedInput(unrecognized_input)
-    }
-}
+// // TODO: Derive these
+// impl<'a> From<Whitespace<'a>> for Token<'a> {
+//     fn from(whitespace: Whitespace<'a>) -> Self {
+//         Token::Whitespace(whitespace)
+//     }
+// }
+//
+// // TODO: Derive these
+// impl<'a> From<CIdentifier<'a>> for Token<'a> {
+//     fn from(c_identifier: CIdentifier<'a>) -> Self {
+//         Token::CIdentifier(c_identifier)
+//     }
+// }
+//
+// // TODO: Derive these
+// impl<'a> From<DecimalPointLiteral<'a>> for Token<'a> {
+//     fn from(decimal_point_literal: DecimalPointLiteral<'a>) -> Self {
+//         Token::DecimalPointLiteral(decimal_point_literal)
+//     }
+// }
+//
+// // TODO: Derive these
+// impl<'a> From<IntegerLiteral<'a>> for Token<'a> {
+//     fn from(integer_literal: IntegerLiteral<'a>) -> Self {
+//         Token::IntegerLiteral(integer_literal)
+//     }
+// }
+//
+// // TODO: Derive these
+// impl<'a> From<AsciiStringLiteral<'a>> for Token<'a> {
+//     fn from(ascii_string_literal: AsciiStringLiteral<'a>) -> Self {
+//         Token::AsciiStringLiteral(ascii_string_literal)
+//     }
+// }
+//
+// // TODO: Derive these
+// impl<'a> From<UnrecognizedInput<'a>> for Token<'a> {
+//     fn from(unrecognized_input: UnrecognizedInput<'a>) -> Self {
+//         Token::UnrecognizedInput(unrecognized_input)
+//     }
+// }
 
 impl<'a> Token<'a> {
     pub fn new(token_kind: TokenKind, input: &'a str) -> Self {
@@ -145,7 +172,7 @@ impl<'a> Token<'a> {
             TokenKind::Comma => Token::Comma,
             TokenKind::Whitespace => Token::Whitespace(Whitespace(input)),
             TokenKind::CIdentifier => Token::CIdentifier(CIdentifier(input)),
-            TokenKind::DecimalLiteral => Token::DecimalLiteral(DecimalLiteral(input)),
+            TokenKind::DecimalPointLiteral => Token::DecimalPointLiteral(DecimalPointLiteral(input)),
             TokenKind::IntegerLiteral => Token::IntegerLiteral(IntegerLiteral(input)),
             TokenKind::AsciiStringLiteral => Token::AsciiStringLiteral(AsciiStringLiteral(input)),
             TokenKind::UnrecognizedInput => Token::UnrecognizedInput(UnrecognizedInput(input)),
@@ -156,7 +183,7 @@ impl<'a> Token<'a> {
     }
 }
 
-// TODO: Derive this somehow
+// TODO: Derive this somehow -- use enum_kind
 #[derive(Clone, Copy, Debug, enum_map::Enum, PartialEq)]
 pub enum TokenKind {
     EndOfInput,
@@ -165,7 +192,7 @@ pub enum TokenKind {
     Comma,
     Whitespace,
     CIdentifier,
-    DecimalLiteral,
+    DecimalPointLiteral,
     IntegerLiteral,
     AsciiStringLiteral,
     UnrecognizedInput,
@@ -180,7 +207,7 @@ impl<'a> From<&Token<'a>> for TokenKind {
             Token::Comma => TokenKind::Comma,
             Token::Whitespace(_) => TokenKind::Whitespace,
             Token::CIdentifier(_) => TokenKind::CIdentifier,
-            Token::DecimalLiteral(_) => TokenKind::DecimalLiteral,
+            Token::DecimalPointLiteral(_) => TokenKind::DecimalPointLiteral,
             Token::IntegerLiteral(_) => TokenKind::IntegerLiteral,
             Token::AsciiStringLiteral(_) => TokenKind::AsciiStringLiteral,
             Token::UnrecognizedInput(_) => TokenKind::UnrecognizedInput,
@@ -296,7 +323,7 @@ lazy_static::lazy_static! {
         TokenKind::CIdentifier => regex::Regex::new(r"^[A-Za-z_][A-Za-z_0-9]*").unwrap(),
         // An optional sign, then a string of least 1 digit containing a single decimal point, then optional
         // integer-valued exponent.
-        TokenKind::DecimalLiteral => regex::Regex::new(r"^[+\-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)([eE][+\-]?(0|[1-9][0-9]*))?").unwrap(),
+        TokenKind::DecimalPointLiteral => regex::Regex::new(r"^[+\-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)([eE][+\-]?(0|[1-9][0-9]*))?").unwrap(),
         // An optional sign, then either 0 or a string of digits not starting with 0.
         TokenKind::IntegerLiteral => regex::Regex::new(r"^[+\-]?(0|[1-9][0-9]*)").unwrap(),
         // An ASCII string literal consists of printable chars and escaped chars.

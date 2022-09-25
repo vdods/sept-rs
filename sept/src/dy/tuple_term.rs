@@ -1,7 +1,7 @@
 use crate::{dy::{self, Value}, Result, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(derive_more::AsRef, Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
+#[derive(derive_more::AsRef, Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
 pub struct TupleTerm(Vec<Value>);
 
 impl dy::Constructor for TupleTerm {
@@ -23,25 +23,6 @@ impl dy::Deconstruct for TupleTerm {
         dy::ParametricDeconstruction::new_recursive(st::Tuple.into(), self).into()
     }
 }
-
-impl std::ops::Deref for TupleTerm {
-    type Target = Vec<Value>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for TupleTerm {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-// impl std::fmt::Display for TupleTerm {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-//         write!(f, "{}", &self.stringify())
-//     }
-// }
 
 impl std::fmt::Display for TupleTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {

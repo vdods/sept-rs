@@ -54,6 +54,7 @@ impl Deconstruction {
         }
     }
     // TODO: This should be derivable via trait macro (also requires a Reconstruct trait).
+    // TODO: Also make a reconstruction method which operates by &self
     pub fn reconstruct(self) -> Result<dy::Value> {
         match self {
             dy::Deconstruction::NonParametric(non_parametric_deconstruction) => Ok(non_parametric_deconstruction.reconstruct()?),

@@ -1,5 +1,7 @@
 use crate::{dy, st::{self, Inhabits, Stringify, TermTrait}};
 
+// TODO: Consider making a type alias for Utf8StringTerm.
+
 impl dy::Deconstruct for String {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!

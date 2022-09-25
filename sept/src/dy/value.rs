@@ -1,4 +1,4 @@
-use crate::{dy::{self, IntoValue, RUNTIME_LA}, Result, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, IntoValue, RUNTIME_LA}, Error, parser, Result, st::{self, Stringify, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -82,6 +82,13 @@ impl std::fmt::Display for Value {
 impl<T: TermTrait + IntoValue + 'static> From<T> for Value {
     fn from(t: T) -> Self {
         Self(Box::new(t))
+    }
+}
+
+impl std::str::FromStr for Value {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(parser::parse_value(s)?)
     }
 }
 

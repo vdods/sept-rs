@@ -32,7 +32,7 @@ The practical goals of `sept` are:
 ## Benchmarks of Success
 
 Some measurable indicators of the success of `sept` are:
--   Broad elimination of certain components of conventional programs, such as:
+-   Broad elimination/automation of certain components of conventional programs, such as:
     -   Serialization
     -   API definition
     -   Arbitrary text-based program syntax and formatting conventions (see model-view-controller)
