@@ -5,7 +5,8 @@ use crate::{dy, Result};
 // TODO: Other schemas for deconstruction probably also make sense, such as Tabular (a StructTerm
 // would fit this, because its data consists of two columns: "field name" and "field type"), and
 // linked data structures that have nodes on a heap and pointers to the heap (e.g. Tree, DAG)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, enum_kinds::EnumKind, PartialEq)]
+#[enum_kind(DeconstructionKind)]
 pub enum Deconstruction {
     NonParametric(dy::NonParametricDeconstruction),
     /// Box is necessary because Deconstruction and ParametricDeconstruction are mutually recursive data structures.
@@ -24,7 +25,6 @@ impl From<dy::ParametricDeconstruction> for Deconstruction {
     }
 }
 
-// TODO: Figure out how to derive most of these methods using some proc macro crate
 impl Deconstruction {
     pub fn kind(&self) -> DeconstructionKind {
         self.into()
@@ -54,27 +54,11 @@ impl Deconstruction {
         }
     }
     // TODO: This should be derivable via trait macro (also requires a Reconstruct trait).
-    // TODO: Also make a reconstruction method which operates by &self
+    // TODO: Also make a reconstructed method which operates by &self
     pub fn reconstruct(self) -> Result<dy::Value> {
         match self {
             dy::Deconstruction::NonParametric(non_parametric_deconstruction) => Ok(non_parametric_deconstruction.reconstruct()?),
             dy::Deconstruction::Parametric(parametric_deconstruction) => Ok(parametric_deconstruction.reconstruct()?),
-        }
-    }
-}
-
-// TODO: Figure out how to derive this using some proc macro crate
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DeconstructionKind {
-    NonParametric,
-    Parametric,
-}
-
-impl From<&Deconstruction> for DeconstructionKind {
-    fn from(deconstruction: &Deconstruction) -> Self {
-        match deconstruction {
-            Deconstruction::NonParametric(_) => DeconstructionKind::NonParametric,
-            Deconstruction::Parametric(_) => DeconstructionKind::Parametric,
         }
     }
 }

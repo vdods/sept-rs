@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
 use anyhow::Context;
 use std::fmt::Debug;
 
@@ -53,8 +53,8 @@ impl NonParametricTermTrait for GlobalSymRef {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::GlobalSymRef
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::GlobalSymRef
     }
 }
 

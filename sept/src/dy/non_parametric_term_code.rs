@@ -3,14 +3,14 @@
 // here, as this enum is simply meant for serialization representation purposes.  In
 // deserialization, Values containing the "real" terms would be used instead, so that
 // there isn't a need to check for multiple alternate representations of various types.
-// TODO: Rename this to something else, since this type itself is not a first class term,
-// but only represents the fixed, known non-paremetric terms.
+// TODO: Consider versioning this type, e.g. NonParametricTermCode_1_0, and then including a version marker
+// in the textifaction or binary serialization.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DynNPTerm {
+pub enum NonParametricTermCode {
     // The most basic Types.
     Term = 0, // Literally everything is a Term (this could be called Any)
-    NonParametricTerm, // Inhabitants are Terms requiring no parameters to instantiate (all members of the DynNPTerm enum)
+    NonParametricTerm, // Inhabitants are Terms requiring no parameters to instantiate (all members of the NonParametricTermCode enum)
     ParametricTerm, // Inhabitants are Terms requiring parameters to instantiate, e.g. 10.25, 'x', 999000
 
     // Type Types.

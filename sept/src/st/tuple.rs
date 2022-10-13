@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, TupleType}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, TupleType}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -40,8 +40,8 @@ impl NonParametricTermTrait for Tuple {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Tuple
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Tuple
     }
 }
 

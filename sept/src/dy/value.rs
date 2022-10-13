@@ -144,6 +144,7 @@ impl Value {
     }
     /// If this Value contains dy::Deconstruction, then it calls reconstruct on it, otherwise
     /// returns an error.  The call to reconstruct may return an error.
+    // TODO: Figure out if Deconstruction really should be allowed to be made into a Value.
     pub fn reconstruct_in_place(&mut self) -> Result<()> {
         if self.is::<dy::Deconstruction>() {
             // This is a bit silly, but I don't want to bother with unsafe code at this point.

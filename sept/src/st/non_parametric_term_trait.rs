@@ -10,5 +10,5 @@ pub trait NonParametricTermTrait: st::TermTrait + dy::IntoValue + Clone + Copy {
     fn instantiate() -> Self;
     /// Retrieve the runtime-valued (i.e. dynamically-valued) form of this NonParametricTerm.
     // TODO: This should not have a &self parameter.
-    fn as_dyn_npterm(&self) -> dy::DynNPTerm;
+    fn as_non_parametric_term_code() -> dy::NonParametricTermCode;
 }

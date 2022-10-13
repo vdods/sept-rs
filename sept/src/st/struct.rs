@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, StructType}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, StructType}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -63,8 +63,8 @@ impl NonParametricTermTrait for Struct {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Struct
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Struct
     }
 }
 

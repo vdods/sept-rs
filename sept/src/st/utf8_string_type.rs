@@ -23,8 +23,8 @@ impl st::NonParametricTermTrait for Utf8StringType {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
-        dy::DynNPTerm::Utf8StringType
+    fn as_non_parametric_term_code() -> dy::NonParametricTermCode {
+        dy::NonParametricTermCode::Utf8StringType
     }
 }
 

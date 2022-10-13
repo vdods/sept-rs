@@ -1,6 +1,6 @@
 [package]
 name = "sept"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Victor Dods <victor.dods@gmail.com>"]
 edition = "2021"
 
@@ -12,6 +12,8 @@ edition = "2021"
 anyhow = "1.0.44"
 bind_match = "0.1.2"
 derive_more = "0.99.17"
+enum-as-inner = "0.5.1"
+enum-kinds = "0.5.1"
 enum-map = "2.0.0"
 lazy_static = "1.4.0"
 log = "0.4.14"

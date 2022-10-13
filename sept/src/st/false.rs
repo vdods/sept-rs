@@ -29,8 +29,8 @@ impl st::NonParametricTermTrait for False {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> dy::DynNPTerm {
-        dy::DynNPTerm::False
+    fn as_non_parametric_term_code() -> dy::NonParametricTermCode {
+        dy::NonParametricTermCode::False
     }
 }
 

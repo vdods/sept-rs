@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, ArrayType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, ArrayType, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -39,8 +39,8 @@ impl NonParametricTermTrait for Array {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Array
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Array
     }
 }
 

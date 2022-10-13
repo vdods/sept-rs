@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify, VoidType}};
+use crate::{dy::{self, NonParametricTermCode}, st::{self, Inhabits, NonParametricTermTrait, Stringify, VoidType}};
 
 /// This represents the Void term itself.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
@@ -24,8 +24,8 @@ impl NonParametricTermTrait for Void {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Void
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Void
     }
 }
 

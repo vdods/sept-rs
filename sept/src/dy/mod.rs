@@ -2,12 +2,12 @@ mod array_term;
 mod constructor;
 mod deconstruct;
 mod deconstruction;
-mod dyn_np_term;
 mod global_sym_ref_term;
 mod global_symbol_table;
 mod into_value;
 mod local_sym_ref_term;
 mod non_parametric_deconstruction;
+mod non_parametric_term_code;
 mod parametric_deconstruction;
 mod runtime;
 mod struct_term;
@@ -23,7 +23,7 @@ pub use crate::dy::{
     constructor::Constructor,
     deconstruct::{Deconstruct, Textifier},
     deconstruction::{Deconstruction, DeconstructionKind},
-    dyn_np_term::DynNPTerm,
+    non_parametric_term_code::NonParametricTermCode,
     global_sym_ref_term::GlobalSymRefTerm,
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,
     into_value::IntoValue,

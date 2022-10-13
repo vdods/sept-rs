@@ -1145,7 +1145,7 @@ impl st::Inhabits<Type> for UnOp {
 }
 
 trait BinOpTermTrait {
-    // TODO: A BinOp whose character is defined at runtime (analogous to DynNPTerm) would need
+    // TODO: A BinOp whose character is defined at runtime (analogous to NonParametricTermCode) would need
     // a &self parameter.  Could distingish this by having st::BinOpTermTrait and dy::BinOpTermTrait
     // or actually, maybe static vs dynamic isn't exactly right.. nonparametric vs parametric?
     fn is_commutative() -> bool;

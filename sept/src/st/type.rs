@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, NonParametricTermCode}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 
 /// This represents the NonParametricType `Type` itself, not the trait TypeTrait.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -26,8 +26,8 @@ impl NonParametricTermTrait for Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Type
     }
 }
 

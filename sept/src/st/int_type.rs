@@ -1,5 +1,5 @@
 use crate::{
-    dy::{self, DynNPTerm},
+    dy::{self, NonParametricTermCode},
     st::{self, NonParametricTermTrait, Stringify, Type},
 };
 use std::fmt::Debug;
@@ -139,8 +139,8 @@ impl NonParametricTermTrait for Sint8Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Sint8Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Sint8Type
     }
 }
 
@@ -151,8 +151,8 @@ impl NonParametricTermTrait for Sint16Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Sint16Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Sint16Type
     }
 }
 
@@ -163,8 +163,8 @@ impl NonParametricTermTrait for Sint32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Sint32Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Sint32Type
     }
 }
 
@@ -175,8 +175,8 @@ impl NonParametricTermTrait for Sint64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Sint64Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Sint64Type
     }
 }
 
@@ -187,8 +187,8 @@ impl NonParametricTermTrait for Uint8Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Uint8Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Uint8Type
     }
 }
 
@@ -199,8 +199,8 @@ impl NonParametricTermTrait for Uint16Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Uint16Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Uint16Type
     }
 }
 
@@ -211,8 +211,8 @@ impl NonParametricTermTrait for Uint32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Uint32Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Uint32Type
     }
 }
 
@@ -223,8 +223,8 @@ impl NonParametricTermTrait for Uint64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Uint64Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Uint64Type
     }
 }
 

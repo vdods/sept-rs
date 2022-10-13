@@ -1,6 +1,6 @@
 [package]
 name = "sept_derive_tests"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Victor Dods <victor.dods@gmail.com>"]
 edition = "2021"
 

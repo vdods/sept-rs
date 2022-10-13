@@ -107,7 +107,8 @@ pub struct UnrecognizedInput<'a>(&'a str);
 /// Note that these have to be in order that the matches will be tried in.
 /// Start with the quick/simple ones, then go to the slow/complex ones.  It's important
 /// that try_scanning_decimal_point_literal happens before try_scanning_integer_literal.
-#[derive(Clone, Debug, derive_more::From, PartialEq)]
+#[derive(Clone, Debug, enum_kinds::EnumKind, derive_more::From, PartialEq)]
+#[enum_kind(TokenKind, derive(enum_map::Enum))]
 pub enum Token<'a> {
     EndOfInput,
     OpenParen,
@@ -120,48 +121,6 @@ pub enum Token<'a> {
     AsciiStringLiteral(AsciiStringLiteral<'a>),
     UnrecognizedInput(UnrecognizedInput<'a>),
 }
-
-// // TODO: Derive these
-// impl<'a> From<Whitespace<'a>> for Token<'a> {
-//     fn from(whitespace: Whitespace<'a>) -> Self {
-//         Token::Whitespace(whitespace)
-//     }
-// }
-//
-// // TODO: Derive these
-// impl<'a> From<CIdentifier<'a>> for Token<'a> {
-//     fn from(c_identifier: CIdentifier<'a>) -> Self {
-//         Token::CIdentifier(c_identifier)
-//     }
-// }
-//
-// // TODO: Derive these
-// impl<'a> From<DecimalPointLiteral<'a>> for Token<'a> {
-//     fn from(decimal_point_literal: DecimalPointLiteral<'a>) -> Self {
-//         Token::DecimalPointLiteral(decimal_point_literal)
-//     }
-// }
-//
-// // TODO: Derive these
-// impl<'a> From<IntegerLiteral<'a>> for Token<'a> {
-//     fn from(integer_literal: IntegerLiteral<'a>) -> Self {
-//         Token::IntegerLiteral(integer_literal)
-//     }
-// }
-//
-// // TODO: Derive these
-// impl<'a> From<AsciiStringLiteral<'a>> for Token<'a> {
-//     fn from(ascii_string_literal: AsciiStringLiteral<'a>) -> Self {
-//         Token::AsciiStringLiteral(ascii_string_literal)
-//     }
-// }
-//
-// // TODO: Derive these
-// impl<'a> From<UnrecognizedInput<'a>> for Token<'a> {
-//     fn from(unrecognized_input: UnrecognizedInput<'a>) -> Self {
-//         Token::UnrecognizedInput(unrecognized_input)
-//     }
-// }
 
 impl<'a> Token<'a> {
     pub fn new(token_kind: TokenKind, input: &'a str) -> Self {
@@ -179,39 +138,7 @@ impl<'a> Token<'a> {
         }
     }
     pub fn kind(&self) -> TokenKind {
-        TokenKind::from(self)
-    }
-}
-
-// TODO: Derive this somehow -- use enum_kind
-#[derive(Clone, Copy, Debug, enum_map::Enum, PartialEq)]
-pub enum TokenKind {
-    EndOfInput,
-    OpenParen,
-    CloseParen,
-    Comma,
-    Whitespace,
-    CIdentifier,
-    DecimalPointLiteral,
-    IntegerLiteral,
-    AsciiStringLiteral,
-    UnrecognizedInput,
-}
-
-impl<'a> From<&Token<'a>> for TokenKind {
-    fn from(token: &Token<'a>) -> Self {
-        match token {
-            Token::EndOfInput => TokenKind::EndOfInput,
-            Token::OpenParen => TokenKind::OpenParen,
-            Token::CloseParen => TokenKind::CloseParen,
-            Token::Comma => TokenKind::Comma,
-            Token::Whitespace(_) => TokenKind::Whitespace,
-            Token::CIdentifier(_) => TokenKind::CIdentifier,
-            Token::DecimalPointLiteral(_) => TokenKind::DecimalPointLiteral,
-            Token::IntegerLiteral(_) => TokenKind::IntegerLiteral,
-            Token::AsciiStringLiteral(_) => TokenKind::AsciiStringLiteral,
-            Token::UnrecognizedInput(_) => TokenKind::UnrecognizedInput,
-        }
+        self.into()
     }
 }
 

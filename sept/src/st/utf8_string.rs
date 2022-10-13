@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -43,8 +43,8 @@ impl NonParametricTermTrait for Utf8String {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Utf8String
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Utf8String
     }
 }
 

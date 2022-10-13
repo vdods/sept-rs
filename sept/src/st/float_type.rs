@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, st::{self, NonParametricTermTrait, Stringify, Type}};
+use crate::{dy::{self, NonParametricTermCode}, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -40,8 +40,8 @@ impl NonParametricTermTrait for Float32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Float32Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Float32Type
     }
 }
 
@@ -52,8 +52,8 @@ impl NonParametricTermTrait for Float64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Float64Type
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Float64Type
     }
 }
 

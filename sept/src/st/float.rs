@@ -1,4 +1,4 @@
-use crate::{dy::{self, DynNPTerm}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 /// This represents the Float32 type itself.
@@ -80,8 +80,8 @@ impl NonParametricTermTrait for Float32 {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Float32
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Float32
     }
 }
 
@@ -92,8 +92,8 @@ impl NonParametricTermTrait for Float64 {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_dyn_npterm(&self) -> DynNPTerm {
-        DynNPTerm::Float64
+    fn as_non_parametric_term_code() -> NonParametricTermCode {
+        NonParametricTermCode::Float64
     }
 }
 

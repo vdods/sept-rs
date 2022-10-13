@@ -348,6 +348,7 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{make_expr_sequence, make_terminal, make_tuple_expr};
 
     /// This will run once at load time (i.e. presumably before main function is called).
     #[ctor::ctor]
@@ -355,7 +356,7 @@ mod tests {
         env_logger::try_init().unwrap();
     }
 
-    fn test_parse_expr_sequence_case(input: &str) {
+    fn test_parse_expr_sequence_case<'a>(input: &str, expected_expr_sequence: &ExprSequence<'a>) {
         log::debug!("input: {:?}", input);
         let token_v = scanner::scan(input).expect("test");
         log::debug!("token_v ({} elements): {:?}", token_v.len(), token_v);
@@ -363,6 +364,7 @@ mod tests {
         log::debug!("expr_sequence:\n{:#?}", expr_sequence);
         log::debug!("parse_stats: {:?}", parse_stats);
         assert_eq!(parse_stats.scanner_token_count, token_v.len());
+        assert_eq!(expr_sequence, *expected_expr_sequence);
     }
 
     #[test]
@@ -372,14 +374,108 @@ mod tests {
         dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
         dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("weewoo", true.into()).expect("test");
 
-        test_parse_expr_sequence_case("Tuple");
-        test_parse_expr_sequence_case("123");
-        test_parse_expr_sequence_case("Float64 34.002e10");
-        test_parse_expr_sequence_case("(Float64 34.002e10)");
-        test_parse_expr_sequence_case(" (Float64, 34.002e10) ");
-        test_parse_expr_sequence_case(" (Float64, 34.002e10 ()) ");
-        test_parse_expr_sequence_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
-        test_parse_expr_sequence_case("ArrayES(Float32, 4)(100.0, 8.9, 0.0, 1.0)");
-        test_parse_expr_sequence_case("GlobalSymRef(Utf8String(\"weewoo\"))");
+        test_parse_expr_sequence_case(
+            "Tuple",
+            &make_expr_sequence!(make_terminal!(CIdentifier, "Tuple")),
+        );
+        test_parse_expr_sequence_case(
+            "Tuple()",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "Tuple"),
+                make_tuple_expr!(),
+            ),
+        );
+        test_parse_expr_sequence_case(
+            "Tuple()()",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "Tuple"),
+                make_tuple_expr!(),
+                make_tuple_expr!(),
+            )
+        );
+        test_parse_expr_sequence_case(
+            "123",
+            &make_expr_sequence!(make_terminal!(IntegerLiteral, "123"))
+        );
+        test_parse_expr_sequence_case(
+            "Float64 34.002e10",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "Float64"),
+                make_terminal!(DecimalPointLiteral, "34.002e10"),
+            ),
+        );
+        // Test various permutations of whitespace
+        for input in ["(Float64 34.002e10)", " (Float64 34.002e10) "] {
+            test_parse_expr_sequence_case(
+                input,
+                &make_expr_sequence!(
+                    make_tuple_expr!(
+                        make_expr_sequence!(
+                            make_terminal!(CIdentifier, "Float64"),
+                            make_terminal!(DecimalPointLiteral, "34.002e10"),
+                        ),
+                    ),
+                ),
+            );
+        }
+        test_parse_expr_sequence_case(
+            " (Float64, 34.002e10 ()) ",
+            &make_expr_sequence!(
+                make_tuple_expr!(
+                    make_expr_sequence!(make_terminal!(CIdentifier, "Float64")),
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "34.002e10"), make_tuple_expr!()),
+                ),
+            ),
+        );
+        test_parse_expr_sequence_case(
+            "Tuple(Sint8(123), Bool(true), Void, Utf8String)",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "Tuple"),
+                make_tuple_expr!(
+                    make_expr_sequence!(
+                        make_terminal!(CIdentifier, "Sint8"),
+                        make_tuple_expr!(make_expr_sequence!(make_terminal!(IntegerLiteral, "123"))),
+                    ),
+                    make_expr_sequence!(
+                        make_terminal!(CIdentifier, "Bool"),
+                        make_tuple_expr!(make_expr_sequence!(make_terminal!(CIdentifier, "true"))),
+                    ),
+                    make_expr_sequence!(make_terminal!(CIdentifier, "Void")),
+                    make_expr_sequence!(make_terminal!(CIdentifier, "Utf8String")),
+                ),
+            ),
+        );
+        test_parse_expr_sequence_case(
+            "ArrayES(Float32, 4)(100.0, 8.9, 0.0, 1.0)",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "ArrayES"),
+                make_tuple_expr!(
+                    make_expr_sequence!(make_terminal!(CIdentifier, "Float32")),
+                    make_expr_sequence!(make_terminal!(IntegerLiteral, "4")),
+                ),
+                make_tuple_expr!(
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "100.0")),
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "8.9")),
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "0.0")),
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "1.0")),
+                ),
+            ),
+        );
+        test_parse_expr_sequence_case(
+            "GlobalSymRef(Utf8String(\"weewoo\"))",
+            &make_expr_sequence!(
+                make_terminal!(CIdentifier, "GlobalSymRef"),
+                make_tuple_expr!(
+                    make_expr_sequence!(
+                        make_terminal!(CIdentifier, "Utf8String"),
+                        make_tuple_expr!(
+                            make_expr_sequence!(
+                                make_terminal!(AsciiStringLiteral, "\"weewoo\""),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        );
     }
 }

@@ -40,7 +40,7 @@ pub struct Runtime {
     // TODO: See about collecting many of these into a common map, since many of them will have
     // identical indexes.
 
-    non_parametric_term_s: HashSet<TypeId>,
+    non_parametric_term_code_m: HashMap<TypeId, dy::NonParametricTermCode>,
     term_s: HashSet<TypeId>,
     type_s: HashSet<TypeId>,
     // TODO: This is silly, just map to &'static str
@@ -595,7 +595,7 @@ impl Runtime {
         }
     }
     pub fn register_non_parametric_term<T: st::NonParametricTermTrait + 'static>(&mut self) -> Result<()> {
-        self.non_parametric_term_s.insert(TypeId::of::<T>());
+        self.non_parametric_term_code_m.insert(TypeId::of::<T>(), T::as_non_parametric_term_code());
         let non_parametric_term_instantiate_fn = || -> dy::Value {
             dy::Value::from(T::instantiate())
         };
@@ -632,9 +632,9 @@ impl Runtime {
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             None => {
-                // panic!("no stringify fn found for {:?}", x.type_id()),
-                log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
-                format!("InstanceOf({})", self.label_of(x.type_id()))
+                panic!("no stringify fn found for {:?}", x.type_id());
+//                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
+//                 format!("InstanceOf({})", self.label_of(x.type_id()))
             }
         }
     }
@@ -803,7 +803,16 @@ impl Runtime {
         }
     }
     pub fn is_non_parametric_term(&self, x: &ValueGuts) -> bool {
-        self.non_parametric_term_s.contains(&x.type_id())
+        self.non_parametric_term_code_m.contains_key(&x.type_id())
+    }
+    /// Returns the NonParametricTermCode value for x if it's a NonParametricTerm, otherwise error.
+    pub fn non_parametric_term_code(&self, x: &ValueGuts) -> Result<dy::NonParametricTermCode> {
+        log::debug!("non_parametric_term_code; x.type_id(): {:?}, label_of(x): {}", x.type_id(), self.label_of(x.type_id()));
+        Ok(self.non_parametric_term_code_m
+            .get(&x.type_id())
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("this type is not registered as a NonParametricTerm"))?
+        )
     }
     pub fn is_transparent_ref_term(&self, x: &ValueGuts) -> bool {
         self.dereferenced_once_fn_m.contains_key(&x.type_id())
