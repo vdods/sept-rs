@@ -1,4 +1,4 @@
-use crate::{dy, parser::{Expr, ExprSequence, Terminal, TupleExpr}, Result, scanner};
+use crate::{dy, parser::{Expr, ExprSequence, Terminal, Syntactuple}, Result, scanner};
 
 #[derive(Debug)]
 pub struct ParseStats {
@@ -59,7 +59,7 @@ pub fn parse_expr_sequence<'a>(
 
             scanner::TokenKind::CloseParen |
             scanner::TokenKind::Comma => {
-                // These conditionally gracefully end ExprSequence; they're for TupleExpr to parse.
+                // These conditionally gracefully end ExprSequence; they're for Syntactuple to parse.
                 if expr_sequence_end == ExprSequenceEnd::Unrestricted {
                     return Ok((ExprSequence::from(expr_v), ParseStats { scanner_token_count }));
                 } else {
@@ -69,9 +69,9 @@ pub fn parse_expr_sequence<'a>(
             }
 
             scanner::TokenKind::OpenParen => {
-                let (tuple_expr, parse_stats) = parse_tuple_expr(&token_v[scanner_token_count..])?;
+                let (syntactuple, parse_stats) = parse_syntactuple(&token_v[scanner_token_count..])?;
                 assert_eq!(token_v[scanner_token_count + parse_stats.scanner_token_count - 1].kind(), scanner::TokenKind::CloseParen);
-                expr_v.push(tuple_expr.into());
+                expr_v.push(syntactuple.into());
                 scanner_token_count += parse_stats.scanner_token_count;
             }
 
@@ -96,8 +96,8 @@ pub fn parse_expr_sequence<'a>(
     }
 }
 
-pub fn parse_tuple_expr<'a>(token_v: &[scanner::Token<'a>]) -> Result<(TupleExpr<'a>, ParseStats)> {
-    log::trace!("parse_tuple_expr; token_v ({} elements): {:?}", token_v.len(), token_v);
+pub fn parse_syntactuple<'a>(token_v: &[scanner::Token<'a>]) -> Result<(Syntactuple<'a>, ParseStats)> {
+    log::trace!("parse_syntactuple; token_v ({} elements): {:?}", token_v.len(), token_v);
     anyhow::ensure!(!token_v.len() >= 2, "token_v is too short (expected at least 2 elements, got {})", token_v.len());
 
     assert_eq!(token_v[0].kind(), scanner::TokenKind::OpenParen);
@@ -106,7 +106,7 @@ pub fn parse_tuple_expr<'a>(token_v: &[scanner::Token<'a>]) -> Result<(TupleExpr
     let mut expr_v: Vec<Expr<'a>> = Vec::new();
     loop {
         let next_token = &token_v[scanner_token_count];
-        log::trace!("    parse_tuple_expr; scanner_token_count: {}, next_token: {:?}", scanner_token_count, next_token);
+        log::trace!("    parse_syntactuple; scanner_token_count: {}, next_token: {:?}", scanner_token_count, next_token);
         match next_token.kind() {
             scanner::TokenKind::EndOfInput => {
                 // TODO: More context, line number, etc.
@@ -114,10 +114,10 @@ pub fn parse_tuple_expr<'a>(token_v: &[scanner::Token<'a>]) -> Result<(TupleExpr
             }
 
             scanner::TokenKind::CloseParen => {
-                // This gracefully ends TupleExpr.
+                // This gracefully ends Syntactuple.
                 // Consume the CloseParam.
                 scanner_token_count += 1;
-                return Ok((TupleExpr::from(expr_v), ParseStats { scanner_token_count }))
+                return Ok((Syntactuple::from(expr_v), ParseStats { scanner_token_count }))
             }
 
             scanner::TokenKind::Comma => {
@@ -211,14 +211,14 @@ fn parse_value_from_expr<'a>(expr: &Expr<'a>) -> Result<dy::Value> {
     let value = match expr {
         Expr::Terminal(terminal) => parse_value_from_terminal(terminal)?,
         Expr::ExprSequence(expr_sequence) => parse_value_from_expr_sequence(expr_sequence)?,
-        Expr::TupleExpr(_tuple_expr) => { anyhow::bail!("parse error: can't have a raw syntactical tuple; must construct it by prefixing the raw syntactical tuple with `Tuple` (this is just a choice to be totally formal about this parser in order to keep it as simple as possible, at a small cost of usability)"); }
+        Expr::Syntactuple(_syntactuple) => { anyhow::bail!("parse error: can't have a raw syntactical tuple; must construct it by prefixing the raw syntactical tuple with `Tuple` (this is just a choice to be totally formal about this parser in order to keep it as simple as possible, at a small cost of usability)"); }
     };
     Ok(value)
 }
 
-fn parse_tuple_term_from_tuple_expr<'a>(tuple_expr: &TupleExpr<'a>) -> Result<dy::TupleTerm> {
+fn parse_tuple_term_from_syntactuple<'a>(syntactuple: &Syntactuple<'a>) -> Result<dy::TupleTerm> {
     let element_v =
-        tuple_expr
+        syntactuple
             .as_ref()
             .iter()
             .map(|expr| parse_value_from_expr(expr))
@@ -227,21 +227,21 @@ fn parse_tuple_term_from_tuple_expr<'a>(tuple_expr: &TupleExpr<'a>) -> Result<dy
 }
 
 fn parse_tuple_term_from_expr<'a>(expr: &Expr<'a>) -> Result<dy::TupleTerm> {
-    let tuple_expr =
-        expr.as_tuple_expr()
+    let syntactuple =
+        expr.as_syntactuple()
             .ok_or_else(
-                || anyhow::anyhow!("parse error: expected TupleExpr, but got {:?}", expr.kind())
+                || anyhow::anyhow!("parse error: expected Syntactuple, but got {:?}", expr.kind())
             )?;
-    Ok(parse_tuple_term_from_tuple_expr(tuple_expr)?)
+    Ok(parse_tuple_term_from_syntactuple(syntactuple)?)
 }
 
 // fn parse_value_from_expr_sequence<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Value> {
 fn parse_value_from_expr_sequence<'a>(expr_sequence: &ExprSequence<'a>) -> Result<dy::Value> {
-    // The expr_sequence must be a Expr::Terminal followed by 0 or more instances of Expr::TupleExpr.
+    // The expr_sequence must be a Expr::Terminal followed by 0 or more instances of Expr::Syntactuple.
     // TODO: Figure out if an empty sequence has a canonical meaning as a dy::Value.
 //     anyhow::ensure!(expr_v.len() > 0, "parse error: empty input");
     anyhow::ensure!(expr_sequence.len() > 0, "parse error: empty input");
-    // Inductive definition.  The expr sequence must be [terminal, tuple_expr_1, ..., tuple_expr_n]
+    // Inductive definition.  The expr sequence must be [terminal, syntactuple_1, ..., syntactuple_n]
     // for some n (which could be 0).  First, extract the terminal and parse it.  This is the "head
     // value".  If n == 0, then this value is returned directly.  If n > 0, then the head value is
     // the constructor and the next tuple is fed in as its parameters to construct a value into
@@ -251,7 +251,7 @@ fn parse_value_from_expr_sequence<'a>(expr_sequence: &ExprSequence<'a>) -> Resul
         Expr::Terminal(terminal) => parse_value_from_terminal(terminal)?,
         Expr::ExprSequence(_) => { panic!("programmer error; it should not be possible to compose ExprSequence directly within ExprSequence"); }
         // TODO: Figure out how to notate the location of the error in the input.
-        Expr::TupleExpr(_tuple_expr) => { anyhow::bail!("parse error: expected expr sequence to start with a terminal, but found a tuple expr"); }
+        Expr::Syntactuple(_syntactuple) => { anyhow::bail!("parse error: expected expr sequence to start with a terminal, but found a tuple expr"); }
     };
     log::debug!("head_value: {:?}", head_value);
     let mut value = head_value;
@@ -288,14 +288,13 @@ pub fn parse_deconstruction(input: &str) -> Result<dy::Deconstruction> {
 
 fn parse_deconstruction_from_tokens<'a>(token_v: &[scanner::Token<'a>]) -> Result<dy::Deconstruction> {
     let (expr_sequence, _parse_stats) = parse_expr_sequence(&token_v, ExprSequenceEnd::OnlyOnEndOfInput)?;
-    // We expect a Terminal, then at least 0 TupleExpr-s.
+    // We expect a Terminal, then at least 0 Syntactuple-s.
     let expr_v: Vec<_> = expr_sequence.into();
     anyhow::ensure!(!expr_v.is_empty(), "no expressions");
     Ok(parse_deconstruction_impl(&expr_v)?)
 }
 
 fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstruction> {
-//     use std::ops::Deref;
     match expr_v.len() {
         0 => { anyhow::bail!("empty expr_v"); }
         1 => {
@@ -308,8 +307,8 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
                         )?
                     ))
                 }
-                Expr::TupleExpr(tuple_expr) => {
-                    anyhow::bail!("expected CIdentifier but got {:?}", tuple_expr);
+                Expr::Syntactuple(syntactuple) => {
+                    anyhow::bail!("expected CIdentifier but got {:?}", syntactuple);
                 }
                 Expr::ExprSequence(expr_sequence) => {
                     Ok(parse_deconstruction_impl(&expr_sequence.as_ref()[..])?)
@@ -319,18 +318,18 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
         _ => {
             // Inductive case.  Last term is the parameters, all but last form the constructor.
             let parameter_dv = match expr_v.last().unwrap() {
-                Expr::TupleExpr(tuple_expr) => {
-                    let mut parameter_dv = Vec::with_capacity(tuple_expr.as_ref().len());
-                    for i in 0..tuple_expr.as_ref().len() {
-                        parameter_dv.push(parse_deconstruction_impl(&tuple_expr.as_ref()[i..i+1])?);
+                Expr::Syntactuple(syntactuple) => {
+                    let mut parameter_dv = Vec::with_capacity(syntactuple.as_ref().len());
+                    for i in 0..syntactuple.as_ref().len() {
+                        parameter_dv.push(parse_deconstruction_impl(&syntactuple.as_ref()[i..i+1])?);
                     }
                     parameter_dv
                 }
                 Expr::Terminal(terminal) => {
-                    anyhow::bail!("expected TupleExpr but got {:?}", terminal);
+                    anyhow::bail!("expected Syntactuple but got {:?}", terminal);
                 }
                 Expr::ExprSequence(expr_sequence) => {
-                    anyhow::bail!("expected TupleExpr but got {:?}", expr_sequence);
+                    anyhow::bail!("expected Syntactuple but got {:?}", expr_sequence);
                 }
             };
             Ok(dy::Deconstruction::from(
@@ -348,7 +347,7 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{make_expr_sequence, make_terminal, make_tuple_expr};
+    use crate::{make_expr_sequence, make_terminal, make_syntactuple};
 
     /// This will run once at load time (i.e. presumably before main function is called).
     #[ctor::ctor]
@@ -382,15 +381,15 @@ mod tests {
             "Tuple()",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "Tuple"),
-                make_tuple_expr!(),
+                make_syntactuple!(),
             ),
         );
         test_parse_expr_sequence_case(
             "Tuple()()",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "Tuple"),
-                make_tuple_expr!(),
-                make_tuple_expr!(),
+                make_syntactuple!(),
+                make_syntactuple!(),
             )
         );
         test_parse_expr_sequence_case(
@@ -409,7 +408,7 @@ mod tests {
             test_parse_expr_sequence_case(
                 input,
                 &make_expr_sequence!(
-                    make_tuple_expr!(
+                    make_syntactuple!(
                         make_expr_sequence!(
                             make_terminal!(CIdentifier, "Float64"),
                             make_terminal!(DecimalPointLiteral, "34.002e10"),
@@ -421,9 +420,9 @@ mod tests {
         test_parse_expr_sequence_case(
             " (Float64, 34.002e10 ()) ",
             &make_expr_sequence!(
-                make_tuple_expr!(
+                make_syntactuple!(
                     make_expr_sequence!(make_terminal!(CIdentifier, "Float64")),
-                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "34.002e10"), make_tuple_expr!()),
+                    make_expr_sequence!(make_terminal!(DecimalPointLiteral, "34.002e10"), make_syntactuple!()),
                 ),
             ),
         );
@@ -431,14 +430,14 @@ mod tests {
             "Tuple(Sint8(123), Bool(true), Void, Utf8String)",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "Tuple"),
-                make_tuple_expr!(
+                make_syntactuple!(
                     make_expr_sequence!(
                         make_terminal!(CIdentifier, "Sint8"),
-                        make_tuple_expr!(make_expr_sequence!(make_terminal!(IntegerLiteral, "123"))),
+                        make_syntactuple!(make_expr_sequence!(make_terminal!(IntegerLiteral, "123"))),
                     ),
                     make_expr_sequence!(
                         make_terminal!(CIdentifier, "Bool"),
-                        make_tuple_expr!(make_expr_sequence!(make_terminal!(CIdentifier, "true"))),
+                        make_syntactuple!(make_expr_sequence!(make_terminal!(CIdentifier, "true"))),
                     ),
                     make_expr_sequence!(make_terminal!(CIdentifier, "Void")),
                     make_expr_sequence!(make_terminal!(CIdentifier, "Utf8String")),
@@ -449,11 +448,11 @@ mod tests {
             "ArrayES(Float32, 4)(100.0, 8.9, 0.0, 1.0)",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "ArrayES"),
-                make_tuple_expr!(
+                make_syntactuple!(
                     make_expr_sequence!(make_terminal!(CIdentifier, "Float32")),
                     make_expr_sequence!(make_terminal!(IntegerLiteral, "4")),
                 ),
-                make_tuple_expr!(
+                make_syntactuple!(
                     make_expr_sequence!(make_terminal!(DecimalPointLiteral, "100.0")),
                     make_expr_sequence!(make_terminal!(DecimalPointLiteral, "8.9")),
                     make_expr_sequence!(make_terminal!(DecimalPointLiteral, "0.0")),
@@ -465,10 +464,10 @@ mod tests {
             "GlobalSymRef(Utf8String(\"weewoo\"))",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "GlobalSymRef"),
-                make_tuple_expr!(
+                make_syntactuple!(
                     make_expr_sequence!(
                         make_terminal!(CIdentifier, "Utf8String"),
-                        make_tuple_expr!(
+                        make_syntactuple!(
                             make_expr_sequence!(
                                 make_terminal!(AsciiStringLiteral, "\"weewoo\""),
                             ),
