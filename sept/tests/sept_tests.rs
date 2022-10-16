@@ -1112,21 +1112,10 @@ fn test_parse_deconstruction() {
 // TEMP TESTING
 //
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
-
-impl st::NonParametricTermTrait for BinOp {
-    fn identifier() -> &'static str {
-        "BinOp"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
 
 impl st::Inhabits<Type> for BinOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -1134,21 +1123,10 @@ impl st::Inhabits<Type> for BinOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
-
-impl st::NonParametricTermTrait for UnOp {
-    fn identifier() -> &'static str {
-        "UnOp"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
 
 impl st::Inhabits<Type> for UnOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -1165,101 +1143,35 @@ trait BinOpTermTrait {
 
 trait UnOpTermTrait {}
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Add;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Sub;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Mul;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Div;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Pow;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
-
-impl st::NonParametricTermTrait for Add {
-    fn identifier() -> &'static str {
-        "Add"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
-
-impl st::NonParametricTermTrait for Sub {
-    fn identifier() -> &'static str {
-        "Sub"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
-
-impl st::NonParametricTermTrait for Mul {
-    fn identifier() -> &'static str {
-        "Mul"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
-
-impl st::NonParametricTermTrait for Div {
-    fn identifier() -> &'static str {
-        "Div"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
-
-impl st::NonParametricTermTrait for Pow {
-    fn identifier() -> &'static str {
-        "Pow"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
-
-impl st::NonParametricTermTrait for Neg {
-    fn identifier() -> &'static str {
-        "Neg"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
 
 impl BinOpTermTrait for Add {
     fn is_commutative() -> bool {
@@ -1388,21 +1300,10 @@ impl Inhabits<UnOp> for Neg {
 // }
 
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
-
-impl st::NonParametricTermTrait for Expr {
-    fn identifier() -> &'static str {
-        "Expr"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Undefined
-    }
-}
 
 impl st::Inhabits<Type> for Expr {
     fn inhabits(&self, _rhs: &Type) -> bool {

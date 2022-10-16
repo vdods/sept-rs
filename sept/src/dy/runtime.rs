@@ -617,11 +617,11 @@ impl Runtime {
         }
     }
     pub fn register_non_parametric_term<T: st::NonParametricTermTrait + 'static>(&mut self) -> Result<()> {
-        self.non_parametric_term_code_m.insert(TypeId::of::<T>(), T::as_non_parametric_term_code());
+        self.non_parametric_term_code_m.insert(TypeId::of::<T>(), T::NON_PARAMETRIC_TERM_CODE);
         let non_parametric_term_instantiate_fn = || -> dy::Value {
             dy::Value::from(T::instantiate())
         };
-        Ok(self.register_non_parametric_term_instantiate_fn(T::identifier(), non_parametric_term_instantiate_fn)?)
+        Ok(self.register_non_parametric_term_instantiate_fn(T::IDENTIFIER, non_parametric_term_instantiate_fn)?)
     }
 
     pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&'a self) -> Option<&'a BinaryPredicate> {
