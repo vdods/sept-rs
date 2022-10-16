@@ -17,7 +17,9 @@ mod int_term;
 mod int_type;
 mod local_sym_ref;
 mod local_sym_ref_type;
+mod non_parametric_term_code;
 mod non_parametric_term_trait;
+mod serializable;
 mod stringify_trait;
 mod r#struct;
 mod struct_type;
@@ -55,7 +57,9 @@ pub use crate::st::{
     int_type::{Sint8Type, Sint16Type, Sint32Type, Sint64Type, Uint8Type, Uint16Type, Uint32Type, Uint64Type},
     local_sym_ref::LocalSymRef,
     local_sym_ref_type::LocalSymRefType,
+    non_parametric_term_code::NonParametricTermCode,
     non_parametric_term_trait::NonParametricTermTrait,
+    serializable::Serializable,
     stringify_trait::Stringify,
     r#struct::Struct,
     struct_type::StructType,

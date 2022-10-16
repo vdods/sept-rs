@@ -1116,9 +1116,15 @@ fn test_parse_deconstruction() {
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
 
-impl dy::Deconstruct for BinOp {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for BinOp {
+    fn identifier() -> &'static str {
+        "BinOp"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::VoidType
     }
 }
 
@@ -1132,9 +1138,15 @@ impl st::Inhabits<Type> for BinOp {
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
 
-impl dy::Deconstruct for UnOp {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for UnOp {
+    fn identifier() -> &'static str {
+        "UnOp"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
@@ -1177,39 +1189,75 @@ pub struct Pow;
 #[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
 
-impl dy::Deconstruct for Add {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Add {
+    fn identifier() -> &'static str {
+        "Add"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
-impl dy::Deconstruct for Sub {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Sub {
+    fn identifier() -> &'static str {
+        "Sub"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
-impl dy::Deconstruct for Mul {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Mul {
+    fn identifier() -> &'static str {
+        "Mul"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
-impl dy::Deconstruct for Div {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Div {
+    fn identifier() -> &'static str {
+        "Div"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
-impl dy::Deconstruct for Pow {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Pow {
+    fn identifier() -> &'static str {
+        "Pow"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
-impl dy::Deconstruct for Neg {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Neg {
+    fn identifier() -> &'static str {
+        "Neg"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 
@@ -1344,9 +1392,15 @@ impl Inhabits<UnOp> for Neg {
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
 
-impl dy::Deconstruct for Expr {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
+impl st::NonParametricTermTrait for Expr {
+    fn identifier() -> &'static str {
+        "Expr"
+    }
+    fn instantiate() -> Self {
+        Self{}
+    }
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Undefined
     }
 }
 

@@ -229,7 +229,7 @@
         -   Destructure (i.e. produce a concrete term from a term of a given type).
         -   Render (to text) -- this could/would be derivable from an implementation of Destructure
         -   Parse (from text) -- this could/would be derivable from an implementation of Restructure
-        -   Serialize (from binary data) -- this could/would be derivable from an implementation of Destructure
+        -   Serializable (from binary data) -- this could/would be derivable from an implementation of Destructure
         -   Deserialize (to binary data) -- this could/would be derivable from an implementation of Restructure
     -   Notes on Deconstruct
         -   There are two interesting kinds of deconstruction

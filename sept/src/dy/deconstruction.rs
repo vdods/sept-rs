@@ -8,7 +8,10 @@ use crate::{dy, Result};
 #[derive(Clone, Debug, enum_kinds::EnumKind, PartialEq)]
 #[enum_kind(DeconstructionKind)]
 pub enum Deconstruction {
+    /// First base case -- non-parametric terms
     NonParametric(dy::NonParametricDeconstruction),
+    /// Second base case -- parametric terms from a finite set of types defined to be terminals.
+    Terminal(dy::TerminalDeconstruction),
     /// Box is necessary because Deconstruction and ParametricDeconstruction are mutually recursive data structures.
     Parametric(Box<dy::ParametricDeconstruction>),
 }
@@ -16,6 +19,12 @@ pub enum Deconstruction {
 impl From<dy::NonParametricDeconstruction> for Deconstruction {
     fn from(non_parametric_deconstruction: dy::NonParametricDeconstruction) -> Self {
         Self::NonParametric(non_parametric_deconstruction)
+    }
+}
+
+impl From<dy::TerminalDeconstruction> for Deconstruction {
+    fn from(terminal_deconstruction: dy::TerminalDeconstruction) -> Self {
+        Self::Terminal(terminal_deconstruction)
     }
 }
 
@@ -32,18 +41,30 @@ impl Deconstruction {
     pub fn is_non_parametric(&self) -> bool {
         match self {
             Deconstruction::NonParametric(_) => true,
-            _ => false
+            _ => false,
+        }
+    }
+    pub fn is_terminal(&self) -> bool {
+        match self {
+            Deconstruction::Terminal(_) => true,
+            _ => false,
         }
     }
     pub fn is_parametric(&self) -> bool {
         match self {
             Deconstruction::Parametric(_) => true,
-            _ => false
+            _ => false,
         }
     }
     pub fn into_non_parametric(self) -> Option<dy::NonParametricDeconstruction> {
         match self {
             Deconstruction::NonParametric(non_parametric_deconstruction) => Some(non_parametric_deconstruction),
+            _ => None,
+        }
+    }
+    pub fn into_terminal(self) -> Option<dy::TerminalDeconstruction> {
+        match self {
+            Deconstruction::Terminal(terminal_deconstruction) => Some(terminal_deconstruction),
             _ => None,
         }
     }
@@ -58,6 +79,7 @@ impl Deconstruction {
     pub fn reconstruct(self) -> Result<dy::Value> {
         match self {
             dy::Deconstruction::NonParametric(non_parametric_deconstruction) => Ok(non_parametric_deconstruction.reconstruct()?),
+            dy::Deconstruction::Terminal(terminal_deconstruction) => Ok(terminal_deconstruction.reconstruct()?),
             dy::Deconstruction::Parametric(parametric_deconstruction) => Ok(parametric_deconstruction.reconstruct()?),
         }
     }

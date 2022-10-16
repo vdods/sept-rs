@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, ArrayType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, Result, st::{self, ArrayType, Inhabits, Stringify}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -14,12 +14,6 @@ impl dy::Constructor for Array {
     }
 }
 
-impl dy::Deconstruct for Array {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl Inhabits<ArrayType> for Array {
     fn inhabits(&self, _: &ArrayType) -> bool {
         true
@@ -32,15 +26,15 @@ impl st::Inhabits<st::Type> for Array {
     }
 }
 
-impl NonParametricTermTrait for Array {
+impl st::NonParametricTermTrait for Array {
     fn identifier() -> &'static str {
         "Array"
     }
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Array
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Array
     }
 }
 

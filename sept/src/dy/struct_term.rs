@@ -95,13 +95,26 @@ impl st::Inhabits<st::Type> for StructTerm {
     }
 }
 
+impl st::Serializable for StructTerm {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
+        // like where a StructTerm smaller than 8 bytes is encoded in exactly 8 bytes.
+        let mut bytes_written = (self.field_decl_v.len() as u64).serialize(writer)?;
+        for (field_name, field_type) in self.field_decl_v.iter() {
+            bytes_written += field_name.serialize(writer)?;
+            bytes_written += field_type.serialize(writer)?;
+        }
+        Ok(bytes_written)
+    }
+}
+
 impl Stringify for StructTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Struct(");
-        for (i, (key, value)) in self.field_decl_v.iter().enumerate() {
+        for (i, (field_name, field_type)) in self.field_decl_v.iter().enumerate() {
             // TODO: Probably use write! here, because it can write directly to a String apparently?
-            s.push_str(&format!("{:?}: {}", key, value));
+            s.push_str(&format!("{:?}: {}", field_name, field_type));
             if i+1 < self.field_decl_v.len() {
                 s.push_str(", ");
             }

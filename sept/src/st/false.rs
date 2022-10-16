@@ -4,12 +4,6 @@ use crate::{dy, st::{self, Bool, FalseType, Inhabits, Stringify, True}};
 #[st_term_trait(AbstractTypeType = "FalseType", is_parametric = "false", is_type = "false")]
 pub struct False;
 
-impl dy::Deconstruct for False {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl Inhabits<Bool> for False {
     fn inhabits(&self, _rhs: &Bool) -> bool {
         true
@@ -29,8 +23,8 @@ impl st::NonParametricTermTrait for False {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> dy::NonParametricTermCode {
-        dy::NonParametricTermCode::False
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::False
     }
 }
 

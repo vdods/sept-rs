@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 /// This represents the Float32 type itself.
@@ -37,18 +37,6 @@ impl dy::Constructor for Float64 {
     }
 }
 
-impl dy::Deconstruct for Float32 {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Float64 {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl Inhabits<st::Float32Type> for Float32 {
     fn inhabits(&self, _: &st::Float32Type) -> bool {
         true
@@ -80,8 +68,8 @@ impl NonParametricTermTrait for Float32 {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Float32
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Float32
     }
 }
 
@@ -92,8 +80,8 @@ impl NonParametricTermTrait for Float64 {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Float64
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Float64
     }
 }
 

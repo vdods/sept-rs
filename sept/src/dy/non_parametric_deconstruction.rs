@@ -2,6 +2,10 @@ use crate::{dy, Error, Result};
 
 /// A NonParametricDeconstruction represents the base case of the inductive structure that Deconstruction has.
 /// In particular, it represents the instantiation of a non-parametric term.
+// TODO: Consider that this could actually store NonParametricTermCode, and use runtime to instantiate
+// the actual NonParametricTerm again before construction.  If it doesn't store NonParametricTermCode,
+// then probably NonParametricDeconstruction should go away and TerminalDeconstruction should be used
+// instead.
 #[derive(derive_more::AsRef, Clone, Debug, derive_more::Into, PartialEq)]
 pub struct NonParametricDeconstruction(dy::Value);
 

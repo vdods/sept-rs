@@ -1,15 +1,9 @@
-use crate::{dy::{self, NonParametricTermCode}, st::{self, Inhabits, NonParametricTermTrait, Stringify, VoidType}};
+use crate::{dy, st::{self, Inhabits, NonParametricTermTrait, Stringify, VoidType}};
 
 /// This represents the Void term itself.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "false")]
 pub struct Void;
-
-impl dy::Deconstruct for Void {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
 
 impl Inhabits<VoidType> for Void {
     fn inhabits(&self, _: &VoidType) -> bool {
@@ -24,8 +18,8 @@ impl NonParametricTermTrait for Void {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Void
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Void
     }
 }
 

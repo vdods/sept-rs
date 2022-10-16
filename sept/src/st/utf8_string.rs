@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -15,12 +15,6 @@ impl dy::Constructor for Utf8String {
             Some(string) => Ok(std::mem::take(string)),
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Utf8String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
-    }
-}
-
-impl dy::Deconstruct for Utf8String {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -43,8 +37,8 @@ impl NonParametricTermTrait for Utf8String {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Utf8String
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Utf8String
     }
 }
 

@@ -1,11 +1,11 @@
-use crate::{dy, st::{self, Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
+use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
 
 impl dy::Deconstruct for bool {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Bool.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -51,6 +51,14 @@ impl PartialEq<True> for bool {
 impl PartialEq<False> for bool {
     fn eq(&self, _other: &False) -> bool {
         *self == false
+    }
+}
+
+impl st::Serializable for bool {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        // Represent as u8.
+        let n = if *self { 1u8 } else { 0u8 };
+        Ok(n.serialize(writer)?)
     }
 }
 

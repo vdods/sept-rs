@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, st::{self, NonParametricTermTrait, Stringify, Type}};
+use crate::{dy, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -8,18 +8,6 @@ pub struct Float32Type;
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Float64Type;
-
-impl dy::Deconstruct for Float32Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Float64Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
 
 impl st::Inhabits<Type> for Float32Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -40,8 +28,8 @@ impl NonParametricTermTrait for Float32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Float32Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Float32Type
     }
 }
 
@@ -52,8 +40,8 @@ impl NonParametricTermTrait for Float64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Float64Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Float64Type
     }
 }
 

@@ -27,9 +27,9 @@ impl dy::Deconstruct for TupleTerm {
 impl std::fmt::Display for TupleTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "Tuple(")?;
-        for (i, element) in self.0.iter().enumerate() {
+        for (i, element) in self.iter().enumerate() {
             write!(f, "{}", element)?;
-            if i+1 < self.0.len() {
+            if i+1 < self.len() {
                 write!(f, ", ")?;
             }
         }
@@ -102,12 +102,12 @@ impl Inhabits<Tuple> for TupleTerm {
 
 impl Inhabits<TupleTerm> for TupleTerm {
     fn inhabits(&self, rhs: &TupleTerm) -> bool {
-        if rhs.0.len() != self.0.len() {
+        if rhs.0.len() != self.len() {
             return false;
         }
         // TODO: Use std::iter::zip here when it's stable
-        for i in 0..self.0.len() {
-            if !self.0[i].inhabits(&rhs.0[i]) {
+        for i in 0..self.len() {
+            if !self[i].inhabits(&rhs.0[i]) {
                 return false;
             }
         }
@@ -118,7 +118,7 @@ impl Inhabits<TupleTerm> for TupleTerm {
 impl st::Inhabits<st::Type> for TupleTerm {
     /// A TupleTerm is a type only if each of its elements are types.
     fn inhabits(&self, t: &st::Type) -> bool {
-        for tuple_term_element in self.0.iter() {
+        for tuple_term_element in self.iter() {
             if !tuple_term_element.inhabits(t) {
                 return false;
             }
@@ -142,13 +142,25 @@ impl Inhabits<dy::StructTerm> for TupleTerm {
     }
 }
 
+impl st::Serializable for TupleTerm {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
+        // like where a tuple smaller than 8 bytes is encoded in exactly 8 bytes.
+        let mut bytes_written = (self.len() as u64).serialize(writer)?;
+        for element in self.iter() {
+            bytes_written += element.serialize(writer)?;
+        }
+        Ok(bytes_written)
+    }
+}
+
 impl Stringify for TupleTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Tuple(");
-        for (i, element) in self.0.iter().enumerate() {
+        for (i, element) in self.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.0.len() {
+            if i+1 < self.len() {
                 s.push_str(", ");
             }
         }
@@ -162,15 +174,15 @@ impl TermTrait for TupleTerm {
 
     /// A Tuple term is parametric if there is at least one parameter.
     fn is_parametric(&self) -> bool {
-        self.0.len() > 0
+        self.len() > 0
     }
     /// A Tuple term is a type if all of its elements are types.
     fn is_type(&self) -> bool {
-        self.0.iter().all(|element| element.is_type())
+        self.iter().all(|element| element.is_type())
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
         let mut type_element_v = Vec::new();
-        for self_element in self.0.iter() {
+        for self_element in self.iter() {
             type_element_v.push(self_element.abstract_type());
         }
         TupleTerm(type_element_v)

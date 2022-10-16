@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, TupleType}};
+use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, TupleType}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -12,12 +12,6 @@ impl dy::Constructor for Tuple {
         // because Tuple represents the collection of all TupleTerms, and there's no further
         // type checking.  Contrast with TupleTerm(...) which would type check its parameters.
         Ok(parameter_t)
-    }
-}
-
-impl dy::Deconstruct for Tuple {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -40,8 +34,8 @@ impl NonParametricTermTrait for Tuple {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Tuple
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Tuple
     }
 }
 

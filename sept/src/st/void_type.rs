@@ -4,12 +4,6 @@ use crate::{dy, st::{self, Stringify, Type}};
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct VoidType;
 
-impl dy::Deconstruct for VoidType {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl st::Inhabits<st::Type> for VoidType {
     fn inhabits(&self, _rhs: &st::Type) -> bool {
         true
@@ -23,8 +17,8 @@ impl st::NonParametricTermTrait for VoidType {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> dy::NonParametricTermCode {
-        dy::NonParametricTermCode::VoidType
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::VoidType
     }
 }
 

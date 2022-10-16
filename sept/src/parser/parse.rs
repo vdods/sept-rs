@@ -235,18 +235,15 @@ fn parse_tuple_term_from_expr<'a>(expr: &Expr<'a>) -> Result<dy::TupleTerm> {
     Ok(parse_tuple_term_from_syntactuple(syntactuple)?)
 }
 
-// fn parse_value_from_expr_sequence<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Value> {
 fn parse_value_from_expr_sequence<'a>(expr_sequence: &ExprSequence<'a>) -> Result<dy::Value> {
     // The expr_sequence must be a Expr::Terminal followed by 0 or more instances of Expr::Syntactuple.
     // TODO: Figure out if an empty sequence has a canonical meaning as a dy::Value.
-//     anyhow::ensure!(expr_v.len() > 0, "parse error: empty input");
     anyhow::ensure!(expr_sequence.len() > 0, "parse error: empty input");
     // Inductive definition.  The expr sequence must be [terminal, syntactuple_1, ..., syntactuple_n]
     // for some n (which could be 0).  First, extract the terminal and parse it.  This is the "head
     // value".  If n == 0, then this value is returned directly.  If n > 0, then the head value is
     // the constructor and the next tuple is fed in as its parameters to construct a value into
     // which the next tuple is fed in as its constructor parameters, etc.
-//     let head_value = match &expr_v[0] {
     let head_value = match &expr_sequence[0] {
         Expr::Terminal(terminal) => parse_value_from_terminal(terminal)?,
         Expr::ExprSequence(_) => { panic!("programmer error; it should not be possible to compose ExprSequence directly within ExprSequence"); }
@@ -268,7 +265,6 @@ fn parse_value_from_expr_sequence<'a>(expr_sequence: &ExprSequence<'a>) -> Resul
 fn parse_value_from_tokens<'a>(token_v: &[scanner::Token<'a>]) -> Result<dy::Value> {
     let (expr_sequence, _parse_stats) = parse_expr_sequence(token_v, ExprSequenceEnd::OnlyOnEndOfInput)?;
     log::debug!("parse_value_from_tokens\n\ttoken_v: {:#?}\n\texpr_sequence: {:#?}", token_v, expr_sequence);
-//     Ok(parse_value_from_expr_sequence(expr_sequence.as_slice().iter().collect::<Vec<_>>().as_slice())?)
     Ok(parse_value_from_expr_sequence(&expr_sequence)?)
 }
 
@@ -301,11 +297,10 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
             // Base case
             match expr_v.first().unwrap() {
                 Expr::Terminal(terminal) => {
-                    Ok(dy::Deconstruction::NonParametric(
-                        dy::NonParametricDeconstruction::new(
-                            parse_value_from_terminal(terminal)?
-                        )?
-                    ))
+                    use dy::Deconstruct;
+                    // We deconstruct the value so that it ends up as NonParametricTermDeconstruction
+                    // or TerminalDeconstruction as appropriate.
+                    Ok(parse_value_from_terminal(terminal)?.deconstruct())
                 }
                 Expr::Syntactuple(syntactuple) => {
                     anyhow::bail!("expected CIdentifier but got {:?}", syntactuple);

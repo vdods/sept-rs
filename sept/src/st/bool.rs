@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, BoolType, NonParametricTermTrait, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, BoolType, NonParametricTermTrait, Inhabits, Stringify}};
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -15,12 +15,6 @@ impl dy::Constructor for Bool {
             Some(string) => Ok(std::mem::take(string)),
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Bool, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
-    }
-}
-
-impl dy::Deconstruct for Bool {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
     }
 }
 
@@ -43,8 +37,8 @@ impl NonParametricTermTrait for Bool {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Bool
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Bool
     }
 }
 

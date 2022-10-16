@@ -111,6 +111,12 @@ impl PartialEq<Value> for Value {
     }
 }
 
+impl st::Serializable for Value {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        Ok(RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
+    }
+}
+
 impl Stringify for Value {
     fn stringify(&self) -> String {
         RUNTIME_LA.read().unwrap().stringify(self.as_ref())

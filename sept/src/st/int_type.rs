@@ -1,7 +1,4 @@
-use crate::{
-    dy::{self, NonParametricTermCode},
-    st::{self, NonParametricTermTrait, Stringify, Type},
-};
+use crate::{dy, st::{self, NonParametricTermTrait, Stringify, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -35,54 +32,6 @@ pub struct Uint32Type;
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Uint64Type;
-
-impl dy::Deconstruct for Sint8Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Sint16Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Sint32Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Sint64Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Uint8Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Uint16Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Uint32Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
-impl dy::Deconstruct for Uint64Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
 
 impl st::Inhabits<Type> for Sint8Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -139,8 +88,8 @@ impl NonParametricTermTrait for Sint8Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Sint8Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Sint8Type
     }
 }
 
@@ -151,8 +100,8 @@ impl NonParametricTermTrait for Sint16Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Sint16Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Sint16Type
     }
 }
 
@@ -163,8 +112,8 @@ impl NonParametricTermTrait for Sint32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Sint32Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Sint32Type
     }
 }
 
@@ -175,8 +124,8 @@ impl NonParametricTermTrait for Sint64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Sint64Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Sint64Type
     }
 }
 
@@ -187,8 +136,8 @@ impl NonParametricTermTrait for Uint8Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Uint8Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Uint8Type
     }
 }
 
@@ -199,8 +148,8 @@ impl NonParametricTermTrait for Uint16Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Uint16Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Uint16Type
     }
 }
 
@@ -211,8 +160,8 @@ impl NonParametricTermTrait for Uint32Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Uint32Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Uint32Type
     }
 }
 
@@ -223,8 +172,8 @@ impl NonParametricTermTrait for Uint64Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Uint64Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Uint64Type
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
 
 /// This represents the NonParametricType `Type` itself, not the trait TypeTrait.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -6,12 +6,6 @@ use crate::{dy::{self, NonParametricTermCode}, st::{self, Inhabits, NonParametri
 /// but let's go with it for now!  Really, it should be FormalTypeOf(Type).
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Type;
-
-impl dy::Deconstruct for Type {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
 
 impl Inhabits<Type> for Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
@@ -26,8 +20,8 @@ impl NonParametricTermTrait for Type {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Type
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Type
     }
 }
 

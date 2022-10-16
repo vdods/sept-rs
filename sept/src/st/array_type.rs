@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, st::{self, NonParametricTermTrait, Stringify, Type}};
+use crate::{dy, st::{self, Stringify, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -6,27 +6,21 @@ use std::fmt::Debug;
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct ArrayType;
 
-impl dy::Deconstruct for ArrayType {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl st::Inhabits<st::Type> for ArrayType {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl NonParametricTermTrait for ArrayType {
+impl st::NonParametricTermTrait for ArrayType {
     fn identifier() -> &'static str {
         "ArrayType"
     }
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::ArrayType
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::ArrayType
     }
 }
 

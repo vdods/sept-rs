@@ -69,6 +69,14 @@ impl std::fmt::Display for StructTermTerm {
     }
 }
 
+impl st::Serializable for StructTermTerm {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        let mut bytes_written = self.type_.serialize(writer)?;
+        bytes_written += self.field_t.serialize(writer)?;
+        Ok(bytes_written)
+    }
+}
+
 impl st::Stringify for StructTermTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();

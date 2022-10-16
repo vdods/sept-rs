@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, Result, st::{self, GlobalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
 use anyhow::Context;
 use std::fmt::Debug;
 
@@ -28,12 +28,6 @@ impl dy::Constructor for GlobalSymRef {
     }
 }
 
-impl dy::Deconstruct for GlobalSymRef {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl Inhabits<GlobalSymRefType> for GlobalSymRef {
     fn inhabits(&self, _: &GlobalSymRefType) -> bool {
         true
@@ -53,8 +47,8 @@ impl NonParametricTermTrait for GlobalSymRef {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::GlobalSymRef
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::GlobalSymRef
     }
 }
 

@@ -1,15 +1,9 @@
-use crate::{dy::{self, NonParametricTermCode}, st::{self, LocalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, st::{self, LocalSymRefType, Inhabits, NonParametricTermTrait, Stringify}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "LocalSymRefType", is_parametric = "false", is_type = "true")]
 pub struct LocalSymRef;
-
-impl dy::Deconstruct for LocalSymRef {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
 
 impl Inhabits<LocalSymRefType> for LocalSymRef {
     fn inhabits(&self, _: &LocalSymRefType) -> bool {
@@ -30,8 +24,8 @@ impl NonParametricTermTrait for LocalSymRef {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::LocalSymRef
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::LocalSymRef
     }
 }
 

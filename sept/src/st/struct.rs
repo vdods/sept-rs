@@ -1,4 +1,4 @@
-use crate::{dy::{self, NonParametricTermCode}, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, StructType}};
+use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, StructType}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -38,12 +38,6 @@ impl dy::Constructor for Struct {
     }
 }
 
-impl dy::Deconstruct for Struct {
-    fn deconstruct(self) -> dy::Deconstruction {
-        dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()
-    }
-}
-
 impl Inhabits<StructType> for Struct {
     fn inhabits(&self, _: &StructType) -> bool {
         true
@@ -63,8 +57,8 @@ impl NonParametricTermTrait for Struct {
     fn instantiate() -> Self {
         Self{}
     }
-    fn as_non_parametric_term_code() -> NonParametricTermCode {
-        NonParametricTermCode::Struct
+    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+        st::NonParametricTermCode::Struct
     }
 }
 

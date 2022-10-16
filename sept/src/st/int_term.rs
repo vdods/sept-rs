@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Inhabits, Stringify, TermTrait}};
+use crate::{dy, Result, st::{self, Inhabits, Stringify, TermTrait}};
 
 impl dy::IntoValue for i8 {}
 impl dy::IntoValue for i16 {}
@@ -62,7 +62,7 @@ impl dy::Deconstruct for i8 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Sint8.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -72,7 +72,7 @@ impl dy::Deconstruct for i16 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Sint16.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -82,7 +82,7 @@ impl dy::Deconstruct for i32 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Sint32.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -92,7 +92,7 @@ impl dy::Deconstruct for i64 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Sint64.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -102,7 +102,7 @@ impl dy::Deconstruct for u8 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Uint8.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -112,7 +112,7 @@ impl dy::Deconstruct for u16 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Uint16.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -122,7 +122,7 @@ impl dy::Deconstruct for u32 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Uint32.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -132,8 +132,64 @@ impl dy::Deconstruct for u64 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Uint64.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
+    }
+}
+
+impl st::Serializable for i8 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for i16 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for i32 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for i64 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for u8 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for u16 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for u32 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for u64 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
     }
 }
 

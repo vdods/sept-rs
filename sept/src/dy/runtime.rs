@@ -5,8 +5,8 @@ use crate::{
         self, Array, ArrayType,
         Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type, Float64, Float64Type,
         GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef, LocalSymRefType,
-        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
-        Struct, StructType, Term, TermTrait, True, TrueType, Tuple, TupleType, Type,
+        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
+        Struct, StructType, Term, True, TrueType, Tuple, TupleType, Type,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
         Utf8String, Utf8StringType, Void, VoidType,
     },
@@ -15,6 +15,7 @@ use std::{any::TypeId, collections::{HashMap, HashSet}, sync::{Arc, RwLock}};
 
 pub type DebugFn = fn(x: &ValueGuts, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error>;
 pub type StringifyFn = fn(x: &ValueGuts) -> String;
+pub type SerializeFn = fn(x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize>;
 pub type LabelFn = fn() -> &'static str;
 pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
@@ -40,13 +41,14 @@ pub struct Runtime {
     // TODO: See about collecting many of these into a common map, since many of them will have
     // identical indexes.
 
-    non_parametric_term_code_m: HashMap<TypeId, dy::NonParametricTermCode>,
+    non_parametric_term_code_m: HashMap<TypeId, st::NonParametricTermCode>,
     term_s: HashSet<TypeId>,
     type_s: HashSet<TypeId>,
     // TODO: This is silly, just map to &'static str
     label_fn_m: HashMap<TypeId, LabelFn>,
     debug_fn_m: HashMap<TypeId, DebugFn>,
     stringify_fn_m: HashMap<TypeId, StringifyFn>,
+    serialize_fn_m: HashMap<TypeId, SerializeFn>,
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
     abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
@@ -320,19 +322,21 @@ impl Runtime {
         T:  st::TermTrait +
             dy::Deconstruct +
             std::fmt::Debug +
-            Stringify +
+            st::Serializable +
+            st::Stringify +
             std::cmp::PartialEq +
-            Inhabits<<T as TermTrait>::AbstractTypeType> +
+            Inhabits<<T as st::TermTrait>::AbstractTypeType> +
             'static,
-        <T as TermTrait>::AbstractTypeType: st::TypeTrait
+        <T as st::TermTrait>::AbstractTypeType: st::TypeTrait
     {
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(self.term_s.insert(type_id), "collision with already-registered term {}", self.label_of(type_id));
         self.register_label::<T>()?;
         self.register_debug::<T>()?;
+        self.register_serialize::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
-        self.register_inhabits::<T, <T as TermTrait>::AbstractTypeType>()?;
+        self.register_inhabits::<T, <T as st::TermTrait>::AbstractTypeType>()?;
         self.register_abstract_type::<T>()?;
         self.register_clone::<T>()?;
         self.register_is_parametric::<T>()?;
@@ -345,12 +349,13 @@ impl Runtime {
         T:  st::TypeTrait +
             dy::Deconstruct +
             std::fmt::Debug +
-            Stringify +
+            st::Serializable +
+            st::Stringify +
             std::cmp::PartialEq +
-            Inhabits<<T as TermTrait>::AbstractTypeType> +
+            Inhabits<<T as st::TermTrait>::AbstractTypeType> +
             Inhabits<st::Type> +
             'static,
-        <T as TermTrait>::AbstractTypeType: st::TypeTrait
+        <T as st::TermTrait>::AbstractTypeType: st::TypeTrait
     {
         self.register_term::<T>()?;
         if self.inhabits_fn::<T, st::Type>().is_none() {
@@ -372,7 +377,7 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub(crate) fn register_label<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_label<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         Ok(self.register_label_fn(TypeId::of::<T>(), T::label)?)
     }
     pub(crate) fn register_debug_fn(
@@ -402,10 +407,27 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub(crate) fn register_stringify<S: Stringify + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_stringify<S: st::Stringify + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<S>();
         let stringify_fn = |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
         Ok(self.register_stringify_fn(type_id, stringify_fn)?)
+    }
+    pub(crate) fn register_serialize_fn(
+        &mut self,
+        type_id: TypeId,
+        serialize_fn: SerializeFn,
+    ) -> Result<()> {
+        match self.serialize_fn_m.insert(type_id, serialize_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered serialize fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub(crate) fn register_serialize<S: st::Serializable + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<S>();
+        let serialize_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
+            Ok(x.downcast_ref::<S>().unwrap().serialize(writer)?)
+        };
+        Ok(self.register_serialize_fn(type_id, serialize_fn)?)
     }
     pub(crate) fn register_abstract_type_fn(
         &mut self,
@@ -419,7 +441,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_abstract_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_abstract_type<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let abstract_type_fn = |x: &ValueGuts| -> Box<ValueGuts> {
             // TODO: if the return type is Box<ValueGuts>, then just return that,
@@ -455,7 +477,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_clone<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_clone<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let clone_fn = |x: &ValueGuts| -> Box<ValueGuts> {
             // TODO: if the return type is Box<ValueGuts>, then just return that,
@@ -481,7 +503,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_parametric<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_parametric<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_parametric_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_parametric()
@@ -493,7 +515,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_type<T: TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_type<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_type_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_type()
@@ -634,6 +656,17 @@ impl Runtime {
             None => {
                 panic!("no stringify fn found for {:?}", x.type_id());
 //                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
+//                 format!("InstanceOf({})", self.label_of(x.type_id()))
+            }
+        }
+    }
+    // Note that this does not use referential transparency.
+    pub fn serialize(&self, x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize> {
+        match self.serialize_fn_m.get(&x.type_id()) {
+            Some(serialize_fn) => Ok(serialize_fn(x, writer)?),
+            None => {
+                panic!("no serialize fn found for {:?}", x.type_id());
+//                 log::warn!("no serialize fn found for {}; returning generic default", self.label_of(x.type_id()));
 //                 format!("InstanceOf({})", self.label_of(x.type_id()))
             }
         }
@@ -806,7 +839,7 @@ impl Runtime {
         self.non_parametric_term_code_m.contains_key(&x.type_id())
     }
     /// Returns the NonParametricTermCode value for x if it's a NonParametricTerm, otherwise error.
-    pub fn non_parametric_term_code(&self, x: &ValueGuts) -> Result<dy::NonParametricTermCode> {
+    pub fn non_parametric_term_code(&self, x: &ValueGuts) -> Result<st::NonParametricTermCode> {
         log::debug!("non_parametric_term_code; x.type_id(): {:?}, label_of(x): {}", x.type_id(), self.label_of(x.type_id()));
         Ok(self.non_parametric_term_code_m
             .get(&x.type_id())

@@ -1,11 +1,11 @@
-use crate::{dy, st::{self, Float32, Float64, Inhabits, Stringify, TermTrait}};
+use crate::{dy, Result, st::{self, Float32, Float64, Inhabits, Stringify, TermTrait}};
 
 impl dy::Deconstruct for f32 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Float32.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -15,7 +15,7 @@ impl dy::Deconstruct for f64 {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
             st::Float64.deconstruct(),
-            vec![dy::NonParametricDeconstruction::new_unchecked(dy::Value::from(self)).into()],
+            vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         ).into()
     }
 }
@@ -34,6 +34,20 @@ impl Inhabits<Float64> for f64 {
 
 impl dy::IntoValue for f32 {}
 impl dy::IntoValue for f64 {}
+
+impl st::Serializable for f32 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl st::Serializable for f64 {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all(&self.to_le_bytes())?;
+        Ok(std::mem::size_of::<Self>())
+    }
+}
 
 impl Stringify for f32 {
     fn stringify(&self) -> String {
