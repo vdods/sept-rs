@@ -1,43 +1,43 @@
-use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify}};
+use crate::{dy, Result, st::{self, Inhabits, Stringify}};
 use std::fmt::Debug;
 
 /// This represents the Sint8 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Sint8Type", is_parametric = "false", is_type = "true")]
 pub struct Sint8;
 
 /// This represents the Sint16 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Sint16Type", is_parametric = "false", is_type = "true")]
 pub struct Sint16;
 
 /// This represents the Sint32 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Sint32Type", is_parametric = "false", is_type = "true")]
 pub struct Sint32;
 
 /// This represents the Sint64 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Sint64Type", is_parametric = "false", is_type = "true")]
 pub struct Sint64;
 
 /// This represents the Uint8 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Uint8Type", is_parametric = "false", is_type = "true")]
 pub struct Uint8;
 
 /// This represents the Uint16 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Uint16Type", is_parametric = "false", is_type = "true")]
 pub struct Uint16;
 
 /// This represents the Uint32 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Uint32Type", is_parametric = "false", is_type = "true")]
 pub struct Uint32;
 
 /// This represents the Uint64 type itself.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "st::Uint64Type", is_parametric = "false", is_type = "true")]
 pub struct Uint64;
 
@@ -238,102 +238,6 @@ impl st::Inhabits<st::Type> for Uint32 {
 impl st::Inhabits<st::Type> for Uint64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl NonParametricTermTrait for Sint8 {
-    fn identifier() -> &'static str {
-        "Sint8"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Sint8
-    }
-}
-
-impl NonParametricTermTrait for Sint16 {
-    fn identifier() -> &'static str {
-        "Sint16"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Sint16
-    }
-}
-
-impl NonParametricTermTrait for Sint32 {
-    fn identifier() -> &'static str {
-        "Sint32"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Sint32
-    }
-}
-
-impl NonParametricTermTrait for Sint64 {
-    fn identifier() -> &'static str {
-        "Sint64"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Sint64
-    }
-}
-
-impl NonParametricTermTrait for Uint8 {
-    fn identifier() -> &'static str {
-        "Uint8"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Uint8
-    }
-}
-
-impl NonParametricTermTrait for Uint16 {
-    fn identifier() -> &'static str {
-        "Uint16"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Uint16
-    }
-}
-
-impl NonParametricTermTrait for Uint32 {
-    fn identifier() -> &'static str {
-        "Uint32"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Uint32
-    }
-}
-
-impl NonParametricTermTrait for Uint64 {
-    fn identifier() -> &'static str {
-        "Uint64"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Uint64
     }
 }
 

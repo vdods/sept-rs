@@ -69,6 +69,36 @@ pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::Token
 }
 
 //
+// proc_macro for deriving sept::st::NonParametricTermTrait (it's re-exported in that crate).
+//
+
+/// This will derive sept::st::NonParametricTermTrait, which for now has no additional attributes, e.g.
+/// ```
+/// #[derive(sept::st::NonParametricTermTrait)]
+/// pub struct FancyTerm;
+/// ```
+#[proc_macro_derive(StNonParametricTermTrait)]
+pub fn derive_st_non_parametric_term_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input);
+    let syn::DeriveInput { ident, .. } = input;
+
+    let output = quote! {
+        impl st::NonParametricTermTrait for #ident {
+            fn identifier() -> &'static str {
+                stringify!(#ident)
+            }
+            fn instantiate() -> Self {
+                Self{}
+            }
+            fn as_non_parametric_term_code() -> st::NonParametricTermCode {
+                st::NonParametricTermCode::#ident
+            }
+        }
+    };
+    output.into()
+}
+
+//
 // proc_macro for deriving sept::st::TypeTrait (it's re-exported in that crate).
 //
 

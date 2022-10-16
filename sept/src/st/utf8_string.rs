@@ -1,7 +1,7 @@
-use crate::{dy, Result, st::{self, Utf8StringType, NonParametricTermTrait, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Utf8StringType, Inhabits, Stringify}};
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Utf8StringType", is_parametric = "false", is_type = "true")]
 pub struct Utf8String;
 
@@ -27,18 +27,6 @@ impl st::Inhabits<st::Type> for Utf8String {
 impl Inhabits<Utf8StringType> for Utf8String {
     fn inhabits(&self, _: &Utf8StringType) -> bool {
         true
-    }
-}
-
-impl NonParametricTermTrait for Utf8String {
-    fn identifier() -> &'static str {
-        "Utf8String"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Utf8String
     }
 }
 

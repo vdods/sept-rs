@@ -1,7 +1,7 @@
 use crate::{dy, st::{self, Stringify, Type}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 // TODO: AbstractTypeType could/should actually be "FormalTypeOf(ArrayType)"
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct ArrayType;
@@ -9,18 +9,6 @@ pub struct ArrayType;
 impl st::Inhabits<st::Type> for ArrayType {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl st::NonParametricTermTrait for ArrayType {
-    fn identifier() -> &'static str {
-        "ArrayType"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::ArrayType
     }
 }
 

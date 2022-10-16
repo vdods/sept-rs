@@ -17,6 +17,9 @@ pub struct FancyTerm;
 #[st_term_trait(is_type = "true")]
 pub struct DumbType;
 
+#[derive(Clone, Debug, dy::IntoValue, st::NonParametricTermTrait)]
+pub struct Undefined;
+
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn blah() {

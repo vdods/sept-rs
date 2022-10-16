@@ -1,6 +1,6 @@
 use crate::{dy, st::{self, Bool, FalseType, Inhabits, Stringify, True}};
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "FalseType", is_parametric = "false", is_type = "false")]
 pub struct False;
 
@@ -13,18 +13,6 @@ impl Inhabits<Bool> for False {
 impl Inhabits<FalseType> for False {
     fn inhabits(&self, _rhs: &FalseType) -> bool {
         true
-    }
-}
-
-impl st::NonParametricTermTrait for False {
-    fn identifier() -> &'static str {
-        "False"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::False
     }
 }
 

@@ -1124,7 +1124,7 @@ impl st::NonParametricTermTrait for BinOp {
         Self{}
     }
     fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::VoidType
+        st::NonParametricTermCode::Undefined
     }
 }
 

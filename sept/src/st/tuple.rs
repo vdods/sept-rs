@@ -1,7 +1,7 @@
-use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, TupleType}};
+use crate::{dy, Result, st::{self, Inhabits, Stringify, TupleType}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "TupleType", is_parametric = "false", is_type = "true")]
 pub struct Tuple;
 
@@ -24,18 +24,6 @@ impl Inhabits<TupleType> for Tuple {
 impl st::Inhabits<st::Type> for Tuple {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl NonParametricTermTrait for Tuple {
-    fn identifier() -> &'static str {
-        "Tuple"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Tuple
     }
 }
 

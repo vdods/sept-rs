@@ -1,7 +1,7 @@
-use crate::{dy, Result, st::{self, Inhabits, NonParametricTermTrait, Stringify, StructType}};
+use crate::{dy, Result, st::{self, Inhabits, Stringify, StructType}};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "StructType", is_parametric = "false", is_type = "true")]
 pub struct Struct;
 
@@ -47,18 +47,6 @@ impl Inhabits<StructType> for Struct {
 impl st::Inhabits<st::Type> for Struct {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl NonParametricTermTrait for Struct {
-    fn identifier() -> &'static str {
-        "Struct"
-    }
-    fn instantiate() -> Self {
-        Self{}
-    }
-    fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-        st::NonParametricTermCode::Struct
     }
 }
 
