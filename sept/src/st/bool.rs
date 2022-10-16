@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, BoolType, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, BoolType, Inhabits, Stringifiable}};
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -27,11 +27,5 @@ impl Inhabits<BoolType> for Bool {
 impl st::Inhabits<st::Type> for Bool {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Bool {
-    fn stringify(&self) -> String {
-        "Bool".into()
     }
 }

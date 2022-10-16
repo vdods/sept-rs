@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, GlobalSymRefType, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, GlobalSymRefType, Inhabits, Stringifiable}};
 use anyhow::Context;
 use std::fmt::Debug;
 
@@ -37,11 +37,5 @@ impl Inhabits<GlobalSymRefType> for GlobalSymRef {
 impl st::Inhabits<st::Type> for GlobalSymRef {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for GlobalSymRef {
-    fn stringify(&self) -> String {
-        "GlobalSymRef".into()
     }
 }

@@ -67,13 +67,13 @@ fn textify_impl(
         dy::Deconstruction::NonParametric(non_parametric_deconstruction) => {
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
-            use crate::st::Stringify;
+            use crate::st::Stringifiable;
             write!(f, "{}", non_parametric_deconstruction.as_ref().stringify())?
         }
         dy::Deconstruction::Terminal(terminal_deconstruction) => {
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
-            use crate::st::Stringify;
+            use crate::st::Stringifiable;
             // TODO: Should this be a more-formal kind of stringification?
             write!(f, "{}", terminal_deconstruction.as_ref().stringify())?
         }

@@ -25,3 +25,9 @@ impl<N: NonParametricTermTrait> st::Serializable for N {
         Ok((N::NON_PARAMETRIC_TERM_CODE as u8).serialize(writer)?)
     }
 }
+
+impl<N: NonParametricTermTrait> st::Stringifiable for N {
+    fn stringify(&self) -> String {
+        N::IDENTIFIER.to_string()
+    }
+}

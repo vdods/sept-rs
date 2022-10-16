@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Bool, Inhabits, False, Stringify, TrueType}};
+use crate::{dy, st::{self, Bool, Inhabits, False, TrueType}};
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "TrueType", is_parametric = "false", is_type = "false")]
@@ -25,11 +25,5 @@ impl PartialEq<bool> for True {
 impl PartialEq<False> for True {
     fn eq(&self, _other: &False) -> bool {
         false
-    }
-}
-
-impl Stringify for True {
-    fn stringify(&self) -> String {
-        "True".into()
     }
 }

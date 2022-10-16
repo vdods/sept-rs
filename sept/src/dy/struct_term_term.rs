@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Stringify}};
+use crate::{dy, Result, st::{self, Stringifiable}};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -77,7 +77,7 @@ impl st::Serializable for StructTermTerm {
     }
 }
 
-impl st::Stringify for StructTermTerm {
+impl st::Stringifiable for StructTermTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         // NOTE: This doesn't guarantee any of:

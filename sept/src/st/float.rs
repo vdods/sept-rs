@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Inhabits, Stringifiable}};
 use std::fmt::Debug;
 
 /// This represents the Float32 type itself.
@@ -58,17 +58,5 @@ impl st::Inhabits<st::Type> for Float32 {
 impl st::Inhabits<st::Type> for Float64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Float32 {
-    fn stringify(&self) -> String {
-        "Float32".into()
-    }
-}
-
-impl Stringify for Float64 {
-    fn stringify(&self) -> String {
-        "Float64".into()
     }
 }

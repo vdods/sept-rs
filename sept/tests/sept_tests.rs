@@ -11,7 +11,7 @@ use sept::{
         self,
         Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType,
         Float32, Float32Type, Float64, Float64Type, Inhabits,
-        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringify,
+        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringifiable,
         Struct, StructType,
         TermTrait, True, TrueType, Type, TypeTrait,
         Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
@@ -730,8 +730,8 @@ fn test_deconstruct() {
 
 fn test_deconstruct_reconstruct_roundtrip<T, C>(x: T)
 where
-    T: Deconstruct + Stringify + PartialEq,
-    C: Constructor + Stringify,
+    T: Deconstruct + Stringifiable + PartialEq,
+    C: Constructor + Stringifiable,
     <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>
 {
     log::debug!("x: {}", x.stringify());
@@ -1205,54 +1205,6 @@ impl BinOpTermTrait for Pow {
 
 impl UnOpTermTrait for Neg {}
 
-impl Stringify for BinOp {
-    fn stringify(&self) -> String {
-        "BinOp".into()
-    }
-}
-
-impl Stringify for UnOp {
-    fn stringify(&self) -> String {
-        "UnOp".into()
-    }
-}
-
-impl Stringify for Add {
-    fn stringify(&self) -> String {
-        "Add".into()
-    }
-}
-
-impl Stringify for Sub {
-    fn stringify(&self) -> String {
-        "Sub".into()
-    }
-}
-
-impl Stringify for Mul {
-    fn stringify(&self) -> String {
-        "Mul".into()
-    }
-}
-
-impl Stringify for Div {
-    fn stringify(&self) -> String {
-        "Div".into()
-    }
-}
-
-impl Stringify for Pow {
-    fn stringify(&self) -> String {
-        "Pow".into()
-    }
-}
-
-impl Stringify for Neg {
-    fn stringify(&self) -> String {
-        "Neg".into()
-    }
-}
-
 impl Inhabits<BinOp> for Add {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
@@ -1312,12 +1264,6 @@ impl st::Inhabits<Type> for Expr {
 }
 
 impl dy::IntoValue for Expr {}
-
-impl Stringify for Expr {
-    fn stringify(&self) -> String {
-        "Expr".into()
-    }
-}
 
 impl Inhabits<Expr> for f64 {
     fn inhabits(&self, _rhs: &Expr) -> bool {

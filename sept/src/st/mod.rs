@@ -20,7 +20,7 @@ mod local_sym_ref_type;
 mod non_parametric_term_code;
 mod non_parametric_term_trait;
 mod serializable;
-mod stringify_trait;
+mod stringifiable;
 mod r#struct;
 mod struct_type;
 mod term;
@@ -60,7 +60,7 @@ pub use crate::st::{
     non_parametric_term_code::NonParametricTermCode,
     non_parametric_term_trait::NonParametricTermTrait,
     serializable::Serializable,
-    stringify_trait::Stringify,
+    stringifiable::Stringifiable,
     r#struct::Struct,
     struct_type::StructType,
     term::Term,

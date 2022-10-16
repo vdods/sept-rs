@@ -323,7 +323,7 @@ impl Runtime {
             dy::Deconstruct +
             std::fmt::Debug +
             st::Serializable +
-            st::Stringify +
+            st::Stringifiable +
             std::cmp::PartialEq +
             Inhabits<<T as st::TermTrait>::AbstractTypeType> +
             'static,
@@ -350,7 +350,7 @@ impl Runtime {
             dy::Deconstruct +
             std::fmt::Debug +
             st::Serializable +
-            st::Stringify +
+            st::Stringifiable +
             std::cmp::PartialEq +
             Inhabits<<T as st::TermTrait>::AbstractTypeType> +
             Inhabits<st::Type> +
@@ -407,7 +407,7 @@ impl Runtime {
             None => Ok(())
         }
     }
-    pub(crate) fn register_stringify<S: st::Stringify + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_stringify<S: st::Stringifiable + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<S>();
         let stringify_fn = |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
         Ok(self.register_stringify_fn(type_id, stringify_fn)?)
@@ -649,7 +649,7 @@ impl Runtime {
             }
         }
     }
-    // Note that this does not use referential transparency.  Stringify should be renamed to ConcreteText or something.
+    // Note that this does not use referential transparency.  Stringifiable should be renamed to ConcreteText or something.
     pub fn stringify(&self, x: &ValueGuts) -> String {
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),

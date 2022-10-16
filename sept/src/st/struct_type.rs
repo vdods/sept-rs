@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, Type}};
+use crate::{dy, st::{self, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -8,11 +8,5 @@ pub struct StructType;
 impl st::Inhabits<Type> for StructType {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
-    }
-}
-
-impl Stringify for StructType {
-    fn stringify(&self) -> String {
-        "StructType".into()
     }
 }

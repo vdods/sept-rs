@@ -1,4 +1,4 @@
-use crate::{dy::{self, IntoValue, RUNTIME_LA}, Error, parser, Result, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, IntoValue, RUNTIME_LA}, Error, parser, Result, st::{self, Stringifiable, TermTrait}};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -117,7 +117,7 @@ impl st::Serializable for Value {
     }
 }
 
-impl Stringify for Value {
+impl Stringifiable for Value {
     fn stringify(&self) -> String {
         RUNTIME_LA.read().unwrap().stringify(self.as_ref())
     }

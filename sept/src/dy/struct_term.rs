@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify, Struct, TermTrait}};
+use crate::{dy, Result, st::{self, Inhabits, Stringifiable, Struct, TermTrait}};
 use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
@@ -108,7 +108,7 @@ impl st::Serializable for StructTerm {
     }
 }
 
-impl Stringify for StructTerm {
+impl Stringifiable for StructTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Struct(");

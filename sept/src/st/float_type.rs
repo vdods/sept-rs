@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, Type}};
+use crate::{dy, st::{self, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -18,17 +18,5 @@ impl st::Inhabits<Type> for Float32Type {
 impl st::Inhabits<Type> for Float64Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Float32Type {
-    fn stringify(&self) -> String {
-        "Float32Type".into()
-    }
-}
-
-impl Stringify for Float64Type {
-    fn stringify(&self) -> String {
-        "Float64Type".into()
     }
 }

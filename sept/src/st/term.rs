@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Inhabits, Stringify, TermTrait, Type}};
+use crate::{dy, st::{self, Inhabits, TermTrait, Type}};
 
 /// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -15,11 +15,5 @@ impl<T: TermTrait + dy::IntoValue + 'static> Inhabits<Term> for T {
 impl Inhabits<Type> for Term {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Term {
-    fn stringify(&self) -> String {
-        "Term".into()
     }
 }

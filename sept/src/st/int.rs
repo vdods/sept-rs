@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Inhabits, Stringifiable}};
 use std::fmt::Debug;
 
 /// This represents the Sint8 type itself.
@@ -238,53 +238,5 @@ impl st::Inhabits<st::Type> for Uint32 {
 impl st::Inhabits<st::Type> for Uint64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Sint8 {
-    fn stringify(&self) -> String {
-        "Sint8".into()
-    }
-}
-
-impl Stringify for Sint16 {
-    fn stringify(&self) -> String {
-        "Sint16".into()
-    }
-}
-
-impl Stringify for Sint32 {
-    fn stringify(&self) -> String {
-        "Sint32".into()
-    }
-}
-
-impl Stringify for Sint64 {
-    fn stringify(&self) -> String {
-        "Sint64".into()
-    }
-}
-
-impl Stringify for Uint8 {
-    fn stringify(&self) -> String {
-        "Uint8".into()
-    }
-}
-
-impl Stringify for Uint16 {
-    fn stringify(&self) -> String {
-        "Uint16".into()
-    }
-}
-
-impl Stringify for Uint32 {
-    fn stringify(&self) -> String {
-        "Uint32".into()
-    }
-}
-
-impl Stringify for Uint64 {
-    fn stringify(&self) -> String {
-        "Uint64".into()
     }
 }

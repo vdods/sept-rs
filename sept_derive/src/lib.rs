@@ -16,7 +16,8 @@ struct StTermTraitArguments {
     is_type: String,
 }
 
-/// This will derive sept::st::TermTrait; trait implementation details should be given via `st_term_trait`, e.g.
+/// This will derive sept::st::TermTrait; trait implementation details should be given via
+/// `st_term_trait`, e.g.
 /// ```
 /// #[derive(sept::st::TermTrait)]
 /// #[st_term_trait(AbstractTypeType = "<type>")] // Defines return type of `fn abstract_type(&self)`
@@ -72,26 +73,43 @@ pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::Token
 // proc_macro for deriving sept::st::NonParametricTermTrait (it's re-exported in that crate).
 //
 
-/// This will derive sept::st::NonParametricTermTrait, which for now has no additional attributes, e.g.
+#[derive(FromDeriveInput, Default)]
+#[darling(default, attributes(st_non_parametric_term_trait))]
+struct StNonParametricTermTraitArguments {
+    code: Option<String>,
+}
+
+/// This will derive sept::st::NonParametricTermTrait; trait implementation details should be
+/// given via `st_non_parametric_term_trait`, e.g.
 /// ```
 /// #[derive(sept::st::NonParametricTermTrait)]
+/// #[st_non_parametric_term_trait(code = "<expr>")]
 /// pub struct FancyTerm;
 /// ```
-#[proc_macro_derive(StNonParametricTermTrait)]
+#[proc_macro_derive(StNonParametricTermTrait, attributes(st_non_parametric_term_trait))]
 pub fn derive_st_non_parametric_term_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
+    let non_parametric_term_trait_arguments =
+        StNonParametricTermTraitArguments::from_derive_input(&input).expect("Wrong arguments");
+    #[allow(unused_variables)]
+    let StNonParametricTermTraitArguments { code } = non_parametric_term_trait_arguments;
     let syn::DeriveInput { ident, .. } = input;
+    let non_parametric_term_code = match code {
+        Some(c) => {
+            let blah: syn::Expr = syn::parse_str(&c).unwrap();
+            quote!(st::NonParametricTermCode::#blah)
+        }
+        None => {
+            quote!(st::NonParametricTermCode::#ident)
+        }
+    };
 
     let output = quote! {
         impl st::NonParametricTermTrait for #ident {
-            fn identifier() -> &'static str {
-                stringify!(#ident)
-            }
+            const IDENTIFIER: &'static str = stringify!(#ident);
+            const NON_PARAMETRIC_TERM_CODE: st::NonParametricTermCode = #non_parametric_term_code;
             fn instantiate() -> Self {
                 Self{}
-            }
-            fn as_non_parametric_term_code() -> st::NonParametricTermCode {
-                st::NonParametricTermCode::#ident
             }
         }
     };

@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Utf8StringType, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Utf8StringType, Inhabits, Stringifiable}};
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -27,11 +27,5 @@ impl st::Inhabits<st::Type> for Utf8String {
 impl Inhabits<Utf8StringType> for Utf8String {
     fn inhabits(&self, _: &Utf8StringType) -> bool {
         true
-    }
-}
-
-impl Stringify for Utf8String {
-    fn stringify(&self) -> String {
-        "Utf8String".into()
     }
 }

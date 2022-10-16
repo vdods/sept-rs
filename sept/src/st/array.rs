@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, ArrayType, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, ArrayType, Inhabits}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -23,11 +23,5 @@ impl Inhabits<ArrayType> for Array {
 impl st::Inhabits<st::Type> for Array {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Array {
-    fn stringify(&self) -> String {
-        "Array".into()
     }
 }

@@ -1,4 +1,4 @@
-use crate::{dy::{self, Value}, Result, st::{self, Inhabits, Stringify, TermTrait, Tuple}};
+use crate::{dy::{self, Value}, Result, st::{self, Inhabits, Stringifiable, TermTrait, Tuple}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 #[derive(derive_more::AsRef, Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
@@ -154,7 +154,7 @@ impl st::Serializable for TupleTerm {
     }
 }
 
-impl Stringify for TupleTerm {
+impl Stringifiable for TupleTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Tuple(");

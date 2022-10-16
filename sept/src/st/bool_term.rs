@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringify, TermTrait, True, TrueType}};
+use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType}};
 
 impl dy::Deconstruct for bool {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -62,7 +62,7 @@ impl st::Serializable for bool {
     }
 }
 
-impl Stringify for bool {
+impl Stringifiable for bool {
     fn stringify(&self) -> String {
         self.to_string()
     }

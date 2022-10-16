@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, TermTrait, Type}};
+use crate::{dy, st::{self, TermTrait, Type}};
 
 /// EmptyType is a Type that by definition has no inhabitants.
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -15,11 +15,5 @@ impl<T: TermTrait + dy::IntoValue + 'static> st::Inhabits<EmptyType> for T {
     /// Nothing inhabits EmptyType.
     fn inhabits(&self, _rhs: &EmptyType) -> bool {
         false
-    }
-}
-
-impl Stringify for EmptyType {
-    fn stringify(&self) -> String {
-        "EmptyType".into()
     }
 }

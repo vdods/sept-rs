@@ -1,5 +1,5 @@
 // The repr(u8) attribute is to be compatible with the C++ implementation.
-// NOTE: TermTrait and all the other things like Stringify are not being implemented
+// NOTE: TermTrait and all the other things like Stringifiable are not being implemented
 // here, as this enum is simply meant for serialization representation purposes.  In
 // deserialization, Values containing the "real" terms would be used instead, so that
 // there isn't a need to check for multiple alternate representations of various types.

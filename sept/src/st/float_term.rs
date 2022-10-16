@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Float32, Float64, Inhabits, Stringify, TermTrait}};
+use crate::{dy, Result, st::{self, Float32, Float64, Inhabits, Stringifiable, TermTrait}};
 
 impl dy::Deconstruct for f32 {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -49,14 +49,14 @@ impl st::Serializable for f64 {
     }
 }
 
-impl Stringify for f32 {
+impl Stringifiable for f32 {
     fn stringify(&self) -> String {
         // Apparently Rust, by default, formats floats with enough digits to make them unique.
         self.to_string()
     }
 }
 
-impl Stringify for f64 {
+impl Stringifiable for f64 {
     fn stringify(&self) -> String {
         // Apparently Rust, by default, formats floats with enough digits to make them unique.
         self.to_string()

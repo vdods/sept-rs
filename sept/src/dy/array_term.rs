@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Array, Inhabits, Stringify}};
+use crate::{dy, Result, st::{self, Array, Inhabits, Stringifiable}};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 #[derive(Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
@@ -35,7 +35,7 @@ impl st::Serializable for ArrayTerm {
     }
 }
 
-impl Stringify for ArrayTerm {
+impl Stringifiable for ArrayTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Array(");

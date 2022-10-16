@@ -30,7 +30,7 @@ fn blah() {
     log::debug!("v (as Debug): {:?}", v);
 
     let x = Sint32;
-    use sept::st::Stringify;
+    use sept::st::Stringifiable;
     log::debug!("x: {}", x.stringify());
     let d = DumbType;
     log::debug!("d.abstract_type(): {}", d.abstract_type().stringify());

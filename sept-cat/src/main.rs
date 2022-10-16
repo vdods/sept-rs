@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
     log::info!("parsed value:\n{:?}", value);
-    use sept::st::Stringify;
+    use sept::st::Stringifiable;
     log::info!("parsed value stringified:\n{}", value.stringify());
     use sept::dy::Deconstruct;
     let deconstruction = value.deconstructed();

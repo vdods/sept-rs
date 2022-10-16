@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, Type}};
+use crate::{dy, st::{self, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -78,53 +78,5 @@ impl st::Inhabits<Type> for Uint32Type {
 impl st::Inhabits<Type> for Uint64Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Sint8Type {
-    fn stringify(&self) -> String {
-        "Sint8Type".into()
-    }
-}
-
-impl Stringify for Sint16Type {
-    fn stringify(&self) -> String {
-        "Sint16Type".into()
-    }
-}
-
-impl Stringify for Sint32Type {
-    fn stringify(&self) -> String {
-        "Sint32Type".into()
-    }
-}
-
-impl Stringify for Sint64Type {
-    fn stringify(&self) -> String {
-        "Sint64Type".into()
-    }
-}
-
-impl Stringify for Uint8Type {
-    fn stringify(&self) -> String {
-        "Uint8Type".into()
-    }
-}
-
-impl Stringify for Uint16Type {
-    fn stringify(&self) -> String {
-        "Uint16Type".into()
-    }
-}
-
-impl Stringify for Uint32Type {
-    fn stringify(&self) -> String {
-        "Uint32Type".into()
-    }
-}
-
-impl Stringify for Uint64Type {
-    fn stringify(&self) -> String {
-        "Uint64Type".into()
     }
 }

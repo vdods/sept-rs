@@ -1,4 +1,4 @@
-use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringifiable, TermTrait}};
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -55,7 +55,7 @@ impl PartialEq<LocalSymRefTerm> for LocalSymRefTerm {
     }
 }
 
-impl Stringify for LocalSymRefTerm {
+impl Stringifiable for LocalSymRefTerm {
     fn stringify(&self) -> String {
         format!("LocalSymRefTerm({:?}, {:?})", Arc::as_ptr(&self.local_symbol_table_la), self.symbol_id)
     }

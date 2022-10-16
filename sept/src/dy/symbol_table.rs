@@ -61,7 +61,7 @@ impl std::fmt::Debug for SymbolTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "SymbolTable {:p} {{\n", self)?;
         for (symbol_id, value_la) in self.symbol_map.iter() {
-            use crate::st::Stringify;
+            use crate::st::Stringifiable;
             write!(f, "    {:?} => {}\n", symbol_id, value_la.read().unwrap().stringify())?;
         }
         match &self.parent_symbol_table_lao {

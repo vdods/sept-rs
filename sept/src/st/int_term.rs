@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify, TermTrait}};
+use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
 
 impl dy::IntoValue for i8 {}
 impl dy::IntoValue for i16 {}
@@ -193,49 +193,49 @@ impl st::Serializable for u64 {
     }
 }
 
-impl Stringify for i8 {
+impl Stringifiable for i8 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for i16 {
+impl Stringifiable for i16 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for i32 {
+impl Stringifiable for i32 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for i64 {
+impl Stringifiable for i64 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for u8 {
+impl Stringifiable for u8 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for u16 {
+impl Stringifiable for u16 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for u32 {
+impl Stringifiable for u32 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringify for u64 {
+impl Stringifiable for u64 {
     fn stringify(&self) -> String {
         self.to_string()
     }

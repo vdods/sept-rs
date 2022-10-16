@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, LocalSymRefType, Inhabits, Stringify}};
+use crate::{dy, st::{self, LocalSymRefType, Inhabits}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -14,11 +14,5 @@ impl Inhabits<LocalSymRefType> for LocalSymRef {
 impl st::Inhabits<st::Type> for LocalSymRef {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for LocalSymRef {
-    fn stringify(&self) -> String {
-        "LocalSymRef".into()
     }
 }

@@ -1,4 +1,4 @@
-use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringify, TermTrait}};
+use crate::{dy::{self, TransparentRefTrait}, Result, st::{self, Stringifiable, TermTrait}};
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -52,7 +52,7 @@ impl PartialEq<GlobalSymRefTerm> for GlobalSymRefTerm {
     }
 }
 
-impl Stringify for GlobalSymRefTerm {
+impl Stringifiable for GlobalSymRefTerm {
     fn stringify(&self) -> String {
         format!("GlobalSymRefTerm({:?})", self.symbol_id)
     }

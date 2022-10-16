@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify, TupleType}};
+use crate::{dy, Result, st::{self, Inhabits, TupleType}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -24,11 +24,5 @@ impl Inhabits<TupleType> for Tuple {
 impl st::Inhabits<st::Type> for Tuple {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for Tuple {
-    fn stringify(&self) -> String {
-        "Tuple".into()
     }
 }

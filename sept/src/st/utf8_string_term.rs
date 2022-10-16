@@ -1,4 +1,4 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringify, TermTrait}};
+use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
 
 // TODO: Consider making a type alias for Utf8StringTerm.
 
@@ -31,7 +31,7 @@ impl st::Serializable for String {
     }
 }
 
-impl Stringify for String {
+impl Stringifiable for String {
     fn stringify(&self) -> String {
         // Create a quoted string literal.
         format!("{:?}", self)

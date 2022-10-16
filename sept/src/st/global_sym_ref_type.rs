@@ -1,4 +1,4 @@
-use crate::{dy, st::{self, Stringify, Type}};
+use crate::{dy, st::{self, Type}};
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
@@ -9,11 +9,5 @@ pub struct GlobalSymRefType {}
 impl st::Inhabits<st::Type> for GlobalSymRefType {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
-    }
-}
-
-impl Stringify for GlobalSymRefType {
-    fn stringify(&self) -> String {
-        "GlobalSymRefType".into()
     }
 }
