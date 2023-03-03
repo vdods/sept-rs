@@ -115,6 +115,7 @@ impl st::TestValues for String {
     }
 }
 
+// TODO: Move these into sept_tests
 #[cfg(test)]
 mod tests {
     fn test_serialize_deserialize_case(string: String, expected_bytes_written: usize) {

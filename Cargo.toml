@@ -5,4 +5,4 @@
 # - https://github.com/rust-lang/cargo/issues/10719
 # - https://github.com/rust-lang/rust/issues/90148
 resolver = "2"
-members = ["sept", "sept-cat", "sept_derive", "sept_derive_tests"]
+members = ["sept", "sept-cat", "sept-gui", "sept_derive", "sept_derive_tests"]

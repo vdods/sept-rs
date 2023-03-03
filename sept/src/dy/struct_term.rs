@@ -16,7 +16,7 @@ pub struct StructTerm {
     // which would simplify various checks and projections into TupleTerm.
     // TODO: Probably eventually allow arbitrary terms as the field names.
     // TODO: Define and use SymbolDecl as a formal type.
-    pub(crate) field_decl_v: Vec<(String, dy::Value)>,
+    pub field_decl_v: Vec<(String, dy::Value)>,
     /// This is a cache for the quick lookup of the element index based on a field name.
     name_index_m: HashMap<String, usize>,
 }
@@ -85,7 +85,7 @@ impl dy::Constructor for StructTerm {
             struct_term_term.inhabits(self),
             "type mismatch in StructTerm::deserialize_parameters_and_construct; expected type_ {} but got {}",
             self.textified(),
-            struct_term_term.type_.textified(),
+            struct_term_term.direct_type().textified(),
         );
         Ok(struct_term_term)
     }
