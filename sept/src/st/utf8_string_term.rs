@@ -1,6 +1,10 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
+use crate::{
+    dy,
+    st::{self, Inhabits, Stringifiable, TermTrait},
+    Result,
+};
 
-// TODO: Consider making a type alias for Utf8StringTerm.
+pub type Utf8StringTerm = String;
 
 impl dy::Deconstruct for String {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -8,7 +12,8 @@ impl dy::Deconstruct for String {
         dy::ParametricDeconstruction::new(
             st::Utf8String.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -48,6 +53,6 @@ impl TermTrait for String {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }

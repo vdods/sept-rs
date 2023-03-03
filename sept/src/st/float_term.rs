@@ -1,4 +1,11 @@
-use crate::{dy, Result, st::{self, Float32, Float64, Inhabits, Stringifiable, TermTrait}};
+use crate::{
+    dy,
+    st::{self, Float32, Float64, Inhabits, Stringifiable, TermTrait},
+    Result,
+};
+
+pub type Float32Term = f32;
+pub type Float64Term = f64;
 
 impl dy::Deconstruct for f32 {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -6,7 +13,8 @@ impl dy::Deconstruct for f32 {
         dy::ParametricDeconstruction::new(
             st::Float32.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -16,7 +24,8 @@ impl dy::Deconstruct for f64 {
         dy::ParametricDeconstruction::new(
             st::Float64.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -73,7 +82,7 @@ impl TermTrait for f32 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -87,6 +96,6 @@ impl TermTrait for f64 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }

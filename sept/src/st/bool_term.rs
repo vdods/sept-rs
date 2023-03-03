@@ -1,4 +1,10 @@
-use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType}};
+use crate::{
+    dy,
+    st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType},
+    Result,
+};
+
+pub type BoolTerm = bool;
 
 impl dy::Deconstruct for bool {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -6,7 +12,8 @@ impl dy::Deconstruct for bool {
         dy::ParametricDeconstruction::new(
             st::Bool.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -78,6 +85,6 @@ impl TermTrait for bool {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }

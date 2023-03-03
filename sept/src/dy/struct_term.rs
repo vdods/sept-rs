@@ -1,10 +1,20 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringifiable, Struct, TermTrait}};
+use crate::{
+    dy,
+    st::{self, Inhabits, Stringifiable, Struct, TermTrait},
+    Result,
+};
 use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "Struct", is_parametric = "self.field_decl_v.len() > 0", is_type = "true")]
+#[derive(
+    Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "Struct",
+    is_parametric = "self.field_decl_v.len() > 0",
+    is_type = "true"
+)]
 pub struct StructTerm {
     /// This stores the field declarations (i.e. `field: Type`) in a particular order.
     // TODO: Check that each is a type.
@@ -12,7 +22,7 @@ pub struct StructTerm {
     // which would simplify various checks and projections into TupleTerm.
     // TODO: Probably eventually allow arbitrary terms as the field names.
     // TODO: Define and use SymbolDecl as a formal type.
-    pub(crate) field_decl_v: Vec<(String, dy::Value)>,
+    pub field_decl_v: Vec<(String, dy::Value)>,
     /// This is a cache for the quick lookup of the element index based on a field name.
     name_index_m: HashMap<String, usize>,
 }
@@ -25,8 +35,15 @@ impl StructTerm {
             anyhow::ensure!(field_decl.1.inhabits(&st::Type), "expected {}th StructTerm field type (which was {:?}) to inhabit Type, but it did not", i, field_decl.1);
         }
         // Generate name_index_m.
-        let name_index_m: HashMap<String, usize> = field_decl_v.iter().enumerate().map(|(i, (name, _))| (name.clone(), i)).collect();
-        Ok(Self { field_decl_v, name_index_m })
+        let name_index_m: HashMap<String, usize> = field_decl_v
+            .iter()
+            .enumerate()
+            .map(|(i, (name, _))| (name.clone(), i))
+            .collect();
+        Ok(Self {
+            field_decl_v,
+            name_index_m,
+        })
     }
     /// Verifies inhabitation by field_t (which is a kind of untyped StructTermTerm), otherwise
     /// returns an error describing the failure.
@@ -56,7 +73,10 @@ impl dy::Constructor for StructTerm {
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         self.verify_inhabitation_by(&parameter_t)?;
         log::warn!("NOTE: Just copying the StructTerm as the StructTermTerm's type for now. TODO: figure out what the right approach is");
-        Ok(dy::StructTermTerm::new_unchecked(self.clone().into(), parameter_t))
+        Ok(dy::StructTermTerm::new_unchecked(
+            self.clone().into(),
+            parameter_t,
+        ))
     }
 }
 
@@ -73,7 +93,8 @@ impl dy::Deconstruct for StructTerm {
                 })
                 .collect::<Vec<dy::Value>>()
                 .into(),
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -115,7 +136,7 @@ impl Stringifiable for StructTerm {
         for (i, (field_name, field_type)) in self.field_decl_v.iter().enumerate() {
             // TODO: Probably use write! here, because it can write directly to a String apparently?
             s.push_str(&format!("{:?}: {}", field_name, field_type));
-            if i+1 < self.field_decl_v.len() {
+            if i + 1 < self.field_decl_v.len() {
                 s.push_str(", ");
             }
         }
