@@ -22,6 +22,10 @@ impl dy::Constructor for Float32 {
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Float32, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl dy::Constructor for Float64 {
@@ -34,6 +38,10 @@ impl dy::Constructor for Float64 {
             Some(string) => Ok(std::mem::take(string)),
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Float64, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
+    }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 

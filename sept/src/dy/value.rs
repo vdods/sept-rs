@@ -33,6 +33,9 @@ impl dy::Constructor for Value {
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         Ok(RUNTIME_LA.read().unwrap().construct(self.as_ref(), parameter_t)?)
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        Ok(RUNTIME_LA.read().unwrap().deserialize_parameters_and_construct(self.as_ref(), reader)?)
+    }
 }
 
 impl std::fmt::Debug for Value {
@@ -111,10 +114,84 @@ impl PartialEq<Value> for Value {
     }
 }
 
+impl st::Deserializable for Value {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+//         // NOTE: This is not memory efficient, because it deserializes an entire Deconstruction into
+//         // memory, and then reconstructs it.  Instead it could reconstruct as it deserializes.
+//         let deconstruction = dy::Deconstruction::deserialize(reader)?;
+//         Ok(deconstruction.reconstruct()?)
+        // First read the SerializedTopLevelCode to decide what to do.
+        match st::SerializedTopLevelCode::read(reader)? {
+            st::SerializedTopLevelCode::Construction => {
+                // Deserialize the constructor.
+                let constructor = Value::deserialize(reader)?;
+                // Deserialize the parameters and construct the Value.
+                use dy::Constructor;
+                Ok(constructor.deserialize_parameters_and_construct(reader)?)
+            }
+            st::SerializedTopLevelCode::NonParametric => {
+                // The NonParametricTermCode plays the role of the constructor, and there are
+                // no parameters as you might have guessed.
+                let non_parametric_term_code = st::NonParametricTermCode::read(reader)?;
+                Ok(dy::RUNTIME_LA.read().unwrap().non_parametric_term_from_code(non_parametric_term_code)?)
+            }
+        }
+    }
+}
+
 impl st::Serializable for Value {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-        Ok(RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
+//         {
+//             use dy::Deconstruct;
+//             log::debug!("Value::serialize(); self.is_parametric(): {:?}, self.textified(): {}", self.is_parametric(), self.textified());
+//         }
+        let mut bytes_written = 0usize;
+        if self.nondereferencing_is_parametric() {
+            let constructor = self.nondereferencing_abstract_type();
+//             {
+//                 use dy::Deconstruct;
+//                 log::debug!("Value::serialize(); constructor.is_parametric(): {:?}, constructor.textified(): {}", constructor.is_parametric(), constructor.textified());
+//             }
+            // This indicates this serialization is a construction.
+            bytes_written += st::SerializedTopLevelCode::Construction.write(writer)?;
+            // This is the constructor
+            bytes_written += constructor.serialize(writer)?;
+            // This is the value itself.
+            bytes_written += dy::RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?;
+        } else {
+            // This indicates this serialization is a non-parametric term.
+            bytes_written += st::SerializedTopLevelCode::NonParametric.write(writer)?;
+            // This is the code representing the non-parametric term itself (its "value").
+            bytes_written +=
+                dy::RUNTIME_LA
+                    .read()
+                    .unwrap()
+                    .non_parametric_term_code(self.as_ref())?
+                    .write(writer)?;
+        }
+        Ok(bytes_written)
+
+//         // Because Value stores type information dynamically, it all has to be serialized.
+//         let mut bytes_written =
+//             dy::RUNTIME_LA.read().unwrap().serialize_top_level_code(self.as_ref(), writer)?;
+//         // TODO: This would be replaced with getting the constructor (assuming the value is
+//         // Constructible) and then serializing that.
+//         bytes_written +=
+//             dy::RUNTIME_LA.read().unwrap().serialize_constructor(self.as_ref(), writer)?;
+//         bytes_written +=
+//             dy::RUNTIME_LA.read().unwrap().serialize_parameters(self.as_ref(), writer)?;
+//         Ok(bytes_written)
     }
+
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(dy::RUNTIME_LA.read().unwrap().serialize_top_level_code(self.as_ref(), writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(dy::RUNTIME_LA.read().unwrap().serialize_constructor(self.as_ref(), writer)?)
+//     }
+//     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(dy::RUNTIME_LA.read().unwrap().serialize_parameters(self.as_ref(), writer)?)
+//     }
 }
 
 impl Stringifiable for Value {
@@ -165,5 +242,11 @@ impl Value {
             // No need to reconstruct anything.
         }
         Ok(())
+    }
+    fn nondereferencing_abstract_type(&self) -> Self {
+        RUNTIME_LA.read().unwrap().nondereferencing_abstract_type_of(self.as_ref()).into()
+    }
+    fn nondereferencing_is_parametric(&self) -> bool {
+        RUNTIME_LA.read().unwrap().nondereferencing_is_parametric(self.as_ref())
     }
 }

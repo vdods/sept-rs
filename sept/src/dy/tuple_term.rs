@@ -15,6 +15,13 @@ impl dy::Constructor for TupleTerm {
         // Passed type check, now can use the parameter_t tuple directly.
         Ok(parameter_t)
     }
+    fn deserialize_parameters_and_construct(&self, _reader: &mut dyn std::io::Read) -> Result<Self> {
+        unimplemented!("todo");
+//         // Each element is the constructor for each element in the parameters.
+//         for (i, element) in self.iter().enumerate() {
+//             element.deserialize_parameters_and_construct(reader
+//         }
+    }
 }
 
 impl dy::Deconstruct for TupleTerm {
@@ -142,12 +149,33 @@ impl Inhabits<dy::StructTerm> for TupleTerm {
     }
 }
 
+impl st::Deserializable for TupleTerm {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let len = st::read_len(reader)?;
+        let mut element_v = Vec::with_capacity(len);
+        for _ in 0..len {
+            element_v.push(dy::Value::deserialize(reader)?);
+        }
+        Ok(Self::from(element_v))
+    }
+}
+
 impl st::Serializable for TupleTerm {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Tuple.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        use dy::Deconstruct;
+        log::debug!("TupleTerm::serialize(); self: {}", self.textified());
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where a tuple smaller than 8 bytes is encoded in exactly 8 bytes.
-        let mut bytes_written = (self.len() as u64).serialize(writer)?;
+        let mut bytes_written = st::write_len(self.len(), writer)?;
         for element in self.iter() {
+//             use dy::Deconstruct;
+            log::debug!("TupleTerm::serialize(); element.type_id(): {:?}; element: {}", element.type_id(), element.textified());
             bytes_written += element.serialize(writer)?;
         }
         Ok(bytes_written)
@@ -172,9 +200,11 @@ impl Stringifiable for TupleTerm {
 impl TermTrait for TupleTerm {
     type AbstractTypeType = TupleTerm;
 
-    /// A Tuple term is parametric if there is at least one parameter.
+    /// Because of the dynamic nature of TupleTerm (along with other implementation choices
+    /// regarding dy::Value and dy::Runtime), even an empty TupleTerm has to be considered
+    /// parametric, because its type is represented by a generic dy::Value.
     fn is_parametric(&self) -> bool {
-        self.len() > 0
+        true
     }
     /// A Tuple term is a type if all of its elements are types.
     fn is_type(&self) -> bool {

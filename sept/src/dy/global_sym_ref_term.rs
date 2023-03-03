@@ -13,6 +13,9 @@ impl dy::Constructor for GlobalSymRefTerm {
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         Ok(self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().construct(parameter_t)?)
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        Ok(self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().deserialize_parameters_and_construct(reader)?)
+    }
 }
 
 /// GlobalSymRefTerm's impl for dy::Deconstruct does not use referential transparency, because
@@ -52,6 +55,19 @@ impl PartialEq<GlobalSymRefTerm> for GlobalSymRefTerm {
     }
 }
 
+impl st::Deserializable for GlobalSymRefTerm {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let symbol_id = String::deserialize(reader)?;
+        Ok(Self::new_unchecked(symbol_id))
+    }
+}
+
+impl st::Serializable for GlobalSymRefTerm {
+    fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        Ok(self.symbol_id.serialize(writer)?)
+    }
+}
+
 impl Stringifiable for GlobalSymRefTerm {
     fn stringify(&self) -> String {
         format!("GlobalSymRefTerm({:?})", self.symbol_id)
@@ -75,6 +91,12 @@ impl TermTrait for GlobalSymRefTerm {
     /// NOTE: This panics if the symbol isn't defined, which is probably not great.
     fn abstract_type(&self) -> Self::AbstractTypeType {
         self.resolved().expect("GlobalSymRefTerm failed to resolve").read().unwrap().abstract_type()
+    }
+}
+
+impl st::TestValues for GlobalSymRefTerm {
+    fn fixed_test_values() -> Vec<Self> {
+        vec![Self::new_unchecked("blah".to_string())]
     }
 }
 

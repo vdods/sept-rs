@@ -174,7 +174,7 @@ fn parse_value_from_terminal<'a>(terminal: &Terminal<'a>) -> Result<dy::Value> {
                 Ok(dy::Value::from(false)) // This is probably a TEMP HACK
             } else {
                 // Check if there's a non-parametric term with the given name registered with the runtime.
-                match dy::RUNTIME_LA.read().unwrap().non_parametric_term(&c_identifier) {
+                match dy::RUNTIME_LA.read().unwrap().non_parametric_term_from_identifier(&c_identifier) {
                     Ok(non_parametric_term_value) => Ok(non_parametric_term_value),
                     Err(_) => {
                         // Otherwise create a GlobalSymRefTerm of the given identifier.

@@ -26,6 +26,10 @@ impl dy::Constructor for GlobalSymRef {
 //         // to resolve the symbol.
 //         dy::GlobalSymRef::new_unchecked(symbol_id);
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl Inhabits<GlobalSymRefType> for GlobalSymRef {

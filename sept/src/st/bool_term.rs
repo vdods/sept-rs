@@ -1,5 +1,7 @@
 use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType}};
 
+pub type BoolTerm = bool;
+
 impl dy::Deconstruct for bool {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
@@ -54,7 +56,19 @@ impl PartialEq<False> for bool {
     }
 }
 
+impl st::Deserializable for bool {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        Ok(u8::deserialize(reader)? != 0u8)
+    }
+}
+
 impl st::Serializable for bool {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Bool.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // Represent as u8.
         let n = if *self { 1u8 } else { 0u8 };
@@ -79,5 +93,11 @@ impl TermTrait for bool {
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
         Self::AbstractTypeType{}
+    }
+}
+
+impl st::TestValues for bool {
+    fn fixed_test_values() -> Vec<Self> {
+        vec![true, false]
     }
 }

@@ -8,12 +8,16 @@ use crate::{dy, Result, st::{self, Stringifiable}};
 // StructTerm itself.
 #[derive(Clone, Debug, dy::IntoValue, PartialEq)]
 pub struct StructTermTerm {
-    /// A StructTerm necessarily has a defined type.  Typically that would be declared in a symbol
-    /// table (probably the global symbol table), and type_ would be a GlobalSymRefTerm.
+    /// An instance of StructTermTerm necessarily has a defined type, which is an instance of
+    /// StructTerm.  Typically that would be declared in a symbol table (probably the global symbol
+    /// table) so that a full copy of the StructTerm instance isn't kept with each instance of
+    /// StructTermTerm, and type_ would be a kind of ref, such as GlobalSymRefTerm, LocalSymRefTerm,
+    /// or eventually MemRefTerm.
     // TODO: Use type-specifying GlobalSymRefTerm when possible
     // TODO: Maybe this will eventually use a direct reference to the StructTerm instance itself
-    // via some ref counted construction, i.e. a [reference-counted] MemRef
-    type_: dy::Value,
+    // via some ref counted construction, i.e. a [reference-counted] MemRef; this would require
+    // a "linker" step upon resolution.
+    pub(crate) type_: dy::Value,
     // This is the ordered sequence of element values.
     pub(crate) field_t: dy::TupleTerm,
 }
@@ -24,6 +28,8 @@ impl dy::Deconstruct for StructTermTerm {
         dy::ParametricDeconstruction::new_recursive(self.type_, self.field_t).into()
     }
 }
+
+// TODO: Impls for st::Inhabits<dy::GlobalSymRefTerm> and st::Inhabits<dy::LocalSymRefTerm>
 
 impl st::Inhabits<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
@@ -69,13 +75,47 @@ impl std::fmt::Display for StructTermTerm {
     }
 }
 
+impl st::Deserializable for StructTermTerm {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let type_ = dy::Value::deserialize(reader)?;
+        let field_t = dy::TupleTerm::deserialize(reader)?;
+        // NOTE: This check might cause dereferences (e.g. in GlobalSymRefTerm) which may fail to
+        // resolve if they're not defined yet (e.g. in a mutually nested struct).
+        Ok(Self::new_checked(type_, field_t)?)
+    }
+}
+
 impl st::Serializable for StructTermTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        // This is a bit redundant, in that the case of serializing dy::Value::from(struct_term_term),
+        // it serializes the type twice, but it drastically simplifies the logic.
         let mut bytes_written = self.type_.serialize(writer)?;
         bytes_written += self.field_t.serialize(writer)?;
         Ok(bytes_written)
     }
 }
+
+// /// Note that StructTermTerm doesn't implement st::Deserializable, because its constructor is
+// /// a parametric type (StructTerm).  Instead, it's deserialized using StructTerm's impl of
+// /// dy::Constructor::deserialize_parameters_and_construct.
+// impl st::Serializable for StructTermTerm {
+// //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+// //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+// //     }
+// //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+// //         Ok(self.type_.serialize(writer)?)
+// //     }
+//     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         // NOTE: The assumption "the construction is known when calling serialize" is a bit tricky;
+//         // it's known that ultimately the constructor is [resolves to] an instance of StructTerm,
+//         // but the exact value of that instance of StructTerm (i.e. the type info of the fields
+//         // in this StructTermTerm) is necessary in order to fully understand the serialization here.
+//
+//         // It's assumed that the constructor is known, which carries the field type information,
+//         // so only field_t needs to be serialized.
+//         Ok(self.field_t.serialize(writer)?)
+//     }
+// }
 
 impl st::Stringifiable for StructTermTerm {
     fn stringify(&self) -> String {
@@ -98,14 +138,71 @@ impl st::Stringifiable for StructTermTerm {
 impl st::TermTrait for StructTermTerm {
     type AbstractTypeType = dy::Value;
 
-    /// A StructTermTerm instance is parametric if there is at least one element.
+    /// Because of the dynamic nature of StructTermTerm (along with other implementation choices
+    /// regarding dy::Value and dy::Runtime), even an empty StructTerm has to be considered parametric,
+    /// because its type is represented by a generic dy::Value.
     fn is_parametric(&self) -> bool {
-        self.field_t.len() > 0
+        true
     }
     fn is_type(&self) -> bool {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
         self.type_.clone()
+    }
+}
+
+impl st::TestValues for StructTermTerm {
+    fn fixed_test_values() -> Vec<Self> {
+        vec![
+            // Empty struct
+            Self::new_checked(
+                dy::StructTerm::new(vec![]).unwrap().into(),
+                dy::TupleTerm::from(vec![]),
+            ).unwrap(),
+            // Struct with single attribute
+            Self::new_checked(
+                dy::StructTerm::new(vec![("x".to_string(), st::Float64.into())]).unwrap().into(),
+                dy::TupleTerm::from(vec![4.01f64.into()]),
+            ).unwrap(),
+            // Struct with two attributes
+            Self::new_checked(
+                dy::StructTerm::new(vec![
+                    ("x".to_string(), st::Float64.into()),
+                    ("Y".to_string(), st::Array.into()),
+                ]).unwrap().into(),
+                dy::TupleTerm::from(vec![
+                    4.01f64.into(),
+                    dy::ArrayTerm::from(vec![true.into(), 123u32.into()]).into(),
+                ]),
+            ).unwrap(),
+            // Nested struct -- TODO: Clearly we need some macros to make assembling these things
+            // more ergonomic.
+            {
+                let inner_struct_term =
+                    dy::StructTerm::new(vec![
+                        ("x".to_string(), st::Float64.into()),
+                        ("Y".to_string(), st::Array.into()),
+                    ]).unwrap();
+                Self::new_checked(
+                    dy::StructTerm::new(vec![
+                        ("b".to_string(), st::Bool.into()),
+                        ("t".to_string(), st::TrueType.into()),
+                        ("g".to_string(), inner_struct_term.clone().into()),
+                    ]).unwrap().into(),
+                    dy::TupleTerm::from(vec![
+                        false.into(),
+                        st::True.into(),
+                        Self::new_checked(
+                            inner_struct_term.into(),
+                            dy::TupleTerm::from(vec![
+                                4.01f64.into(),
+                                dy::ArrayTerm::from(vec![true.into(), 123u32.into()]).into(),
+                            ]),
+                        ).unwrap().into()
+                    ]),
+                ).unwrap().into()
+            }
+        ]
     }
 }

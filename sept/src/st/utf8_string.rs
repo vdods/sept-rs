@@ -16,6 +16,10 @@ impl dy::Constructor for Utf8String {
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Utf8String, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl st::Inhabits<st::Type> for Utf8String {

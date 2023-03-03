@@ -19,3 +19,32 @@ pub use crate::{
     dag::{DirectedAcyclicGraph, EdgeSetMap, IncludeNode, NodeSet},
     poset::{PartialOrder, PartiallyOrderedSet},
 };
+
+/// This is a bit of a hack, but is a practical way to iterate over the tuple of non-parametric
+/// terms in a strongly typed way, without resorting to dy::Value.
+#[macro_export]
+macro_rules! for_each_parametric_term {
+    ($T:ident, $e:expr) => {
+        (
+            { type T = $crate::dy::ArrayTerm;                  $e },
+            { type T = $crate::dy::GlobalSymRefTerm;                  $e },
+//             { type T = $crate::dy::LocalSymRefTerm;                  $e },
+            { type T = $crate::dy::StructTerm;                  $e },
+            { type T = $crate::dy::StructTermTerm;                  $e },
+            { type T = $crate::dy::TupleTerm;                  $e },
+            // TODO: Should this just be bool?  BoolTerm is a type alias for bool.
+            { type T = $crate::st::BoolTerm;                  $e },
+            { type T = $crate::st::Float32Term;                  $e },
+            { type T = $crate::st::Float64Term;                  $e },
+            { type T = $crate::st::Sint8Term;                  $e },
+            { type T = $crate::st::Sint16Term;                  $e },
+            { type T = $crate::st::Sint32Term;                  $e },
+            { type T = $crate::st::Sint64Term;                  $e },
+            { type T = $crate::st::Uint8Term;                  $e },
+            { type T = $crate::st::Uint16Term;                  $e },
+            { type T = $crate::st::Uint32Term;                  $e },
+            { type T = $crate::st::Uint64Term;                  $e },
+            { type T = $crate::st::Utf8StringTerm;                  $e },
+        )
+    };
+}

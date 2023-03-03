@@ -22,7 +22,8 @@ pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
 pub type DereferencedOnceFn = fn(x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>>;
-pub type ConstructorFn = fn(constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value>;
+pub type ConstructFn = fn(constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value>;
+pub type DeserializeParametersAndConstructFn = fn(constructor: &ValueGuts, reader: &mut dyn std::io::Read) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
 
@@ -41,6 +42,8 @@ pub struct Runtime {
     // TODO: See about collecting many of these into a common map, since many of them will have
     // identical indexes.
 
+    // TODO: A way to iterate over NonParametricTerms, Terms, Types, etc.
+
     non_parametric_term_code_m: HashMap<TypeId, st::NonParametricTermCode>,
     term_s: HashSet<TypeId>,
     type_s: HashSet<TypeId>,
@@ -48,6 +51,8 @@ pub struct Runtime {
     label_fn_m: HashMap<TypeId, LabelFn>,
     debug_fn_m: HashMap<TypeId, DebugFn>,
     stringify_fn_m: HashMap<TypeId, StringifyFn>,
+//     serialize_top_level_code_fn_m: HashMap<TypeId, SerializeFn>,
+//     serialize_construct_fn_m: HashMap<TypeId, SerializeFn>,
     serialize_fn_m: HashMap<TypeId, SerializeFn>,
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
@@ -57,9 +62,11 @@ pub struct Runtime {
     is_type_fn_m: HashMap<TypeId, UnaryPredicate>,
     // TODO: subtype of
     dereferenced_once_fn_m: HashMap<TypeId, DereferencedOnceFn>,
-    constructor_fn_m: HashMap<TypeId, ConstructorFn>,
+    construct_fn_m: HashMap<TypeId, ConstructFn>,
+    deserialize_parameters_and_construct_fn_m: HashMap<TypeId, DeserializeParametersAndConstructFn>,
     deconstruct_fn_m: HashMap<TypeId, DeconstructFn>,
-    non_parametric_term_instantiate_fn_m: HashMap<&'static str, NonParametricTermInstantiateFn>,
+    non_parametric_term_instantiate_from_identifier_fn_m: HashMap<&'static str, NonParametricTermInstantiateFn>,
+    non_parametric_term_instantiate_from_code_fn_m: HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
 }
 
 impl Runtime {
@@ -203,7 +210,7 @@ impl Runtime {
         runtime.register_constructor::<Float64>().unwrap();
         runtime.register_constructor::<Utf8String>().unwrap();
         runtime.register_constructor::<Array>().unwrap();
-        runtime.register_constructor::<GlobalSymRefTerm>().unwrap();
+//         runtime.register_constructor::<GlobalSymRefTerm>().unwrap();
         runtime.register_constructor::<Tuple>().unwrap();
         runtime.register_constructor::<TupleTerm>().unwrap();
         runtime.register_constructor::<Struct>().unwrap();
@@ -282,25 +289,28 @@ impl Runtime {
         // TODO: Need to somehow make it so that everything inhabits Term
         // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
 
-        runtime.register_label::<GlobalSymRefTerm>().unwrap();
-        runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
+//         runtime.register_label::<GlobalSymRefTerm>().unwrap();
+//         runtime.register_stringify::<GlobalSymRefTerm>().unwrap();
         runtime.register_label::<LocalSymRefTerm>().unwrap();
         runtime.register_stringify::<LocalSymRefTerm>().unwrap();
         runtime.register_partial_eq::<bool, True>().unwrap();
         runtime.register_partial_eq::<bool, False>().unwrap();
         // TODO: referential transparency has to be handled with special code
-        runtime.register_partial_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+//         runtime.register_partial_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
         runtime.register_partial_eq::<LocalSymRefTerm, LocalSymRefTerm>().unwrap();
         runtime.register_inhabits::<bool, FalseType>().unwrap();
         runtime.register_inhabits::<bool, TrueType>().unwrap();
         runtime.register_inhabits::<False, Bool>().unwrap();
         runtime.register_inhabits::<True, Bool>().unwrap();
         runtime.register_inhabits::<TupleTerm, StructTerm>().unwrap();
+//         runtime.register_inhabits::<StructTermTerm, GlobalSymRefTerm>().unwrap();
+//         runtime.register_inhabits::<StructTermTerm, LocalSymRefTerm>().unwrap();
+        runtime.register_inhabits::<StructTermTerm, StructTerm>().unwrap();
 
         runtime.register_abstract_type::<GlobalSymRefTerm>().unwrap();
         runtime.register_clone::<GlobalSymRefTerm>().unwrap();
         runtime.register_debug::<GlobalSymRefTerm>().unwrap();
-        runtime.register_is_parametric::<GlobalSymRefTerm>().unwrap();
+        runtime.register_is_parametric_fn todo::<GlobalSymRefTerm>().unwrap();
         runtime.register_is_type::<GlobalSymRefTerm>().unwrap();
 
         runtime.register_abstract_type::<LocalSymRefTerm>().unwrap();
@@ -412,7 +422,27 @@ impl Runtime {
         let stringify_fn = |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
         Ok(self.register_stringify_fn(type_id, stringify_fn)?)
     }
-    pub(crate) fn register_serialize_fn(
+//     fn register_serialize_top_level_code_fn(
+//         &mut self,
+//         type_id: TypeId,
+//         serialize_top_level_code_fn: SerializeFn,
+//     ) -> Result<()> {
+//         match self.serialize_top_level_code_fn_m.insert(type_id, serialize_top_level_code_fn) {
+//             Some(_) => Err(anyhow::anyhow!("collision with already-registered serialize_top_level_code fn for {}", self.label_of(type_id))),
+//             None => Ok(())
+//         }
+//     }
+//     fn register_serialize_construct_fn(
+//         &mut self,
+//         type_id: TypeId,
+//         serialize_construct_fn: SerializeFn,
+//     ) -> Result<()> {
+//         match self.serialize_construct_fn_m.insert(type_id, serialize_construct_fn) {
+//             Some(_) => Err(anyhow::anyhow!("collision with already-registered serialize_constructor fn for {}", self.label_of(type_id))),
+//             None => Ok(())
+//         }
+//     }
+    fn register_serialize_fn(
         &mut self,
         type_id: TypeId,
         serialize_fn: SerializeFn,
@@ -424,10 +454,19 @@ impl Runtime {
     }
     pub(crate) fn register_serialize<S: st::Serializable + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<S>();
+//         let serialize_top_level_code_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
+//             Ok(x.downcast_ref::<S>().unwrap().serialize_top_level_code(writer)?)
+//         };
+//         let serialize_construct_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
+//             Ok(x.downcast_ref::<S>().unwrap().serialize_constructor(writer)?)
+//         };
         let serialize_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
             Ok(x.downcast_ref::<S>().unwrap().serialize(writer)?)
         };
-        Ok(self.register_serialize_fn(type_id, serialize_fn)?)
+//         self.register_serialize_top_level_code_fn(type_id, serialize_top_level_code_fn)?;
+//         self.register_serialize_construct_fn(type_id, serialize_construct_fn)?;
+        self.register_serialize_fn(type_id, serialize_fn)?;
+        Ok(())
     }
     pub(crate) fn register_abstract_type_fn(
         &mut self,
@@ -503,15 +542,28 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
+    pub(crate) fn register_is_parametric_fn(
+        &mut self,
+        type_id: TypeId,
+        is_parametric_fn: UnaryPredicate,
+    ) -> Result<()> {
+        match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    // TODO: Rename this something different (this was copied and pasted from register_stringify
+    // and the semantics don't match).
     pub(crate) fn register_is_parametric<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_parametric_fn = |x: &ValueGuts| -> bool {
             x.downcast_ref::<T>().unwrap().is_parametric()
         };
-        match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric fn for {}", self.label_of(type_id))),
-            None => Ok(())
-        }
+        Ok(self.register_is_parametric_fn(type_id, is_parametric_fn)?)
+//         match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
+//             Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric fn for {}", self.label_of(type_id))),
+//             None => Ok(())
+//         }
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
@@ -597,22 +649,47 @@ impl Runtime {
         };
         Ok(self.register_deconstruct_fn(type_id, deconstruct_fn)?)
     }
-    pub(crate) fn register_constructor_fn(&mut self, type_id: TypeId, constructor_fn: ConstructorFn) -> Result<()> {
-        match self.constructor_fn_m.insert(type_id, constructor_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered constructor fn for {}", self.label_of(type_id))),
+    pub(crate) fn register_construct_fn(&mut self, type_id: TypeId, construct_fn: ConstructFn) -> Result<()> {
+        match self.construct_fn_m.insert(type_id, construct_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered construct fn for {}", self.label_of(type_id))),
+            None => Ok(())
+        }
+    }
+    pub(crate) fn register_deserialize_parameters_and_construct_fn(&mut self, type_id: TypeId, deserialize_parameters_and_construct_fn: DeserializeParametersAndConstructFn) -> Result<()> {
+        match self.deserialize_parameters_and_construct_fn_m.insert(type_id, deserialize_parameters_and_construct_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered deserialize_parameters_and_construct fn for {}", self.label_of(type_id))),
             None => Ok(())
         }
     }
     pub fn register_constructor<T: dy::Constructor + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let constructor_fn = |constructor: &ValueGuts, parameter_t: dy::TupleTerm| -> Result<dy::Value> {
+        let construct_fn = |constructor: &ValueGuts, parameter_t: dy::TupleTerm| -> Result<dy::Value> {
             Ok(constructor.downcast_ref::<T>().unwrap().construct(parameter_t)?.into())
         };
-        Ok(self.register_constructor_fn(type_id, constructor_fn)?)
+        self.register_construct_fn(type_id, construct_fn)?;
+        let deserialize_parameters_and_construct_fn = |constructor: &ValueGuts, reader: &mut dyn std::io::Read| -> Result<dy::Value> {
+            Ok(constructor.downcast_ref::<T>().unwrap().deserialize_parameters_and_construct(reader)?.into())
+        };
+        self.register_deserialize_parameters_and_construct_fn(type_id, deserialize_parameters_and_construct_fn)?;
+        Ok(())
     }
-    pub(crate) fn register_non_parametric_term_instantiate_fn(&mut self, identifier: &'static str, non_parametric_term_instantiate_fn: NonParametricTermInstantiateFn) -> Result<()> {
-        match self.non_parametric_term_instantiate_fn_m.insert(identifier, non_parametric_term_instantiate_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate fn for {}", identifier)),
+    pub(crate) fn register_non_parametric_term_instantiate_from_identifier_fn(
+        &mut self,
+        identifier: &'static str,
+        non_parametric_term_instantiate_from_identifier_fn: NonParametricTermInstantiateFn,
+    ) -> Result<()> {
+        match self.non_parametric_term_instantiate_from_identifier_fn_m.insert(identifier, non_parametric_term_instantiate_from_identifier_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate_from_identifier fn for {}", identifier)),
+            None => Ok(())
+        }
+    }
+    pub(crate) fn register_non_parametric_term_instantiate_from_code_fn(
+        &mut self,
+        code: st::NonParametricTermCode,
+        non_parametric_term_instantiate_from_code_fn: NonParametricTermInstantiateFn,
+    ) -> Result<()> {
+        match self.non_parametric_term_instantiate_from_code_fn_m.insert(code, non_parametric_term_instantiate_from_code_fn) {
+            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate_from_code fn for {}", code)),
             None => Ok(())
         }
     }
@@ -621,7 +698,15 @@ impl Runtime {
         let non_parametric_term_instantiate_fn = || -> dy::Value {
             dy::Value::from(T::instantiate())
         };
-        Ok(self.register_non_parametric_term_instantiate_fn(T::IDENTIFIER, non_parametric_term_instantiate_fn)?)
+        self.register_non_parametric_term_instantiate_from_identifier_fn(
+            T::IDENTIFIER,
+            non_parametric_term_instantiate_fn,
+        )?;
+        self.register_non_parametric_term_instantiate_from_code_fn(
+            T::NON_PARAMETRIC_TERM_CODE,
+            non_parametric_term_instantiate_fn,
+        )?;
+        Ok(())
     }
 
     pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(&'a self) -> Option<&'a BinaryPredicate> {
@@ -660,14 +745,30 @@ impl Runtime {
             }
         }
     }
+//     // Note that this does not use referential transparency.
+//     pub fn serialize_top_level_code(&self, x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         match self.serialize_top_level_code_fn_m.get(&x.type_id()) {
+//             Some(serialize_top_level_code_fn) => Ok(serialize_top_level_code_fn(x, writer)?),
+//             None => {
+//                 panic!("no serialize_top_level_code fn found for {:?}", x.type_id());
+//             }
+//         }
+//     }
+//     // Note that this does not use referential transparency.
+//     pub fn serialize_constructor(&self, x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         match self.serialize_construct_fn_m.get(&x.type_id()) {
+//             Some(serialize_construct_fn) => Ok(serialize_construct_fn(x, writer)?),
+//             None => {
+//                 panic!("no serialize_constructor fn found for {:?}", x.type_id());
+//             }
+//         }
+//     }
     // Note that this does not use referential transparency.
     pub fn serialize(&self, x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize> {
         match self.serialize_fn_m.get(&x.type_id()) {
             Some(serialize_fn) => Ok(serialize_fn(x, writer)?),
             None => {
                 panic!("no serialize fn found for {:?}", x.type_id());
-//                 log::warn!("no serialize fn found for {}; returning generic default", self.label_of(x.type_id()));
-//                 format!("InstanceOf({})", self.label_of(x.type_id()))
             }
         }
     }
@@ -755,22 +856,22 @@ impl Runtime {
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
-                self.abstract_type_of_impl(x_value_guts)
+                self.nondereferencing_abstract_type_of(x_value_guts)
             },
             MaybeDereferencedValue::Ref(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
-                self.abstract_type_of_impl(x_value_g.as_ref())
+                self.nondereferencing_abstract_type_of(x_value_g.as_ref())
             },
         }
     }
-    fn abstract_type_of_impl(&self, x: &ValueGuts) -> Box<ValueGuts> {
+    pub(crate) fn nondereferencing_abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
         let type_id = x.type_id();
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
             None => {
-                // panic!("no abstract_type fn found for ({}, ())", self.label_of(lhs_type_id), self.label_of(rhs_type_id)),
-                log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
-                Box::new(Type)
+                panic!("no abstract_type fn found for {}", self.label_of(type_id));
+//                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
+//                 Box::new(Type)
             }
         }
     }
@@ -787,20 +888,22 @@ impl Runtime {
             }
         }
     }
+    // TODO: Consider renaming this to is_parametric_term
     pub fn is_parametric(&self, x: &ValueGuts) -> bool {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
             MaybeDereferencedValue::NonRef(x_value_guts) => {
-                self.is_parametric_impl(x_value_guts)
+                self.nondereferencing_is_parametric(x_value_guts)
             },
             MaybeDereferencedValue::Ref(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
-                self.is_parametric_impl(x_value_g.as_ref())
+                self.nondereferencing_is_parametric(x_value_g.as_ref())
             },
         }
     }
-    fn is_parametric_impl(&self, x: &ValueGuts) -> bool {
+    // TODO: Consider renaming this to is_parametric_term_impl
+    pub(crate) fn nondereferencing_is_parametric(&self, x: &ValueGuts) -> bool {
         match self.is_parametric_fn_m.get(&x.type_id()) {
             Some(is_parametric_fn) => is_parametric_fn(x),
             None => {
@@ -877,11 +980,20 @@ impl Runtime {
         }
     }
     pub fn construct(&self, constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value> {
-        match self.constructor_fn_m.get(&constructor.type_id()) {
-            Some(constructor_fn) => Ok(constructor_fn(constructor, parameter_t)?),
+        match self.construct_fn_m.get(&constructor.type_id()) {
+            Some(construct_fn) => Ok(construct_fn(constructor, parameter_t)?),
             None => {
-                panic!("no constructor fn found for {}", self.label_of(constructor.type_id()));
+                panic!("no construct fn found for {}", self.label_of(constructor.type_id()));
                 // NOTE: A reasonable default would be Err(anyhow::anyhow!("no construct fn found for {}", self.label_of(constructor.type_id()))
+            }
+        }
+    }
+    pub fn deserialize_parameters_and_construct(&self, constructor: &ValueGuts, reader: &mut dyn std::io::Read) -> Result<dy::Value> {
+        match self.deserialize_parameters_and_construct_fn_m.get(&constructor.type_id()) {
+            Some(deserialize_parameters_and_construct_fn) => Ok(deserialize_parameters_and_construct_fn(constructor, reader)?),
+            None => {
+                panic!("no deserialize_parameters_and_construct fn found for {}", self.label_of(constructor.type_id()));
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deserialize_parameters_and_construct fn found for {}", self.label_of(constructor.type_id()))
             }
         }
     }
@@ -894,11 +1006,21 @@ impl Runtime {
             }
         }
     }
-    pub fn non_parametric_term(&self, identifier: &str) -> Result<dy::Value> {
-        match self.non_parametric_term_instantiate_fn_m.get(identifier) {
-            Some(non_parametric_term_instantiate_fn) => Ok(non_parametric_term_instantiate_fn()),
+    pub fn non_parametric_term_from_identifier(&self, identifier: &str) -> Result<dy::Value> {
+        match self.non_parametric_term_instantiate_from_identifier_fn_m.get(identifier) {
+            Some(non_parametric_term_instantiate_from_identifier_fn) => Ok(non_parametric_term_instantiate_from_identifier_fn()),
             None => Err(anyhow::anyhow!("NonParametricTerm `{}` not found", identifier))
         }
+    }
+    pub fn non_parametric_term_from_code(&self, code: st::NonParametricTermCode) -> Result<dy::Value> {
+        match self.non_parametric_term_instantiate_from_code_fn_m.get(&code) {
+            Some(non_parametric_term_instantiate_fn) => Ok(non_parametric_term_instantiate_fn()),
+            None => Err(anyhow::anyhow!("NonParametricTerm `{}` not found", code))
+        }
+    }
+    /// Returns true iff T is a term that's been registered in this Runtime.
+    pub fn is_registered_term<T: st::TermTrait>(&self) -> bool {
+        self.term_s.contains(&TypeId::of::<T>())
     }
 }
 

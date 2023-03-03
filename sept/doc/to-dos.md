@@ -27,6 +27,7 @@
 -   It should be possible to use symbolic and URL-like references to types in the following ways:
     -   In a dynamic mode, declaring a term has a symbolic/URL-specified type simply does dynamic validation.
     -   In a static mode, a natively defined struct/class could have a derive attribute that verifies (maybe at load-time?) that the given struct/class faithfully represents the type referred to.  This would be the ideal way to implement strongly typed, statically compiled usages of schemas that are defined in some public, online repository.
+-   Rename types involving acronyms to use all caps, e.g. `Utf8String` -> `UTF8String`, `PodType` -> `PODType`, because it looks better.
 
 ## Design Notes For `sept-tui`
 

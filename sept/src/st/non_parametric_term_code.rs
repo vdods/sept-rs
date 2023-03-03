@@ -1,3 +1,5 @@
+use crate::Result;
+
 // The repr(u8) attribute is to be compatible with the C++ implementation.
 // NOTE: TermTrait and all the other things like Stringifiable are not being implemented
 // here, as this enum is simply meant for serialization representation purposes.  In
@@ -6,7 +8,7 @@
 // TODO: Consider versioning this type, e.g. NonParametricTermCode_1_0, and then including a version marker
 // in the textifaction or binary serialization.
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, derive_more::Display, Eq, Hash, PartialEq, int_enum::IntEnum)]
 pub enum NonParametricTermCode {
     // The most basic Types.
 
@@ -65,158 +67,181 @@ pub enum NonParametricTermCode {
     Uint64 = 0x17,
     Float32 = 0x18,
     Float64 = 0x19,
-//     AsciiChar, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
+    AsciiChar = 0x1A, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
 
     // POD Type Types
 
     /// Sole inhabitant is Bool.
-    BoolType,
+    BoolType = 0x1B,
     /// Sole inhabitant is Sint8.
-    Sint8Type,
+    Sint8Type = 0x1C,
     /// Sole inhabitant is Sint16.
-    Sint16Type,
+    Sint16Type = 0x1D,
     /// Sole inhabitant is Sint32.
-    Sint32Type,
+    Sint32Type = 0x1E,
     /// Sole inhabitant is Sint64.
-    Sint64Type,
+    Sint64Type = 0x1F,
     /// Sole inhabitant is Uint8.
-    Uint8Type,
+    Uint8Type = 0x20,
     /// Sole inhabitant is Uint16.
-    Uint16Type,
+    Uint16Type = 0x21,
     /// Sole inhabitant is Uint32
-    Uint32Type,
+    Uint32Type = 0x22,
     /// Sole inhabitant is Uint64
-    Uint64Type,
+    Uint64Type = 0x23,
     /// Sole inhabitant is Float32
-    Float32Type,
+    Float32Type = 0x24,
     /// Sole inhabitant is Float64
-    Float64Type,
-//     /// Sole inhabitant is AsciiChar.
-//     AsciiCharType,
+    Float64Type = 0x25,
+    /// Sole inhabitant is AsciiChar.
+    AsciiCharType = 0x26,
 
-    Utf8String,
+    Utf8String = 0x27,
     /// Sole inhabitant is Utf8String.
-    Utf8StringType,
+    Utf8StringType = 0x28,
 
     // Other Types related to POD Types
 
-    /// Isomorphic to Union(Sint8Type, Sint16Type, Sint32Type, Sint64Type).
-    SintType,
     /// Isomorphic to Union(Sint8, Sint16, Sint32, Sint64).
     // TODO: Maybe allow this to construct Sint(N) where N is the number of bits, and e.g. Sint(32)
     // would be isomorphic to Sint32.
-    Sint,
-    /// Isomorphic to Union(Uint8Type, Uint16Type, Uint32Type, Uint64Type).
-    UintType,
+    Sint = 0x29,
     /// Isomorphic to Union(Uint8, Uint16, Uint32, Uint64).
     // TODO: Maybe allow this to construct Uint(N) where N is the number of bits, and e.g. Uint(32)
     // would be isomorphic to Uint32.
-    Uint,
+    Uint = 0x2A,
+    /// Isomorphic to Union(Float32,Float64).
+    Float = 0x2B,
+    /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  Pod : PodType.
+    Pod = 0x2C,
+
+    /// Isomorphic to Union(Sint8Type, Sint16Type, Sint32Type, Sint64Type).
+    SintType = 0x2D,
+    /// Isomorphic to Union(Uint8Type, Uint16Type, Uint32Type, Uint64Type).
+    UintType = 0x2E,
     /// Isomorphic to Union(Float32Type,Float64Type).
-    FloatType,
-    Float, // Isomorphic to Union(Float32,Float64).
+    FloatType = 0x2F,
     // TODO: Add CHAR types
     /// Isomorphic to Union(BoolType, SintType, UintType, FloatType) (TODO: Somehow add Pod as an inhabitant)
-    PodType,
-    /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  Pod : PodType.
-    Pod,
+    PodType = 0x30,
     // TODO: Add semantic classes like Positive, Negative, NonPositive, NonNegative, Zero
 
-    /// Sole inhabitant is Union.
-    UnionType,
     /// Inhabitants have the form Union(T1,...,TN) -- implemented as UnionTerm.
-    Union,
+    Union = 0x31,
     /// Inhabitants have the form Intersection(T1,...,TN) -- implemented as IntersectionTerm.
-    Intersection,
+    Intersection = 0x32,
     /// Inhabitants have the form Negation(T) -- implemented as NegationTerm.
-    Negation,
+    Negation = 0x33,
     /// Inhabitants have the form Difference(T,U1,...,UN) -- implemented as DifferenceTerm.
-    Difference,
+    Difference = 0x34,
+
+    /// Sole inhabitant is Union.
+    UnionType = 0x35,
+    /// Sole inhabitant is Intersection.
+    IntersectionType = 0x36,
+    /// Sole inhabitant is Negation.
+    NegationType = 0x37,
+    /// Sole inhabitant is Difference.
+    DifferenceType = 0x38,
 
     // TODO: UnionType, IntersectionType, etc.
 
     /// Inhabitants are ArrayES, ArrayE, ArrayS, Array.
-    ArrayType,
+    ArrayType = 0x39,
     /// Inhabitants have the form ArrayES(T,N) -- implemented as ArrayESTerm.
-    ArrayES,
+    ArrayES = 0x3A,
     /// Inhabitants have the form ArrayE(T) -- implemented as ArrayETerm.
-    ArrayE,
+    ArrayE = 0x3B,
     /// Inhabitants have the form ArrayS(N) -- implemented as ArraySTerm.
-    ArrayS,
+    ArrayS = 0x3C,
     /// Inhabitants have the form Array(...) -- implemented as ArrayTerm.
-    Array,
+    Array = 0x3D,
 
     /// Inhabitants are OrderedMapDC, OrderedMapD, OrderedMapC, OrderedMap.
-    OrderedMapType,
+    OrderedMapType = 0x3E,
     /// Inhabitants have the form OrderedMapDC(Domain,Codomain) -- implemented as OrderedMapDCTerm.
-    OrderedMapDC,
+    OrderedMapDC = 0x3F,
     /// Inhabitants have the form OrderedMapD(Domain) -- implemented as OrderedMapDTerm.
-    OrderedMapD,
+    OrderedMapD = 0x40,
     /// Inhabitants have the form OrderedMapC(Codomain) -- implemented as OrderedMapCTerm.
-    OrderedMapC,
+    OrderedMapC = 0x41,
     /// Inhabitants have the form OrderedMap(...) -- implemented as OrderedMapTerm.
-    OrderedMap,
+    OrderedMap = 0x42,
 
     // Sole inhabitant is Tuple.
-    TupleType,
+    TupleType = 0x43,
     /// Inhabitants have the form Tuple(...) -- implemented as TupleTerm.
-    Tuple,
+    Tuple = 0x44,
 
     /// Sole inhabitant is Struct.
-    StructType,
+    StructType = 0x45,
     /// Inhabitants have the form Struct(...) -- implemented by StructTerm.  Inhabitants are specific
     /// structs.  Struct itself is a metatype which constructs structs.  An instance of a particular
     /// struct would be Struct(...)(...) and is implemented by StructTermTerm.
-    Struct,
+    Struct = 0x46,
 
     //
     // Reference-related terms
     //
 
     /// Sole inhabitant is MemRef.
-    MemRefType,
+    MemRefType = 0x47,
     /// Inhabitants have the form MemRef(&d), where d is Data.
-    MemRef,
+    MemRef = 0x48,
     /// Sole inhabitant is GlobalSymRef.
-    GlobalSymRefType,
+    GlobalSymRefType = 0x49,
     /// Inhabitants have the form GlobalSymRef("<symbol-id>") -- implemented as GlobalSymRefTerm.
-    GlobalSymRef,
+    GlobalSymRef = 0x4A,
     /// Sole inhabitant is LocalSymRef.
-    LocalSymRefType,
+    LocalSymRefType = 0x4B,
     /// Inhabitants have the form LocalSymRef("<symbol-id>", <shared-ptr-to-symbol-table>) --
     /// implemented as LocalSymRefTerm.
-    LocalSymRef,
+    LocalSymRef = 0x4C,
 
-    PlaceholderType,
-    Placeholder,
+    PlaceholderType = 0x4D,
+    Placeholder = 0x4E,
 
-    FreevarType,
-    Freevar,
+    FreevarType = 0x4F,
+    Freevar = 0x50,
 
     //
     // Control terms
     //
 
     /// Sole inhabitant is Output.
-    OutputType,
+    OutputType = 0x51,
     /// Inhabitants have the form Output(V) for some value V.
-    Output,
+    Output = 0x52,
     /// Sole inhabitant is ClearOutput.
-    ClearOutputType,
+    ClearOutputType = 0x53,
     /// Singleton.
-    ClearOutput,
+    ClearOutput = 0x54,
     /// Sole inhabitant is EndOfFile.
-    EndOfFileType,
+    EndOfFileType = 0x55,
     /// Singleton.
-    EndOfFile,
+    EndOfFile = 0x56,
     /// Sole inhabitant is RequestSyncInput
-    RequestSyncInputType,
+    RequestSyncInputType = 0x57,
     /// Inhabitants have the form RequestSyncInput(T) for some type T.
-    RequestSyncInput,
+    RequestSyncInput = 0x58,
 
     // TODO: Ideally there could be an "Unspecified(u8)" in which the u8 value is disjoint
     // with the above values, and so it would use niche logic and not take up more storage than u8.
     // this could be used for application-specific values, though that would hinder interoperability.
 
-    Undefined, // TEMP HACK
+    Undefined = 0xFF, // TEMP HACK
+}
+
+impl NonParametricTermCode {
+    pub fn read(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<u8>()];
+        reader.read_exact(&mut buffer)?;
+        let n = u8::from_le_bytes(buffer);
+        // This try_from uses int_enum::IntEnum trait.
+        Ok(Self::try_from(n)?)
+    }
+    pub fn write(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+        writer.write_all((*self as u8).to_le_bytes().as_slice())?;
+        Ok(std::mem::size_of::<u8>())
+    }
 }

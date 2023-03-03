@@ -36,6 +36,10 @@ impl dy::Constructor for Struct {
         ).collect::<Result<Vec<(String, dy::Value)>>>()?;
         Ok(dy::StructTerm::new(field_decl_v)?)
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl Inhabits<StructType> for Struct {

@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "Struct", is_parametric = "self.field_decl_v.len() > 0", is_type = "true")]
+#[derive(Clone, Debug, /*derive_more::From, derive_more::Into, */dy::IntoValue, PartialEq, st::TermTrait)]
+#[st_term_trait(AbstractTypeType = "Struct", is_parametric = "true", is_type = "true")]
 pub struct StructTerm {
     /// This stores the field declarations (i.e. `field: Type`) in a particular order.
     // TODO: Check that each is a type.
@@ -58,6 +58,29 @@ impl dy::Constructor for StructTerm {
         log::warn!("NOTE: Just copying the StructTerm as the StructTermTerm's type for now. TODO: figure out what the right approach is");
         Ok(dy::StructTermTerm::new_unchecked(self.clone().into(), parameter_t))
     }
+//     /// This is the way to deserialize a StructTermTerm; the type (this StructTerm) is necessary
+//     /// in order to understand its serialization.
+//     fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+//         use st::Deserializable;
+//         let field_t = dy::TupleTerm::deserialize(reader)?;
+//         // NOTE: This will cause references to be resolved, but that requires all of them to be
+//         // defined, which may not be the case for mutually-nested structures that use GlobalSymRefs
+//         // in their type definitions.  This may require a separate post-deserialize verification step
+//         // to handle.
+//         Ok(Self::ConstructedType::new_checked(self.clone().into(), field_t)?)
+//     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        let struct_term_term = Self::ConstructedType::deserialize(reader)?;
+        use dy::Deconstruct;
+        anyhow::ensure!(
+            struct_term_term.inhabits(self),
+            "type mismatch in StructTerm::deserialize_parameters_and_construct; expected type_ {} but got {}",
+            self.textified(),
+            struct_term_term.type_.textified(),
+        );
+        Ok(struct_term_term)
+    }
 }
 
 impl dy::Deconstruct for StructTerm {
@@ -95,11 +118,32 @@ impl st::Inhabits<st::Type> for StructTerm {
     }
 }
 
+impl st::Deserializable for StructTerm {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let len = st::read_len(reader)?;
+        let mut field_decl_v = Vec::with_capacity(len);
+        for _ in 0..len {
+            let field_name = String::deserialize(reader)?;
+            let field_type = dy::Value::deserialize(reader)?;
+            field_decl_v.push((field_name, field_type));
+        }
+        Ok(Self::new(field_decl_v)?)
+    }
+}
+
 impl st::Serializable for StructTerm {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Struct.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where a StructTerm smaller than 8 bytes is encoded in exactly 8 bytes.
-        let mut bytes_written = (self.field_decl_v.len() as u64).serialize(writer)?;
+        // TODO: Once Vec<T> is supported as a term of ArrayE(T), then this could change
+        // simply into self.field_decl_v.serialize(writer)
+        let mut bytes_written = st::write_len(self.field_decl_v.len(), writer)?;
         for (field_name, field_type) in self.field_decl_v.iter() {
             bytes_written += field_name.serialize(writer)?;
             bytes_written += field_type.serialize(writer)?;
@@ -121,6 +165,33 @@ impl Stringifiable for StructTerm {
         }
         s.push_str(")");
         s
+    }
+}
+
+impl st::TestValues for StructTerm {
+    fn fixed_test_values() -> Vec<Self> {
+        vec![
+            // Empty struct
+            Self::new(vec![]).unwrap(),
+            Self::new(vec![("x".to_string(), st::Float64.into())]).unwrap(),
+            Self::new(vec![
+                ("x".to_string(), st::Float64.into()),
+                ("Y".to_string(), st::Array.into()),
+            ]).unwrap(),
+            // Nested struct
+            {
+                let inner_struct_term =
+                    Self::new(vec![
+                        ("x".to_string(), st::Float64.into()),
+                        ("Y".to_string(), st::Array.into()),
+                    ]).unwrap();
+                Self::new(vec![
+                    ("b".to_string(), st::Bool.into()),
+                    ("t".to_string(), st::TrueType.into()),
+                    ("g".to_string(), inner_struct_term.into()),
+                ]).unwrap()
+            },
+        ]
     }
 }
 

@@ -1104,8 +1104,68 @@ fn test_parse_deconstruction() {
             ).expect("test")
         )
     );
+}
 
+fn test_runtime_registration_case<T: st::TermTrait>() {
+    assert!(dy::RUNTIME_LA.read().unwrap().is_registered_term::<T>(), "type {} is not a registered term", std::any::type_name::<T>());
+}
 
+#[test]
+#[serial_test::serial]
+fn test_runtime_registrations() {
+    sept::for_each_non_parametric_term!(T, test_runtime_registration_case::<T>());
+    sept::for_each_parametric_term!(T, test_runtime_registration_case::<T>());
+
+}
+
+fn test_serialize_deserialize_case<T: PartialEq + st::Deserializable + st::Serializable + st::TermTrait >(x: &T) {
+    let mut serialized_byte_v = Vec::new();
+    x.serialize(&mut serialized_byte_v).expect("pass");
+    let x_deserialized = T::deserialize(&mut serialized_byte_v.as_slice()).expect("pass");
+    assert_eq!(x_deserialized, *x);
+}
+
+fn test_serialize_deserialize_case_as_value<T: PartialEq + st::Deserializable + dy::IntoValue + st::Serializable + st::TermTrait >(x: &T) {
+    let x_as_value = dy::Value::from(x.clone());
+    let mut serialized_byte_v = Vec::new();
+    use st::Serializable;
+    x_as_value.serialize(&mut serialized_byte_v).expect("pass");
+    use st::Deserializable;
+    let x_deserialized = dy::Value::deserialize(&mut serialized_byte_v.as_slice()).expect("pass");
+    assert_eq!(x_deserialized, x_as_value);
+}
+
+fn test_serialize_deserialize_test_values<T: PartialEq + st::Deserializable + dy::IntoValue + st::Serializable + st::TermTrait + st::TestValues>() {
+    // TODO: Also generate random test values
+    use st::TestValues;
+    for x in T::fixed_test_values() {
+        test_serialize_deserialize_case(&x);
+        test_serialize_deserialize_case_as_value(&x);
+    }
+}
+
+#[test]
+#[serial_test::serial]
+fn test_serialize_deserialize() {
+    sept::for_each_non_parametric_term!(T, test_serialize_deserialize_test_values::<T>());
+
+    test_serialize_deserialize_test_values::<bool>();
+    test_serialize_deserialize_test_values::<i8>();
+    test_serialize_deserialize_test_values::<i16>();
+    test_serialize_deserialize_test_values::<i32>();
+    test_serialize_deserialize_test_values::<i64>();
+    test_serialize_deserialize_test_values::<u8>();
+    test_serialize_deserialize_test_values::<u16>();
+    test_serialize_deserialize_test_values::<u32>();
+    test_serialize_deserialize_test_values::<u64>();
+    test_serialize_deserialize_test_values::<f32>();
+    test_serialize_deserialize_test_values::<f64>();
+    test_serialize_deserialize_test_values::<String>();
+
+    test_serialize_deserialize_test_values::<ArrayTerm>();
+    test_serialize_deserialize_test_values::<GlobalSymRefTerm>();
+    test_serialize_deserialize_test_values::<StructTerm>();
+//     test_serialize_deserialize_test_values::<StructTermTerm>();
 }
 
 //

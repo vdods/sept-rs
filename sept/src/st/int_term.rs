@@ -1,5 +1,14 @@
 use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
 
+pub type Sint8Term = i8;
+pub type Sint16Term = i16;
+pub type Sint32Term = i32;
+pub type Sint64Term = i64;
+pub type Uint8Term = u8;
+pub type Uint16Term = u16;
+pub type Uint32Term = u32;
+pub type Uint64Term = u64;
+
 impl dy::IntoValue for i8 {}
 impl dy::IntoValue for i16 {}
 impl dy::IntoValue for i32 {}
@@ -137,7 +146,77 @@ impl dy::Deconstruct for u64 {
     }
 }
 
+impl st::Deserializable for i8 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for i16 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for i32 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for i64 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for u8 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for u16 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for u32 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
+impl st::Deserializable for u64 {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let mut buffer = [0u8; std::mem::size_of::<Self>()];
+        reader.read_exact(&mut buffer)?;
+        Ok(Self::from_le_bytes(buffer))
+    }
+}
+
 impl st::Serializable for i8 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Sint8.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -145,6 +224,12 @@ impl st::Serializable for i8 {
 }
 
 impl st::Serializable for i16 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Sint16.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -152,6 +237,12 @@ impl st::Serializable for i16 {
 }
 
 impl st::Serializable for i32 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Sint32.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -159,6 +250,12 @@ impl st::Serializable for i32 {
 }
 
 impl st::Serializable for i64 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Sint64.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -166,6 +263,12 @@ impl st::Serializable for i64 {
 }
 
 impl st::Serializable for u8 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Uint8.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -173,6 +276,12 @@ impl st::Serializable for u8 {
 }
 
 impl st::Serializable for u16 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Uint16.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -180,6 +289,12 @@ impl st::Serializable for u16 {
 }
 
 impl st::Serializable for u32 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Uint32.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -187,6 +302,12 @@ impl st::Serializable for u32 {
 }
 
 impl st::Serializable for u64 {
+//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+//     }
+//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(st::Uint64.serialize(writer)?)
+//     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -245,7 +366,7 @@ impl TermTrait for i8 {
     type AbstractTypeType = st::Sint8;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -259,7 +380,7 @@ impl TermTrait for i16 {
     type AbstractTypeType = st::Sint16;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -273,7 +394,7 @@ impl TermTrait for i32 {
     type AbstractTypeType = st::Sint32;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -287,7 +408,7 @@ impl TermTrait for i64 {
     type AbstractTypeType = st::Sint64;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -301,7 +422,7 @@ impl TermTrait for u8 {
     type AbstractTypeType = st::Uint8;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -315,7 +436,7 @@ impl TermTrait for u16 {
     type AbstractTypeType = st::Uint16;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -329,7 +450,7 @@ impl TermTrait for u32 {
     type AbstractTypeType = st::Uint32;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
@@ -343,12 +464,68 @@ impl TermTrait for u64 {
     type AbstractTypeType = st::Uint64;
 
     fn is_parametric(&self) -> bool {
-        false
+        true
     }
     fn is_type(&self) -> bool {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
         Self::AbstractTypeType{}
+    }
+}
+
+impl st::TestValues for i8 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for i16 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for i32 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for i64 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for u8 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, 2, 3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for u16 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, 2, 3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for u32 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, 2, 3, Self::MIN, Self::MAX]
+    }
+}
+
+impl st::TestValues for u64 {
+    fn fixed_test_values() -> Vec<Self> {
+        // Just do some common values as well as MAX and MIN.
+        vec![0, 1, 2, 3, Self::MIN, Self::MAX]
     }
 }

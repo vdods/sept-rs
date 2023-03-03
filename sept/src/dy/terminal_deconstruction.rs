@@ -13,7 +13,7 @@ impl TryFrom<dy::Value> for TerminalDeconstruction {
     type Error = Error;
     fn try_from(value: dy::Value) -> std::result::Result<Self, Self::Error> {
         // TODO: Check that this is actually a terminal type.
-//         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_non_parametric_term(value.as_ref()), "can't create TerminalDeconstruction from a Value (which was {:?}) which is not a NonParametricTerm", value);
+//         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_terminal(value.as_ref()), "can't create TerminalDeconstruction from a Value (which was {:?}) which is not a terminal", value);
         Ok(Self(value))
     }
 }
@@ -34,4 +34,13 @@ impl TerminalDeconstruction {
     pub fn reconstruct(self) -> Result<dy::Value> {
         Ok(self.0)
     }
+    pub fn reconstructed(&self) -> Result<dy::Value> {
+        Ok(self.0.clone())
+    }
 }
+
+// impl st::Serializable for TerminalDeconstruction {
+//     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         Ok(dy::RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
+//     }
+// }

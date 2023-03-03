@@ -12,6 +12,10 @@ impl dy::Constructor for Array {
         let parameter_v: Vec<dy::Value> = parameter_t.into();
         Ok(dy::ArrayTerm::from(parameter_v))
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl Inhabits<ArrayType> for Array {

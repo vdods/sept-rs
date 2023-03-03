@@ -13,6 +13,10 @@ impl dy::Constructor for Tuple {
         // type checking.  Contrast with TupleTerm(...) which would type check its parameters.
         Ok(parameter_t)
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl Inhabits<TupleType> for Tuple {

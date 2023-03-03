@@ -38,4 +38,44 @@ impl ParametricDeconstruction {
         let parameter_t = dy::TupleTerm::from(parameter_v);
         Ok(constructor.construct(parameter_t)?)
     }
+    /// Recurse and call reconstructed on constructor_d and parameter_dv, then perform the construction.
+    pub fn reconstructed(&self) -> Result<dy::Value> {
+        use crate::dy::Constructor;
+        let constructor = self.constructor_d.reconstructed()?;
+        let mut parameter_v = Vec::with_capacity(self.parameter_dv.len());
+        for parameter_d in self.parameter_dv.iter() {
+            parameter_v.push(parameter_d.reconstructed()?);
+        }
+        let parameter_t = dy::TupleTerm::from(parameter_v);
+        Ok(constructor.construct(parameter_t)?)
+    }
 }
+
+// impl st::Deserializable for ParametricDeconstruction {
+//     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+//         let constructor_d = dy::Deconstruction::deserialize(reader)?;
+//         let len = u64::deserialize(reader)?;
+//         anyhow::ensure!(
+//             len <= usize::MAX as u64,
+//             "attempting to deserialize ParametricDeconstruction with a len (which is {}) that exceeds usize::MAX (which is {})",
+//             len,
+//             usize::MAX,
+//         );
+//         let mut parameter_dv = Vec::with_capacity(len);
+//         for _ in 0..len {
+//             parameter_dv.push(dy::Deconstruction::deserialize(reader)?);
+//         }
+//         Ok(Self { constructor_d, parameter_dv })
+//     }
+// }
+//
+// impl st::Serializable for ParametricDeconstruction {
+//     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+//         let mut bytes_written = self.constructor_d.serialize(writer)?;
+//         bytes_written += (self.parameter_dv.len() as u64).serialize(writer)?;
+//         for parameter_d in self.parameter_dv.iter() {
+//             bytes_written += parameter_d.serialize(writer)?;
+//         }
+//         Ok(bytes_written)
+//     }
+// }

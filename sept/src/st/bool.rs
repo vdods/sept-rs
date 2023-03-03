@@ -16,6 +16,10 @@ impl dy::Constructor for Bool {
             None => Err(anyhow::anyhow!("{}.construct expected parameter of type Bool, but got one of type {:?}", self.stringify(), parameter.type_id()))
         }
     }
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+        use st::Deserializable;
+        Ok(Self::ConstructedType::deserialize(reader)?)
+    }
 }
 
 impl Inhabits<BoolType> for Bool {

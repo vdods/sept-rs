@@ -8,9 +8,16 @@ use crate::{dy, Result, st};
 // as Tabular, then they would need some sort of analog to Constructor.  Maybe there would
 // be ParameterizedConstructor and TabularConstructor, etc, and maybe even NonParametricConstructor,
 // which would necessarily return itself.
+// TODO: Rename to ConstructorTrait
 pub trait Constructor: st::TermTrait {
+    // TODO: Rename to ConstructedRepr?
     type ConstructedType: st::TermTrait + Into<dy::Value>;
 
     /// Perform the construction using the given tuple of parameters.
+    // TODO: There should be a st::Constructor trait that accepts a Rust tuple of parameters, or
+    // ideally an ordinary sequence of Rust function parameters.
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType>;
+    /// Deserialize from the given reader the parameters to use in the construction.
+    // TODO: This really belongs in a st::Constructor trait.
+    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType>;
 }
