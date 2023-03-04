@@ -137,6 +137,7 @@ macro_rules! impl_view_using_to_string {
             fn update(&mut self, ui: &mut egui::Ui, view_ctx: &mut ViewCtx) {
                 use sept::st::Stringifiable;
                 ui.colored_label(view_ctx.color_for::<$ty>(), self.stringify().as_str());
+                render_type_annotation_for(self, ui, view_ctx, None);
             }
         }
     };
@@ -195,12 +196,37 @@ impl_view_using_to_string!(sept::st::TupleType);
 impl_view_using_to_string!(sept::st::GlobalSymRefType);
 impl_view_using_to_string!(sept::st::LocalSymRefType);
 
+fn render_type_annotation_for<T: sept::st::TermTrait>(
+    term: &T,
+    ui: &mut egui::Ui,
+    view_ctx: &mut ViewCtx,
+    extra_text_o: Option<&str>,
+) where
+    <T as sept::st::TermTrait>::AbstractTypeType: sept::st::Stringifiable,
+{
+    if view_ctx.show_type_annotations {
+        use sept::st::Stringifiable;
+        let extra_text = extra_text_o.unwrap_or("");
+        ui.colored_label(
+            view_ctx.color_for_type_annotation(),
+            format!(" : {}{}", term.abstract_type().stringify(), extra_text),
+        );
+    }
+}
+
 impl View for sept::st::Utf8StringTerm {
     fn update(&mut self, ui: &mut egui::Ui, view_ctx: &mut ViewCtx) {
         // TEMP HACK -- in-line for now.
         // TODO: Use color for quotes and escape chars
-        ui.horizontal(|ui| {
+        // TODO: non-lineral mode, where newlines and tabs are rendered properly, probably with darkly colored indicators
+        ui.horizontal_wrapped(|ui| {
             ui.colored_label(view_ctx.color_for::<Self>(), format!("{:?}", self).as_str());
+            render_type_annotation_for(
+                self,
+                ui,
+                view_ctx,
+                Some(format!(" (len: {})", self.len()).as_str()),
+            );
         });
     }
 }
@@ -213,15 +239,21 @@ impl View for sept::dy::ArrayTerm {
             ui.horizontal_wrapped(|ui| {
                 let mut view_ctx_g = view_ctx.push_nesting_depth();
 
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), "[");
+                ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), "[ ");
                 let n = self.len();
                 for (i, element) in self.iter_mut().enumerate() {
                     element.update(ui, &mut view_ctx_g);
                     if i + 1 != n {
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), ",");
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), ", ");
                     }
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), "]");
+                ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), " ]");
+                render_type_annotation_for(
+                    self,
+                    ui,
+                    &mut view_ctx_g,
+                    Some(format!(" (len: {})", self.len()).as_str()),
+                );
             });
         } else {
             ui.vertical(|ui| {
@@ -233,10 +265,18 @@ impl View for sept::dy::ArrayTerm {
                         // TEMP HACK -- hardcoded value
                         ui.add_space(24.0);
                         element.update(ui, &mut view_ctx_g);
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), ",");
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), ", ");
                     });
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), "]");
+                ui.horizontal_wrapped(|ui| {
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::ArrayTerm>(), "]");
+                    render_type_annotation_for(
+                        self,
+                        ui,
+                        &mut view_ctx_g,
+                        Some(format!(" (len: {})", self.len()).as_str()),
+                    );
+                })
             });
         }
     }
@@ -247,10 +287,22 @@ impl View for sept::dy::StructTermTerm {
         // TEMP HACK -- in-line for now.
         // TODO: Use color for brackets, commas
         // TODO: Fix this silly layout
-        ui.horizontal(|ui| {
-            self.direct_type_mut().update(ui, view_ctx);
-            self.field_tuple_mut().update(ui, view_ctx);
-        });
+        let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
+
+        let should_use_inline = view_ctx_g.should_use_inline();
+        if should_use_inline {
+            ui.horizontal_wrapped(|ui| {
+                self.direct_type_mut().update(ui, &mut view_ctx_g);
+                self.field_tuple_mut().update(ui, &mut view_ctx_g);
+                // TODO: type annotation
+            });
+        } else {
+            // TODO: Figure out how to nest the stuff properly
+            ui.vertical(|ui| {
+                self.direct_type_mut().update(ui, &mut view_ctx_g);
+                self.field_tuple_mut().update(ui, &mut view_ctx_g);
+            });
+        }
     }
 }
 
@@ -263,41 +315,58 @@ impl View for sept::dy::StructTerm {
             ui.horizontal_wrapped(|ui| {
                 let mut view_ctx_g = view_ctx.push_nesting_depth();
 
-                // TODO: Actually print `Struct` term directly, so it's rendered properly
                 ui.horizontal(|ui| {
+                    let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
                     sept::st::Struct.update(ui, &mut view_ctx_g);
-                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), "{");
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), " { ");
                 });
                 let n = self.field_decl_v.len();
                 for (i, (field_id, field_type)) in self.field_decl_v.iter_mut().enumerate() {
-                    field_id.update(ui, &mut view_ctx_g);
-                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ":");
-                    field_type.update(ui, &mut view_ctx_g);
+                    {
+                        let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
+                        field_id.update(ui, &mut view_ctx_g);
+                    }
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), " :");
+                    {
+                        let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
+                        field_type.update(ui, &mut view_ctx_g);
+                    }
                     if i + 1 != n {
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ",");
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ", ");
                     }
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), "}");
+                ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), " }");
+                render_type_annotation_for(self, ui, &mut view_ctx_g, None);
             });
         } else {
             ui.vertical(|ui| {
                 let mut view_ctx_g = view_ctx.push_nesting_depth();
 
                 ui.horizontal(|ui| {
+                    let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
                     sept::st::Struct.update(ui, &mut view_ctx_g);
-                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), "{");
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), " {");
                 });
                 for (field_id, field_type) in self.field_decl_v.iter_mut() {
                     ui.horizontal(|ui| {
                         // TEMP HACK -- hardcoded value
                         ui.add_space(24.0);
-                        field_id.update(ui, &mut view_ctx_g);
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ":");
-                        field_type.update(ui, &mut view_ctx_g);
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ",");
+                        {
+                            let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
+                            field_id.update(ui, &mut view_ctx_g);
+                        }
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), " :");
+                        {
+                            let mut view_ctx_g = view_ctx_g.push_show_type_annotations(false);
+                            field_type.update(ui, &mut view_ctx_g);
+                        }
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), ", ");
                     });
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), "}");
+                ui.horizontal_wrapped(|ui| {
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::StructTerm>(), "}");
+                    render_type_annotation_for(self, ui, &mut view_ctx_g, None);
+                });
             });
         }
     }
@@ -312,15 +381,21 @@ impl View for sept::dy::TupleTerm {
             ui.horizontal_wrapped(|ui| {
                 let mut view_ctx_g = view_ctx.push_nesting_depth();
 
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), "(");
+                ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), "( ");
                 let n = self.len();
                 for (i, element) in self.iter_mut().enumerate() {
                     element.update(ui, &mut view_ctx_g);
                     if i + 1 != n {
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ",");
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ", ");
                     }
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ")");
+                ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), " )");
+                render_type_annotation_for(
+                    self,
+                    ui,
+                    &mut view_ctx_g,
+                    Some(format!(" (len: {})", self.len()).as_str()),
+                );
             });
         } else {
             ui.vertical(|ui| {
@@ -332,10 +407,18 @@ impl View for sept::dy::TupleTerm {
                         // TEMP HACK -- hardcoded value
                         ui.add_space(24.0);
                         element.update(ui, &mut view_ctx_g);
-                        ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ",");
+                        ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ", ");
                     });
                 }
-                ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ")");
+                ui.horizontal_wrapped(|ui| {
+                    ui.colored_label(view_ctx_g.color_for::<sept::dy::TupleTerm>(), ")");
+                    render_type_annotation_for(
+                        self,
+                        ui,
+                        &mut view_ctx_g,
+                        Some(format!(" (len: {})", self.len()).as_str()),
+                    );
+                });
             });
         }
     }

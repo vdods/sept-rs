@@ -3,11 +3,106 @@ use crate::{View, ViewCtx};
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
-pub struct App {}
+pub struct App {
+    #[serde(skip)]
+    value: sept::dy::Value,
+    #[serde(skip)]
+    view_ctx: ViewCtx,
+}
 
 impl Default for App {
     fn default() -> Self {
-        Self {}
+        let a1 = sept::dy::ArrayTerm::from(vec![
+            true.into(),
+            false.into(),
+            123i8.into(),
+            200u8.into(),
+            12345i16.into(),
+            45678u16.into(),
+            1234567i32.into(),
+            4567890u32.into(),
+            1000000000000i64.into(),
+            9223372036854775808u64.into(),
+            10101.202f32.into(),
+            1.01020304050607f64.into(),
+            sept::st::Void.into(),
+            sept::st::True.into(),
+            sept::st::False.into(),
+            sept::st::EmptyType.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+            sept::st::Void.into(),
+        ]);
+        let a2 = sept::dy::ArrayTerm::from(vec![true.into(), a1.into(), false.into()]);
+
+        let t1 = sept::dy::TupleTerm::from(vec![
+            true.into(),
+            false.into(),
+            123i8.into(),
+            sept::dy::TupleTerm::from(vec![
+                200u8.into(),
+                sept::dy::TupleTerm::from(vec![
+                    12345i16.into(),
+                    45678u16.into(),
+                    1234567i32.into(),
+                ])
+                .into(),
+                4567890u32.into(),
+                1000000000000i64.into(),
+            ])
+            .into(),
+            9223372036854775808u64.into(),
+            10101.202f32.into(),
+            1.01020304050607f64.into(),
+        ]);
+
+        let t2 = sept::dy::TupleTerm::from(vec![
+            sept::st::Void.into(),
+            sept::st::VoidType.into(),
+            sept::st::Bool.into(),
+            sept::st::BoolType.into(),
+            "blah\nthing\they".to_string().into(),
+        ]);
+
+        let st1 = sept::dy::StructTerm::new(
+            vec![
+                ("age".into(), sept::st::Uint8.into()),
+                ("gravity".into(), sept::st::Float64.into()),
+            ]
+            .into(),
+        )
+        .unwrap();
+
+        use sept::dy::Constructor;
+        let stt1 = st1
+            .construct(sept::dy::TupleTerm::from(vec![
+                28u8.into(),
+                4035.56f64.into(),
+            ]))
+            .unwrap();
+
+        let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
+            a2.into(),
+            t1.into(),
+            t2.into(),
+            st1.into(),
+            stt1.into(),
+        ])
+        .into();
+
+        let mut view_ctx = ViewCtx::new();
+        view_ctx.inline_at_nesting_depth = 2;
+
+        Self { value, view_ctx }
     }
 }
 
@@ -50,98 +145,35 @@ impl eframe::App for App {
             });
         });
 
-        // egui::SidePanel::right("side_panel").show(ctx, |ui| {
-        //     ui.heading("Side Panel");
-        //     egui::warn_if_debug_build(ui);
-        // });
+        egui::SidePanel::right("side_panel").show(ctx, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.add(
+                    egui::DragValue::new(&mut self.view_ctx.inline_at_nesting_depth).speed(0.0625),
+                );
+                ui.label("Inline Depth");
+            });
+
+            ui.checkbox(
+                &mut self.view_ctx.show_type_annotations,
+                "Show Type Annotations",
+            );
+
+            egui::warn_if_debug_build(ui);
+        });
 
         // Note that the CentralPanel must be added after side panels.
         egui::CentralPanel::default().show(ctx, |ui| {
-            let mut view_ctx = ViewCtx::new();
-            view_ctx.inline_at_nesting_depth = 1;
+            egui::ScrollArea::vertical()
+                .always_show_scroll(true)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    let old_item_spacing = ui.spacing().item_spacing;
+                    ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
 
-            let a1 = sept::dy::ArrayTerm::from(vec![
-                true.into(),
-                false.into(),
-                123i8.into(),
-                200u8.into(),
-                12345i16.into(),
-                45678u16.into(),
-                1234567i32.into(),
-                4567890u32.into(),
-                1000000000000i64.into(),
-                9223372036854775808u64.into(),
-                10101.202f32.into(),
-                1.01020304050607f64.into(),
-                sept::st::Void.into(),
-                sept::st::True.into(),
-                sept::st::False.into(),
-                sept::st::EmptyType.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-                sept::st::Void.into(),
-            ]);
-            let mut a2 = sept::dy::ArrayTerm::from(vec![true.into(), a1.into(), false.into()]);
-            a2.update(ui, &mut view_ctx);
+                    self.value.update(ui, &mut self.view_ctx);
 
-            let mut t1 = sept::dy::TupleTerm::from(vec![
-                true.into(),
-                false.into(),
-                123i8.into(),
-                sept::dy::TupleTerm::from(vec![
-                    200u8.into(),
-                    sept::dy::TupleTerm::from(vec![
-                        12345i16.into(),
-                        45678u16.into(),
-                        1234567i32.into(),
-                    ])
-                    .into(),
-                    4567890u32.into(),
-                    1000000000000i64.into(),
-                ])
-                .into(),
-                9223372036854775808u64.into(),
-                10101.202f32.into(),
-                1.01020304050607f64.into(),
-            ]);
-            t1.update(ui, &mut view_ctx);
-
-            let mut t2 = sept::dy::TupleTerm::from(vec![
-                sept::st::Void.into(),
-                sept::st::VoidType.into(),
-                sept::st::Bool.into(),
-                sept::st::BoolType.into(),
-                "blah\nthing\they".to_string().into(),
-            ]);
-            t2.update(ui, &mut view_ctx);
-
-            let mut st1 = sept::dy::StructTerm::new(
-                vec![
-                    ("age".into(), sept::st::Uint8.into()),
-                    ("gravity".into(), sept::st::Float64.into()),
-                ]
-                .into(),
-            )
-            .unwrap();
-            st1.update(ui, &mut view_ctx);
-
-            use sept::dy::Constructor;
-            let mut stt1 = st1
-                .construct(sept::dy::TupleTerm::from(vec![
-                    28u8.into(),
-                    4035.56f64.into(),
-                ]))
-                .unwrap();
-            stt1.update(ui, &mut view_ctx);
+                    ui.spacing_mut().item_spacing = old_item_spacing;
+                });
         });
 
         // if false {

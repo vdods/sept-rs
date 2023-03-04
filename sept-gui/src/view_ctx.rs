@@ -1,4 +1,4 @@
-use crate::{ANSIColor, ViewCtxGuard};
+use crate::{ANSIColor, ViewCtxNestingGuard, ViewCtxTAGuard};
 
 /// Provides control over how things are rendered.
 pub struct ViewCtx {
@@ -6,6 +6,8 @@ pub struct ViewCtx {
     pub current_nesting_depth: u32,
     /// Nesting depth at which elements are in-lined.
     pub inline_at_nesting_depth: u32,
+    /// Indicates if type annotations should be shown.
+    pub show_type_annotations: bool,
 }
 
 impl ViewCtx {
@@ -13,17 +15,23 @@ impl ViewCtx {
         Self {
             current_nesting_depth: 0,
             inline_at_nesting_depth: 0,
+            show_type_annotations: true,
         }
     }
-    pub fn push_nesting_depth<'a>(&'a mut self) -> ViewCtxGuard<'a> {
-        self.current_nesting_depth = self
-            .current_nesting_depth
-            .checked_add(1)
-            .expect("programmer error: ViewCtx current_nesting_depth overflow");
-        ViewCtxGuard::new(self)
+    pub fn push_nesting_depth<'a>(&'a mut self) -> ViewCtxNestingGuard<'a> {
+        ViewCtxNestingGuard::new(self)
+    }
+    pub fn push_show_type_annotations<'a>(
+        &'a mut self,
+        show_type_annotations: bool,
+    ) -> ViewCtxTAGuard<'a> {
+        ViewCtxTAGuard::new(self, show_type_annotations)
     }
     pub fn should_use_inline(&self) -> bool {
         self.current_nesting_depth >= self.inline_at_nesting_depth
+    }
+    pub fn color_for_type_annotation(&self) -> egui::Color32 {
+        ANSIColor::BRIGHT_BLACK
     }
     pub fn color_for<T: 'static>(&self) -> egui::Color32 {
         use std::any::TypeId;
@@ -36,16 +44,16 @@ impl ViewCtx {
             || type_id == TypeId::of::<sept::st::Sint32Term>()
             || type_id == TypeId::of::<sept::st::Sint64Term>()
         {
-            ANSIColor::BRIGHT_YELLOW
+            ANSIColor::DARK_CYAN
         } else if type_id == TypeId::of::<sept::st::Uint8Term>()
             || type_id == TypeId::of::<sept::st::Uint16Term>()
             || type_id == TypeId::of::<sept::st::Uint32Term>()
             || type_id == TypeId::of::<sept::st::Uint64Term>()
         {
             ANSIColor::BRIGHT_CYAN
-        } else if type_id == TypeId::of::<sept::st::Float32Term>()
-            || type_id == TypeId::of::<sept::st::Float64Term>()
-        {
+        } else if type_id == TypeId::of::<sept::st::Float32Term>() {
+            ANSIColor::DARK_MAGENTA
+        } else if type_id == TypeId::of::<sept::st::Float64Term>() {
             ANSIColor::BRIGHT_MAGENTA
         } else if type_id == TypeId::of::<sept::st::Void>()
             || type_id == TypeId::of::<sept::st::VoidType>()
