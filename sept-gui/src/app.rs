@@ -42,7 +42,8 @@ impl Default for App {
             sept::st::Void.into(),
             sept::st::Void.into(),
         ]);
-        let a2 = sept::dy::ArrayTerm::from(vec![true.into(), a1.into(), false.into()]);
+        let a2 =
+            sept::dy::ArrayTerm::from(vec![true.into(), 606i32.into(), a1.into(), false.into()]);
 
         let t1 = sept::dy::TupleTerm::from(vec![
             true.into(),
@@ -70,32 +71,54 @@ impl Default for App {
             sept::st::VoidType.into(),
             sept::st::Bool.into(),
             sept::st::BoolType.into(),
-            "blah\nthing\they".to_string().into(),
+            "blah\nthing\tWAAAA\tXyz\n\n!!!\rx".to_string().into(),
+        ]);
+        let t3 = sept::dy::TupleTerm::from(vec![
+            sept::st::Sint32.into(),
+            sept::st::Utf8String.into(),
+            sept::st::Array.into(),
         ]);
 
         let st1 = sept::dy::StructTerm::new(
             vec![
                 ("age".into(), sept::st::Uint8.into()),
                 ("gravity".into(), sept::st::Float64.into()),
+                ("thingy".into(), t3.into()),
             ]
             .into(),
         )
         .unwrap();
+
+        let st0 = sept::dy::StructTerm::new(vec![].into()).unwrap();
 
         use sept::dy::Constructor;
         let stt1 = st1
             .construct(sept::dy::TupleTerm::from(vec![
                 28u8.into(),
                 4035.56f64.into(),
+                sept::dy::TupleTerm::from(vec![
+                    445566i32.into(),
+                    "OSTRICH".to_string().into(),
+                    sept::dy::ArrayTerm::from(vec![]).into(),
+                ])
+                .into(),
             ]))
             .unwrap();
 
+        let s0 = String::new();
+        let s1 = "+++ one day, a big hippo came along and wrecked\teverything.\nyes, i mean absolutely everything!\nthere was nothing left.\n\n\tnothing left but hippos.".to_string();
+
         let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
             a2.into(),
+            sept::dy::ArrayTerm::from(vec![]).into(),
             t1.into(),
             t2.into(),
+            sept::dy::TupleTerm::from(vec![]).into(),
+            st0.into(),
             st1.into(),
             stt1.into(),
+            s0.into(),
+            s1.into(),
         ])
         .into();
 
@@ -145,20 +168,52 @@ impl eframe::App for App {
             });
         });
 
-        egui::SidePanel::right("side_panel").show(ctx, |ui| {
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
+                ui.label("Inlining Depth:");
                 ui.add(
                     egui::DragValue::new(&mut self.view_ctx.inline_at_nesting_depth).speed(0.0625),
                 );
-                ui.label("Inline Depth");
+
+                ui.checkbox(
+                    &mut self.view_ctx.show_expanded_item_indicator,
+                    "Expanded Item Indicator",
+                );
+
+                ui.checkbox(&mut self.view_ctx.show_type_annotations, "Type Annotations");
+
+                ui.checkbox(
+                    &mut self.view_ctx.show_struct_field_name_hints,
+                    "Struct Field Name Hints",
+                );
+
+                ui.label("Font:");
+                ui.add(
+                    egui::DragValue::new(&mut self.view_ctx.font_id.size)
+                        .clamp_range(6.0..=30.0)
+                        .max_decimals(0)
+                        .suffix("pt")
+                        .speed(0.0625),
+                );
+                egui::ComboBox::from_id_source("font family combobox")
+                    .selected_text(format!("{:?}", &mut self.view_ctx.font_id.family))
+                    .show_ui(ui, |ui| {
+                        // ui.style_mut().wrap = Some(false);
+                        ui.set_min_width(60.0);
+                        ui.selectable_value(
+                            &mut self.view_ctx.font_id.family,
+                            egui::FontFamily::Monospace,
+                            "Monospace",
+                        );
+                        ui.selectable_value(
+                            &mut self.view_ctx.font_id.family,
+                            egui::FontFamily::Proportional,
+                            "Proportional",
+                        );
+                    });
+
+                egui::warn_if_debug_build(ui);
             });
-
-            ui.checkbox(
-                &mut self.view_ctx.show_type_annotations,
-                "Show Type Annotations",
-            );
-
-            egui::warn_if_debug_build(ui);
         });
 
         // Note that the CentralPanel must be added after side panels.
@@ -170,7 +225,10 @@ impl eframe::App for App {
                     let old_item_spacing = ui.spacing().item_spacing;
                     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
 
-                    self.value.update(ui, &mut self.view_ctx);
+                    ui.vertical(|ui| {
+                        let layout_job = self.value.update(ui, &mut self.view_ctx, None);
+                        ui.label(layout_job);
+                    });
 
                     ui.spacing_mut().item_spacing = old_item_spacing;
                 });
