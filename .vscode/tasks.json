@@ -30,6 +30,33 @@
                     ]
                 }
             ]
+        },
+        {
+            "label": "sept-gui build",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "build",
+                "--package",
+                "sept-gui",
+                "--all-features"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$rustc",
+                    "fileLocation": [
+                        "relative"
+                    ]
+                }
+            ]
         }
     ]
 }
