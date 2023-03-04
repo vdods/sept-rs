@@ -16,6 +16,6 @@ impl ANSIColor {
     pub const BRIGHT_CYAN: egui::Color32 = egui::Color32::from_rgb(0x55, 0xFF, 0xFF);
     pub const BRIGHT_RED: egui::Color32 = egui::Color32::from_rgb(0xFF, 0x55, 0x55);
     pub const BRIGHT_MAGENTA: egui::Color32 = egui::Color32::from_rgb(0xFF, 0x55, 0xFF);
-    pub const BRIGHT_YELLOW: egui::Color32 = egui::Color32::from_rgb(0xFF, 0x55, 0x55);
+    pub const BRIGHT_YELLOW: egui::Color32 = egui::Color32::from_rgb(0xFF, 0xFF, 0x55);
     pub const BRIGHT_WHITE: egui::Color32 = egui::Color32::from_rgb(0xFF, 0xFF, 0xFF);
 }
