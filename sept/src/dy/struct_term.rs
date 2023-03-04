@@ -66,7 +66,7 @@ impl dy::Constructor for StructTerm {
     type ConstructedType = dy::StructTermTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         self.verify_inhabitation_by(&parameter_t)?;
-        log::warn!("NOTE: Just copying the StructTerm as the StructTermTerm's type for now. TODO: figure out what the right approach is");
+        // log::warn!("NOTE: Just copying the StructTerm as the StructTermTerm's type for now. TODO: figure out what the right approach is");
         Ok(dy::StructTermTerm::new_unchecked(
             self.clone().into(),
             parameter_t,
