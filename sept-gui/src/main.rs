@@ -9,7 +9,7 @@ fn main() {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "SEPT",
         native_options,
         Box::new(|cc| Box::new(sept_gui::App::new(cc))),
     );
