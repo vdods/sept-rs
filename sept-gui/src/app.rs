@@ -1,4 +1,5 @@
 use crate::{View, ViewCtx};
+use std::sync::{Arc, RwLock};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -8,6 +9,8 @@ pub struct App {
     value: sept::dy::Value,
     #[serde(skip)]
     view_ctx: ViewCtx,
+    #[serde(skip)]
+    local_symbol_table_la: Arc<RwLock<sept::dy::SymbolTable>>,
 }
 
 impl Default for App {
@@ -108,6 +111,46 @@ impl Default for App {
         let s0 = String::new();
         let s1 = "+++ one day, a big hippo came along and wrecked\teverything.\nyes, i mean absolutely everything!\nthere was nothing left.\n\n\tnothing left but hippos.".to_string();
 
+        let gsr0 = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".to_string());
+        // NOTE: This uses the dereferenced StructTerm as the type and not the GlobalSymRefTerm as intended.
+        // TODO: Figure out how to get it to construct correctly.
+        let stt2 = gsr0
+            .construct(sept::dy::TupleTerm::from(vec![
+                28u8.into(),
+                4035.56f64.into(),
+            ]))
+            .unwrap();
+        // Manually construct the StructTermTerm so that the GlobalSymRefTerm is used as its type.
+        let stt3 = sept::dy::StructTermTerm::new_checked(
+            gsr0.clone().into(),
+            sept::dy::TupleTerm::from(vec![28u8.into(), 4035.56f64.into()]),
+        )
+        .unwrap();
+
+        let local_symbol_table_la = Arc::new(RwLock::new(
+            sept::dy::SymbolTable::new_without_parent("fancy".to_string()).expect("test"),
+        ));
+        local_symbol_table_la
+            .write()
+            .unwrap()
+            .define_symbol("blah", sept::dy::Value::from(1230321i32))
+            .expect("test");
+        tracing::debug!(
+            "local_symbol_table_la: {:#?}",
+            local_symbol_table_la.read().unwrap()
+        );
+
+        let lsr0 =
+            sept::dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())
+                .expect("test");
+
+        let gsr1 =
+            sept::dy::GlobalSymRefTerm::new_unchecked("this one doesn't resolve".to_string());
+        let lsr1 = sept::dy::LocalSymRefTerm::new_unchecked(
+            local_symbol_table_la.clone(),
+            "also doesn't resolve".into(),
+        );
+
         let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
             a2.into(),
             sept::dy::ArrayTerm::from(vec![]).into(),
@@ -119,13 +162,23 @@ impl Default for App {
             stt1.into(),
             s0.into(),
             s1.into(),
+            gsr0.into(),
+            stt2.into(),
+            stt3.into(),
+            lsr0.into(),
+            gsr1.into(),
+            lsr1.into(),
         ])
         .into();
 
         let mut view_ctx = ViewCtx::new();
         view_ctx.inline_at_nesting_depth = 2;
 
-        Self { value, view_ctx }
+        Self {
+            value,
+            view_ctx,
+            local_symbol_table_la,
+        }
     }
 }
 

@@ -7,6 +7,32 @@ fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
 
+    {
+        // Create the Hippo struct
+        sept::dy::GLOBAL_SYMBOL_TABLE_LA
+            .write()
+            .unwrap()
+            .define_symbol(
+                "Hippo",
+                sept::dy::StructTerm::new(
+                    vec![
+                        ("size".into(), sept::st::Uint8.into()),
+                        ("awesomeness".into(), sept::st::Float64.into()),
+                    ]
+                    .into(),
+                )
+                .expect("test")
+                .into(),
+            )
+            .expect("test");
+
+        let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+        tracing::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
+        let hippo = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".into());
+        use sept::st::Stringifiable;
+        tracing::debug!("hippo: {}", hippo.stringify());
+    }
+
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
         "SEPT",

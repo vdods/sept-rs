@@ -2,23 +2,22 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, RUNTIME_LA,
-        StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value,
+        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, StructTerm,
+        StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
     },
-    parser,
-    scanner,
+    parser, scanner,
     st::{
-        self,
-        Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType,
-        Float32, Float32Type, Float64, Float64Type, Inhabits,
-        Sint8, Sint8Type, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Stringifiable,
-        Struct, StructType,
-        TermTrait, True, TrueType, Type, TypeTrait,
-        Uint8, Uint8Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type,
+        self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
+        Float64, Float64Type, Inhabits, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
+        Sint8, Sint8Type, Stringifiable, Struct, StructType, TermTrait, True, TrueType, Type,
+        TypeTrait, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8, Uint8Type,
         Utf8String, Void, VoidType,
     },
 };
-use std::{any::Any, sync::{Arc, RwLock}};
+use std::{
+    any::Any,
+    sync::{Arc, RwLock},
+};
 
 /// This will run once at load time (i.e. presumably before main function is called).
 #[ctor::ctor]
@@ -37,29 +36,28 @@ fn test_term_and_type() {
     // is correct and desired, since these types are known at compile time.
 
     assert!(Void.inhabits(&VoidType));
-//     assert!(!Void.inhabits(&FalseType));
-//     assert!(!Void.inhabits(&Type));
-//     assert!(!Void.inhabits(&Bool));
-//     assert!(!Void.inhabits(&BoolType));
+    //     assert!(!Void.inhabits(&FalseType));
+    //     assert!(!Void.inhabits(&Type));
+    //     assert!(!Void.inhabits(&Bool));
+    //     assert!(!Void.inhabits(&BoolType));
 
     assert!(VoidType.inhabits(&Type));
 
     assert!(True.inhabits(&TrueType));
-//     assert!(!True.inhabits(&FalseType));
+    //     assert!(!True.inhabits(&FalseType));
     assert!(True.inhabits(&Bool));
-//     assert!(!True.inhabits(&BoolType));
+    //     assert!(!True.inhabits(&BoolType));
 
-//     assert!(!False.inhabits(&TrueType));
+    //     assert!(!False.inhabits(&TrueType));
     assert!(False.inhabits(&FalseType));
     assert!(False.inhabits(&Bool));
-//     assert!(!False.inhabits(&BoolType));
+    //     assert!(!False.inhabits(&BoolType));
 
     assert!(TrueType.inhabits(&BoolType));
     assert!(FalseType.inhabits(&BoolType));
     assert!(Bool.inhabits(&BoolType));
-//     assert!(!Bool.inhabits(&TrueType));
-//     assert!(!Bool.inhabits(&FalseType));
-
+    //     assert!(!Bool.inhabits(&TrueType));
+    //     assert!(!Bool.inhabits(&FalseType));
 
     assert!(!True.is_parametric());
     assert!(!True.is_type());
@@ -95,7 +93,10 @@ fn test_runtime_stringify() {
     assert_eq!(runtime_g.stringify(&Bool), "Bool");
     assert_eq!(runtime_g.stringify(&BoolType), "BoolType");
 
-    log::debug!("RUNTIME_LA.stringify(&123): {:#?}", runtime_g.stringify(&123));
+    log::debug!(
+        "RUNTIME_LA.stringify(&123): {:#?}",
+        runtime_g.stringify(&123)
+    );
 }
 
 #[test]
@@ -199,11 +200,11 @@ fn test_arrays() {
     assert!(runtime_g.inhabits(&a0, &Array));
     assert!(runtime_g.inhabits(&Array, &ArrayType));
 
-//     let a1 = vec![100i8, 101i8, 99i8, 10i8];
-//     log::debug!("a1: {:?}", a1);
-//     log::debug!("a1.stringify(): {}", a1.stringify());
-//
-//     assert!(a1.inhabits(&Array));
+    //     let a1 = vec![100i8, 101i8, 99i8, 10i8];
+    //     log::debug!("a1: {:?}", a1);
+    //     log::debug!("a1.stringify(): {}", a1.stringify());
+    //
+    //     assert!(a1.inhabits(&Array));
 }
 
 #[test]
@@ -241,7 +242,11 @@ fn test_abstract_type() {
 
     {
         let x = &Void;
-        log::debug!("runtime_g.abstract_type_of({}): {}", runtime_g.stringify(x), runtime_g.stringify(runtime_g.abstract_type_of(x).as_ref()));
+        log::debug!(
+            "runtime_g.abstract_type_of({}): {}",
+            runtime_g.stringify(x),
+            runtime_g.stringify(runtime_g.abstract_type_of(x).as_ref())
+        );
     }
 
     assert!(runtime_g.eq(runtime_g.abstract_type_of(&Type).as_ref(), &Type));
@@ -294,8 +299,14 @@ fn test_value() {
 
     log::debug!("v1.inhabits(&Sint32): {:?}", v1.inhabits(&Sint32));
     log::debug!("v1.inhabits(&Bool): {:?}", v1.inhabits(&Bool));
-    log::debug!("v1.inhabits(&Value::from(Sint32)): {:?}", v1.inhabits(&Value::from(Sint32)));
-    log::debug!("v1.inhabits(&Value::from(Bool)): {:?}", v1.inhabits(&Value::from(Bool)));
+    log::debug!(
+        "v1.inhabits(&Value::from(Sint32)): {:?}",
+        v1.inhabits(&Value::from(Sint32))
+    );
+    log::debug!(
+        "v1.inhabits(&Value::from(Bool)): {:?}",
+        v1.inhabits(&Value::from(Bool))
+    );
     log::debug!("v1.inhabits(&v2): {:?}", v1.inhabits(&v2));
     let v3 = Value::from(Sint32);
     log::debug!("v1.inhabits(&v3): {:?}", v1.inhabits(&v3));
@@ -318,45 +329,124 @@ fn test_symbol_table() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let mut symbol_table = SymbolTable::new_with_parent(None);
+    let mut symbol_table = SymbolTable::new_without_parent("fancy".to_string()).expect("test");
     assert!(!symbol_table.symbol_is_defined("blah"));
-    symbol_table.define_symbol("blah", Value::from(123i32)).expect("test");
+    symbol_table
+        .define_symbol("blah", Value::from(123i32))
+        .expect("test");
     assert!(symbol_table.symbol_is_defined("blah"));
-    assert_eq!(*symbol_table.resolved_symbol("blah").expect("test").read().unwrap(), Value::from(123i32));
+    assert_eq!(
+        *symbol_table
+            .resolved_symbol("blah")
+            .expect("test")
+            .read()
+            .unwrap(),
+        Value::from(123i32)
+    );
 
     log::debug!("symbol_table: {:#?}", symbol_table);
 
     // Now check GLOBAL_SYMBOL_TABLE_LA
     {
-        assert!(!dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap().symbol_is_defined("bleh"));
+        assert!(!dy::GLOBAL_SYMBOL_TABLE_LA
+            .read()
+            .unwrap()
+            .symbol_is_defined("bleh"));
 
         // Have to acquire a separate write lock.
-        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bleh", Value::from(456f32)).expect("test");
+        dy::GLOBAL_SYMBOL_TABLE_LA
+            .write()
+            .unwrap()
+            .define_symbol("bleh", Value::from(456f32))
+            .expect("test");
 
         // Now acquire a read lock.
         let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         assert!(global_symbol_table_g.symbol_is_defined("bleh"));
-        assert_eq!(*global_symbol_table_g.resolved_symbol("bleh").expect("test").read().unwrap(), Value::from(456f32));
+        assert_eq!(
+            *global_symbol_table_g
+                .resolved_symbol("bleh")
+                .expect("test")
+                .read()
+                .unwrap(),
+            Value::from(456f32)
+        );
 
         log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
     }
 
     // Test out parent symbol tables.
-    let parent_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
-    let child_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(Some(parent_symbol_table_la.clone()))));
+    let parent_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_without_parent("P".to_string()).expect("test"),
+    ));
+    let child_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_with_parent("C".to_string(), parent_symbol_table_la.clone())
+            .expect("test"),
+    ));
 
-    parent_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(200u32)).expect("test");
-    parent_symbol_table_la.write().unwrap().define_symbol("hippo", Value::from(300u32)).expect("test");
+    parent_symbol_table_la
+        .write()
+        .unwrap()
+        .define_symbol("stuff", Value::from(200u32))
+        .expect("test");
+    parent_symbol_table_la
+        .write()
+        .unwrap()
+        .define_symbol("hippo", Value::from(300u32))
+        .expect("test");
 
-    child_symbol_table_la.write().unwrap().define_symbol("stuff", Value::from(444u32)).expect("test");
+    child_symbol_table_la
+        .write()
+        .unwrap()
+        .define_symbol("stuff", Value::from(444u32))
+        .expect("test");
 
-    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("stuff").expect("test").read().unwrap(), Value::from(200u32));
-    assert_eq!(*parent_symbol_table_la.read().unwrap().resolved_symbol("hippo").expect("test").read().unwrap(), Value::from(300u32));
+    assert_eq!(
+        *parent_symbol_table_la
+            .read()
+            .unwrap()
+            .resolved_symbol("stuff")
+            .expect("test")
+            .read()
+            .unwrap(),
+        Value::from(200u32)
+    );
+    assert_eq!(
+        *parent_symbol_table_la
+            .read()
+            .unwrap()
+            .resolved_symbol("hippo")
+            .expect("test")
+            .read()
+            .unwrap(),
+        Value::from(300u32)
+    );
 
-    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("stuff").expect("test").read().unwrap(), Value::from(444u32));
-    assert_eq!(*child_symbol_table_la.read().unwrap().resolved_symbol("hippo").expect("test").read().unwrap(), Value::from(300u32));
+    assert_eq!(
+        *child_symbol_table_la
+            .read()
+            .unwrap()
+            .resolved_symbol("stuff")
+            .expect("test")
+            .read()
+            .unwrap(),
+        Value::from(444u32)
+    );
+    assert_eq!(
+        *child_symbol_table_la
+            .read()
+            .unwrap()
+            .resolved_symbol("hippo")
+            .expect("test")
+            .read()
+            .unwrap(),
+        Value::from(300u32)
+    );
 
-    log::debug!("child_symbol_table:\n{:#?}", child_symbol_table_la.read().unwrap());
+    log::debug!(
+        "child_symbol_table:\n{:#?}",
+        child_symbol_table_la.read().unwrap()
+    );
 }
 
 #[test]
@@ -368,16 +458,22 @@ fn test_global_sym_ref_term() {
     // Write a bunch of stuff into the global_symbol_table
     {
         let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
-        global_symbol_table_g.define_symbol("bleh", Value::from(456f32)).expect("test");
-        global_symbol_table_g.define_symbol("stuff", Value::from(True{})).expect("test");
-        global_symbol_table_g.define_symbol("andthings", Value::from(Void{})).expect("test");
+        global_symbol_table_g
+            .define_symbol("bleh", Value::from(456f32))
+            .expect("test");
+        global_symbol_table_g
+            .define_symbol("stuff", Value::from(True {}))
+            .expect("test");
+        global_symbol_table_g
+            .define_symbol("andthings", Value::from(Void {}))
+            .expect("test");
     }
 
     // Now check GlobalSymRefTerm.
     let r = GlobalSymRefTerm::new_unchecked("bleh".into());
     log::debug!("r (as Debug): {:#?}", r);
-    log::debug!("r (as Display): {}" , r);
-    log::debug!("r: {}" , r.stringify());
+    log::debug!("r (as Display): {}", r);
+    log::debug!("r: {}", r.stringify());
 
     let t = TupleTerm::from(vec![
         GlobalSymRefTerm::new_unchecked("bleh".into()).into(),
@@ -393,9 +489,12 @@ fn test_global_sym_ref_term() {
         let r_resolved_la = r.resolved().expect("test");
         let r_resolved_g = r_resolved_la.read().unwrap();
         log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
-        log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
+        log::debug!(
+            "r_resolved_g.as_ref() (as Debug): {:#?}",
+            r_resolved_g.as_ref()
+        );
 
-    //     use std::ops::Deref; // Is this somehow unnecessary?
+        //     use std::ops::Deref; // Is this somehow unnecessary?
         log::debug!("r_resolved_g (as Display): {}", r_resolved_g);
         log::debug!("r_resolved_g: {}", r_resolved_g.stringify());
 
@@ -408,9 +507,12 @@ fn test_global_sym_ref_term() {
         let r_resolved_la = r.resolved().expect("test");
         let mut r_resolved_g = r_resolved_la.write().unwrap();
         log::debug!("r_resolved_g (as Debug): {:#?}", r_resolved_g);
-        log::debug!("r_resolved_g.as_ref() (as Debug): {:#?}", r_resolved_g.as_ref());
+        log::debug!(
+            "r_resolved_g.as_ref() (as Debug): {:#?}",
+            r_resolved_g.as_ref()
+        );
 
-    //     use std::ops::Deref; // Is this somehow unnecessary?
+        //     use std::ops::Deref; // Is this somehow unnecessary?
         log::debug!("r_resolved_g (as Display): {}", r_resolved_g);
         log::debug!("r_resolved_g: {}", r_resolved_g.stringify());
 
@@ -429,9 +531,21 @@ fn test_global_sym_ref_term() {
         // Write more stuff into the global_symbol_table
         {
             let mut global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap();
-            global_symbol_table_g.define_symbol("inner", Value::from(40404u32)).expect("test");
-            global_symbol_table_g.define_symbol("outer", Value::from(GlobalSymRefTerm::new_unchecked("inner".into()))).expect("test");
-            global_symbol_table_g.define_symbol("outerer", Value::from(GlobalSymRefTerm::new_unchecked("outer".into()))).expect("test");
+            global_symbol_table_g
+                .define_symbol("inner", Value::from(40404u32))
+                .expect("test");
+            global_symbol_table_g
+                .define_symbol(
+                    "outer",
+                    Value::from(GlobalSymRefTerm::new_unchecked("inner".into())),
+                )
+                .expect("test");
+            global_symbol_table_g
+                .define_symbol(
+                    "outerer",
+                    Value::from(GlobalSymRefTerm::new_unchecked("outer".into())),
+                )
+                .expect("test");
         }
 
         {
@@ -448,30 +562,58 @@ fn test_global_sym_ref_term() {
         {
             let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref).expect("test");
             let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
-            log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
-            log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
+            log::debug!(
+                "inner_dereferenced_once_g (as Debug): {:#?}",
+                inner_dereferenced_once_g
+            );
+            log::debug!(
+                "inner_dereferenced_once_g: {}",
+                inner_dereferenced_once_g.stringify()
+            );
             assert_eq!(*inner_dereferenced_once_g, test_value);
         }
 
         {
             let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref).expect("test");
             let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
-            log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
-            log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
+            log::debug!(
+                "outer_dereferenced_once_g (as Debug): {:#?}",
+                outer_dereferenced_once_g
+            );
+            log::debug!(
+                "outer_dereferenced_once_g: {}",
+                outer_dereferenced_once_g.stringify()
+            );
             assert_eq!(*outer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
         {
-            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref).expect("test");
+            let outerer_dereferenced_once_la =
+                runtime_g.dereferenced_once(&outerer_ref).expect("test");
             let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
-            log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
-            log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
+            log::debug!(
+                "outerer_dereferenced_once_g (as Debug): {:#?}",
+                outerer_dereferenced_once_g
+            );
+            log::debug!(
+                "outerer_dereferenced_once_g: {}",
+                outerer_dereferenced_once_g.stringify()
+            );
             assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
-        assert_eq!(*inner_ref.resolved().expect("test").read().unwrap(), test_value);
-        assert_eq!(*outer_ref.resolved().expect("test").read().unwrap(), test_value);
-        assert_eq!(*outerer_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(
+            *inner_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
+        assert_eq!(
+            *outer_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
+        assert_eq!(
+            *outerer_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
     }
 }
 
@@ -481,11 +623,22 @@ fn test_local_sym_ref_term() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
-    local_symbol_table_la.write().unwrap().define_symbol("blah", dy::Value::from(123i32)).expect("test");
-    log::debug!("local_symbol_table_la: {:#?}", local_symbol_table_la.read().unwrap());
+    let local_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_without_parent("stuffs".to_string()).expect("pass"),
+    ));
+    local_symbol_table_la
+        .write()
+        .unwrap()
+        .define_symbol("blah", dy::Value::from(123i32))
+        .expect("test");
+    log::debug!(
+        "local_symbol_table_la: {:#?}",
+        local_symbol_table_la.read().unwrap()
+    );
 
-    let local_sym_ref_term = dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into()).expect("test");
+    let local_sym_ref_term =
+        dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())
+            .expect("test");
     log::debug!("local_sym_ref_term: (as Debug) {:#?}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: (as Display) {}", local_sym_ref_term);
     log::debug!("local_sym_ref_term: {}", local_sym_ref_term.stringify());
@@ -497,9 +650,27 @@ fn test_local_sym_ref_term() {
         // Write more stuff into the local_symbol_table
         {
             let mut local_symbol_table_g = local_symbol_table_la.write().unwrap();
-            local_symbol_table_g.define_symbol("inner", Value::from(51515u32)).expect("test");
-            local_symbol_table_g.define_symbol("outer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into()))).expect("test");
-            local_symbol_table_g.define_symbol("outerer", Value::from(dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into()))).expect("test");
+            local_symbol_table_g
+                .define_symbol("inner", Value::from(51515u32))
+                .expect("test");
+            local_symbol_table_g
+                .define_symbol(
+                    "outer",
+                    Value::from(dy::LocalSymRefTerm::new_unchecked(
+                        local_symbol_table_la.clone(),
+                        "inner".into(),
+                    )),
+                )
+                .expect("test");
+            local_symbol_table_g
+                .define_symbol(
+                    "outerer",
+                    Value::from(dy::LocalSymRefTerm::new_unchecked(
+                        local_symbol_table_la.clone(),
+                        "outer".into(),
+                    )),
+                )
+                .expect("test");
         }
 
         {
@@ -507,39 +678,70 @@ fn test_local_sym_ref_term() {
             log::debug!("local_symbol_table_g: {:#?}", local_symbol_table_g);
         }
 
-        let inner_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into());
-        let outer_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into());
-        let outerer_ref = dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outerer".into());
+        let inner_ref =
+            dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "inner".into());
+        let outer_ref =
+            dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outer".into());
+        let outerer_ref =
+            dy::LocalSymRefTerm::new_unchecked(local_symbol_table_la.clone(), "outerer".into());
 
         let runtime_g = dy::RUNTIME_LA.read().unwrap();
 
         {
             let inner_dereferenced_once_la = runtime_g.dereferenced_once(&inner_ref).expect("test");
             let inner_dereferenced_once_g = inner_dereferenced_once_la.read().unwrap();
-            log::debug!("inner_dereferenced_once_g (as Debug): {:#?}", inner_dereferenced_once_g);
-            log::debug!("inner_dereferenced_once_g: {}", inner_dereferenced_once_g.stringify());
+            log::debug!(
+                "inner_dereferenced_once_g (as Debug): {:#?}",
+                inner_dereferenced_once_g
+            );
+            log::debug!(
+                "inner_dereferenced_once_g: {}",
+                inner_dereferenced_once_g.stringify()
+            );
             assert_eq!(*inner_dereferenced_once_g, test_value);
         }
 
         {
             let outer_dereferenced_once_la = runtime_g.dereferenced_once(&outer_ref).expect("test");
             let outer_dereferenced_once_g = outer_dereferenced_once_la.read().unwrap();
-            log::debug!("outer_dereferenced_once_g (as Debug): {:#?}", outer_dereferenced_once_g);
-            log::debug!("outer_dereferenced_once_g: {}", outer_dereferenced_once_g.stringify());
+            log::debug!(
+                "outer_dereferenced_once_g (as Debug): {:#?}",
+                outer_dereferenced_once_g
+            );
+            log::debug!(
+                "outer_dereferenced_once_g: {}",
+                outer_dereferenced_once_g.stringify()
+            );
             assert_eq!(*outer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
         {
-            let outerer_dereferenced_once_la = runtime_g.dereferenced_once(&outerer_ref).expect("test");
+            let outerer_dereferenced_once_la =
+                runtime_g.dereferenced_once(&outerer_ref).expect("test");
             let outerer_dereferenced_once_g = outerer_dereferenced_once_la.read().unwrap();
-            log::debug!("outerer_dereferenced_once_g (as Debug): {:#?}", outerer_dereferenced_once_g);
-            log::debug!("outerer_dereferenced_once_g: {}", outerer_dereferenced_once_g.stringify());
+            log::debug!(
+                "outerer_dereferenced_once_g (as Debug): {:#?}",
+                outerer_dereferenced_once_g
+            );
+            log::debug!(
+                "outerer_dereferenced_once_g: {}",
+                outerer_dereferenced_once_g.stringify()
+            );
             assert_eq!(*outerer_dereferenced_once_g, Value::from(inner_ref.clone()));
         }
 
-        assert_eq!(*inner_ref.resolved().expect("test").read().unwrap(), test_value);
-        assert_eq!(*outer_ref.resolved().expect("test").read().unwrap(), test_value);
-        assert_eq!(*outerer_ref.resolved().expect("test").read().unwrap(), test_value);
+        assert_eq!(
+            *inner_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
+        assert_eq!(
+            *outer_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
+        assert_eq!(
+            *outerer_ref.resolved().expect("test").read().unwrap(),
+            test_value
+        );
     }
 }
 
@@ -555,13 +757,22 @@ fn test_structs() {
     assert!(Struct.inhabits(&StructType));
 
     // Create the Hippo struct
-    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap()
+    dy::GLOBAL_SYMBOL_TABLE_LA
+        .write()
+        .unwrap()
         .define_symbol(
             "Hippo",
             StructTerm::new(
-                vec![("age".into(), Uint8.into()), ("gravity".into(), Float64.into())].into()
-            ).expect("test").into()
-        ).expect("test");
+                vec![
+                    ("age".into(), Uint8.into()),
+                    ("gravity".into(), Float64.into()),
+                ]
+                .into(),
+            )
+            .expect("test")
+            .into(),
+        )
+        .expect("test");
 
     let global_symbol_table_g = dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
     log::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
@@ -569,17 +780,23 @@ fn test_structs() {
     log::debug!("hippo: {}", hippo.stringify());
 
     let x = global_symbol_table_g
-        .resolved_symbol("Hippo").expect("test")
-        .read().unwrap()
+        .resolved_symbol("Hippo")
+        .expect("test")
+        .read()
+        .unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
-        .construct(vec![23u8.into(), 999.0f64.into()].into()).expect("test");
+        .construct(vec![23u8.into(), 999.0f64.into()].into())
+        .expect("test");
     let y = global_symbol_table_g
-        .resolved_symbol("Hippo").expect("test")
-        .read().unwrap()
+        .resolved_symbol("Hippo")
+        .expect("test")
+        .read()
+        .unwrap()
         .downcast_ref::<StructTerm>()
         .unwrap()
-        .construct(vec![100u8.into(), (-3.0f64).into()].into()).expect("test");
+        .construct(vec![100u8.into(), (-3.0f64).into()].into())
+        .expect("test");
     log::debug!("x: {}", x.stringify());
     log::debug!("y: {}", y.stringify());
     log::debug!("x == y: {}", x == y);
@@ -589,8 +806,16 @@ fn test_structs() {
     assert!(x != y);
     assert!(y != x);
 
-    let x2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![23u8.into(), 999.0f64.into()].into()).expect("test");
-    let y2 = dy::StructTermTerm::new_checked(hippo.clone().into(), vec![100u8.into(), (-3.0f64).into()].into()).expect("test");
+    let x2 = dy::StructTermTerm::new_checked(
+        hippo.clone().into(),
+        vec![23u8.into(), 999.0f64.into()].into(),
+    )
+    .expect("test");
+    let y2 = dy::StructTermTerm::new_checked(
+        hippo.clone().into(),
+        vec![100u8.into(), (-3.0f64).into()].into(),
+    )
+    .expect("test");
 
     log::debug!("x2: {}", x2.stringify());
     log::debug!("y2: {}", y2.stringify());
@@ -668,7 +893,6 @@ fn test_deconstruct() {
         }
     }
 
-
     {
         let st_tt = TupleTerm::from((n, x, b, a));
         log::debug!("st_tt (stringify): {}", st_tt.stringify());
@@ -695,9 +919,12 @@ fn test_deconstruct() {
         }
     }
 
-
     {
-        let s = StructTerm::new(vec![("name".into(), Utf8String.into()), ("age".into(), Uint8.into())]).expect("test");
+        let s = StructTerm::new(vec![
+            ("name".into(), Utf8String.into()),
+            ("age".into(), Uint8.into()),
+        ])
+        .expect("test");
         log::debug!("s (stringify): {}", s.stringify());
         {
             let deconstruction = s.deconstructed();
@@ -708,7 +935,11 @@ fn test_deconstruct() {
             log::debug!("s.deconstruct(): {:#?}", deconstruction);
         }
 
-        let s_term = StructTermTerm::new_checked(s.clone().into(), TupleTerm::from((String::from("Hippo"), 99u8))).expect("test");
+        let s_term = StructTermTerm::new_checked(
+            s.clone().into(),
+            TupleTerm::from((String::from("Hippo"), 99u8)),
+        )
+        .expect("test");
         log::debug!("s_term (stringify): {}", s_term.stringify());
         {
             let deconstruction = s_term.deconstructed();
@@ -721,7 +952,11 @@ fn test_deconstruct() {
     }
 
     {
-        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("thingy", 1234.5678f64.into()).expect("test");
+        dy::GLOBAL_SYMBOL_TABLE_LA
+            .write()
+            .unwrap()
+            .define_symbol("thingy", 1234.5678f64.into())
+            .expect("test");
         let g = GlobalSymRefTerm::new_unchecked("thingy".into());
         let deconstruction = g.deconstructed();
         log::debug!("g.deconstructed(): {:#?}", deconstruction);
@@ -732,7 +967,7 @@ fn test_deconstruct_reconstruct_roundtrip<T, C>(x: T)
 where
     T: Deconstruct + Stringifiable + PartialEq,
     C: Constructor + Stringifiable,
-    <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>
+    <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>,
 {
     log::debug!("x: {}", x.stringify());
     log::debug!("x (as Debug): {:#?}", x);
@@ -741,7 +976,11 @@ where
     assert_eq!(x_deconstruction.kind(), dy::DeconstructionKind::Parametric);
     let parameterization = x_deconstruction.clone().into_parametric().unwrap();
     log::debug!("parameterization (as Debug): {:#?}", parameterization);
-    assert!(parameterization.constructor_d.reconstruct().expect("test").is::<C>());
+    assert!(parameterization
+        .constructor_d
+        .reconstruct()
+        .expect("test")
+        .is::<C>());
     let x_reconstructed = x_deconstruction.reconstruct().expect("test");
     log::debug!("x_reconstructed (as Debug): {:#?}", x_reconstructed);
     log::debug!("x_reconstructed: {:#?}", x_reconstructed.stringify());
@@ -766,7 +1005,12 @@ fn test_constructor() {
     test_deconstruct_reconstruct_roundtrip::<f64, Float64>(100.25f64);
     test_deconstruct_reconstruct_roundtrip::<String, Utf8String>("BLAH".into());
 
-    test_deconstruct_reconstruct_roundtrip::<TupleTerm, st::Tuple>(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))));
+    test_deconstruct_reconstruct_roundtrip::<TupleTerm, st::Tuple>(TupleTerm::from((
+        123i8,
+        99u32,
+        100.25f32,
+        String::from("HIPPO"),
+    )));
 }
 
 fn test_textify_case<T: std::fmt::Debug + dy::Deconstruct>(value: T, expected_text: &str) {
@@ -797,18 +1041,33 @@ fn test_textify() {
     test_textify_case(123u64, "Uint64(123)");
     test_textify_case(4.75f32, "Float32(4.75)");
     test_textify_case(4.75f64, "Float64(4.75)");
-    test_textify_case(String::from("Hippos and Hippas"), "Utf8String(\"Hippos and Hippas\")");
-    test_textify_case(TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))), "Tuple(Sint8(123), Uint32(99), Float32(100.25), Utf8String(\"HIPPO\"))");
     test_textify_case(
-        StructTerm::new(
-            vec![("name".into(), Utf8String.into()), ("score".into(), Uint64.into())],
-        ).expect("test"),
+        String::from("Hippos and Hippas"),
+        "Utf8String(\"Hippos and Hippas\")",
+    );
+    test_textify_case(
+        TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))),
+        "Tuple(Sint8(123), Uint32(99), Float32(100.25), Utf8String(\"HIPPO\"))",
+    );
+    test_textify_case(
+        StructTerm::new(vec![
+            ("name".into(), Utf8String.into()),
+            ("score".into(), Uint64.into()),
+        ])
+        .expect("test"),
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
     );
-    test_textify_case(GlobalSymRefTerm::new_unchecked("fancyfancy".into()), "GlobalSymRef(Utf8String(\"fancyfancy\"))");
+    test_textify_case(
+        GlobalSymRefTerm::new_unchecked("fancyfancy".into()),
+        "GlobalSymRef(Utf8String(\"fancyfancy\"))",
+    );
 }
 
-fn test_try_scanning_case(token_kind: scanner::TokenKind, input: &str, expected_token_o: Option<scanner::Token>) {
+fn test_try_scanning_case(
+    token_kind: scanner::TokenKind,
+    input: &str,
+    expected_token_o: Option<scanner::Token>,
+) {
     let token_o = scanner::try_scanning(token_kind, input).map(|(token, _match_stats)| token);
     assert_eq!(token_o, expected_token_o);
 }
@@ -855,19 +1114,55 @@ fn test_try_scanning() {
     test_try_scanning_case(TokenKind::Comma, "", None);
     test_try_scanning_case(TokenKind::Comma, "\x7F", None);
 
-    test_try_scanning_case(TokenKind::Whitespace, " ", Some(Token::Whitespace(" ".into())));
-    test_try_scanning_case(TokenKind::Whitespace, "\t", Some(Token::Whitespace("\t".into())));
-    test_try_scanning_case(TokenKind::Whitespace, "\n", Some(Token::Whitespace("\n".into())));
-    test_try_scanning_case(TokenKind::Whitespace, "    \t  \n\n\n", Some(Token::Whitespace("    \t  \n\n\n".into())));
-    test_try_scanning_case(TokenKind::Whitespace, "    \t  \n\n\n!", Some(Token::Whitespace("    \t  \n\n\n".into())));
+    test_try_scanning_case(
+        TokenKind::Whitespace,
+        " ",
+        Some(Token::Whitespace(" ".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::Whitespace,
+        "\t",
+        Some(Token::Whitespace("\t".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::Whitespace,
+        "\n",
+        Some(Token::Whitespace("\n".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::Whitespace,
+        "    \t  \n\n\n",
+        Some(Token::Whitespace("    \t  \n\n\n".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::Whitespace,
+        "    \t  \n\n\n!",
+        Some(Token::Whitespace("    \t  \n\n\n".into())),
+    );
     test_try_scanning_case(TokenKind::Whitespace, "x", None);
     test_try_scanning_case(TokenKind::Whitespace, "", None);
     test_try_scanning_case(TokenKind::Whitespace, "\x7F", None);
 
-    test_try_scanning_case(TokenKind::CIdentifier, "xyz", Some(Token::CIdentifier("xyz".into())));
-    test_try_scanning_case(TokenKind::CIdentifier, "ABC__123", Some(Token::CIdentifier("ABC__123".into())));
-    test_try_scanning_case(TokenKind::CIdentifier, "_x_100y_z", Some(Token::CIdentifier("_x_100y_z".into())));
-    test_try_scanning_case(TokenKind::CIdentifier, "_x_100y_z.", Some(Token::CIdentifier("_x_100y_z".into())));
+    test_try_scanning_case(
+        TokenKind::CIdentifier,
+        "xyz",
+        Some(Token::CIdentifier("xyz".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::CIdentifier,
+        "ABC__123",
+        Some(Token::CIdentifier("ABC__123".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::CIdentifier,
+        "_x_100y_z",
+        Some(Token::CIdentifier("_x_100y_z".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::CIdentifier,
+        "_x_100y_z.",
+        Some(Token::CIdentifier("_x_100y_z".into())),
+    );
     test_try_scanning_case(TokenKind::CIdentifier, ".", None);
     test_try_scanning_case(TokenKind::CIdentifier, "1", None);
     test_try_scanning_case(TokenKind::CIdentifier, "(", None);
@@ -875,33 +1170,128 @@ fn test_try_scanning() {
     test_try_scanning_case(TokenKind::CIdentifier, "", None);
     test_try_scanning_case(TokenKind::CIdentifier, "\x7F", None);
 
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "0.",
+        Some(Token::DecimalPointLiteral("0.".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        ".0",
+        Some(Token::DecimalPointLiteral(".0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "1.",
+        Some(Token::DecimalPointLiteral("1.".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        ".2",
+        Some(Token::DecimalPointLiteral(".2".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "3.4",
+        Some(Token::DecimalPointLiteral("3.4".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-3.4",
+        Some(Token::DecimalPointLiteral("-3.4".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-3.",
+        Some(Token::DecimalPointLiteral("-3.".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-.4",
+        Some(Token::DecimalPointLiteral("-.4".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+3.4",
+        Some(Token::DecimalPointLiteral("+3.4".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+3.",
+        Some(Token::DecimalPointLiteral("+3.".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+.4",
+        Some(Token::DecimalPointLiteral("+.4".into())),
+    );
 
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "0.", Some(Token::DecimalPointLiteral("0.".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".0", Some(Token::DecimalPointLiteral(".0".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "1.", Some(Token::DecimalPointLiteral("1.".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".2", Some(Token::DecimalPointLiteral(".2".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "3.4", Some(Token::DecimalPointLiteral("3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.4", Some(Token::DecimalPointLiteral("-3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.", Some(Token::DecimalPointLiteral("-3.".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-.4", Some(Token::DecimalPointLiteral("-.4".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.4", Some(Token::DecimalPointLiteral("+3.4".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.", Some(Token::DecimalPointLiteral("+3.".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4", Some(Token::DecimalPointLiteral("+.4".into())));
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "0.e0",
+        Some(Token::DecimalPointLiteral("0.e0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        ".0e1",
+        Some(Token::DecimalPointLiteral(".0e1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "1.e100",
+        Some(Token::DecimalPointLiteral("1.e100".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        ".2e-0",
+        Some(Token::DecimalPointLiteral(".2e-0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "3.4e-10",
+        Some(Token::DecimalPointLiteral("3.4e-10".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-3.4e8",
+        Some(Token::DecimalPointLiteral("-3.4e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-3.e8",
+        Some(Token::DecimalPointLiteral("-3.e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "-.4e8",
+        Some(Token::DecimalPointLiteral("-.4e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+3.4e8",
+        Some(Token::DecimalPointLiteral("+3.4e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+3.e8",
+        Some(Token::DecimalPointLiteral("+3.e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+.4e8",
+        Some(Token::DecimalPointLiteral("+.4e8".into())),
+    );
 
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "0.e0", Some(Token::DecimalPointLiteral("0.e0".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".0e1", Some(Token::DecimalPointLiteral(".0e1".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "1.e100", Some(Token::DecimalPointLiteral("1.e100".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, ".2e-0", Some(Token::DecimalPointLiteral(".2e-0".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "3.4e-10", Some(Token::DecimalPointLiteral("3.4e-10".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.4e8", Some(Token::DecimalPointLiteral("-3.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-3.e8", Some(Token::DecimalPointLiteral("-3.e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "-.4e8", Some(Token::DecimalPointLiteral("-.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.4e8", Some(Token::DecimalPointLiteral("+3.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+3.e8", Some(Token::DecimalPointLiteral("+3.e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8", Some(Token::DecimalPointLiteral("+.4e8".into())));
-
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8xyz", Some(Token::DecimalPointLiteral("+.4e8".into())));
-    test_try_scanning_case(TokenKind::DecimalPointLiteral, "+.4e8)", Some(Token::DecimalPointLiteral("+.4e8".into())));
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+.4e8xyz",
+        Some(Token::DecimalPointLiteral("+.4e8".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::DecimalPointLiteral,
+        "+.4e8)",
+        Some(Token::DecimalPointLiteral("+.4e8".into())),
+    );
 
     test_try_scanning_case(TokenKind::DecimalPointLiteral, ".", None);
     test_try_scanning_case(TokenKind::DecimalPointLiteral, "0", None);
@@ -914,24 +1304,82 @@ fn test_try_scanning() {
     test_try_scanning_case(TokenKind::DecimalPointLiteral, "", None);
     test_try_scanning_case(TokenKind::DecimalPointLiteral, "\x7F", None);
 
-
-
-    test_try_scanning_case(TokenKind::IntegerLiteral, "0", Some(Token::IntegerLiteral("0".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "1", Some(Token::IntegerLiteral("1".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "1234", Some(Token::IntegerLiteral("1234".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "99999999999999999999999", Some(Token::IntegerLiteral("99999999999999999999999".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "-0", Some(Token::IntegerLiteral("-0".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "-1", Some(Token::IntegerLiteral("-1".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "-1234", Some(Token::IntegerLiteral("-1234".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "-99999999999999999999999", Some(Token::IntegerLiteral("-99999999999999999999999".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "+0", Some(Token::IntegerLiteral("+0".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "+1", Some(Token::IntegerLiteral("+1".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "+1234", Some(Token::IntegerLiteral("+1234".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "+99999999999999999999999", Some(Token::IntegerLiteral("+99999999999999999999999".into())));
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "0",
+        Some(Token::IntegerLiteral("0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "1",
+        Some(Token::IntegerLiteral("1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "1234",
+        Some(Token::IntegerLiteral("1234".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "99999999999999999999999",
+        Some(Token::IntegerLiteral("99999999999999999999999".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "-0",
+        Some(Token::IntegerLiteral("-0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "-1",
+        Some(Token::IntegerLiteral("-1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "-1234",
+        Some(Token::IntegerLiteral("-1234".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "-99999999999999999999999",
+        Some(Token::IntegerLiteral("-99999999999999999999999".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "+0",
+        Some(Token::IntegerLiteral("+0".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "+1",
+        Some(Token::IntegerLiteral("+1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "+1234",
+        Some(Token::IntegerLiteral("+1234".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "+99999999999999999999999",
+        Some(Token::IntegerLiteral("+99999999999999999999999".into())),
+    );
     // Note that this doesn't try to match the whole string.
-    test_try_scanning_case(TokenKind::IntegerLiteral, "1.", Some(Token::IntegerLiteral("1".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "1x", Some(Token::IntegerLiteral("1".into())));
-    test_try_scanning_case(TokenKind::IntegerLiteral, "1)", Some(Token::IntegerLiteral("1".into())));
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "1.",
+        Some(Token::IntegerLiteral("1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "1x",
+        Some(Token::IntegerLiteral("1".into())),
+    );
+    test_try_scanning_case(
+        TokenKind::IntegerLiteral,
+        "1)",
+        Some(Token::IntegerLiteral("1".into())),
+    );
     test_try_scanning_case(TokenKind::IntegerLiteral, "abcxyz", None);
     test_try_scanning_case(TokenKind::IntegerLiteral, "__", None);
     test_try_scanning_case(TokenKind::IntegerLiteral, ".", None);
@@ -941,11 +1389,24 @@ fn test_try_scanning() {
     test_try_scanning_case(TokenKind::IntegerLiteral, "", None);
     test_try_scanning_case(TokenKind::IntegerLiteral, "\x7F", None);
 
-
     for input in vec![
         r#""""#,
-        r#""\0""#, r#""\a""#, r#""\b""#, r#""\t""#, r#""\n""#, r#""\v""#, r#""\f""#, r#""\r""#, r#""\"""#, r#""\\""#,
-        r#""\x00""#, r#""\xAA""#, r#""\x93""#, r#""\x7f""#, r#""\xee""#, r#""\xFf""#,
+        r#""\0""#,
+        r#""\a""#,
+        r#""\b""#,
+        r#""\t""#,
+        r#""\n""#,
+        r#""\v""#,
+        r#""\f""#,
+        r#""\r""#,
+        r#""\"""#,
+        r#""\\""#,
+        r#""\x00""#,
+        r#""\xAA""#,
+        r#""\x93""#,
+        r#""\x7f""#,
+        r#""\xee""#,
+        r#""\xFf""#,
         r#"" ""#,
         // TODO: More test cases
     ] {
@@ -960,7 +1421,7 @@ fn test_try_scanning() {
     test_try_scanning_case_ascii_string_literal("\n  ");
     test_try_scanning_case_ascii_string_literal("blah");
     test_try_scanning_case_ascii_string_literal("\"thingy'\\");
-//     test_try_scanning_case_ascii_string_literal("\t\f\v\n\r\a\b");
+    //     test_try_scanning_case_ascii_string_literal("\t\f\v\n\r\a\b");
     // TODO: More exhaustive test cases where Rust's format("{:?}", s) isn't getting in the way.
 }
 
@@ -980,32 +1441,67 @@ fn test_scan_case_negative(input: &str) {
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_scan() {
     use scanner::Token;
-    test_scan_case(
-        "",
-        vec![],
-    );
+    test_scan_case("", vec![]);
     test_scan_case(
         "blah, (thing, hippo)",
         vec![
             Token::CIdentifier("blah".into()),
             Token::Comma,
             Token::OpenParen,
-                Token::CIdentifier("thing".into()),
-                Token::Comma,
-                Token::CIdentifier("hippo".into()),
+            Token::CIdentifier("thing".into()),
+            Token::Comma,
+            Token::CIdentifier("hippo".into()),
             Token::CloseParen,
         ],
     );
-    for input in vec!["3", "+8", "-9", "10", "0", "+0", "-0", "-1000", "999999999999999999999999999999999999999999999999999999999999999999"] {
+    for input in vec![
+        "3",
+        "+8",
+        "-9",
+        "10",
+        "0",
+        "+0",
+        "-0",
+        "-1000",
+        "999999999999999999999999999999999999999999999999999999999999999999",
+    ] {
         test_scan_case(input, vec![Token::IntegerLiteral(input.into())]);
     }
-    for input in vec!["4.", ".5", "6.7", "0.0", "+8.", "-9.", "4.e0", "4.e+0", "4.e-0", ".5e1", "1.6e10", "8.05e-20", "-999999.1010101010e+666666666"] {
+    for input in vec![
+        "4.",
+        ".5",
+        "6.7",
+        "0.0",
+        "+8.",
+        "-9.",
+        "4.e0",
+        "4.e+0",
+        "4.e-0",
+        ".5e1",
+        "1.6e10",
+        "8.05e-20",
+        "-999999.1010101010e+666666666",
+    ] {
         test_scan_case(input, vec![Token::DecimalPointLiteral(input.into())]);
     }
     for input in vec![
         r#""""#,
-        r#""\0""#, r#""\a""#, r#""\b""#, r#""\t""#, r#""\n""#, r#""\v""#, r#""\f""#, r#""\r""#, r#""\"""#, r#""\\""#,
-        r#""\x00""#, r#""\xAA""#, r#""\x93""#, r#""\x7f""#, r#""\xee""#, r#""\xFf""#,
+        r#""\0""#,
+        r#""\a""#,
+        r#""\b""#,
+        r#""\t""#,
+        r#""\n""#,
+        r#""\v""#,
+        r#""\f""#,
+        r#""\r""#,
+        r#""\"""#,
+        r#""\\""#,
+        r#""\x00""#,
+        r#""\xAA""#,
+        r#""\x93""#,
+        r#""\x7f""#,
+        r#""\xee""#,
+        r#""\xFf""#,
         r#"" !""#,
         r#"" !#""#,
         r#"" !#$""#,
@@ -1040,30 +1536,45 @@ fn test_parse_value_case(input: &str, expected_value: dy::Value) {
 fn test_parse_value() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
-    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("thingy", true.into()).expect("test");
-    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("bloppy", 123u32.into()).expect("test");
-    dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().define_symbol("Tuple", st::Tuple.into()).expect("test");
+    dy::GLOBAL_SYMBOL_TABLE_LA
+        .write()
+        .unwrap()
+        .define_symbol("thingy", true.into())
+        .expect("test");
+    dy::GLOBAL_SYMBOL_TABLE_LA
+        .write()
+        .unwrap()
+        .define_symbol("bloppy", 123u32.into())
+        .expect("test");
+    dy::GLOBAL_SYMBOL_TABLE_LA
+        .write()
+        .unwrap()
+        .define_symbol("Tuple", st::Tuple.into())
+        .expect("test");
 
     test_parse_value_case("Tuple", st::Tuple.into());
     test_parse_value_case(
         "Tuple(thingy, bloppy)",
         dy::TupleTerm::from(vec![dy::Value::from(true), dy::Value::from(123u32)]).into(),
     );
-//     test_parse_value_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
+    //     test_parse_value_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
 
-//     test_parse_value_case(
-//         "ArrayES(Float64, 4)(100.0, 8.9, 0.0, 1.0)",
-//         st::ArrayES
-//             .construct(dy::TupleTerm::from(vec![st::Float64, 4]))
-//             .construct(dy::TupleTerm::from(vec![100.0f64, 8.9f64, 0.0f64, 1.0f64])),
-//     );
+    //     test_parse_value_case(
+    //         "ArrayES(Float64, 4)(100.0, 8.9, 0.0, 1.0)",
+    //         st::ArrayES
+    //             .construct(dy::TupleTerm::from(vec![st::Float64, 4]))
+    //             .construct(dy::TupleTerm::from(vec![100.0f64, 8.9f64, 0.0f64, 1.0f64])),
+    //     );
     test_parse_value_case(
         "Tuple(Float64, Uint64)(100.0, 89)",
         dy::TupleTerm::from(vec![dy::Value::from(100.0f64), dy::Value::from(89u64)]).into(),
     );
 
-//     test_parse_value_case("GlobalSymRef(Utf8String(\"weewoo\"))");
-    test_parse_value_case("thingy", dy::GlobalSymRefTerm::new_unchecked("thingy".into()).into());
+    //     test_parse_value_case("GlobalSymRef(Utf8String(\"weewoo\"))");
+    test_parse_value_case(
+        "thingy",
+        dy::GlobalSymRefTerm::new_unchecked("thingy".into()).into(),
+    );
 }
 
 fn test_parse_deconstruction_case(input: &str, expected_value: dy::Value) {
@@ -1084,35 +1595,51 @@ fn test_parse_deconstruction() {
     test_parse_deconstruction_case("False", dy::Value::from(st::False));
     test_parse_deconstruction_case("Tuple", dy::Value::from(st::Tuple));
     test_parse_deconstruction_case("Tuple()", dy::Value::from(dy::TupleTerm::from(vec![])));
-    test_parse_deconstruction_case("Tuple(True, False)", dy::Value::from(dy::TupleTerm::from((true, false))));
+    test_parse_deconstruction_case(
+        "Tuple(True, False)",
+        dy::Value::from(dy::TupleTerm::from((true, false))),
+    );
 
     test_parse_deconstruction_case("Float64(4.5)", dy::Value::from(4.5f64));
     test_parse_deconstruction_case("Float64(4.e10)", dy::Value::from(4.0e10f64));
     test_parse_deconstruction_case("Float64(-.01)", dy::Value::from(-0.01f64));
 
-//     test_parse_deconstruction_case("Float32(4.5)", dy::Value::from(4.5f32));
-//     test_parse_deconstruction_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
-//     test_parse_deconstruction_case("Float32(-.01)", dy::Value::from(-0.01f32));
+    //     test_parse_deconstruction_case("Float32(4.5)", dy::Value::from(4.5f32));
+    //     test_parse_deconstruction_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
+    //     test_parse_deconstruction_case("Float32(-.01)", dy::Value::from(-0.01f32));
 
-    test_parse_deconstruction_case("Utf8String(\"blah\\n\\thh\")", dy::Value::from(String::from("blah\n\thh")));
+    test_parse_deconstruction_case(
+        "Utf8String(\"blah\\n\\thh\")",
+        dy::Value::from(String::from("blah\n\thh")),
+    );
 
     test_parse_deconstruction_case(
         "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
         dy::Value::from(
-            StructTerm::new(
-                vec![("name".into(), Utf8String.into()), ("score".into(), Uint64.into())],
-            ).expect("test")
-        )
+            StructTerm::new(vec![
+                ("name".into(), Utf8String.into()),
+                ("score".into(), Uint64.into()),
+            ])
+            .expect("test"),
+        ),
     );
-
-
 }
 
 //
 // TEMP TESTING
 //
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
@@ -1123,7 +1650,17 @@ impl st::Inhabits<Type> for BinOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
@@ -1143,32 +1680,44 @@ trait BinOpTermTrait {
 
 trait UnOpTermTrait {}
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Add;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Sub;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Mul;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Div;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Pow;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
@@ -1251,8 +1800,9 @@ impl Inhabits<UnOp> for Neg {
 //     pub static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32.into(), BinOp.into(), Sint32.into()]);
 // }
 
-
-#[derive(Clone, Copy, Debug, Eq, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait,
+)]
 #[st_non_parametric_term_trait(code = "Undefined")]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
@@ -1275,7 +1825,7 @@ impl Inhabits<Expr> for TupleTerm {
     fn inhabits(&self, _rhs: &Expr) -> bool {
         // TODO: Expr should really be Union(BinOpExpr, LiteralExpr, UnOpExpr)
         // TODO: Either register this with the runtime or make a const
-        let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
+        let bin_op_expr = TupleTerm::from(vec![Expr {}.into(), BinOp {}.into(), Expr {}.into()]);
         // TODO: Left and right unary ops
         self.inhabits(&bin_op_expr)
     }
@@ -1285,7 +1835,7 @@ fn eval_expr(expr: &Value) -> f64 {
     use std::ops::Deref;
 
     // TODO: Either register this with the runtime or make a const
-    let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
+    let bin_op_expr = TupleTerm::from(vec![Expr {}.into(), BinOp {}.into(), Expr {}.into()]);
 
     // TODO: This should be a poset search under Expr (which is really a Union of types)
     if expr.inhabits(&Float64) {
@@ -1335,51 +1885,70 @@ fn test_ast() {
         runtime_g.register_type::<Expr>().expect("test");
 
         // Non-uniform registrations.
-        runtime_g.register_inhabits::<f64,Expr>().unwrap();
-        runtime_g.register_inhabits::<TupleTerm,Expr>().unwrap();
+        runtime_g.register_inhabits::<f64, Expr>().unwrap();
+        runtime_g.register_inhabits::<TupleTerm, Expr>().unwrap();
     }
 
-    let expr1 = TupleTerm::from(vec![123.0f64.into(), Add{}.into(), 456.0f64.into()]);
-    let bin_op_expr = TupleTerm::from(vec![Expr{}.into(), BinOp{}.into(), Expr{}.into()]);
+    let expr1 = TupleTerm::from(vec![123.0f64.into(), Add {}.into(), 456.0f64.into()]);
+    let bin_op_expr = TupleTerm::from(vec![Expr {}.into(), BinOp {}.into(), Expr {}.into()]);
     log::debug!("expr1: {}", expr1);
     log::debug!("bin_op_expr: {}", bin_op_expr);
-    log::debug!("Expr{{}}: {}", Expr{}.stringify());
+    log::debug!("Expr{{}}: {}", Expr {}.stringify());
     assert!(expr1.inhabits(&bin_op_expr));
-    assert!(expr1.inhabits(&Expr{}));
+    assert!(expr1.inhabits(&Expr {}));
 
     let expr2 = TupleTerm::from(vec![
-        TupleTerm::from(vec![77.75f64.into(), Mul{}.into(), 900.125f64.into()]).into(),
-        Add{}.into(),
+        TupleTerm::from(vec![77.75f64.into(), Mul {}.into(), 900.125f64.into()]).into(),
+        Add {}.into(),
         1.0f64.into(),
     ]);
     log::debug!("expr2: {}", expr2);
-    assert!(expr2.inhabits(&Expr{}));
+    assert!(expr2.inhabits(&Expr {}));
     assert!(expr2.inhabits(&bin_op_expr));
 
-    log::debug!("eval_expr({}): {}", expr2.stringify(), eval_expr(&Value::from(expr2)));
+    log::debug!(
+        "eval_expr({}): {}",
+        expr2.stringify(),
+        eval_expr(&Value::from(expr2))
+    );
 
-    let expr3 = TupleTerm::from((TupleTerm::from((77.75f64, Mul{}, 900.125f64)), Add{}, 1.0f64));
+    let expr3 = TupleTerm::from((
+        TupleTerm::from((77.75f64, Mul {}, 900.125f64)),
+        Add {},
+        1.0f64,
+    ));
     log::debug!("expr3: {}", expr3);
 
     // TEMP TESTING
     {
         // Create the BinOpExpr struct
-        dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap()
+        dy::GLOBAL_SYMBOL_TABLE_LA
+            .write()
+            .unwrap()
             .define_symbol(
                 "BinOpExpr",
                 StructTerm::new(
-                    vec![("lhs".into(), Expr{}.into()), ("bin_op".into(), BinOp{}.into()), ("rhs".into(), Expr{}.into())].into()
-                ).expect("test").into()
-            ).expect("test");
-        log::debug!("global_symbol_table: {:#?}", dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap());
+                    vec![
+                        ("lhs".into(), Expr {}.into()),
+                        ("bin_op".into(), BinOp {}.into()),
+                        ("rhs".into(), Expr {}.into()),
+                    ]
+                    .into(),
+                )
+                .expect("test")
+                .into(),
+            )
+            .expect("test");
+        log::debug!(
+            "global_symbol_table: {:#?}",
+            dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap()
+        );
         let bin_op_expr = GlobalSymRefTerm::new_unchecked("BinOpExpr".into());
         log::debug!("bin_op_expr: {}", bin_op_expr.stringify());
 
-//         assert!(expr3.inhabits(&bin_op_expr));
+        //         assert!(expr3.inhabits(&bin_op_expr));
     }
 
     // Now test parsing something involving the defined symbols, and then evaluating it.
-    {
-
-    }
+    {}
 }
