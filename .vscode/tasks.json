@@ -57,6 +57,31 @@
                     ]
                 }
             ]
+        },
+        {
+            "label": "sept build",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "test",
+                "--package",
+                "sept",
+                "--all-features",
+                "--no-run"
+            ],
+            "group": "build",
+            "presentation": {
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$rustc",
+                    "fileLocation": [
+                        "relative"
+                    ]
+                }
+            ]
         }
     ]
 }

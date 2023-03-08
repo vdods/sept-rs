@@ -16,6 +16,9 @@ pub trait Constructor: st::TermTrait {
     /// Perform the construction using the given tuple of parameters.
     // TODO: There should be a st::Constructor trait that accepts a Rust tuple of parameters, or
     // ideally an ordinary sequence of Rust function parameters.
+    // TODO: Consider adding a "origin_constructor" parameter, in particular to allow for a global/local
+    // symref to be passed in, instead of the dereferenced valued implicitly taken to be self.  This only
+    // matters in some situations.
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType>;
     /// Deserialize from the given reader the parameters to use in the construction.
     // TODO: This really belongs in a st::Constructor trait.

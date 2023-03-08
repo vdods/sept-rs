@@ -85,7 +85,7 @@ impl dy::Constructor for StructTerm {
             struct_term_term.inhabits(self),
             "type mismatch in StructTerm::deserialize_parameters_and_construct; expected type_ {} but got {}",
             self.textified(),
-            struct_term_term.direct_type().textified(),
+            struct_term_term.declared_type().textified(),
         );
         Ok(struct_term_term)
     }

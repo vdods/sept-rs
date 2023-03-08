@@ -22,11 +22,11 @@ pub struct LocalSymRefTerm {
 impl dy::Deconstruct for LocalSymRefTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         unimplemented!("not sure how to represent the local symbol table unless it's somehow named and has a deconstruction");
-        //         dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
+        // dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
     }
     fn deconstructed(&self) -> dy::Deconstruction {
         unimplemented!("not sure how to represent the local symbol table unless it's somehow named and has a deconstruction");
-        //         dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
+        // dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
     }
 }
 
@@ -148,6 +148,10 @@ impl LocalSymRefTerm {
         }
     }
 
+    /// Returns the SymbolTable this ref refers to.
+    pub fn local_symbol_table(&self) -> &Arc<RwLock<dy::SymbolTable>> {
+        &self.local_symbol_table_la
+    }
     /// Explicitly resolves (dereferences) this ref.
     pub fn resolved(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(dy::RUNTIME_LA

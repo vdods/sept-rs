@@ -1,4 +1,4 @@
-use crate::{LayoutMode, ViewCtx};
+use crate::{ANSIColor, LayoutMode, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
 pub trait View {
@@ -52,7 +52,7 @@ fn indentation_for<T: 'static>(view_ctx: &ViewCtx) -> LayoutJob {
     )
 }
 
-fn render3_type_annotation_for<T: sept::st::TermTrait>(
+fn render_type_annotation_for<T: sept::st::TermTrait>(
     term: &T,
     layout_job: &mut LayoutJob,
     view_ctx: &mut ViewCtx,
@@ -90,7 +90,7 @@ macro_rules! impl_view_using_to_string {
                     view_ctx.color_for::<$ty>(),
                     view_ctx,
                 );
-                render3_type_annotation_for(self, &mut layout_job, view_ctx, None);
+                render_type_annotation_for(self, &mut layout_job, view_ctx, None);
                 layout_job
             }
             fn update_inline(
@@ -105,7 +105,7 @@ macro_rules! impl_view_using_to_string {
                     view_ctx.color_for::<$ty>(),
                     view_ctx,
                 );
-                render3_type_annotation_for(self, layout_job, view_ctx, None);
+                render_type_annotation_for(self, layout_job, view_ctx, None);
             }
         }
     };
@@ -168,6 +168,8 @@ fn render_str_as_literal_without_quotes(
     text: &str,
     layout_job: &mut LayoutJob,
     view_ctx: &ViewCtx,
+    regular_char_color: egui::Color32,
+    escape_char_color: egui::Color32,
 ) {
     let mut buffer = String::new();
     for c in text.chars() {
@@ -175,19 +177,14 @@ fn render_str_as_literal_without_quotes(
         if c == '\\' || c == '\"' || (c as u32) < (' ' as u32) || (c as u32) > ('~' as u32) {
             // Output the existing buffer, if any contents.
             if !buffer.is_empty() {
-                layout_job_append(
-                    layout_job,
-                    buffer.as_str(),
-                    view_ctx.color_for::<sept::st::Utf8StringTerm>(),
-                    view_ctx,
-                );
+                layout_job_append(layout_job, buffer.as_str(), regular_char_color, view_ctx);
                 buffer.clear();
             }
             // Output the escape char.
             layout_job_append(
                 layout_job,
                 c.escape_default().to_string().as_str(),
-                view_ctx.color_for_escape_chars(),
+                escape_char_color,
                 view_ctx,
             );
         } else {
@@ -196,12 +193,7 @@ fn render_str_as_literal_without_quotes(
     }
     // Output the existing buffer, if any contents.
     if !buffer.is_empty() {
-        layout_job_append(
-            layout_job,
-            buffer.as_str(),
-            view_ctx.color_for::<sept::st::Utf8StringTerm>(),
-            view_ctx,
-        );
+        layout_job_append(layout_job, buffer.as_str(), regular_char_color, view_ctx);
         buffer.clear();
     }
 }
@@ -219,10 +211,10 @@ impl View for sept::st::Utf8StringTerm {
             layout_job_append(
                 &mut layout_job,
                 "\"\"",
-                view_ctx.color_for_quotes(),
+                view_ctx.color_for_utf8string_quotes(),
                 view_ctx,
             );
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 &mut layout_job,
                 view_ctx,
@@ -231,10 +223,18 @@ impl View for sept::st::Utf8StringTerm {
             return layout_job;
         }
 
-        layout_job_append(&mut layout_job, "\"", view_ctx.color_for_quotes(), view_ctx);
+        layout_job_append(
+            &mut layout_job,
+            "\"",
+            view_ctx.color_for_utf8string_quotes(),
+            view_ctx,
+        );
         ui.label(layout_job);
 
         {
+            let regular_char_color = view_ctx.color_for::<Self>();
+            let escape_char_color = view_ctx.color_for_utf8string_escape_chars();
+
             let mut view_ctx_g = view_ctx.push_nesting_depth();
 
             for line in self.split_inclusive('\n') {
@@ -248,6 +248,8 @@ impl View for sept::st::Utf8StringTerm {
                             line,
                             &mut layout_job,
                             &mut view_ctx_g,
+                            regular_char_color,
+                            escape_char_color,
                         );
                         ui.label(layout_job);
                     });
@@ -256,8 +258,13 @@ impl View for sept::st::Utf8StringTerm {
         }
 
         let mut layout_job = LayoutJob::default();
-        layout_job_append(&mut layout_job, "\"", view_ctx.color_for_quotes(), view_ctx);
-        render3_type_annotation_for(
+        layout_job_append(
+            &mut layout_job,
+            "\"",
+            view_ctx.color_for_utf8string_quotes(),
+            view_ctx,
+        );
+        render_type_annotation_for(
             self,
             &mut layout_job,
             view_ctx,
@@ -267,15 +274,133 @@ impl View for sept::st::Utf8StringTerm {
         layout_job
     }
     fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
-        layout_job_append(layout_job, "\"", view_ctx.color_for_quotes(), view_ctx);
-        render_str_as_literal_without_quotes(self, layout_job, view_ctx);
-        layout_job_append(layout_job, "\"", view_ctx.color_for_quotes(), view_ctx);
-        render3_type_annotation_for(
+        layout_job_append(
+            layout_job,
+            "\"",
+            view_ctx.color_for_utf8string_quotes(),
+            view_ctx,
+        );
+        render_str_as_literal_without_quotes(
+            self,
+            layout_job,
+            view_ctx,
+            view_ctx.color_for::<Self>(),
+            view_ctx.color_for_utf8string_escape_chars(),
+        );
+        layout_job_append(
+            layout_job,
+            "\"",
+            view_ctx.color_for_utf8string_quotes(),
+            view_ctx,
+        );
+        render_type_annotation_for(
             self,
             layout_job,
             view_ctx,
             Some(format!(" (len: {})", self.len()).as_str()),
         );
+    }
+}
+
+impl View for sept::dy::GlobalSymRefTerm {
+    fn update_expanded(
+        &mut self,
+        _ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
+        self.update_inline(&mut layout_job, view_ctx);
+        layout_job
+    }
+    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
+        let (resolved, path, at_color, quote_color, regular_char_color, escape_char_color) =
+            match global_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
+                Ok(resolved_symbol_path) => (
+                    true,
+                    resolved_symbol_path,
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_global_sym_ref_quotes(),
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_global_sym_ref_escape_chars(),
+                ),
+                Err(_) => (
+                    false,
+                    global_symbol_table_g
+                        .unresolved_symbol_path(self.symbol_id.as_str())
+                        .expect("temp hack"),
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_global_sym_ref_quotes(),
+                    ANSIColor::BRIGHT_RED,
+                    ANSIColor::DARK_RED,
+                ),
+            };
+
+        layout_job_append(layout_job, "@", at_color, view_ctx);
+        layout_job_append(layout_job, "\"", quote_color, view_ctx);
+        render_str_as_literal_without_quotes(
+            path.as_str(),
+            layout_job,
+            view_ctx,
+            regular_char_color,
+            escape_char_color,
+        );
+        layout_job_append(layout_job, "\"", quote_color, view_ctx);
+        if resolved {
+            render_type_annotation_for(self, layout_job, view_ctx, None);
+        }
+    }
+}
+
+impl View for sept::dy::LocalSymRefTerm {
+    fn update_expanded(
+        &mut self,
+        _ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
+        self.update_inline(&mut layout_job, view_ctx);
+        layout_job
+    }
+    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        let local_symbol_table_g = self.local_symbol_table().read().unwrap();
+        let (resolved, path, dollar_color, quote_color, regular_char_color, escape_char_color) =
+            match local_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
+                Ok(resolved_symbol_path) => (
+                    true,
+                    resolved_symbol_path,
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_local_sym_ref_quotes(),
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_local_sym_ref_escape_chars(),
+                ),
+                Err(_) => (
+                    false,
+                    local_symbol_table_g
+                        .unresolved_symbol_path(self.symbol_id.as_str())
+                        .expect("temp hack"),
+                    view_ctx.color_for::<Self>(),
+                    view_ctx.color_for_local_sym_ref_quotes(),
+                    ANSIColor::BRIGHT_RED,
+                    ANSIColor::DARK_RED,
+                ),
+            };
+
+        layout_job_append(layout_job, "$", dollar_color, view_ctx);
+        layout_job_append(layout_job, "\"", quote_color, view_ctx);
+        render_str_as_literal_without_quotes(
+            path.as_str(),
+            layout_job,
+            view_ctx,
+            regular_char_color,
+            escape_char_color,
+        );
+        layout_job_append(layout_job, "\"", quote_color, view_ctx);
+        if resolved {
+            render_type_annotation_for(self, layout_job, view_ctx, None);
+        }
     }
 }
 
@@ -295,7 +420,7 @@ impl View for sept::dy::ArrayTerm {
                 view_ctx.color_for::<Self>(),
                 view_ctx,
             );
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 &mut layout_job,
                 view_ctx,
@@ -329,7 +454,7 @@ impl View for sept::dy::ArrayTerm {
 
         let mut layout_job = LayoutJob::default();
         layout_job_append(&mut layout_job, "]", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(
+        render_type_annotation_for(
             self,
             &mut layout_job,
             view_ctx,
@@ -341,7 +466,7 @@ impl View for sept::dy::ArrayTerm {
     fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.is_empty() {
             layout_job_append(layout_job, "[]", view_ctx.color_for::<Self>(), view_ctx);
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 layout_job,
                 view_ctx,
@@ -356,7 +481,7 @@ impl View for sept::dy::ArrayTerm {
             layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, "]", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(
+        render_type_annotation_for(
             self,
             layout_job,
             view_ctx,
@@ -381,7 +506,7 @@ impl View for sept::dy::TupleTerm {
                 view_ctx.color_for::<Self>(),
                 view_ctx,
             );
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 &mut layout_job,
                 view_ctx,
@@ -415,7 +540,7 @@ impl View for sept::dy::TupleTerm {
 
         let mut layout_job = LayoutJob::default();
         layout_job_append(&mut layout_job, ")", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(
+        render_type_annotation_for(
             self,
             &mut layout_job,
             view_ctx,
@@ -427,7 +552,7 @@ impl View for sept::dy::TupleTerm {
     fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.is_empty() {
             layout_job_append(layout_job, "()", view_ctx.color_for::<Self>(), view_ctx);
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 layout_job,
                 view_ctx,
@@ -442,7 +567,7 @@ impl View for sept::dy::TupleTerm {
             layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, ")", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(
+        render_type_annotation_for(
             self,
             layout_job,
             view_ctx,
@@ -485,7 +610,7 @@ impl View for (String, sept::dy::Value) {
         layout_job_append(
             layout_job,
             ": ",
-            view_ctx_g.color_for::<Self>(),
+            view_ctx_g.color_for::<sept::dy::StructTerm>(),
             &mut view_ctx_g,
         );
         field_type.update_inline(layout_job, &mut view_ctx_g);
@@ -512,7 +637,7 @@ impl View for sept::dy::StructTerm {
                 view_ctx.color_for::<Self>(),
                 view_ctx,
             );
-            render3_type_annotation_for(
+            render_type_annotation_for(
                 self,
                 &mut layout_job,
                 view_ctx,
@@ -555,7 +680,7 @@ impl View for sept::dy::StructTerm {
 
         let mut layout_job = LayoutJob::default();
         layout_job_append(&mut layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(
+        render_type_annotation_for(
             self,
             &mut layout_job,
             view_ctx,
@@ -571,7 +696,7 @@ impl View for sept::dy::StructTerm {
                 sept::st::Struct.update_inline(layout_job, &mut view_ctx_g);
             }
             layout_job_append(layout_job, " {}", view_ctx.color_for::<Self>(), view_ctx);
-            render3_type_annotation_for(self, layout_job, view_ctx, None);
+            render_type_annotation_for(self, layout_job, view_ctx, None);
             // Return this to the outer context.
             return;
         }
@@ -586,7 +711,7 @@ impl View for sept::dy::StructTerm {
             layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
-        render3_type_annotation_for(self, layout_job, view_ctx, None);
+        render_type_annotation_for(self, layout_job, view_ctx, None);
     }
 }
 
@@ -599,7 +724,7 @@ impl View for sept::dy::StructTermTerm {
     ) -> LayoutJob {
         let mut layout_job = {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            self.direct_type_mut()
+            self.declared_type_mut()
                 .update_expanded(ui, &mut view_ctx_g, continuation_layout_job_o)
         };
         // TODO: Maybe there should be some syntax for "construction"
@@ -615,7 +740,7 @@ impl View for sept::dy::StructTermTerm {
         // TEMP HACK -- this is very wasteful, but just clone it for now to get the job done, and
         // sort out the efficient way later.  This awkwardness is needed partly because the "update"
         // methods expect `&mut self`, and can't use `&self` to simply render.
-        let mut direct_type = match self.direct_type().dereferenced().unwrap() {
+        let mut direct_type = match self.declared_type().dereferenced().unwrap() {
             sept::dy::MaybeDereferencedValue::NonRef(value_guts) => value_guts
                 .downcast_ref::<sept::dy::StructTerm>()
                 .expect("StructTermTerm's r#type field did not dereference into StructTerm")
@@ -665,14 +790,14 @@ impl View for sept::dy::StructTermTerm {
         let mut layout_job = LayoutJob::default();
         layout_job_append(&mut layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
         // TODO: Figure out if this should be conditional somehow.
-        render3_type_annotation_for(self, &mut layout_job, view_ctx, None);
+        render_type_annotation_for(self, &mut layout_job, view_ctx, None);
         // Return this to the outer context
         layout_job
     }
     fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            self.direct_type_mut()
+            self.declared_type_mut()
                 .update_inline(layout_job, &mut view_ctx_g);
         }
         // TODO: It's a space for now, but maybe there should be some syntax for "construction"
@@ -682,7 +807,7 @@ impl View for sept::dy::StructTermTerm {
         // TEMP HACK -- this is very wasteful, but just clone it for now to get the job done, and
         // sort out the efficient way later.  This awkwardness is needed partly because the "update"
         // methods expect `&mut self`, and can't use `&self` to simply render.
-        let mut direct_type = match self.direct_type().dereferenced().unwrap() {
+        let mut direct_type = match self.declared_type().dereferenced().unwrap() {
             sept::dy::MaybeDereferencedValue::NonRef(value_guts) => value_guts
                 .downcast_ref::<sept::dy::StructTerm>()
                 .expect("StructTermTerm's r#type field did not dereference into StructTerm")
@@ -725,7 +850,7 @@ impl View for sept::dy::StructTermTerm {
 
         layout_job_append(layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
         // TODO: Figure out if this should be conditional somehow.
-        render3_type_annotation_for(self, layout_job, view_ctx, None);
+        render_type_annotation_for(self, layout_job, view_ctx, None);
     }
 }
 
@@ -844,9 +969,13 @@ impl View for sept::dy::Value {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::TupleType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_mut::<sept::dy::GlobalSymRefTerm>() {
+            term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRef>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRefType>() {
+            term.update_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_mut::<sept::dy::LocalSymRefTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRef>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -854,7 +983,7 @@ impl View for sept::dy::Value {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else {
             use sept::st::Stringifiable;
-            tracing::error!("View3 not implemented for {}", self.stringify());
+            tracing::error!("View not implemented for {}", self.stringify());
             unimplemented!("not yet");
         }
     }
@@ -967,9 +1096,13 @@ impl View for sept::dy::Value {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::TupleType>() {
             term.update_inline(layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_mut::<sept::dy::GlobalSymRefTerm>() {
+            term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRef>() {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRefType>() {
+            term.update_inline(layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_mut::<sept::dy::LocalSymRefTerm>() {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRef>() {
             term.update_inline(layout_job, view_ctx);
@@ -977,7 +1110,7 @@ impl View for sept::dy::Value {
             term.update_inline(layout_job, view_ctx);
         } else {
             use sept::st::Stringifiable;
-            tracing::error!("View3 not implemented for {}", self.stringify());
+            tracing::error!("View not implemented for {}", self.stringify());
             unimplemented!("not yet");
         }
     }

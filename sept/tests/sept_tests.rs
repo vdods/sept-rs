@@ -3,8 +3,7 @@
 use sept::{
     dy::{
         self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, StructTerm,
-        StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, GLOBAL_SYMBOL_TABLE_LA,
-        RUNTIME_LA,
+        StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
     },
     parser, scanner,
     st::{
@@ -131,8 +130,10 @@ fn test_runtime_stringify() {
     assert_eq!(runtime_g.stringify(&Bool), "Bool");
     assert_eq!(runtime_g.stringify(&BoolType), "BoolType");
 
-    // TODO: Figure out why this isn't compiling.  i32 should be Send and Sync but it complains that it's not.
-    // log::debug!("RUNTIME_LA.stringify(&123): {:#?}", runtime_g.stringify(&123));
+    log::debug!(
+        "RUNTIME_LA.stringify(&123): {:#?}",
+        runtime_g.stringify(&123)
+    );
 }
 
 #[test]
@@ -365,7 +366,7 @@ fn test_symbol_table() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let mut symbol_table = SymbolTable::new_with_parent(None);
+    let mut symbol_table = SymbolTable::new_without_parent("fancy".to_string()).expect("test");
     assert!(!symbol_table.symbol_is_defined("test_symbol_table_blah"));
     symbol_table
         .define_symbol("test_symbol_table_blah", Value::from(123i32))
@@ -412,10 +413,13 @@ fn test_symbol_table() {
     }
 
     // Test out parent symbol tables.
-    let parent_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
-    let child_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(Some(
-        parent_symbol_table_la.clone(),
-    ))));
+    let parent_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_without_parent("P".to_string()).expect("test"),
+    ));
+    let child_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_with_parent("C".to_string(), parent_symbol_table_la.clone())
+            .expect("test"),
+    ));
 
     parent_symbol_table_la
         .write()
@@ -662,7 +666,9 @@ fn test_local_sym_ref_term() {
     // Have to clear the global_symbol_table, since we don't know what order the tests will run in.
     dy::GLOBAL_SYMBOL_TABLE_LA.write().unwrap().clear();
 
-    let local_symbol_table_la = Arc::new(RwLock::new(SymbolTable::new_with_parent(None)));
+    let local_symbol_table_la = Arc::new(RwLock::new(
+        SymbolTable::new_without_parent("fancy".to_string()).expect("test"),
+    ));
     local_symbol_table_la
         .write()
         .unwrap()

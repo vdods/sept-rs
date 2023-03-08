@@ -56,9 +56,6 @@ impl ViewCtx {
             self.invisible_indent.as_str()
         }
     }
-    pub fn should_use_inline(&self) -> bool {
-        self.current_nesting_depth >= self.inline_at_nesting_depth
-    }
     pub fn layout_mode(&self) -> LayoutMode {
         match self
             .current_nesting_depth
@@ -72,11 +69,23 @@ impl ViewCtx {
     pub fn color_for_type_annotation(&self) -> egui::Color32 {
         ANSIColor::BRIGHT_BLACK
     }
-    pub fn color_for_quotes(&self) -> egui::Color32 {
+    pub fn color_for_utf8string_quotes(&self) -> egui::Color32 {
         ANSIColor::DARK_YELLOW
     }
-    pub fn color_for_escape_chars(&self) -> egui::Color32 {
+    pub fn color_for_utf8string_escape_chars(&self) -> egui::Color32 {
         ANSIColor::BRIGHT_RED
+    }
+    pub fn color_for_global_sym_ref_quotes(&self) -> egui::Color32 {
+        ANSIColor::DARK_GREEN
+    }
+    pub fn color_for_global_sym_ref_escape_chars(&self) -> egui::Color32 {
+        ANSIColor::DARK_GREEN
+    }
+    pub fn color_for_local_sym_ref_quotes(&self) -> egui::Color32 {
+        ANSIColor::DARK_CYAN
+    }
+    pub fn color_for_local_sym_ref_escape_chars(&self) -> egui::Color32 {
+        ANSIColor::DARK_CYAN
     }
     pub fn color_for_indentation_for<T: 'static>(&self) -> egui::Color32 {
         use std::any::TypeId;
@@ -167,6 +176,10 @@ impl ViewCtx {
             ANSIColor::BRIGHT_BLUE
         } else if type_id == TypeId::of::<sept::dy::TupleTerm>() {
             ANSIColor::BRIGHT_GREEN
+        } else if type_id == TypeId::of::<sept::dy::GlobalSymRefTerm>() {
+            ANSIColor::BRIGHT_GREEN
+        } else if type_id == TypeId::of::<sept::dy::LocalSymRefTerm>() {
+            ANSIColor::BRIGHT_CYAN
         } else {
             // TODO: Use some default from the style
             ANSIColor::DARK_WHITE

@@ -82,11 +82,10 @@ impl StructTermTerm {
             field_t,
         })
     }
-    // TODO: Come up with a better name for this.
-    pub fn direct_type(&self) -> &dy::Value {
+    pub fn declared_type(&self) -> &dy::Value {
         &self.r#type
     }
-    pub fn direct_type_mut(&mut self) -> &mut dy::Value {
+    pub fn declared_type_mut(&mut self) -> &mut dy::Value {
         &mut self.r#type
     }
     pub fn field_tuple(&self) -> &dy::TupleTerm {
