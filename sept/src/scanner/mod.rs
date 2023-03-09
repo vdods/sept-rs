@@ -14,7 +14,10 @@ pub struct ScanStats {
 
 impl ScanStats {
     pub fn from(matched_input: &str) -> Self {
-        Self { len: matched_input.len(), newline_count: matched_input.matches('\n').count() }
+        Self {
+            len: matched_input.len(),
+            newline_count: matched_input.matches('\n').count(),
+        }
     }
 }
 
@@ -24,12 +27,19 @@ pub fn try_scanning<'a>(token_kind: TokenKind, input: &'a str) -> Option<(Token<
     if token_kind == TokenKind::UnrecognizedInput {
         panic!("TokenKind::UnrecognizedInput is not a valid parameter to this function");
     }
-    TOKEN_KIND_REGEX_M[token_kind].find(input).map(
-        |matched_input| {
-            log::trace!("scanner found {:?} having matched input {:?}", token_kind, matched_input.as_str());
-            (Token::new(token_kind, matched_input.as_str()), ScanStats::from(matched_input.as_str()))
-        }
-    )
+    TOKEN_KIND_REGEX_M[token_kind]
+        .find(input)
+        .map(|matched_input| {
+            log::trace!(
+                "scanner found {:?} having matched input {:?}",
+                token_kind,
+                matched_input.as_str()
+            );
+            (
+                Token::new(token_kind, matched_input.as_str()),
+                ScanStats::from(matched_input.as_str()),
+            )
+        })
 }
 
 fn get_leading_current_input_as_string_literal(current_input: &str) -> String {
@@ -51,9 +61,15 @@ pub fn scan_token<'a>(input: &'a str) -> (Token<'a>, ScanStats) {
         }
     }
     // Handle UnrecognizedInput as the fallthrough.
-    assert!(input.len() > 0, "try_scanning_end_of_input already being called should have guaranteed this condition");
+    assert!(
+        input.len() > 0,
+        "try_scanning_end_of_input already being called should have guaranteed this condition"
+    );
     let unrecognized_input_str = &input[0..1];
-    (UnrecognizedInput::from(unrecognized_input_str).into(), ScanStats::from(unrecognized_input_str))
+    (
+        UnrecognizedInput::from(unrecognized_input_str).into(),
+        ScanStats::from(unrecognized_input_str),
+    )
 }
 
 pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
@@ -65,25 +81,36 @@ pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
     let mut open_paren_count = 0usize;
     loop {
         let current_input = &input[cursor..];
-        log::trace!("current_input: {}", get_leading_current_input_as_string_literal(current_input));
+        log::trace!(
+            "current_input: {}",
+            get_leading_current_input_as_string_literal(current_input)
+        );
         let (token, scan_stats) = scan_token(current_input);
         // Special handling for different tokens.
         match token {
             Token::EndOfInput => {
                 // No need to record this token or update anything more.  Just return.
                 return Ok(token_v);
-            },
+            }
             // TODO: Maybe let the parser handle this?  Or is it good that this does some convenient extra work?
             Token::OpenParen => {
                 open_paren_count += 1;
-            },
+            }
             Token::CloseParen => {
-                anyhow::ensure!(open_paren_count > 0, "unmatched ')' on line {}", line_number);
+                anyhow::ensure!(
+                    open_paren_count > 0,
+                    "unmatched ')' on line {}",
+                    line_number
+                );
                 open_paren_count -= 1;
-            },
+            }
             Token::UnrecognizedInput(_) => {
-                anyhow::bail!("unrecognized input on line {}: {}", line_number, get_leading_current_input_as_string_literal(current_input));
-            },
+                anyhow::bail!(
+                    "unrecognized input on line {}: {}",
+                    line_number,
+                    get_leading_current_input_as_string_literal(current_input)
+                );
+            }
             _ => {
                 // No special handling needed.
             }
@@ -91,8 +118,10 @@ pub fn scan<'a>(input: &'a str) -> Result<Vec<Token<'a>>> {
         // Add the token if it's not to be ignored.
         match token {
             // Ignore token
-            Token::Whitespace(_) => { }
-            _ => { token_v.push(token); }
+            Token::Whitespace(_) => {}
+            _ => {
+                token_v.push(token);
+            }
         }
         // Update line_number and cursor.
         line_number += scan_stats.newline_count;

@@ -1,4 +1,9 @@
-use crate::{dy::{self, IntoValue, RUNTIME_LA}, Error, parser, Result, st::{self, Stringifiable, TermTrait}};
+use crate::{
+    dy::{self, IntoValue, RUNTIME_LA},
+    parser,
+    st::{self, Stringifiable, TermTrait},
+    Error, Result,
+};
 use std::any::Any;
 
 pub type ValueGuts = dyn Any + Send + Sync;
@@ -31,7 +36,10 @@ impl Clone for Value {
 impl dy::Constructor for Value {
     type ConstructedType = Value;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
-        Ok(RUNTIME_LA.read().unwrap().construct(self.as_ref(), parameter_t)?)
+        Ok(RUNTIME_LA
+            .read()
+            .unwrap()
+            .construct(self.as_ref(), parameter_t)?)
     }
 }
 
@@ -94,7 +102,10 @@ impl std::str::FromStr for Value {
 
 impl st::Inhabits<Value> for Value {
     fn inhabits(&self, rhs: &Value) -> bool {
-        RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs.as_ref())
+        RUNTIME_LA
+            .read()
+            .unwrap()
+            .inhabits(self.as_ref(), rhs.as_ref())
     }
 }
 
@@ -113,7 +124,10 @@ impl PartialEq<Value> for Value {
 
 impl st::Serializable for Value {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-        Ok(RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
+        Ok(RUNTIME_LA
+            .read()
+            .unwrap()
+            .serialize(self.as_ref(), writer)?)
     }
 }
 
@@ -159,7 +173,8 @@ impl Value {
             let mut dummy = Value::from(st::Void);
             std::mem::swap(self, &mut dummy);
             // Ideally we would use Box::into_inner here instead of *, but that's somehow still unstable.
-            let deconstruction: dy::Deconstruction = *dummy.0.downcast::<dy::Deconstruction>().unwrap();
+            let deconstruction: dy::Deconstruction =
+                *dummy.0.downcast::<dy::Deconstruction>().unwrap();
             self.0 = Box::new(deconstruction.reconstruct()?);
         } else {
             // No need to reconstruct anything.

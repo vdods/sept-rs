@@ -1,5 +1,10 @@
 use crate::Result;
-use std::{cmp::Eq, collections::{HashMap, HashSet}, fmt::Debug, hash::Hash};
+use std::{
+    cmp::Eq,
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    hash::Hash,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IncludeNode {
@@ -49,12 +54,12 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
     }
     /// Returns true iff the given node is a root node.  Note that this checks by reference,
     /// not value.  It also doesn't check if the given node is a member node or not.
-    pub fn is_a_root_node (&self, node: T) -> bool {
+    pub fn is_a_root_node(&self, node: T) -> bool {
         self.root_node_s.contains(&node)
     }
     /// Returns true iff the given node is a leaf node.  Note that this checks by reference,
     /// not value.  It also doesn't check if the given node is a member node or not.
-    pub fn is_a_leaf_node (&self, node: T) -> bool {
+    pub fn is_a_leaf_node(&self, node: T) -> bool {
         self.leaf_node_s.contains(&node)
     }
     /// Returns true iff the specified element is present in the DAG.
@@ -66,7 +71,7 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
     pub fn contains_edge(&self, source: T, target: T) -> bool {
         match self.child_sm.get(&source) {
             Some(child_s) => child_s.contains(&target),
-            None => false
+            None => false,
         }
     }
 
@@ -142,7 +147,12 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
 
     /// `descendants` is the out-parameter into which the results will be inserted.
     // TODO: Support non-exact matches for node (though this probably depends on having a relation, such as in a poset)
-    pub fn collect_descendants_of(&self, node: T, descendants: &mut HashSet<T>, include_node: IncludeNode) {
+    pub fn collect_descendants_of(
+        &self,
+        node: T,
+        descendants: &mut HashSet<T>,
+        include_node: IncludeNode,
+    ) {
         assert!(self.child_sm.contains_key(&node));
         if include_node == IncludeNode::True {
             descendants.insert(node);
@@ -153,7 +163,12 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
     }
     /// `ancestors` is the out-parameter into which the results will be inserted.
     // TODO: Support non-exact matches for node (though this probably depends on having a relation, such as in a poset)
-    pub fn collect_ancestors_of(&self, node: T, ancestors: &mut HashSet<T>, include_node: IncludeNode) {
+    pub fn collect_ancestors_of(
+        &self,
+        node: T,
+        ancestors: &mut HashSet<T>,
+        include_node: IncludeNode,
+    ) {
         assert!(self.parent_sm.contains_key(&node));
         if include_node == IncludeNode::True {
             ancestors.insert(node);
@@ -165,7 +180,11 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
 
     /// Generate a dot (see graphviz) source file of this DAG, optionally specifying node_to_string_o
     /// to define how to render each node into text.  If None is specified, then format!("{:?}") will be used.
-    pub fn generate_dot_graph(&self, title: &str, node_to_string_o: Option<fn(T) -> String>) -> Result<String> {
+    pub fn generate_dot_graph(
+        &self,
+        title: &str,
+        node_to_string_o: Option<fn(T) -> String>,
+    ) -> Result<String> {
         use std::fmt::Write as FmtWrite;
 
         let node_to_string = match node_to_string_o {
@@ -175,12 +194,21 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
 
         // Reference: https://en.wikipedia.org/wiki/DOT_(graph_description_language)#Directed_graphs
         let mut retval = String::new();
-        write!(&mut retval, "digraph {{\n    // title\n    labelloc=\"t\";\n    label={:?};\n", title)?;
+        write!(
+            &mut retval,
+            "digraph {{\n    // title\n    labelloc=\"t\";\n    label={:?};\n",
+            title
+        )?;
         for (node, child_s) in self.child_sm.iter() {
             let node_as_string = node_to_string(*node);
             write!(&mut retval, "    {};\n", node_as_string)?;
             for child in child_s.iter() {
-                write!(&mut retval, "    {} -> {};\n", node_as_string, node_to_string(*child))?;
+                write!(
+                    &mut retval,
+                    "    {} -> {};\n",
+                    node_as_string,
+                    node_to_string(*child)
+                )?;
             }
         }
         write!(&mut retval, "}}\n")?;
@@ -191,60 +219,78 @@ impl<T: Copy + Debug + Eq + Hash> DirectedAcyclicGraph<T> {
 #[cfg(test)]
 mod tests {
 
-use super::*;
+    use super::*;
 
-#[test]
-#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_dag_i32() -> Result<()> {
-    let _ = env_logger::try_init();
+    #[test]
+    #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+    fn test_dag_i32() -> Result<()> {
+        let _ = env_logger::try_init();
 
-    let mut dag: DirectedAcyclicGraph<i32> = DirectedAcyclicGraph::new();
-    dag.insert_node(8);
-    dag.insert_node(13);
-    dag.insert_node(14);
-    dag.insert_node(22);
-    dag.insert_node(-100);
-    dag.insert_node(-1);
-    dag.insert_edge(8, 14);
-    log::debug!("{}", dag.generate_dot_graph("thing", None)?);
+        let mut dag: DirectedAcyclicGraph<i32> = DirectedAcyclicGraph::new();
+        dag.insert_node(8);
+        dag.insert_node(13);
+        dag.insert_node(14);
+        dag.insert_node(22);
+        dag.insert_node(-100);
+        dag.insert_node(-1);
+        dag.insert_edge(8, 14);
+        log::debug!("{}", dag.generate_dot_graph("thing", None)?);
 
-    dag.insert_node_along_edge(8, -100, 14);
-    log::debug!("dag: {:#?}", dag);
-    log::debug!("generate_dot_graph:\n{}", dag.generate_dot_graph("thing", Some(|s| format!("!{:?}!", s)))?);
+        dag.insert_node_along_edge(8, -100, 14);
+        log::debug!("dag: {:#?}", dag);
+        log::debug!(
+            "generate_dot_graph:\n{}",
+            dag.generate_dot_graph("thing", Some(|s| format!("!{:?}!", s)))?
+        );
 
-    let descendents_of_blah_include_node = dag.descendants_of(8, IncludeNode::True);
-    log::debug!("descendents_of_blah_include_node: {:?}", descendents_of_blah_include_node);
+        let descendents_of_blah_include_node = dag.descendants_of(8, IncludeNode::True);
+        log::debug!(
+            "descendents_of_blah_include_node: {:?}",
+            descendents_of_blah_include_node
+        );
 
-    let descendents_of_blah_dont_include_node = dag.descendants_of(8, IncludeNode::False);
-    log::debug!("descendents_of_blah_dont_include_node: {:?}", descendents_of_blah_dont_include_node);
+        let descendents_of_blah_dont_include_node = dag.descendants_of(8, IncludeNode::False);
+        log::debug!(
+            "descendents_of_blah_dont_include_node: {:?}",
+            descendents_of_blah_dont_include_node
+        );
 
-    Ok(())
-}
-
-#[test]
-#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
-fn test_dag_ref_str() -> Result<()> {
-    let _ = env_logger::try_init();
-
-    let thing_v = vec!["blah", "hippo", "splunge", "affaffa", "burnk"];
-    let mut dag: DirectedAcyclicGraph<&str> = DirectedAcyclicGraph::new();
-    for thing in thing_v.iter() {
-        dag.insert_node(thing);
+        Ok(())
     }
-    dag.insert_edge(&thing_v[0], &thing_v[1]);
-    log::debug!("{}", dag.generate_dot_graph("thing", None)?);
 
-    dag.insert_node_along_edge(&thing_v[0], &thing_v[2], &thing_v[1]);
-    log::debug!("dag: {:#?}", dag);
-    log::debug!("generate_dot_graph:\n{}", dag.generate_dot_graph("thing", Some(|s| format!("!{:?}!", s)))?);
+    #[test]
+    #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+    fn test_dag_ref_str() -> Result<()> {
+        let _ = env_logger::try_init();
 
-    let descendents_of_blah_include_node = dag.descendants_of(&thing_v[0], IncludeNode::True);
-    log::debug!("descendents_of_blah_include_node: {:?}", descendents_of_blah_include_node);
+        let thing_v = vec!["blah", "hippo", "splunge", "affaffa", "burnk"];
+        let mut dag: DirectedAcyclicGraph<&str> = DirectedAcyclicGraph::new();
+        for thing in thing_v.iter() {
+            dag.insert_node(thing);
+        }
+        dag.insert_edge(&thing_v[0], &thing_v[1]);
+        log::debug!("{}", dag.generate_dot_graph("thing", None)?);
 
-    let descendents_of_blah_dont_include_node = dag.descendants_of(&thing_v[0], IncludeNode::False);
-    log::debug!("descendents_of_blah_dont_include_node: {:?}", descendents_of_blah_dont_include_node);
+        dag.insert_node_along_edge(&thing_v[0], &thing_v[2], &thing_v[1]);
+        log::debug!("dag: {:#?}", dag);
+        log::debug!(
+            "generate_dot_graph:\n{}",
+            dag.generate_dot_graph("thing", Some(|s| format!("!{:?}!", s)))?
+        );
 
-    Ok(())
-}
+        let descendents_of_blah_include_node = dag.descendants_of(&thing_v[0], IncludeNode::True);
+        log::debug!(
+            "descendents_of_blah_include_node: {:?}",
+            descendents_of_blah_include_node
+        );
 
+        let descendents_of_blah_dont_include_node =
+            dag.descendants_of(&thing_v[0], IncludeNode::False);
+        log::debug!(
+            "descendents_of_blah_dont_include_node: {:?}",
+            descendents_of_blah_dont_include_node
+        );
+
+        Ok(())
+    }
 }

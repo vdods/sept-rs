@@ -58,7 +58,9 @@ impl Deconstruction {
     }
     pub fn into_non_parametric(self) -> Option<dy::NonParametricDeconstruction> {
         match self {
-            Deconstruction::NonParametric(non_parametric_deconstruction) => Some(non_parametric_deconstruction),
+            Deconstruction::NonParametric(non_parametric_deconstruction) => {
+                Some(non_parametric_deconstruction)
+            }
             _ => None,
         }
     }
@@ -70,7 +72,9 @@ impl Deconstruction {
     }
     pub fn into_parametric(self) -> Option<dy::ParametricDeconstruction> {
         match self {
-            Deconstruction::Parametric(parametric_deconstruction_b) => Some(*parametric_deconstruction_b),
+            Deconstruction::Parametric(parametric_deconstruction_b) => {
+                Some(*parametric_deconstruction_b)
+            }
             _ => None,
         }
     }
@@ -78,9 +82,15 @@ impl Deconstruction {
     // TODO: Also make a reconstructed method which operates by &self
     pub fn reconstruct(self) -> Result<dy::Value> {
         match self {
-            dy::Deconstruction::NonParametric(non_parametric_deconstruction) => Ok(non_parametric_deconstruction.reconstruct()?),
-            dy::Deconstruction::Terminal(terminal_deconstruction) => Ok(terminal_deconstruction.reconstruct()?),
-            dy::Deconstruction::Parametric(parametric_deconstruction) => Ok(parametric_deconstruction.reconstruct()?),
+            dy::Deconstruction::NonParametric(non_parametric_deconstruction) => {
+                Ok(non_parametric_deconstruction.reconstruct()?)
+            }
+            dy::Deconstruction::Terminal(terminal_deconstruction) => {
+                Ok(terminal_deconstruction.reconstruct()?)
+            }
+            dy::Deconstruction::Parametric(parametric_deconstruction) => {
+                Ok(parametric_deconstruction.reconstruct()?)
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 
 /// A NonParametricTermTrait (NonParametricTermTrait) is one that has no "state", i.e. each
 /// NonParametricTermTrait is a singleton.  It's recommended to derive this trait using

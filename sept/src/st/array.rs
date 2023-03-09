@@ -1,8 +1,26 @@
-use crate::{dy, Result, st::{self, ArrayType, Inhabits}};
+use crate::{
+    dy,
+    st::{self, ArrayType, Inhabits},
+    Result,
+};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
-#[st_term_trait(AbstractTypeType = "ArrayType", is_parametric = "false", is_type = "true")]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "ArrayType",
+    is_parametric = "false",
+    is_type = "true"
+)]
 pub struct Array;
 
 impl dy::Constructor for Array {

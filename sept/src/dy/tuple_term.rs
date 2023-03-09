@@ -1,16 +1,44 @@
-use crate::{dy::{self, Value}, Result, st::{self, Inhabits, Stringifiable, TermTrait, Tuple}};
+use crate::{
+    dy::{self, Value},
+    st::{self, Inhabits, Stringifiable, TermTrait, Tuple},
+    Result,
+};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(derive_more::AsRef, Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TypeTrait)]
+#[derive(
+    derive_more::AsRef,
+    Clone,
+    Debug,
+    derive_more::Deref,
+    derive_more::DerefMut,
+    derive_more::From,
+    derive_more::Into,
+    dy::IntoValue,
+    PartialEq,
+    st::TypeTrait,
+)]
 pub struct TupleTerm(Vec<Value>);
 
 impl dy::Constructor for TupleTerm {
     type ConstructedType = TupleTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
-        anyhow::ensure!(parameter_t.len() == self.len(), "{}.construct expected {} parameter(s), got {}", self.stringify(), self.len(), parameter_t.len());
+        anyhow::ensure!(
+            parameter_t.len() == self.len(),
+            "{}.construct expected {} parameter(s), got {}",
+            self.stringify(),
+            self.len(),
+            parameter_t.len()
+        );
         // TODO: Use zip iterator when available.
         for i in 0..self.len() {
-            anyhow::ensure!(parameter_t[i].inhabits(&self[i]), "{}.construct expected {}th parameter (which was {}) to inhabit {}, but it did not", self.stringify(), i, parameter_t[i], self[i]);
+            anyhow::ensure!(
+                parameter_t[i].inhabits(&self[i]),
+                "{}.construct expected {}th parameter (which was {}) to inhabit {}, but it did not",
+                self.stringify(),
+                i,
+                parameter_t[i],
+                self[i]
+            );
         }
         // Passed type check, now can use the parameter_t tuple directly.
         Ok(parameter_t)
@@ -29,7 +57,7 @@ impl std::fmt::Display for TupleTerm {
         write!(f, "Tuple(")?;
         for (i, element) in self.iter().enumerate() {
             write!(f, "{}", element)?;
-            if i+1 < self.len() {
+            if i + 1 < self.len() {
                 write!(f, ", ")?;
             }
         }
@@ -47,7 +75,8 @@ impl From<()> for TupleTerm {
 }
 
 impl<T0> From<(T0,)> for TupleTerm
-where T0: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
 {
     fn from(t: (T0,)) -> Self {
         vec![t.0.into()].into()
@@ -55,7 +84,9 @@ where T0: TermTrait + Into<Value>
 }
 
 impl<T0, T1> From<(T0, T1)> for TupleTerm
-where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
+    T1: TermTrait + Into<Value>,
 {
     fn from(t: (T0, T1)) -> Self {
         vec![t.0.into(), t.1.into()].into()
@@ -63,7 +94,10 @@ where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>
 }
 
 impl<T0, T1, T2> From<(T0, T1, T2)> for TupleTerm
-where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
+    T1: TermTrait + Into<Value>,
+    T2: TermTrait + Into<Value>,
 {
     fn from(t: (T0, T1, T2)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into()].into()
@@ -71,7 +105,11 @@ where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + 
 }
 
 impl<T0, T1, T2, T3> From<(T0, T1, T2, T3)> for TupleTerm
-where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
+    T1: TermTrait + Into<Value>,
+    T2: TermTrait + Into<Value>,
+    T3: TermTrait + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into()].into()
@@ -79,7 +117,12 @@ where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + 
 }
 
 impl<T0, T1, T2, T3, T4> From<(T0, T1, T2, T3, T4)> for TupleTerm
-where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>, T4: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
+    T1: TermTrait + Into<Value>,
+    T2: TermTrait + Into<Value>,
+    T3: TermTrait + Into<Value>,
+    T4: TermTrait + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3, T4)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into()].into()
@@ -87,10 +130,24 @@ where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + 
 }
 
 impl<T0, T1, T2, T3, T4, T5> From<(T0, T1, T2, T3, T4, T5)> for TupleTerm
-where T0: TermTrait + Into<Value>, T1: TermTrait + Into<Value>, T2: TermTrait + Into<Value>, T3: TermTrait + Into<Value>, T4: TermTrait + Into<Value>, T5: TermTrait + Into<Value>
+where
+    T0: TermTrait + Into<Value>,
+    T1: TermTrait + Into<Value>,
+    T2: TermTrait + Into<Value>,
+    T3: TermTrait + Into<Value>,
+    T4: TermTrait + Into<Value>,
+    T5: TermTrait + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3, T4, T5)) -> Self {
-        vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into(), t.5.into()].into()
+        vec![
+            t.0.into(),
+            t.1.into(),
+            t.2.into(),
+            t.3.into(),
+            t.4.into(),
+            t.5.into(),
+        ]
+        .into()
     }
 }
 
@@ -160,7 +217,7 @@ impl Stringifiable for TupleTerm {
         s.push_str("Tuple(");
         for (i, element) in self.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.len() {
+            if i + 1 < self.len() {
                 s.push_str(", ");
             }
         }

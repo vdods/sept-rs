@@ -1,8 +1,26 @@
-use crate::{dy, Result, st::{self, Inhabits, TupleType}};
+use crate::{
+    dy,
+    st::{self, Inhabits, TupleType},
+    Result,
+};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
-#[st_term_trait(AbstractTypeType = "TupleType", is_parametric = "false", is_type = "true")]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "TupleType",
+    is_parametric = "false",
+    is_type = "true"
+)]
 pub struct Tuple;
 
 impl dy::Constructor for Tuple {

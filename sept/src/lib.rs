@@ -14,8 +14,8 @@ pub mod scanner;
 /// traits in `dy` so that they can be used in a `dy` way.
 pub mod st;
 
-pub use anyhow::{Error, Result};
 pub use crate::{
     dag::{DirectedAcyclicGraph, EdgeSetMap, IncludeNode, NodeSet},
     poset::{PartialOrder, PartiallyOrderedSet},
 };
+pub use anyhow::{Error, Result};

@@ -9,7 +9,6 @@
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NonParametricTermCode {
     // The most basic Types.
-
     /// Literally everything is a Term (this could be called Any).
     Term = 0x00,
     /// Inhabitants are Terms requiring no parameters to instantiate (each variant of the
@@ -19,7 +18,6 @@ pub enum NonParametricTermCode {
     ParametricTerm = 0x02,
 
     // Type Types.
-
     /// A Term which has an inhabitation predicate.
     Type = 0x03,
     /// A Term which is not a Type (this could be called Value).
@@ -30,7 +28,6 @@ pub enum NonParametricTermCode {
     ParametricType = 0x06,
 
     // NonParametricTerm && NonType
-
     /// Void is a NonType that conveys no information.
     Void = 0x07,
     /// The truthier of the two inhabitants of Bool.
@@ -39,7 +36,6 @@ pub enum NonParametricTermCode {
     False = 0x09,
 
     // A few natural Types.
-
     /// Sole inhabitant is Void.
     VoidType = 0x0A,
     /// Sole inhabitant is True.
@@ -52,7 +48,6 @@ pub enum NonParametricTermCode {
     FormalTypeOf = 0x0E,
 
     // POD Types
-
     /// Isomorphic to Union(TrueType, FalseType).
     Bool = 0x0F,
     Sint8 = 0x10,
@@ -65,10 +60,9 @@ pub enum NonParametricTermCode {
     Uint64 = 0x17,
     Float32 = 0x18,
     Float64 = 0x19,
-//     AsciiChar, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
+    //     AsciiChar, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
 
     // POD Type Types
-
     /// Sole inhabitant is Bool.
     BoolType,
     /// Sole inhabitant is Sint8.
@@ -91,15 +85,13 @@ pub enum NonParametricTermCode {
     Float32Type,
     /// Sole inhabitant is Float64
     Float64Type,
-//     /// Sole inhabitant is AsciiChar.
-//     AsciiCharType,
-
+    //     /// Sole inhabitant is AsciiChar.
+    //     AsciiCharType,
     Utf8String,
     /// Sole inhabitant is Utf8String.
     Utf8StringType,
 
     // Other Types related to POD Types
-
     /// Isomorphic to Union(Sint8Type, Sint16Type, Sint32Type, Sint64Type).
     SintType,
     /// Isomorphic to Union(Sint8, Sint16, Sint32, Sint64).
@@ -121,7 +113,6 @@ pub enum NonParametricTermCode {
     /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  Pod : PodType.
     Pod,
     // TODO: Add semantic classes like Positive, Negative, NonPositive, NonNegative, Zero
-
     /// Sole inhabitant is Union.
     UnionType,
     /// Inhabitants have the form Union(T1,...,TN) -- implemented as UnionTerm.
@@ -134,7 +125,6 @@ pub enum NonParametricTermCode {
     Difference,
 
     // TODO: UnionType, IntersectionType, etc.
-
     /// Inhabitants are ArrayES, ArrayE, ArrayS, Array.
     ArrayType,
     /// Inhabitants have the form ArrayES(T,N) -- implemented as ArrayESTerm.
@@ -172,7 +162,6 @@ pub enum NonParametricTermCode {
     //
     // Reference-related terms
     //
-
     /// Sole inhabitant is MemRef.
     MemRefType,
     /// Inhabitants have the form MemRef(&d), where d is Data.
@@ -196,7 +185,6 @@ pub enum NonParametricTermCode {
     //
     // Control terms
     //
-
     /// Sole inhabitant is Output.
     OutputType,
     /// Inhabitants have the form Output(V) for some value V.
@@ -217,6 +205,5 @@ pub enum NonParametricTermCode {
     // TODO: Ideally there could be an "Unspecified(u8)" in which the u8 value is disjoint
     // with the above values, and so it would use niche logic and not take up more storage than u8.
     // this could be used for application-specific values, though that would hinder interoperability.
-
     Undefined, // TEMP HACK
 }

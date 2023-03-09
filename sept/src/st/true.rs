@@ -1,7 +1,16 @@
-use crate::{dy, st::{self, Bool, Inhabits, False, TrueType}};
+use crate::{
+    dy,
+    st::{self, Bool, False, Inhabits, TrueType},
+};
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "TrueType", is_parametric = "false", is_type = "false")]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "TrueType",
+    is_parametric = "false",
+    is_type = "false"
+)]
 pub struct True;
 
 impl Inhabits<Bool> for True {

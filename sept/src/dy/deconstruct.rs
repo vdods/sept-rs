@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 
 /// This trait defines deconstruction of a term.
 // TODO: Rename to Deconstructible
@@ -82,7 +82,7 @@ fn textify_impl(
             write!(f, "(")?;
             for (i, parameter_d) in parametric_deconstruction.parameter_dv.iter().enumerate() {
                 textify_impl(&parameter_d, f)?;
-                if i+1 < parametric_deconstruction.parameter_dv.len() {
+                if i + 1 < parametric_deconstruction.parameter_dv.len() {
                     write!(f, ", ")?;
                 }
             }
@@ -103,12 +103,14 @@ fn serialize_impl(
             // Retrieve the code for this non parametric term and serialize that.
             // The `.as_ref().as_ref()` is correct; the first one gets &Value, the second one
             // gets &ValueGuts.
-            let non_parametric_term_code =
-                dy::RUNTIME_LA
-                    .read()
-                    .unwrap()
-                    .non_parametric_term_code(non_parametric_deconstruction.as_ref().as_ref())?;
-            assert!((non_parametric_term_code as u32) < 0x100u32, "NonParametricTermCode exceeds 1-byte storage capacity");
+            let non_parametric_term_code = dy::RUNTIME_LA
+                .read()
+                .unwrap()
+                .non_parametric_term_code(non_parametric_deconstruction.as_ref().as_ref())?;
+            assert!(
+                (non_parametric_term_code as u32) < 0x100u32,
+                "NonParametricTermCode exceeds 1-byte storage capacity"
+            );
             writer.write_all(&[non_parametric_term_code as u8])?;
             bytes_written += 1;
 
@@ -121,8 +123,7 @@ fn serialize_impl(
             Ok(dy::RUNTIME_LA
                 .read()
                 .unwrap()
-                .serialize(terminal_deconstruction.as_ref().as_ref(), writer)?
-            )
+                .serialize(terminal_deconstruction.as_ref().as_ref(), writer)?)
         }
         dy::Deconstruction::Parametric(parametric_deconstruction) => {
             let mut bytes_written = 0usize;

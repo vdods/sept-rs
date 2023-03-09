@@ -16,7 +16,7 @@ impl TryFrom<dy::Value> for NonParametricDeconstruction {
     fn try_from(value: dy::Value) -> std::result::Result<Self, Self::Error> {
         // This check is not really well-defined.  Maybe this NonParametricDeconstruction should
         // really be called TerminalDeconstruction
-//         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_non_parametric_term(value.as_ref()), "can't create NonParametricDeconstruction from a Value (which was {:?}) which is not a NonParametricTerm", value);
+        //         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_non_parametric_term(value.as_ref()), "can't create NonParametricDeconstruction from a Value (which was {:?}) which is not a NonParametricTerm", value);
         Ok(Self(value))
     }
 }
