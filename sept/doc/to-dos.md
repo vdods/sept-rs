@@ -29,11 +29,11 @@
     -   In a static mode, a natively defined struct/class could have a derive attribute that verifies (maybe at load-time?) that the given struct/class faithfully represents the type referred to.  This would be the ideal way to implement strongly typed, statically compiled usages of schemas that are defined in some public, online repository.
 -   Rename types involving acronyms to use all caps, e.g. `Utf8String` -> `UTF8String`, `PodType` -> `PODType`, because it looks better.
 
-## Design Notes For `sept-tui`
+## Design Notes For `sept-gui`
 
 -   Goals
-    -   Create a TUI (Textual User Interface) editor for sept data, analogous to a text editor for text.
-    -   Achieve a sept-data-equivalent of the [LyX](https://www.lyx.org/) editor, which will be used as a reference and usability benchmark.  In particular, with Lyx you edit a document that looks similar to the final product, and more importantly, keyboard shortcuts allow one to type mathematics (to give a particular example) as fast as one could write it by hand.  The same should be true of `sept-tui`.
+    -   Create a GUI editor for sept data, analogous to a text editor for text.
+    -   Achieve a sept-data-equivalent of the [LyX](https://www.lyx.org/) editor, which will be used as a reference and usability benchmark.  In particular, with Lyx you edit a document that looks similar to the final product, and more importantly, keyboard shortcuts allow one to type mathematics (to give a particular example) as fast as one could write it by hand.  The same should be true of `sept-gui`.
     -   Facilitate creation, editing, viewing, search, filtering, and structured manipulation of sept data in a way that is reasonably comprehensible to someone who understands a text editor or programming IDE, in particular, the LyX typesetting program.
     -   Even though full usability through keyboard only is a primary goal, the mouse should still be available.
     -   Use a model-view-controller architecture so that the view of the data is as flexible as the user's needs.
@@ -83,7 +83,7 @@
 
 ### Other Design Criteria
 
--   It should be possible to extract sept data from a view, so that literally anything you interact with in `sept-tui` is first class data (at least on read-only basis), and could be copied out and used in a "new document".  For example, the user has selected a collection of numerical data and analyses it, producing a histogram.  That histogram should be selectable and copyable, so that it could be pasted into its own document and used.
+-   It should be possible to extract sept data from a view, so that literally anything you interact with in `sept-gui` is first class data (at least on read-only basis), and could be copied out and used in a "new document".  For example, the user has selected a collection of numerical data and analyses it, producing a histogram.  That histogram should be selectable and copyable, so that it could be pasted into its own document and used.
 -   Search functions
     -   Basic search on `NonParametricTerm`s (i.e. terminal values).  This would be the closest thing to text based search.
     -   Patterns.  Using the sept type system, a term like
@@ -134,7 +134,7 @@
     -   Editing existing values -- start with direct text editing which modifies the ASCII rendering of that data, and requires parsing the ASCII successfully (and meeting other value constraints) to cause the edit to go through.
 -   Phase 4: Oriented toward creating programming-language-like data
     -   Define a super simple dynamic language and interpreter (see C++ sept implementation for a reference).  This will involve defining a bunch of sept types which represent each of the programming language constructs.
-    -   Attempt to use `sept-tui` to create and edit these programs
+    -   Attempt to use `sept-gui` to create and edit these programs
 -   Phase 5: Oriented toward creating paragraphical content, like web articles
     -   Rendering of paragraphs as in-line content
     -   Hyperlinks
@@ -172,6 +172,18 @@
         [3].0.name[10..20] // take 3rd element of array, take 0th tuple element, take `name` attribute, take slice `10..20`.
         [{3, 8, 10..12}] // take elements 3, 8, and slice `10..20`
 
+    The syntax with `.` delimiting tokens is just a placeholder.  Whatever the coordinate is should not primarily
+    be the syntax itself, and shouldn't be limited by its textual rendering.  The most appropriate data type for
+    a coordinate is a TupleTerm, since it can (and is expected to) store inhomogeneously typed data.  Examples
+    from above:
+
+        (3, 0, "name")
+        ("x",)
+        ("x", "real")
+        (3, 0, "name", Slice(10, 20))
+        (Set { 3, 8, Slice(10, 20)},) // Here, Set is a yet-uncreated type
+
+    Regarding
 
 ## Low-Level To-dos
 

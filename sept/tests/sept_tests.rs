@@ -2,16 +2,16 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, StructTerm,
-        StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
+        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, OrderedMapTerm,
+        StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
     },
     parser, scanner,
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
-        Float64, Float64Type, Inhabits, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type,
-        Sint8, Sint8Type, Stringifiable, Struct, StructType, TermTrait, True, TrueType, Type,
-        TypeTrait, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8, Uint8Type,
-        Utf8String, Void, VoidType,
+        Float64, Float64Type, Inhabits, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32,
+        Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Stringifiable, Struct, StructType,
+        TermTrait, True, TrueType, Type, TypeTrait, Uint16, Uint16Type, Uint32, Uint32Type, Uint64,
+        Uint64Type, Uint8, Uint8Type, Utf8String, Void, VoidType,
     },
 };
 use std::{
@@ -242,6 +242,31 @@ fn test_arrays() {
     //     log::debug!("a1.stringify(): {}", a1.stringify());
     //
     //     assert!(a1.inhabits(&Array));
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_ordered_maps() {
+    let runtime_g = RUNTIME_LA.read().unwrap();
+
+    // Note that Vec<Value> is OrderedMapTerm.
+    // Note also that this is constructing a Vec with nonhomogeneous elements, because
+    // Value stores Box<dyn Any>.
+    let m0 = OrderedMapTerm::from(
+        maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => Void.into() },
+    );
+    log::debug!("m0: {}", m0);
+    log::debug!("m0 (as Debug): {:?}", m0);
+    log::debug!("m0.stringify(): {}", m0.stringify());
+
+    assert!(runtime_g.inhabits(&m0, &OrderedMap));
+    assert!(runtime_g.inhabits(&OrderedMap, &OrderedMapType));
+
+    //     let m1 = vec![100i8, 101i8, 99i8, 10i8];
+    //     log::debug!("m1: {:?}", m1);
+    //     log::debug!("m1.stringify(): {}", m1.stringify());
+    //
+    //     assert!(m1.inhabits(&OrderedMap));
 }
 
 #[test]
@@ -1759,6 +1784,7 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<String>();
 
     test_serialize_deserialize_test_values::<ArrayTerm>();
+    test_serialize_deserialize_test_values::<OrderedMapTerm>();
     // {
     //     // For this one, need to ensure that the appropriate symbol is defined in the global symbol table.
     //     {

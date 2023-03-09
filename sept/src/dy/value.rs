@@ -96,6 +96,8 @@ impl std::fmt::Display for Value {
     }
 }
 
+impl Eq for Value {}
+
 /// This prevents directly nested Value-s, e.g. Value(Value(123u32)), since that's never what we want.
 impl From<Box<ValueGuts>> for Value {
     fn from(b: Box<ValueGuts>) -> Self {
@@ -137,9 +139,27 @@ impl<T: st::TypeTrait + IntoValue + 'static> st::Inhabits<T> for Value {
     }
 }
 
+impl Ord for Value {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        RUNTIME_LA
+            .read()
+            .unwrap()
+            .cmp(self.as_ref(), other.as_ref())
+    }
+}
+
 impl PartialEq<Value> for Value {
     fn eq(&self, other: &Value) -> bool {
         RUNTIME_LA.read().unwrap().eq(self.as_ref(), other.as_ref())
+    }
+}
+
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        RUNTIME_LA
+            .read()
+            .unwrap()
+            .partial_cmp(self.as_ref(), other.as_ref())
     }
 }
 

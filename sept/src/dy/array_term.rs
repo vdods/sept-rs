@@ -44,7 +44,7 @@ impl st::Deserializable for ArrayTerm {
         for _ in 0..len {
             element_v.push(dy::Value::deserialize(reader)?);
         }
-        Ok(ArrayTerm(element_v))
+        Ok(Self(element_v))
     }
 }
 

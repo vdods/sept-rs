@@ -7,6 +7,7 @@ mod global_symbol_table;
 mod into_value;
 mod local_sym_ref_term;
 mod non_parametric_deconstruction;
+mod ordered_map_term;
 mod parametric_deconstruction;
 mod runtime;
 mod struct_term;
@@ -27,6 +28,7 @@ pub use crate::dy::{
     into_value::IntoValue,
     local_sym_ref_term::LocalSymRefTerm,
     non_parametric_deconstruction::NonParametricDeconstruction,
+    ordered_map_term::OrderedMapTerm,
     parametric_deconstruction::ParametricDeconstruction,
     runtime::{
         BinaryPredicate, MaybeDereferencedValue, Runtime, StringifyFn, UnaryPredicate, RUNTIME_LA,

@@ -1,15 +1,15 @@
 use crate::{
     dy::{
-        self, ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, StructTerm, StructTermTerm, TupleTerm,
-        ValueGuts,
+        self, ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, OrderedMapTerm, StructTerm,
+        StructTermTerm, TupleTerm, ValueGuts,
     },
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
         Float64, Float64Type, GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef,
-        LocalSymRefType, Sint16, Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Sint8,
-        Sint8Type, Struct, StructType, Term, True, TrueType, Tuple, TupleType, Type, Uint16,
-        Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8, Uint8Type, Utf8String,
-        Utf8StringType, Void, VoidType,
+        LocalSymRefType, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32, Sint32Type,
+        Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType, Term, True, TrueType, Tuple,
+        TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8,
+        Uint8Type, Utf8String, Utf8StringType, Void, VoidType,
     },
     Result,
 };
@@ -28,6 +28,8 @@ pub type AbstractTypeFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type CloneFn = fn(x: &ValueGuts) -> Box<ValueGuts>;
 pub type UnaryPredicate = fn(x: &ValueGuts) -> bool;
 pub type BinaryPredicate = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> bool;
+pub type CmpFn = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> std::cmp::Ordering;
+pub type PartialCmpFn = fn(lhs: &ValueGuts, rhs: &ValueGuts) -> Option<std::cmp::Ordering>;
 pub type DereferencedOnceFn = fn(x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>>;
 pub type ConstructFn = fn(constructor: &ValueGuts, parameter_t: dy::TupleTerm) -> Result<dy::Value>;
 pub type DeserializeParametersAndConstructFn =
@@ -35,8 +37,18 @@ pub type DeserializeParametersAndConstructFn =
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
 
+struct RegisteredCmpFn {
+    cmp_fn: CmpFn,
+    is_transposed: bool,
+}
+
 struct RegisteredEqualsFn {
     eq_fn: BinaryPredicate,
+    is_transposed: bool,
+}
+
+struct RegisteredPartialCmpFn {
+    partial_cmp_fn: PartialCmpFn,
     is_transposed: bool,
 }
 
@@ -61,7 +73,9 @@ pub struct Runtime {
     //     serialize_top_level_code_fn_m: HashMap<TypeId, SerializeFn>,
     //     serialize_construct_fn_m: HashMap<TypeId, SerializeFn>,
     serialize_fn_m: HashMap<TypeId, SerializeFn>,
+    cmp_fn_m: HashMap<(TypeId, TypeId), RegisteredCmpFn>,
     eq_fn_m: HashMap<(TypeId, TypeId), RegisteredEqualsFn>,
+    partial_cmp_fn_m: HashMap<(TypeId, TypeId), RegisteredPartialCmpFn>,
     inhabits_fn_m: HashMap<(TypeId, TypeId), BinaryPredicate>,
     abstract_type_fn_m: HashMap<TypeId, AbstractTypeFn>,
     clone_fn_m: HashMap<TypeId, CloneFn>,
@@ -108,6 +122,7 @@ impl Runtime {
         runtime.register_term::<String>().unwrap();
         runtime.register_term::<Void>().unwrap();
         runtime.register_term::<ArrayTerm>().unwrap();
+        runtime.register_term::<OrderedMapTerm>().unwrap();
         runtime.register_term::<StructTermTerm>().unwrap();
 
         // Register types
@@ -143,6 +158,8 @@ impl Runtime {
         runtime.register_type::<VoidType>().unwrap();
         runtime.register_type::<Array>().unwrap();
         runtime.register_type::<ArrayType>().unwrap();
+        runtime.register_type::<OrderedMap>().unwrap();
+        runtime.register_type::<OrderedMapType>().unwrap();
         runtime.register_type::<TupleTerm>().unwrap();
         runtime.register_type::<Tuple>().unwrap();
         runtime.register_type::<TupleType>().unwrap();
@@ -219,6 +236,12 @@ impl Runtime {
             .unwrap();
         runtime.register_non_parametric_term::<ArrayType>().unwrap();
         runtime.register_non_parametric_term::<Array>().unwrap();
+        runtime
+            .register_non_parametric_term::<OrderedMapType>()
+            .unwrap();
+        runtime
+            .register_non_parametric_term::<OrderedMap>()
+            .unwrap();
         runtime.register_non_parametric_term::<TupleType>().unwrap();
         runtime.register_non_parametric_term::<Tuple>().unwrap();
         runtime
@@ -253,6 +276,7 @@ impl Runtime {
         runtime.register_constructor::<Float64>().unwrap();
         runtime.register_constructor::<Utf8String>().unwrap();
         runtime.register_constructor::<Array>().unwrap();
+        runtime.register_constructor::<OrderedMap>().unwrap();
         runtime.register_constructor::<GlobalSymRef>().unwrap();
         // runtime.register_constructor::<GlobalSymRefTerm>().unwrap();
         // runtime.register_constructor::<LocalSymRef>().unwrap();
@@ -280,6 +304,8 @@ impl Runtime {
             runtime.reregister_as_eq::<Void>().unwrap();
             // ArrayTerm isn't Eq, because it might contain a float.
             //         runtime.reregister_as_eq::<ArrayTerm>().unwrap();
+            // OrderedMapTerm isn't Eq, because it might contain a float.
+            //         runtime.reregister_as_eq::<OrderedMapTerm>().unwrap();
             // StructTermTerm isn't Eq, because it might contain a float.
             //         runtime.reregister_as_eq::<StructTermTerm>().unwrap();
 
@@ -313,6 +339,8 @@ impl Runtime {
             runtime.reregister_as_eq::<VoidType>().unwrap();
             runtime.reregister_as_eq::<Array>().unwrap();
             runtime.reregister_as_eq::<ArrayType>().unwrap();
+            runtime.reregister_as_eq::<OrderedMap>().unwrap();
+            runtime.reregister_as_eq::<OrderedMapType>().unwrap();
             // TupleTerm isn't Eq, because it might contain a float
             //             runtime.reregister_as_eq::<TupleTerm>().unwrap();
             runtime.reregister_as_eq::<Tuple>().unwrap();
@@ -344,7 +372,9 @@ impl Runtime {
         runtime.register_partial_eq::<bool, True>().unwrap();
         runtime.register_partial_eq::<bool, False>().unwrap();
         // TODO: referential transparency has to be handled with special code
-        //         runtime.register_partial_eq::<GlobalSymRefTerm, GlobalSymRefTerm>().unwrap();
+        runtime
+            .register_partial_eq::<GlobalSymRefTerm, GlobalSymRefTerm>()
+            .unwrap();
         runtime
             .register_partial_eq::<LocalSymRefTerm, LocalSymRefTerm>()
             .unwrap();
@@ -402,11 +432,6 @@ impl Runtime {
         <T as st::TermTrait>::AbstractTypeType: st::TypeTrait,
     {
         let type_id = TypeId::of::<T>();
-        log::trace!(
-            "Runtime::register_term; {} {:?}",
-            std::any::type_name::<T>(),
-            type_id
-        );
         anyhow::ensure!(
             self.term_s.insert(type_id),
             "collision with already-registered term {}; term type that produced the collision was {}",
@@ -734,6 +759,65 @@ impl Runtime {
         };
         Ok(self.register_eq_fn_impl(type_id_pair, eq_fn)?)
     }
+    pub fn register_partial_cmp<Lhs: PartialOrd<Rhs> + 'static, Rhs: 'static>(
+        &mut self,
+    ) -> Result<()> {
+        let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
+        let partial_cmp_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> Option<std::cmp::Ordering> {
+            lhs.downcast_ref::<Lhs>()
+                .unwrap()
+                .partial_cmp(rhs.downcast_ref::<Rhs>().unwrap())
+        };
+        // Ok(self.register_partial_cmp_fn_impl(type_id_pair, partial_cmp_fn)?)
+        let is_transposed = type_id_pair.0 > type_id_pair.1;
+        let type_id_pair_ = if is_transposed {
+            (type_id_pair.1, type_id_pair.0)
+        } else {
+            type_id_pair
+        };
+        match self.partial_cmp_fn_m.insert(
+            type_id_pair_,
+            RegisteredPartialCmpFn {
+                partial_cmp_fn,
+                is_transposed,
+            },
+        ) {
+            Some(_) => Err(anyhow::anyhow!(
+                "collision with already-registered partial_cmp fn for ({}, {}); term types that produced the collision were ({}, {})",
+                self.label_of_type_id(type_id_pair.0),
+                self.label_of_type_id(type_id_pair.1),
+                std::any::type_name::<Lhs>(),
+                std::any::type_name::<Rhs>()
+            )),
+            None => Ok(()),
+        }
+    }
+    // fn register_partial_cmp_fn_impl(
+    //     &mut self,
+    //     type_id_pair: (TypeId, TypeId),
+    //     partial_cmp_fn: BinaryPredicate,
+    // ) -> Result<()> {
+    //     let is_transposed = type_id_pair.0 > type_id_pair.1;
+    //     let type_id_pair_ = if is_transposed {
+    //         (type_id_pair.1, type_id_pair.0)
+    //     } else {
+    //         type_id_pair
+    //     };
+    //     match self.partial_cmp_fn_m.insert(
+    //         type_id_pair_,
+    //         RegisteredPartialCmpFn {
+    //             partial_cmp_fn,
+    //             is_transposed,
+    //         },
+    //     ) {
+    //         Some(_) => Err(anyhow::anyhow!(
+    //             "collision with already-registered partial_cmp fn for ({}, {})",
+    //             self.label_of_type_id(type_id_pair.0),
+    //             self.label_of_type_id(type_id_pair.1)
+    //         )),
+    //         None => Ok(()),
+    //     }
+    // }
     pub fn register_inhabits<Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(
         &mut self,
     ) -> Result<()> {
@@ -945,6 +1029,77 @@ impl Runtime {
             }
         }
     }
+    pub fn cmp(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> std::cmp::Ordering {
+        // Handle referential transparency.
+        let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
+        let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
+        match (lhs_dereferenced, rhs_dereferenced) {
+            (
+                MaybeDereferencedValue::NonRef(lhs_value_guts),
+                MaybeDereferencedValue::NonRef(rhs_value_guts),
+            ) => self.cmp_impl(lhs_value_guts, rhs_value_guts),
+            (
+                MaybeDereferencedValue::NonRef(lhs_value_guts),
+                MaybeDereferencedValue::Ref(rhs_value_la),
+            ) => {
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.cmp_impl(lhs_value_guts, rhs_value_g.as_ref())
+            }
+            (
+                MaybeDereferencedValue::Ref(lhs_value_la),
+                MaybeDereferencedValue::NonRef(rhs_value_guts),
+            ) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                self.cmp_impl(lhs_value_g.as_ref(), rhs_value_guts)
+            }
+            (
+                MaybeDereferencedValue::Ref(lhs_value_la),
+                MaybeDereferencedValue::Ref(rhs_value_la),
+            ) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.cmp_impl(lhs_value_g.as_ref(), rhs_value_g.as_ref())
+            }
+        }
+    }
+    // This method does only the cmp operation, not handling referential transparency.
+    fn cmp_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> std::cmp::Ordering {
+        let lhs_type_id = lhs.type_id();
+        let rhs_type_id = rhs.type_id();
+        let is_transposed = lhs_type_id > rhs_type_id;
+        let type_id_pair = if is_transposed {
+            (rhs_type_id, lhs_type_id)
+        } else {
+            (lhs_type_id, rhs_type_id)
+        };
+        match self.cmp_fn_m.get(&type_id_pair) {
+            Some(registered_cmp_fn) => {
+                if registered_cmp_fn.is_transposed == is_transposed {
+                    // Have to transpose the result
+                    match (registered_cmp_fn.cmp_fn)(lhs, rhs) {
+                        std::cmp::Ordering::Less => std::cmp::Ordering::Greater,
+                        std::cmp::Ordering::Equal => std::cmp::Ordering::Equal,
+                        std::cmp::Ordering::Greater => std::cmp::Ordering::Less,
+                    }
+                } else {
+                    (registered_cmp_fn.cmp_fn)(rhs, lhs)
+                }
+            }
+            None => {
+                log::warn!(
+                    "Runtime is using TypeId to be able to `cmp` different types ({}, {}); this ordering is not stable between builds because TypeId is not stable between builds.",
+                    self.label_of_value_guts(lhs),
+                    self.label_of_value_guts(rhs)
+                );
+                lhs_type_id.cmp(&rhs_type_id)
+                // panic!(
+                //     "no cmp fn found for ({}, {})",
+                //     self.label_of_value_guts(lhs),
+                //     self.label_of_value_guts(rhs)
+                // );
+            }
+        }
+    }
     pub fn eq(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
         // Handle referential transparency.
         let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
@@ -1010,6 +1165,71 @@ impl Runtime {
     pub fn ne(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
         !self.eq(lhs, rhs)
     }
+    pub fn partial_cmp(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> Option<std::cmp::Ordering> {
+        // Handle referential transparency.
+        let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
+        let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
+        match (lhs_dereferenced, rhs_dereferenced) {
+            (
+                MaybeDereferencedValue::NonRef(lhs_value_guts),
+                MaybeDereferencedValue::NonRef(rhs_value_guts),
+            ) => self.partial_cmp_impl(lhs_value_guts, rhs_value_guts),
+            (
+                MaybeDereferencedValue::NonRef(lhs_value_guts),
+                MaybeDereferencedValue::Ref(rhs_value_la),
+            ) => {
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.partial_cmp_impl(lhs_value_guts, rhs_value_g.as_ref())
+            }
+            (
+                MaybeDereferencedValue::Ref(lhs_value_la),
+                MaybeDereferencedValue::NonRef(rhs_value_guts),
+            ) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                self.partial_cmp_impl(lhs_value_g.as_ref(), rhs_value_guts)
+            }
+            (
+                MaybeDereferencedValue::Ref(lhs_value_la),
+                MaybeDereferencedValue::Ref(rhs_value_la),
+            ) => {
+                let lhs_value_g = lhs_value_la.read().unwrap();
+                let rhs_value_g = rhs_value_la.read().unwrap();
+                self.partial_cmp_impl(lhs_value_g.as_ref(), rhs_value_g.as_ref())
+            }
+        }
+    }
+    // This method does only the partial_cmp operation, not handling referential transparency.
+    fn partial_cmp_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> Option<std::cmp::Ordering> {
+        let lhs_type_id = lhs.type_id();
+        let rhs_type_id = rhs.type_id();
+        let is_transposed = lhs_type_id > rhs_type_id;
+        let type_id_pair = if is_transposed {
+            (rhs_type_id, lhs_type_id)
+        } else {
+            (lhs_type_id, rhs_type_id)
+        };
+        match self.partial_cmp_fn_m.get(&type_id_pair) {
+            Some(registered_partial_cmp_fn) => {
+                if registered_partial_cmp_fn.is_transposed == is_transposed {
+                    (registered_partial_cmp_fn.partial_cmp_fn)(lhs, rhs)
+                } else {
+                    (registered_partial_cmp_fn.partial_cmp_fn)(rhs, lhs)
+                }
+            }
+            None => {
+                // This is the most mathematically meaningful default; if there isn't an explicit relationship,
+                // then the two values are incomparable.
+
+                // panic!("no partial_cmp fn found for {:?}", (lhs_type_id, rhs_type_id)),
+                log::warn!(
+                    "no partial_cmp fn found for ({}, {}); returning default value of None",
+                    self.label_of_type_id(lhs_type_id),
+                    self.label_of_type_id(rhs_type_id)
+                );
+                None
+            }
+        }
+    }
     pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
@@ -1048,8 +1268,6 @@ impl Runtime {
                 // panic!("no inhabits fn found for {:?}", (lhs_type_id, rhs_type_id)),
                 log::warn!(
                     "no inhabits fn found for ({}, {}); returning default value of false",
-                    // self.label_of(type_id_pair.0),
-                    // self.label_of(type_id_pair.1)
                     self.label_of_value_guts(x),
                     self.label_of_value_guts(t)
                 );

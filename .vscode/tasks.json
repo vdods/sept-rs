@@ -41,34 +41,6 @@
                 "sept-gui",
                 "--all-features"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "clear": true,
-                "revealProblems": "onProblem"
-            },
-            "problemMatcher": [
-                {
-                    "base": "$rustc",
-                    "fileLocation": [
-                        "relative"
-                    ]
-                }
-            ]
-        },
-        {
-            "label": "sept build",
-            "type": "shell",
-            "command": "cargo",
-            "args": [
-                "test",
-                "--package",
-                "sept",
-                "--all-features",
-                "--no-run"
-            ],
             "group": "build",
             "presentation": {
                 "clear": true,

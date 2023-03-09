@@ -20,6 +20,8 @@ mod local_sym_ref;
 mod local_sym_ref_type;
 mod non_parametric_term_code;
 mod non_parametric_term_trait;
+mod ordered_map;
+mod ordered_map_type;
 mod serializable;
 mod stringifiable;
 mod r#struct;
@@ -66,6 +68,8 @@ pub use crate::st::{
     local_sym_ref_type::LocalSymRefType,
     non_parametric_term_code::NonParametricTermCode,
     non_parametric_term_trait::NonParametricTermTrait,
+    ordered_map::OrderedMap,
+    ordered_map_type::OrderedMapType,
     r#bool::Bool,
     r#false::False,
     r#struct::Struct,
