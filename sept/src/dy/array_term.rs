@@ -1,8 +1,27 @@
-use crate::{dy, Result, st::{self, Array, Inhabits, Stringifiable}};
+use crate::{
+    dy,
+    st::{self, Array, Inhabits, Stringifiable},
+    Result,
+};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "Array", is_parametric = "self.0.len() > 0", is_type = "true")]
+#[derive(
+    Clone,
+    Debug,
+    derive_more::Deref,
+    derive_more::DerefMut,
+    derive_more::From,
+    derive_more::Into,
+    dy::IntoValue,
+    PartialEq,
+    st::TermTrait,
+)]
+// TODO: is_type = "true" seems wrong.. look into this.
+#[st_term_trait(
+    AbstractTypeType = "Array",
+    is_parametric = "self.0.len() > 0",
+    is_type = "true"
+)]
 pub struct ArrayTerm(Vec<dy::Value>);
 
 impl dy::Deconstruct for ArrayTerm {
@@ -41,7 +60,7 @@ impl Stringifiable for ArrayTerm {
         s.push_str("Array(");
         for (i, element) in self.0.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.0.len() {
+            if i + 1 < self.0.len() {
                 s.push_str(", ");
             }
         }

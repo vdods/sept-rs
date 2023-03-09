@@ -13,10 +13,7 @@
                 "sept-gui",
                 "--all-features"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"
@@ -41,7 +38,10 @@
                 "--all-features",
                 "--no-run"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"

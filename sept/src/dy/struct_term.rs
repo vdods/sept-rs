@@ -7,6 +7,8 @@ use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
+// TODO: Consider that this should be called OrderedStructTerm, since it assumes the entries are ordered, which
+// may not be required/desired for other data types that have struct semantics.
 #[derive(
     Clone, Debug, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait,
 )]

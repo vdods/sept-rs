@@ -7,6 +7,7 @@ mod global_symbol_table;
 mod into_value;
 mod local_sym_ref_term;
 mod non_parametric_deconstruction;
+mod ordered_map_term;
 mod parametric_deconstruction;
 mod runtime;
 mod struct_term;
@@ -17,7 +18,6 @@ mod transparent_ref_trait;
 mod tuple_term;
 mod value;
 
-pub use anyhow::{Error, Result};
 pub use crate::dy::{
     array_term::ArrayTerm,
     constructor::Constructor,
@@ -28,8 +28,11 @@ pub use crate::dy::{
     into_value::IntoValue,
     local_sym_ref_term::LocalSymRefTerm,
     non_parametric_deconstruction::NonParametricDeconstruction,
+    ordered_map_term::OrderedMapTerm,
     parametric_deconstruction::ParametricDeconstruction,
-    runtime::{BinaryPredicate, MaybeDereferencedValue, RUNTIME_LA, Runtime, StringifyFn, UnaryPredicate},
+    runtime::{
+        BinaryPredicate, MaybeDereferencedValue, Runtime, StringifyFn, UnaryPredicate, RUNTIME_LA,
+    },
     struct_term::StructTerm,
     struct_term_term::StructTermTerm,
     symbol_table::SymbolTable,
@@ -38,6 +41,7 @@ pub use crate::dy::{
     tuple_term::TupleTerm,
     value::{Value, ValueGuts},
 };
+pub use anyhow::{Error, Result};
 
 // Trait derivation proc macros
 pub use sept_derive::DyIntoValue as IntoValue;
