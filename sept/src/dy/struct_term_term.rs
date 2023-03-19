@@ -1,4 +1,8 @@
-use crate::{dy, Result, st::{self, Stringifiable}};
+use crate::{
+    dy,
+    st::{self, Stringifiable},
+    Result,
+};
 
 /// This is a bit of an awkward name, but if Struct is the constructor for particular structs
 /// (i.e. StructTerm), then the terms inhabiting StructTerm are instances of particular structs,
@@ -53,15 +57,23 @@ impl StructTermTerm {
         match type_maybe_dereferenced {
             dy::MaybeDereferencedValue::NonRef(type_value_guts) => {
                 match type_value_guts.downcast_ref::<dy::StructTerm>() {
-                    Some(struct_term) => { struct_term.verify_inhabitation_by(&field_t)?; },
-                    None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_guts.type_id())); }
+                    Some(struct_term) => {
+                        struct_term.verify_inhabitation_by(&field_t)?;
+                    }
+                    None => {
+                        anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of_type_id(type_value_guts.type_id()));
+                    }
                 }
-            },
+            }
             dy::MaybeDereferencedValue::Ref(type_value_la) => {
                 let type_value_g = type_value_la.read().unwrap();
                 match type_value_g.downcast_ref::<dy::StructTerm>() {
-                    Some(struct_term) => { struct_term.verify_inhabitation_by(&field_t)?; },
-                    None => { anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of(type_value_g.type_id())); }
+                    Some(struct_term) => {
+                        struct_term.verify_inhabitation_by(&field_t)?;
+                    }
+                    None => {
+                        anyhow::bail!("can't construct a StructTermTerm with type_ that isn't a StructTerm; type_ resolved to {}", dy::RUNTIME_LA.read().unwrap().label_of_type_id(type_value_g.type_id()));
+                    }
                 }
             }
         };
@@ -126,7 +138,7 @@ impl st::Stringifiable for StructTermTerm {
         s.push_str(&format!("{}(", self.type_.stringify()));
         for (i, element) in self.field_t.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.field_t.len() {
+            if i + 1 < self.field_t.len() {
                 s.push_str(", ");
             }
         }
@@ -159,37 +171,46 @@ impl st::TestValues for StructTermTerm {
             Self::new_checked(
                 dy::StructTerm::new(vec![]).unwrap().into(),
                 dy::TupleTerm::from(vec![]),
-            ).unwrap(),
+            )
+            .unwrap(),
             // Struct with single attribute
             Self::new_checked(
-                dy::StructTerm::new(vec![("x".to_string(), st::Float64.into())]).unwrap().into(),
+                dy::StructTerm::new(vec![("x".to_string(), st::Float64.into())])
+                    .unwrap()
+                    .into(),
                 dy::TupleTerm::from(vec![4.01f64.into()]),
-            ).unwrap(),
+            )
+            .unwrap(),
             // Struct with two attributes
             Self::new_checked(
                 dy::StructTerm::new(vec![
                     ("x".to_string(), st::Float64.into()),
                     ("Y".to_string(), st::Array.into()),
-                ]).unwrap().into(),
+                ])
+                .unwrap()
+                .into(),
                 dy::TupleTerm::from(vec![
                     4.01f64.into(),
                     dy::ArrayTerm::from(vec![true.into(), 123u32.into()]).into(),
                 ]),
-            ).unwrap(),
+            )
+            .unwrap(),
             // Nested struct -- TODO: Clearly we need some macros to make assembling these things
             // more ergonomic.
             {
-                let inner_struct_term =
-                    dy::StructTerm::new(vec![
-                        ("x".to_string(), st::Float64.into()),
-                        ("Y".to_string(), st::Array.into()),
-                    ]).unwrap();
+                let inner_struct_term = dy::StructTerm::new(vec![
+                    ("x".to_string(), st::Float64.into()),
+                    ("Y".to_string(), st::Array.into()),
+                ])
+                .unwrap();
                 Self::new_checked(
                     dy::StructTerm::new(vec![
                         ("b".to_string(), st::Bool.into()),
                         ("t".to_string(), st::TrueType.into()),
                         ("g".to_string(), inner_struct_term.clone().into()),
-                    ]).unwrap().into(),
+                    ])
+                    .unwrap()
+                    .into(),
                     dy::TupleTerm::from(vec![
                         false.into(),
                         st::True.into(),
@@ -199,10 +220,14 @@ impl st::TestValues for StructTermTerm {
                                 4.01f64.into(),
                                 dy::ArrayTerm::from(vec![true.into(), 123u32.into()]).into(),
                             ]),
-                        ).unwrap().into()
+                        )
+                        .unwrap()
+                        .into(),
                     ]),
-                ).unwrap().into()
-            }
+                )
+                .unwrap()
+                .into()
+            },
         ]
     }
 }

@@ -25,18 +25,38 @@ use std::{
 fn overall_init() {
     // env_logger::try_init().unwrap();
 
-    // TODO: Figure out how to colorize the output
-    // TODO: Maybe add higher precision to timestamp
     use std::io::Write;
     env_logger::Builder::from_default_env()
+        .write_style(env_logger::WriteStyle::Auto)
         .format(|buf, record| {
+            let bracket_style = {
+                let mut style = buf.style();
+                style.set_color(env_logger::fmt::Color::Cyan);
+                style
+            };
+            let timestamp_style = {
+                let mut style = buf.style();
+                style.set_color(env_logger::fmt::Color::Black);
+                style.set_intense(true);
+                style
+            };
+            let fileloc_style = {
+                let mut style = buf.style();
+                style.set_color(env_logger::fmt::Color::Black);
+                style.set_intense(true);
+                style
+            };
+            let level_style = buf.default_level_style(record.level());
             writeln!(
                 buf,
-                "[{} {} {}:{}] - {}",
-                chrono::Local::now().format("%Y-%m-%dT%H:%M:%S"),
-                record.level(),
-                record.file().unwrap_or("unknown"),
-                record.line().unwrap_or(0),
+                "{}{} {} {}{}{}{} {}",
+                bracket_style.value("["),
+                timestamp_style.value(chrono::Local::now().format("%Y-%m-%dT%H:%M:%S.%f")),
+                level_style.value(record.level()),
+                fileloc_style.value(record.file().unwrap_or("unknown")),
+                fileloc_style.value(":"),
+                fileloc_style.value(record.line().unwrap_or(0)),
+                bracket_style.value("]"),
                 record.args()
             )
         })

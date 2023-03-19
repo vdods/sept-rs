@@ -334,14 +334,6 @@ impl Runtime {
         // TODO: Need to somehow make it so that everything inhabits Term
         // TODO: Need to be able to register EmptyType's inhabitation function (it returns false for any term arg)
 
-        log::trace!(
-            "Runtime::new; GlobalSymRefTerm {:?}",
-            TypeId::of::<GlobalSymRefTerm>()
-        );
-        log::trace!(
-            "Runtime::new; LocalSymRefTerm {:?}",
-            TypeId::of::<LocalSymRefTerm>()
-        );
         runtime.term_s.insert(TypeId::of::<GlobalSymRefTerm>());
         runtime.term_s.insert(TypeId::of::<LocalSymRefTerm>());
 
@@ -417,8 +409,9 @@ impl Runtime {
         );
         anyhow::ensure!(
             self.term_s.insert(type_id),
-            "collision with already-registered term {}",
-            self.label_of(type_id)
+            "collision with already-registered term {}; term type that produced the collision was {}",
+            self.label_of_type_id(type_id),
+            std::any::type_name::<T>()
         );
         self.register_label::<T>()?;
         self.register_debug::<T>()?;
@@ -453,61 +446,54 @@ impl Runtime {
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(
             self.type_s.insert(type_id),
-            "collision with already-registered type {}",
-            self.label_of(type_id)
+            "collision with already-registered type {}; term type that produced the collision was {}",
+            self.label_of_type_id(type_id),
+            std::any::type_name::<T>()
         );
         Ok(())
     }
 
-    pub(crate) fn register_label_fn(&mut self, type_id: TypeId, label_fn: LabelFn) -> Result<()> {
-        // log::debug!("register_label_fn; type_id: {:?}; label_fn(): {:?}", type_id, label_fn());
+    // TODO: Rename to register_term_name?
+    pub(crate) fn register_label<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let label_fn = || -> &'static str { std::any::type_name::<T>() };
         match self.label_fn_m.insert(type_id, label_fn) {
             Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered label fn for {}",
-                self.label_of(type_id)
+                "collision with already-registered label fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>()
             )),
             None => Ok(()),
         }
     }
-    pub(crate) fn register_label<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
-        Ok(self.register_label_fn(TypeId::of::<T>(), T::label)?)
-    }
-    pub(crate) fn register_debug_fn(&mut self, type_id: TypeId, debug_fn: DebugFn) -> Result<()> {
-        match self.debug_fn_m.insert(type_id, debug_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered debug fn for {}",
-                self.label_of(type_id)
-            )),
-            None => Ok(()),
-        }
-    }
-    pub(crate) fn register_debug<S: std::fmt::Debug + 'static>(&mut self) -> Result<()> {
-        let type_id = TypeId::of::<S>();
+    pub(crate) fn register_debug<T: std::fmt::Debug + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
         let debug_fn = |x: &ValueGuts,
                         f: &mut std::fmt::Formatter<'_>|
          -> std::result::Result<(), std::fmt::Error> {
-            Ok(x.downcast_ref::<S>().unwrap().fmt(f)?)
+            Ok(x.downcast_ref::<T>().unwrap().fmt(f)?)
         };
-        Ok(self.register_debug_fn(type_id, debug_fn)?)
-    }
-    pub(crate) fn register_stringify_fn(
-        &mut self,
-        type_id: TypeId,
-        stringify_fn: StringifyFn,
-    ) -> Result<()> {
-        match self.stringify_fn_m.insert(type_id, stringify_fn) {
+        match self.debug_fn_m.insert(type_id, debug_fn) {
             Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered stringify fn for {}",
-                self.label_of(type_id)
+                "collision with already-registered debug fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>()
             )),
             None => Ok(()),
         }
     }
-    pub(crate) fn register_stringify<S: st::Stringifiable + 'static>(&mut self) -> Result<()> {
-        let type_id = TypeId::of::<S>();
+    pub(crate) fn register_stringify<T: st::Stringifiable + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
         let stringify_fn =
-            |x: &ValueGuts| -> String { S::stringify(x.downcast_ref::<S>().unwrap()) };
-        Ok(self.register_stringify_fn(type_id, stringify_fn)?)
+            |x: &ValueGuts| -> String { T::stringify(x.downcast_ref::<T>().unwrap()) };
+        match self.stringify_fn_m.insert(type_id, stringify_fn) {
+            Some(_) => Err(anyhow::anyhow!(
+                "collision with already-registered stringify fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>()
+            )),
+            None => Ok(()),
+        }
     }
     //     fn register_serialize_top_level_code_fn(
     //         &mut self,
@@ -529,17 +515,8 @@ impl Runtime {
     //             None => Ok(())
     //         }
     //     }
-    fn register_serialize_fn(&mut self, type_id: TypeId, serialize_fn: SerializeFn) -> Result<()> {
-        match self.serialize_fn_m.insert(type_id, serialize_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered serialize fn for {}",
-                self.label_of(type_id)
-            )),
-            None => Ok(()),
-        }
-    }
-    pub(crate) fn register_serialize<S: st::Serializable + 'static>(&mut self) -> Result<()> {
-        let type_id = TypeId::of::<S>();
+    pub(crate) fn register_serialize<T: st::Serializable + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
         //         let serialize_top_level_code_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
         //             Ok(x.downcast_ref::<S>().unwrap().serialize_top_level_code(writer)?)
         //         };
@@ -547,25 +524,20 @@ impl Runtime {
         //             Ok(x.downcast_ref::<S>().unwrap().serialize_constructor(writer)?)
         //         };
         let serialize_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
-            Ok(x.downcast_ref::<S>().unwrap().serialize(writer)?)
+            Ok(x.downcast_ref::<T>().unwrap().serialize(writer)?)
         };
         //         self.register_serialize_top_level_code_fn(type_id, serialize_top_level_code_fn)?;
         //         self.register_serialize_construct_fn(type_id, serialize_construct_fn)?;
-        self.register_serialize_fn(type_id, serialize_fn)?;
-        Ok(())
-    }
-    pub(crate) fn register_abstract_type_fn(
-        &mut self,
-        type_id: TypeId,
-        abstract_type_fn: AbstractTypeFn,
-    ) -> Result<()> {
-        match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered abstract_type fn for {}",
-                self.label_of(type_id)
-            )),
-            None => Ok(()),
+        match self.serialize_fn_m.insert(type_id, serialize_fn) {
+            Some(_) => {
+                anyhow::bail!("collision with already-registered serialize fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>());
+            }
+            None => {}
         }
+        // self.register_serialize_fn(type_id, serialize_fn)?;
+        Ok(())
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
@@ -609,18 +581,12 @@ impl Runtime {
                 Box::new(abstract_type)
             }
         };
-        Ok(self.register_abstract_type_fn(type_id, abstract_type_fn)?)
-    }
-    pub(crate) fn register_clone_fn(
-        &mut self,
-        type_id: TypeId,
-        clone_fn: AbstractTypeFn,
-    ) -> Result<()> {
-        match self.clone_fn_m.insert(type_id, clone_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered clone fn for {}",
-                self.label_of(type_id)
-            )),
+        match self.abstract_type_fn_m.insert(type_id, abstract_type_fn) {
+            Some(_) => {
+                anyhow::bail!("collision with already-registered abstract_type fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>());
+            }
             None => Ok(()),
         }
     }
@@ -645,26 +611,20 @@ impl Runtime {
             // should not be possible, and all this can be cleaned up.
             if {
                 let at: &ValueGuts = &clone;
-                at.is::<Box<ValueGuts>>()
+                at.is::<Box<ValueGuts>>() || at.is::<dy::Value>()
             } {
-                panic!("this situation isn't implemented yet -- panicking here to avoid creating a Box<Box<ValueGuts>>");
+                unimplemented!("TODO: implement the same situation as in abstract_type to prevent creating a Box<Box<ValueGuts>> or Value(Value(...))");
             }
             Box::new(clone)
         };
-        Ok(self.register_clone_fn(type_id, clone_fn)?)
-    }
-    // TODO: Rename this something different (this was copied and pasted from register_stringify
-    // and the semantics don't match).
-    pub(crate) fn register_is_parametric_fn(
-        &mut self,
-        type_id: TypeId,
-        is_parametric_fn: UnaryPredicate,
-    ) -> Result<()> {
-        match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered is_parametric fn for {}",
-                self.label_of(type_id)
-            )),
+        match self.clone_fn_m.insert(type_id, clone_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                "collision with already-registered clone fn for {}; term type that produced the collision was {}",
+                self.label_of_type_id(type_id),
+                std::any::type_name::<T>()
+            );
+            }
             None => Ok(()),
         }
     }
@@ -674,11 +634,16 @@ impl Runtime {
         let type_id = TypeId::of::<T>();
         let is_parametric_fn =
             |x: &ValueGuts| -> bool { x.downcast_ref::<T>().unwrap().is_parametric() };
-        Ok(self.register_is_parametric_fn(type_id, is_parametric_fn)?)
-        //         match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
-        //             Some(_) => Err(anyhow::anyhow!("collision with already-registered is_parametric fn for {}", self.label_of(type_id))),
-        //             None => Ok(())
-        //         }
+        match self.is_parametric_fn_m.insert(type_id, is_parametric_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered is_parametric fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => Ok(()),
+        }
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
@@ -686,10 +651,13 @@ impl Runtime {
         let type_id = TypeId::of::<T>();
         let is_type_fn = |x: &ValueGuts| -> bool { x.downcast_ref::<T>().unwrap().is_type() };
         match self.is_type_fn_m.insert(type_id, is_type_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered is_type fn for {}",
-                self.label_of(type_id)
-            )),
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered is_type fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
             None => Ok(()),
         }
     }
@@ -711,11 +679,14 @@ impl Runtime {
                 is_transposed,
             },
         ) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered eq fn for ({}, {})",
-                self.label_of(type_id_pair.0),
-                self.label_of(type_id_pair.1)
-            )),
+            // TODO: Could add the extended message that indicates the term types that produced the collision.
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered eq fn for ({}, {})",
+                    self.label_of_type_id(type_id_pair.0),
+                    self.label_of_type_id(type_id_pair.1)
+                );
+            }
             None => Ok(()),
         }
     }
@@ -726,8 +697,8 @@ impl Runtime {
         anyhow::ensure!(
             self.eq_fn_m.contains_key(&type_id_pair),
             "reregister_as_eq can only be used if register_partial_eq has been used for ({}, {})",
-            self.label_of(type_id_pair.0),
-            self.label_of(type_id_pair.1)
+            self.label_of_type_id(type_id_pair.0),
+            self.label_of_type_id(type_id_pair.1)
         );
         // TODO: If the type is a non-parametric term (i.e. singletons), then we can just compare their TypeId values.
         let eq_fn = |lhs: &ValueGuts, rhs: &ValueGuts| -> bool {
@@ -773,27 +744,15 @@ impl Runtime {
                 .inhabits(rhs.downcast_ref::<Rhs>().unwrap())
         };
         match self.inhabits_fn_m.insert(type_id_pair, inhabits_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered inhabits fn for ({}, {})",
-                self.label_of(type_id_pair.0),
-                self.label_of(type_id_pair.1)
-            )),
-            None => Ok(()),
-        }
-    }
-    pub(crate) fn register_dereferenced_once_fn(
-        &mut self,
-        type_id: TypeId,
-        dereferenced_once_fn: DereferencedOnceFn,
-    ) -> Result<()> {
-        match self
-            .dereferenced_once_fn_m
-            .insert(type_id, dereferenced_once_fn)
-        {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered dereferenced_once fn for {}",
-                self.label_of(type_id)
-            )),
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered inhabits fn for ({}, {}); term types that produced the collision were ({}, {})",
+                    self.label_of_type_id(type_id_pair.0),
+                    self.label_of_type_id(type_id_pair.1),
+                    std::any::type_name::<Lhs>(),
+                    std::any::type_name::<Rhs>()
+                );
+            }
             None => Ok(()),
         }
     }
@@ -804,18 +763,17 @@ impl Runtime {
         let dereferenced_once_fn = |x: &ValueGuts| -> Result<Arc<RwLock<dy::Value>>> {
             x.downcast_ref::<T>().unwrap().dereferenced_once()
         };
-        Ok(self.register_dereferenced_once_fn(type_id, dereferenced_once_fn)?)
-    }
-    pub(crate) fn register_deconstruct_fn(
-        &mut self,
-        type_id: TypeId,
-        deconstruct_fn: DeconstructFn,
-    ) -> Result<()> {
-        match self.deconstruct_fn_m.insert(type_id, deconstruct_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered deconstructed fn for {}",
-                self.label_of(type_id)
-            )),
+        match self
+            .dereferenced_once_fn_m
+            .insert(type_id, dereferenced_once_fn)
+        {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered dereferenced_once fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
             None => Ok(()),
         }
     }
@@ -824,34 +782,14 @@ impl Runtime {
         let deconstruct_fn = |x: &ValueGuts| -> dy::Deconstruction {
             x.downcast_ref::<T>().unwrap().deconstructed()
         };
-        Ok(self.register_deconstruct_fn(type_id, deconstruct_fn)?)
-    }
-    pub(crate) fn register_construct_fn(
-        &mut self,
-        type_id: TypeId,
-        construct_fn: ConstructFn,
-    ) -> Result<()> {
-        match self.construct_fn_m.insert(type_id, construct_fn) {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered construct fn for {}",
-                self.label_of(type_id)
-            )),
-            None => Ok(()),
-        }
-    }
-    pub(crate) fn register_deserialize_parameters_and_construct_fn(
-        &mut self,
-        type_id: TypeId,
-        deserialize_parameters_and_construct_fn: DeserializeParametersAndConstructFn,
-    ) -> Result<()> {
-        match self
-            .deserialize_parameters_and_construct_fn_m
-            .insert(type_id, deserialize_parameters_and_construct_fn)
-        {
-            Some(_) => Err(anyhow::anyhow!(
-                "collision with already-registered deserialize_parameters_and_construct fn for {}",
-                self.label_of(type_id)
-            )),
+        match self.deconstruct_fn_m.insert(type_id, deconstruct_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered deconstructed fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
             None => Ok(()),
         }
     }
@@ -865,7 +803,16 @@ impl Runtime {
                     .construct(parameter_t)?
                     .into())
             };
-        self.register_construct_fn(type_id, construct_fn)?;
+        match self.construct_fn_m.insert(type_id, construct_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered construct fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => {}
+        }
         let deserialize_parameters_and_construct_fn =
             |constructor: &ValueGuts, reader: &mut dyn std::io::Read| -> Result<dy::Value> {
                 Ok(constructor
@@ -874,31 +821,20 @@ impl Runtime {
                     .deserialize_parameters_and_construct(reader)?
                     .into())
             };
-        self.register_deserialize_parameters_and_construct_fn(
-            type_id,
-            deserialize_parameters_and_construct_fn,
-        )?;
+        match self
+            .deserialize_parameters_and_construct_fn_m
+            .insert(type_id, deserialize_parameters_and_construct_fn)
+        {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered deserialize_parameters_and_construct fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => {}
+        }
         Ok(())
-    }
-    pub(crate) fn register_non_parametric_term_instantiate_from_identifier_fn(
-        &mut self,
-        identifier: &'static str,
-        non_parametric_term_instantiate_from_identifier_fn: NonParametricTermInstantiateFn,
-    ) -> Result<()> {
-        match self.non_parametric_term_instantiate_from_identifier_fn_m.insert(identifier, non_parametric_term_instantiate_from_identifier_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate_from_identifier fn for {}", identifier)),
-            None => Ok(())
-        }
-    }
-    pub(crate) fn register_non_parametric_term_instantiate_from_code_fn(
-        &mut self,
-        code: st::NonParametricTermCode,
-        non_parametric_term_instantiate_from_code_fn: NonParametricTermInstantiateFn,
-    ) -> Result<()> {
-        match self.non_parametric_term_instantiate_from_code_fn_m.insert(code, non_parametric_term_instantiate_from_code_fn) {
-            Some(_) => Err(anyhow::anyhow!("collision with already-registered non_parametric_term_instantiate_from_code fn for {}", code)),
-            None => Ok(())
-        }
     }
     pub fn register_non_parametric_term<T: st::NonParametricTermTrait + 'static>(
         &mut self,
@@ -907,14 +843,24 @@ impl Runtime {
             .insert(TypeId::of::<T>(), T::NON_PARAMETRIC_TERM_CODE);
         let non_parametric_term_instantiate_fn =
             || -> dy::Value { dy::Value::from(T::instantiate()) };
-        self.register_non_parametric_term_instantiate_from_identifier_fn(
-            T::IDENTIFIER,
-            non_parametric_term_instantiate_fn,
-        )?;
-        self.register_non_parametric_term_instantiate_from_code_fn(
+        match self
+            .non_parametric_term_instantiate_from_identifier_fn_m
+            .insert(T::IDENTIFIER, non_parametric_term_instantiate_fn)
+        {
+            Some(_) => {
+                anyhow::bail!("collision with already-registered non_parametric_term_instantiate_from_identifier fn for {}", T::IDENTIFIER);
+            }
+            None => {}
+        }
+        match self.non_parametric_term_instantiate_from_code_fn_m.insert(
             T::NON_PARAMETRIC_TERM_CODE,
             non_parametric_term_instantiate_fn,
-        )?;
+        ) {
+            Some(_) => {
+                anyhow::bail!("collision with already-registered non_parametric_term_instantiate_from_code fn for {}", T::NON_PARAMETRIC_TERM_CODE);
+            }
+            None => {}
+        }
         Ok(())
     }
 
@@ -927,8 +873,16 @@ impl Runtime {
 
     /// This gives the [non-parametric] label of the concrete type.  For example, even though
     /// GlobalSymRefTerm is referentially transparent, its label is still GlobalSymRefTerm.
-    // TODO: Maybe make `pub fn label_of<T>(&self) -> String` which uses TypeId::of::<T>() and forwards.
-    pub fn label_of(&self, type_id: TypeId) -> String {
+    pub fn label_of_type_id(&self, type_id: TypeId) -> String {
+        match self.label_fn_m.get(&type_id) {
+            Some(label_fn) => label_fn().into(),
+            None => format!("{:?}", type_id),
+        }
+    }
+    /// This gives the [non-parametric] label of the concrete type.  For example, even though
+    /// GlobalSymRefTerm is referentially transparent, its label is still GlobalSymRefTerm.
+    pub fn label_of_value_guts(&self, x: &ValueGuts) -> String {
+        let type_id = x.type_id();
         match self.label_fn_m.get(&type_id) {
             Some(label_fn) => label_fn().into(),
             None => format!("{:?}", type_id),
@@ -943,12 +897,12 @@ impl Runtime {
         match self.debug_fn_m.get(&x.type_id()) {
             Some(debug_fn) => Ok(debug_fn(x, f)?),
             None => {
-                // panic!("no debug fn found for {:?}", x.type_id());
+                // panic!("no debug fn found for {}", self.label_of_value_guts(x));
                 log::warn!(
                     "no debug fn found for {}; returning generic default",
-                    self.label_of(x.type_id())
+                    self.label_of_value_guts(x)
                 );
-                Ok(write!(f, "!InstanceOf!({})", self.label_of(x.type_id()))?)
+                Ok(write!(f, "!InstanceOf!({})", self.label_of_value_guts(x))?)
             }
         }
     }
@@ -957,9 +911,9 @@ impl Runtime {
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             None => {
-                panic!("no stringify fn found for {:?}", x.type_id());
-                //                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of(x.type_id()));
-                //                 format!("InstanceOf({})", self.label_of(x.type_id()))
+                panic!("no stringify fn found for {}", self.label_of_value_guts(x));
+                //                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of_value_guts(x));
+                //                 format!("InstanceOf({})", self.label_of_value_guts(x))
             }
         }
     }
@@ -968,7 +922,7 @@ impl Runtime {
     //         match self.serialize_top_level_code_fn_m.get(&x.type_id()) {
     //             Some(serialize_top_level_code_fn) => Ok(serialize_top_level_code_fn(x, writer)?),
     //             None => {
-    //                 panic!("no serialize_top_level_code fn found for {:?}", x.type_id());
+    //                 panic!("no serialize_top_level_code fn found for {}", self.label_of_value_guts(x));
     //             }
     //         }
     //     }
@@ -977,7 +931,7 @@ impl Runtime {
     //         match self.serialize_construct_fn_m.get(&x.type_id()) {
     //             Some(serialize_construct_fn) => Ok(serialize_construct_fn(x, writer)?),
     //             None => {
-    //                 panic!("no serialize_constructor fn found for {:?}", x.type_id());
+    //                 panic!("no serialize_constructor fn found for {}", self.label_of_value_guts(x));
     //             }
     //         }
     //     }
@@ -987,7 +941,7 @@ impl Runtime {
         match self.serialize_fn_m.get(&x.type_id()) {
             Some(serialize_fn) => Ok(serialize_fn(x, writer)?),
             None => {
-                panic!("no serialize fn found for {:?}", x.type_id());
+                panic!("no serialize fn found for {}", self.label_of_value_guts(x));
             }
         }
     }
@@ -1046,8 +1000,8 @@ impl Runtime {
                 // panic!("no eq fn found for {:?}", (lhs_type_id, rhs_type_id)),
                 log::warn!(
                     "no eq fn found for ({}, {}); returning default value of false",
-                    self.label_of(lhs_type_id),
-                    self.label_of(rhs_type_id)
+                    self.label_of_value_guts(lhs),
+                    self.label_of_value_guts(rhs)
                 );
                 false
             }
@@ -1094,8 +1048,10 @@ impl Runtime {
                 // panic!("no inhabits fn found for {:?}", (lhs_type_id, rhs_type_id)),
                 log::warn!(
                     "no inhabits fn found for ({}, {}); returning default value of false",
-                    self.label_of(type_id_pair.0),
-                    self.label_of(type_id_pair.1)
+                    // self.label_of(type_id_pair.0),
+                    // self.label_of(type_id_pair.1)
+                    self.label_of_value_guts(x),
+                    self.label_of_value_guts(t)
                 );
                 false
             }
@@ -1119,7 +1075,10 @@ impl Runtime {
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
             None => {
-                panic!("no abstract_type fn found for {}", self.label_of(type_id));
+                panic!(
+                    "no abstract_type fn found for {}",
+                    self.label_of_value_guts(x)
+                );
                 //                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 //                 Box::new(Type)
             }
@@ -1131,7 +1090,7 @@ impl Runtime {
         match self.clone_fn_m.get(&type_id) {
             Some(clone_fn) => clone_fn(x),
             None => {
-                panic!("no clone fn found for {}", self.label_of(type_id));
+                panic!("no clone fn found for {}", self.label_of_value_guts(x));
                 // There's probably no reasonable default.
                 //                 log::warn!("no clone fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 //                 Box::new(Type)
@@ -1159,7 +1118,7 @@ impl Runtime {
             None => {
                 panic!(
                     "no is_parametric fn found for {}",
-                    self.label_of(x.type_id())
+                    self.label_of_value_guts(x)
                 );
                 // NOTE: A default here probably doesn't make any sense.
                 //                 log::warn!("no is_parametric fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
@@ -1182,7 +1141,7 @@ impl Runtime {
         match self.is_type_fn_m.get(&x.type_id()) {
             Some(is_type_fn) => is_type_fn(x),
             None => {
-                panic!("no is_type fn found for {}", self.label_of(x.type_id()));
+                panic!("no is_type fn found for {}", self.label_of_value_guts(x));
                 // NOTE: A default here probably doesn't make any sense.
                 //                 log::warn!("no is_type fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
                 //                 false
@@ -1194,11 +1153,6 @@ impl Runtime {
     }
     /// Returns the NonParametricTermCode value for x if it's a NonParametricTerm, otherwise error.
     pub fn non_parametric_term_code(&self, x: &ValueGuts) -> Result<st::NonParametricTermCode> {
-        log::debug!(
-            "non_parametric_term_code; x.type_id(): {:?}, label_of(x): {}",
-            x.type_id(),
-            self.label_of(x.type_id())
-        );
         Ok(self
             .non_parametric_term_code_m
             .get(&x.type_id())
@@ -1214,9 +1168,9 @@ impl Runtime {
             None => {
                 panic!(
                     "no dereferenced_once fn found for {}",
-                    self.label_of(x.type_id())
+                    self.label_of_value_guts(x)
                 );
-                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no dereferenced_once fn found for {}", self.label_of(x.type_id()))
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no dereferenced_once fn found for {}", self.label_of_value_guts(x))
             }
         }
     }
@@ -1254,9 +1208,9 @@ impl Runtime {
             None => {
                 panic!(
                     "no construct fn found for {}",
-                    self.label_of(constructor.type_id())
+                    self.label_of_value_guts(constructor)
                 );
-                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no construct fn found for {}", self.label_of(constructor.type_id()))
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no construct fn found for {}", self.label_of_value_guts(constructor))
             }
         }
     }
@@ -1275,7 +1229,7 @@ impl Runtime {
             None => {
                 panic!(
                     "no deserialize_parameters_and_construct fn found for {}",
-                    self.label_of(constructor.type_id())
+                    self.label_of_value_guts(constructor)
                 );
                 // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deserialize_parameters_and_construct fn found for {}", self.label_of(constructor.type_id()))
             }
@@ -1287,9 +1241,9 @@ impl Runtime {
             None => {
                 panic!(
                     "no deconstructed fn found for {}",
-                    self.label_of(x.type_id())
+                    self.label_of_value_guts(x)
                 );
-                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstructed fn found for {}", self.label_of(x.type_id()))
+                // NOTE: A reasonable default would be Err(anyhow::anyhow!("no deconstructed fn found for {}", self.label_of_value_guts(x))
             }
         }
     }
