@@ -6,12 +6,10 @@ pub trait Deserializable {
     // via Constructor::deserialize_parameters_and_construct.
 
     /// Produce an instance of Self by deserializing the serialized parameters.  This obviously
-    /// requires knowing Self.
-    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> where Self: Sized;
-//     /// Deserializes an instance of the implementing type from the reader.
-//     // TODO: Consider adding serialization parameters such as endianness.  Could also manage
-//     // type context projection this way.
-//     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> where Self: Sized;
+    /// requires knowing the type `Self`.
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self>
+    where
+        Self: Sized;
 }
 
 /// Helper function for deserializing arrays of things.

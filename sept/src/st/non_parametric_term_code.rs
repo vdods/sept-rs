@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Error, Result};
 
 // The repr(u8) attribute is to be compatible with the C++ implementation.
 // NOTE: TermTrait and all the other things like Stringifiable are not being implemented
@@ -11,7 +11,6 @@ use crate::Result;
 #[derive(Clone, Copy, Debug, derive_more::Display, Eq, Hash, PartialEq, int_enum::IntEnum)]
 pub enum NonParametricTermCode {
     // The most basic Types.
-
     /// Literally everything is a Term (this could be called Any).
     Term = 0x00,
     /// Inhabitants are Terms requiring no parameters to instantiate (each variant of the
@@ -21,7 +20,6 @@ pub enum NonParametricTermCode {
     ParametricTerm = 0x02,
 
     // Type Types.
-
     /// A Term which has an inhabitation predicate.
     Type = 0x03,
     /// A Term which is not a Type (this could be called Value).
@@ -32,7 +30,6 @@ pub enum NonParametricTermCode {
     ParametricType = 0x06,
 
     // NonParametricTerm && NonType
-
     /// Void is a NonType that conveys no information.
     Void = 0x07,
     /// The truthier of the two inhabitants of Bool.
@@ -41,7 +38,6 @@ pub enum NonParametricTermCode {
     False = 0x09,
 
     // A few natural Types.
-
     /// Sole inhabitant is Void.
     VoidType = 0x0A,
     /// Sole inhabitant is True.
@@ -54,7 +50,6 @@ pub enum NonParametricTermCode {
     FormalTypeOf = 0x0E,
 
     // POD Types
-
     /// Isomorphic to Union(TrueType, FalseType).
     Bool = 0x0F,
     Sint8 = 0x10,
@@ -70,7 +65,6 @@ pub enum NonParametricTermCode {
     AsciiChar = 0x1A, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
 
     // POD Type Types
-
     /// Sole inhabitant is Bool.
     BoolType = 0x1B,
     /// Sole inhabitant is Sint8.
@@ -101,7 +95,6 @@ pub enum NonParametricTermCode {
     Utf8StringType = 0x28,
 
     // Other Types related to POD Types
-
     /// Isomorphic to Union(Sint8, Sint16, Sint32, Sint64).
     // TODO: Maybe allow this to construct Sint(N) where N is the number of bits, and e.g. Sint(32)
     // would be isomorphic to Sint32.
@@ -125,7 +118,6 @@ pub enum NonParametricTermCode {
     /// Isomorphic to Union(BoolType, SintType, UintType, FloatType) (TODO: Somehow add Pod as an inhabitant)
     PodType = 0x30,
     // TODO: Add semantic classes like Positive, Negative, NonPositive, NonNegative, Zero
-
     /// Inhabitants have the form Union(T1,...,TN) -- implemented as UnionTerm.
     Union = 0x31,
     /// Inhabitants have the form Intersection(T1,...,TN) -- implemented as IntersectionTerm.
@@ -145,7 +137,6 @@ pub enum NonParametricTermCode {
     DifferenceType = 0x38,
 
     // TODO: UnionType, IntersectionType, etc.
-
     /// Inhabitants are ArrayES, ArrayE, ArrayS, Array.
     ArrayType = 0x39,
     /// Inhabitants have the form ArrayES(T,N) -- implemented as ArrayESTerm.
@@ -183,7 +174,6 @@ pub enum NonParametricTermCode {
     //
     // Reference-related terms
     //
-
     /// Sole inhabitant is MemRef.
     MemRefType = 0x47,
     /// Inhabitants have the form MemRef(&d), where d is Data.
@@ -207,7 +197,6 @@ pub enum NonParametricTermCode {
     //
     // Control terms
     //
-
     /// Sole inhabitant is Output.
     OutputType = 0x51,
     /// Inhabitants have the form Output(V) for some value V.
@@ -228,8 +217,15 @@ pub enum NonParametricTermCode {
     // TODO: Ideally there could be an "Unspecified(u8)" in which the u8 value is disjoint
     // with the above values, and so it would use niche logic and not take up more storage than u8.
     // this could be used for application-specific values, though that would hinder interoperability.
-
     Undefined = 0xFF, // TEMP HACK
+}
+
+impl TryFrom<u8> for NonParametricTermCode {
+    type Error = Error;
+    fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
+        use int_enum::IntEnum;
+        Ok(Self::from_int(value)?)
+    }
 }
 
 impl NonParametricTermCode {

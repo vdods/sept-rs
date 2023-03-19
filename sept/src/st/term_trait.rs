@@ -1,7 +1,7 @@
 use std::{any::Any, fmt::Debug};
 
 // TODO: Figure out if it's possible to require trait Inhabits<Self::AbstractTypeType>
-pub trait TermTrait: Any + Clone + Send + Sync + Debug + Sized {
+pub trait TermTrait: Any + Clone + Debug + Send + Sized + Sync {
     /// This defines the return type of `fn abstract_type(&self)`.  Pardon the awkward naming.
     // TODO: This could be renamed to ConstructorRepr or something.
     // TODO: Maybe the bound on this could be `where Self: Inhabits<Self::AbstractTypeType>`
