@@ -23,7 +23,10 @@ pub struct PartiallyOrderedSet<T: Copy + Debug + Eq + Hash> {
 
 impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
     pub fn new(partial_order_eval_fn: PartialOrderEvalFn<T>) -> Self {
-        Self { partial_order_eval_fn, dag: DirectedAcyclicGraph::new() }
+        Self {
+            partial_order_eval_fn,
+            dag: DirectedAcyclicGraph::new(),
+        }
     }
 
     pub fn dag(&self) -> &DirectedAcyclicGraph<T> {
@@ -105,10 +108,8 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
             PartialOrder::Equal => {
                 retval.insert(node);
                 true
-            },
-            PartialOrder::GreaterThan | PartialOrder::Incomparable => {
-                false
-            },
+            }
+            PartialOrder::GreaterThan | PartialOrder::Incomparable => false,
             PartialOrder::LessThan => {
                 let mut inserted = false;
                 for child in self.dag.children_of(node).iter() {
@@ -116,8 +117,8 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
                         PartialOrder::LessThan => {
                             retval.insert(node);
                             inserted = true;
-                        },
-                        PartialOrder::Incomparable => { },
+                        }
+                        PartialOrder::Incomparable => {}
                         PartialOrder::Equal | PartialOrder::GreaterThan => {
                             // TODO: Maybe preserve the value of (self.partial_order_eval_fn)(x, *child)
                             // and pass it along to be used again.
@@ -139,7 +140,7 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
             PartialOrder::Equal => {
                 retval.insert(node);
                 true
-            },
+            }
             PartialOrder::LessThan | PartialOrder::Incomparable => false,
             PartialOrder::GreaterThan => {
                 let mut inserted = false;
@@ -148,8 +149,8 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
                         PartialOrder::GreaterThan => {
                             retval.insert(node);
                             inserted = true;
-                        },
-                        PartialOrder::Incomparable => { },
+                        }
+                        PartialOrder::Incomparable => {}
                         PartialOrder::Equal | PartialOrder::LessThan => {
                             // TODO: Maybe preserve the value of (self.partial_order_eval_fn)(x, *parent)
                             // and pass it along to be used again.
@@ -171,45 +172,47 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
 #[cfg(test)]
 mod tests {
 
-use crate::Result;
-use super::*;
+    use super::*;
+    use crate::Result;
 
-/// The partial order on positive u32 values is defined as:
-/// x divides y implies that x `<=` y, where `<=` means LessThan or Equal.
-fn pos_u32_divisibility_partial_order(lhs: u32, rhs: u32) -> PartialOrder {
-    assert!(lhs > 0);
-    assert!(rhs > 0);
-    let lhs_divides_rhs = rhs % lhs == 0;
-    let rhs_divides_lhs = lhs % rhs == 0;
-    match (lhs_divides_rhs, rhs_divides_lhs) {
-        // lhs divides rhs, rhs divides lhs
-        (true, true) => PartialOrder::Equal,
-        // lhs !divides rhs, rhs divides lhs
-        (false, true) => PartialOrder::GreaterThan,
-        // lhs divides rhs, rhs !divides lhs
-        (true, false) => PartialOrder::LessThan,
-        // lhs !divides rhs, rhs !divides lhs
-        (false, false) => PartialOrder::Incomparable,
+    /// The partial order on positive u32 values is defined as:
+    /// x divides y implies that x `<=` y, where `<=` means LessThan or Equal.
+    fn pos_u32_divisibility_partial_order(lhs: u32, rhs: u32) -> PartialOrder {
+        assert!(lhs > 0);
+        assert!(rhs > 0);
+        let lhs_divides_rhs = rhs % lhs == 0;
+        let rhs_divides_lhs = lhs % rhs == 0;
+        match (lhs_divides_rhs, rhs_divides_lhs) {
+            // lhs divides rhs, rhs divides lhs
+            (true, true) => PartialOrder::Equal,
+            // lhs !divides rhs, rhs divides lhs
+            (false, true) => PartialOrder::GreaterThan,
+            // lhs divides rhs, rhs !divides lhs
+            (true, false) => PartialOrder::LessThan,
+            // lhs !divides rhs, rhs !divides lhs
+            (false, false) => PartialOrder::Incomparable,
+        }
     }
-}
 
-#[test]
-fn test_poset_u32() -> Result<()> {
-    let _ = env_logger::try_init();
+    #[test]
+    fn test_poset_u32() -> Result<()> {
+        let _ = env_logger::try_init();
 
-    let mut poset: PartiallyOrderedSet<u32> = PartiallyOrderedSet::new(pos_u32_divisibility_partial_order);
-    for i in 1..41 {
-        poset.insert(i);
+        let mut poset: PartiallyOrderedSet<u32> =
+            PartiallyOrderedSet::new(pos_u32_divisibility_partial_order);
+        for i in 1..41 {
+            poset.insert(i);
+        }
+        log::debug!("poset:\n{:#?}", poset);
+
+        let dot_graph = poset
+            .dag()
+            .generate_dot_graph("pos ints; divisibility", None)?;
+        //     let mut file = std::fs::File::create("blah.dot")?;
+        //     use std::io::Write;
+        //     file.write_all(dot_graph.as_bytes())?;
+        log::debug!("dot_graph:\n{}", dot_graph);
+
+        Ok(())
     }
-    log::debug!("poset:\n{:#?}", poset);
-
-    let dot_graph = poset.dag().generate_dot_graph("pos ints; divisibility", None)?;
-//     let mut file = std::fs::File::create("blah.dot")?;
-//     use std::io::Write;
-//     file.write_all(dot_graph.as_bytes())?;
-    log::debug!("dot_graph:\n{}", dot_graph);
-
-    Ok(())
-}
-
 }

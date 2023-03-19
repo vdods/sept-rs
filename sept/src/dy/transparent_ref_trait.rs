@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 use std::sync::{Arc, RwLock};
 
 pub trait TransparentRefTrait: st::TermTrait {

@@ -1,4 +1,8 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
+use crate::{
+    dy,
+    st::{self, Inhabits, Stringifiable, TermTrait},
+    Result,
+};
 
 pub type Utf8StringTerm = String;
 
@@ -8,7 +12,8 @@ impl dy::Deconstruct for String {
         dy::ParametricDeconstruction::new(
             st::Utf8String.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -26,18 +31,21 @@ impl st::Deserializable for String {
         let mut string = String::with_capacity(len);
         use std::io::Read;
         let bytes_read = reader.take(len as u64).read_to_string(&mut string)?;
-        anyhow::ensure!(bytes_read == len, "EOF encountered in deserialize before expected end of String");
+        anyhow::ensure!(
+            bytes_read == len,
+            "EOF encountered in deserialize before expected end of String"
+        );
         Ok(string)
     }
 }
 
 impl st::Serializable for String {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Utf8String.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Utf8String.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where a string smaller than 8 bytes is encoded in exactly 8 bytes.
@@ -94,13 +102,16 @@ impl TermTrait for String {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
 impl st::TestValues for String {
     fn fixed_test_values() -> Vec<Self> {
-        vec!["", "a", "abc", "\n", "\t", "日本"].into_iter().map(|s| s.to_string()).collect()
+        vec!["", "a", "abc", "\n", "\t", "日本"]
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect()
     }
 }
 

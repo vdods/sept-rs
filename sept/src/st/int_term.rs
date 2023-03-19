@@ -1,4 +1,8 @@
-use crate::{dy, Result, st::{self, Inhabits, Stringifiable, TermTrait}};
+use crate::{
+    dy,
+    st::{self, Inhabits, Stringifiable, TermTrait},
+    Result,
+};
 
 pub type Sint8Term = i8;
 pub type Sint16Term = i16;
@@ -72,7 +76,8 @@ impl dy::Deconstruct for i8 {
         dy::ParametricDeconstruction::new(
             st::Sint8.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -82,7 +87,8 @@ impl dy::Deconstruct for i16 {
         dy::ParametricDeconstruction::new(
             st::Sint16.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -92,7 +98,8 @@ impl dy::Deconstruct for i32 {
         dy::ParametricDeconstruction::new(
             st::Sint32.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -102,7 +109,8 @@ impl dy::Deconstruct for i64 {
         dy::ParametricDeconstruction::new(
             st::Sint64.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -112,7 +120,8 @@ impl dy::Deconstruct for u8 {
         dy::ParametricDeconstruction::new(
             st::Uint8.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -122,7 +131,8 @@ impl dy::Deconstruct for u16 {
         dy::ParametricDeconstruction::new(
             st::Uint16.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -132,7 +142,8 @@ impl dy::Deconstruct for u32 {
         dy::ParametricDeconstruction::new(
             st::Uint32.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -142,7 +153,8 @@ impl dy::Deconstruct for u64 {
         dy::ParametricDeconstruction::new(
             st::Uint64.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -211,12 +223,12 @@ impl st::Deserializable for u64 {
 }
 
 impl st::Serializable for i8 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Sint8.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Sint8.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -224,12 +236,12 @@ impl st::Serializable for i8 {
 }
 
 impl st::Serializable for i16 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Sint16.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Sint16.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -237,12 +249,12 @@ impl st::Serializable for i16 {
 }
 
 impl st::Serializable for i32 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Sint32.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Sint32.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -250,12 +262,12 @@ impl st::Serializable for i32 {
 }
 
 impl st::Serializable for i64 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Sint64.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Sint64.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -263,12 +275,12 @@ impl st::Serializable for i64 {
 }
 
 impl st::Serializable for u8 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Uint8.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Uint8.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -276,12 +288,12 @@ impl st::Serializable for u8 {
 }
 
 impl st::Serializable for u16 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Uint16.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Uint16.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -289,12 +301,12 @@ impl st::Serializable for u16 {
 }
 
 impl st::Serializable for u32 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Uint32.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Uint32.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -302,12 +314,12 @@ impl st::Serializable for u32 {
 }
 
 impl st::Serializable for u64 {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Uint64.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Uint64.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
@@ -372,7 +384,7 @@ impl TermTrait for i8 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -386,7 +398,7 @@ impl TermTrait for i16 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -400,7 +412,7 @@ impl TermTrait for i32 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -414,7 +426,7 @@ impl TermTrait for i64 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -428,7 +440,7 @@ impl TermTrait for u8 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -442,7 +454,7 @@ impl TermTrait for u16 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -456,7 +468,7 @@ impl TermTrait for u32 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 
@@ -470,7 +482,7 @@ impl TermTrait for u64 {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 

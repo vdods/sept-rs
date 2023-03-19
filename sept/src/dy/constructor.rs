@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 
 /// This trait defines a constructor.  In particular, a constructor is a term that transforms
 /// a tuple of parameters into a term potentially of another type.  E.g. `Array` is a constructor,
@@ -19,5 +19,8 @@ pub trait Constructor: st::TermTrait {
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType>;
     /// Deserialize from the given reader the parameters to use in the construction.
     // TODO: This really belongs in a st::Constructor trait.
-    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType>;
+    fn deserialize_parameters_and_construct(
+        &self,
+        reader: &mut dyn std::io::Read,
+    ) -> Result<Self::ConstructedType>;
 }

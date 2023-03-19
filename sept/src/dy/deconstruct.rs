@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 
 /// This trait defines deconstruction of a term.
 // TODO: Rename to Deconstructible
@@ -29,23 +29,23 @@ pub trait Deconstruct: st::TermTrait + Clone {
     fn textified(&self) -> String {
         Textifier(self).to_string()
     }
-//     /// Canonical serialization of a Deconstruct-ible term, where all type information is encoded
-//     /// in the serialization -- i.e. it's a fully-typed, dynamic representation.
-//     // TODO: Maybe this should just be a generic function accepting a Deconstruct
-//     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(serialize_impl(&self.deconstructed(), writer)?)
-//     }
-//     /// Convenience method for producing a Vec<u8> via serialization.
-//     // TODO: Maybe this should just be a generic function accepting a Deconstruct
-//     fn serialized(&self, starting_capacity_o: Option<usize>) -> Result<Vec<u8>> {
-//         let mut buffer = if let Some(starting_capacity) = starting_capacity_o {
-//             Vec::with_capacity(starting_capacity)
-//         } else {
-//             Vec::new()
-//         };
-//         self.serialize(&mut buffer)?;
-//         Ok(buffer)
-//     }
+    //     /// Canonical serialization of a Deconstruct-ible term, where all type information is encoded
+    //     /// in the serialization -- i.e. it's a fully-typed, dynamic representation.
+    //     // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(serialize_impl(&self.deconstructed(), writer)?)
+    //     }
+    //     /// Convenience method for producing a Vec<u8> via serialization.
+    //     // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    //     fn serialized(&self, starting_capacity_o: Option<usize>) -> Result<Vec<u8>> {
+    //         let mut buffer = if let Some(starting_capacity) = starting_capacity_o {
+    //             Vec::with_capacity(starting_capacity)
+    //         } else {
+    //             Vec::new()
+    //         };
+    //         self.serialize(&mut buffer)?;
+    //         Ok(buffer)
+    //     }
 }
 
 /// This is used as a semantic marker in order to print a value using "full textification", i.e.
@@ -68,21 +68,32 @@ fn textify_impl(
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
             use crate::st::Stringifiable;
-            write!(f, "{}", non_parametric_deconstruction.reconstructed().unwrap().stringify())?
+            write!(
+                f,
+                "{}",
+                non_parametric_deconstruction
+                    .reconstructed()
+                    .unwrap()
+                    .stringify()
+            )?
         }
         dy::Deconstruction::Terminal(terminal_deconstruction) => {
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
             use crate::st::Stringifiable;
             // TODO: Should this be a more-formal kind of stringification?
-            write!(f, "{}", terminal_deconstruction.reconstructed().unwrap().stringify())?
+            write!(
+                f,
+                "{}",
+                terminal_deconstruction.reconstructed().unwrap().stringify()
+            )?
         }
         dy::Deconstruction::Parametric(parametric_deconstruction) => {
             textify_impl(&parametric_deconstruction.constructor_d, f)?;
             write!(f, "(")?;
             for (i, parameter_d) in parametric_deconstruction.parameter_dv.iter().enumerate() {
                 textify_impl(&parameter_d, f)?;
-                if i+1 < parametric_deconstruction.parameter_dv.len() {
+                if i + 1 < parametric_deconstruction.parameter_dv.len() {
                     write!(f, ", ")?;
                 }
             }

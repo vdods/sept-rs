@@ -1,4 +1,4 @@
-use crate::{dy, Result, st};
+use crate::{dy, st, Result};
 
 /// A NonParametricTermTrait (NonParametricTermTrait) is one that has no "state", i.e. each
 /// NonParametricTermTrait is a singleton.  It's recommended to derive this trait using
@@ -29,12 +29,12 @@ impl<N: NonParametricTermTrait> st::Deserializable for N {
 }
 
 impl<N: NonParametricTermTrait> st::Serializable for N {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::NonParametric.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(N::NON_PARAMETRIC_TERM_CODE.write(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::NonParametric.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(N::NON_PARAMETRIC_TERM_CODE.write(writer)?)
+    //     }
     fn serialize(&self, _writer: &mut dyn std::io::Write) -> Result<usize> {
         // A NonParametricTerm has no parameters by definition.  If its type is known, then its
         // value is known, so nothing has to be serialized.

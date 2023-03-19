@@ -1,4 +1,8 @@
-use crate::{dy, Result, st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType}};
+use crate::{
+    dy,
+    st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType},
+    Result,
+};
 
 pub type BoolTerm = bool;
 
@@ -8,7 +12,8 @@ impl dy::Deconstruct for bool {
         dy::ParametricDeconstruction::new(
             st::Bool.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
-        ).into()
+        )
+        .into()
     }
 }
 
@@ -63,12 +68,12 @@ impl st::Deserializable for bool {
 }
 
 impl st::Serializable for bool {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Bool.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Bool.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // Represent as u8.
         let n = if *self { 1u8 } else { 0u8 };
@@ -92,7 +97,7 @@ impl TermTrait for bool {
         false
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Self::AbstractTypeType{}
+        Self::AbstractTypeType {}
     }
 }
 

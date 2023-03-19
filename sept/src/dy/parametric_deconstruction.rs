@@ -17,14 +17,21 @@ pub struct ParametricDeconstruction {
 impl ParametricDeconstruction {
     /// Plain constructor, doesn't call deconstruct on anything.
     pub fn new(constructor_d: dy::Deconstruction, parameter_dv: Vec<dy::Deconstruction>) -> Self {
-        Self { constructor_d, parameter_dv }
+        Self {
+            constructor_d,
+            parameter_dv,
+        }
     }
     /// This will deconstruct constructor and parameters, producing a fully deconstructed value.
     pub fn new_recursive(constructor: dy::Value, parameter_t: dy::TupleTerm) -> Self {
         use crate::dy::Deconstruct;
         Self {
             constructor_d: constructor.deconstruct(),
-            parameter_dv: parameter_t.into_inner().into_iter().map(|parameter| parameter.deconstruct()).collect(),
+            parameter_dv: parameter_t
+                .into_inner()
+                .into_iter()
+                .map(|parameter| parameter.deconstruct())
+                .collect(),
         }
     }
     /// Recurse and call reconstruct on constructor_d and parameter_dv, then perform the construction.

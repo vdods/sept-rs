@@ -1,7 +1,21 @@
-use crate::{dy, Result, st::{self, Array, Inhabits, Stringifiable}};
+use crate::{
+    dy,
+    st::{self, Array, Inhabits, Stringifiable},
+    Result,
+};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
-#[derive(Clone, Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, derive_more::Into, dy::IntoValue, PartialEq, st::TermTrait)]
+#[derive(
+    Clone,
+    Debug,
+    derive_more::Deref,
+    derive_more::DerefMut,
+    derive_more::From,
+    derive_more::Into,
+    dy::IntoValue,
+    PartialEq,
+    st::TermTrait,
+)]
 #[st_term_trait(AbstractTypeType = "Array", is_parametric = "true", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
 
@@ -35,12 +49,12 @@ impl st::Deserializable for ArrayTerm {
 }
 
 impl st::Serializable for ArrayTerm {
-//     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
-//     }
-//     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-//         Ok(st::Array.serialize(writer)?)
-//     }
+    //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
+    //     }
+    //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
+    //         Ok(st::Array.serialize(writer)?)
+    //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where an ArrayTerm smaller than 8 bytes is encoded in exactly 8 bytes.
@@ -58,7 +72,7 @@ impl Stringifiable for ArrayTerm {
         s.push_str("Array(");
         for (i, element) in self.0.iter().enumerate() {
             s.push_str(&element.stringify());
-            if i+1 < self.0.len() {
+            if i + 1 < self.0.len() {
                 s.push_str(", ");
             }
         }

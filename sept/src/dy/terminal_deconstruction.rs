@@ -13,7 +13,7 @@ impl TryFrom<dy::Value> for TerminalDeconstruction {
     type Error = Error;
     fn try_from(value: dy::Value) -> std::result::Result<Self, Self::Error> {
         // TODO: Check that this is actually a terminal type.
-//         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_terminal(value.as_ref()), "can't create TerminalDeconstruction from a Value (which was {:?}) which is not a terminal", value);
+        //         anyhow::ensure!(dy::RUNTIME_LA.read().unwrap().is_terminal(value.as_ref()), "can't create TerminalDeconstruction from a Value (which was {:?}) which is not a terminal", value);
         Ok(Self(value))
     }
 }

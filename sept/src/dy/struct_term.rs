@@ -7,13 +7,7 @@ use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(
-    Clone,
-    Debug,
-    dy::IntoValue,
-    PartialEq,
-    st::TermTrait,
-)]
+#[derive(Clone, Debug, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(AbstractTypeType = "Struct", is_parametric = "true", is_type = "true")]
 pub struct StructTerm {
     /// This stores the field declarations (i.e. `field: Type`) in a particular order.

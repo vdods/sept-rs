@@ -1,7 +1,20 @@
-use crate::{dy, st::{self, TermTrait, Type}};
+use crate::{
+    dy,
+    st::{self, TermTrait, Type},
+};
 
 /// EmptyType is a Type that by definition has no inhabitants.
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
 #[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct EmptyType;
 

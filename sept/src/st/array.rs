@@ -1,8 +1,26 @@
-use crate::{dy, Result, st::{self, ArrayType, Inhabits}};
+use crate::{
+    dy,
+    st::{self, ArrayType, Inhabits},
+    Result,
+};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
-#[st_term_trait(AbstractTypeType = "ArrayType", is_parametric = "false", is_type = "true")]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "ArrayType",
+    is_parametric = "false",
+    is_type = "true"
+)]
 pub struct Array;
 
 impl dy::Constructor for Array {
@@ -12,7 +30,10 @@ impl dy::Constructor for Array {
         let parameter_v: Vec<dy::Value> = parameter_t.into();
         Ok(dy::ArrayTerm::from(parameter_v))
     }
-    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+    fn deserialize_parameters_and_construct(
+        &self,
+        reader: &mut dyn std::io::Read,
+    ) -> Result<Self::ConstructedType> {
         use st::Deserializable;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }

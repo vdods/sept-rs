@@ -3,5 +3,5 @@ mod parse;
 
 pub use crate::parser::{
     expr::{Expr, ExprSequence, Syntactuple, Terminal},
-    parse::{ExprSequenceEnd, ParseStats, parse_deconstruction, parse_value},
+    parse::{parse_deconstruction, parse_value, ExprSequenceEnd, ParseStats},
 };

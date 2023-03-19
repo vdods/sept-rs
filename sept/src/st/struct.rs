@@ -1,15 +1,33 @@
-use crate::{dy, Result, st::{self, Inhabits, StructType}};
+use crate::{
+    dy,
+    st::{self, Inhabits, StructType},
+    Result,
+};
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait)]
-#[st_term_trait(AbstractTypeType = "StructType", is_parametric = "false", is_type = "true")]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    dy::IntoValue,
+    st::NonParametricTermTrait,
+    PartialEq,
+    st::TermTrait,
+    st::TypeTrait,
+)]
+#[st_term_trait(
+    AbstractTypeType = "StructType",
+    is_parametric = "false",
+    is_type = "true"
+)]
 pub struct Struct;
 
 impl dy::Constructor for Struct {
     type ConstructedType = dy::StructTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
-//         // TEMP HACK: This will be a real type eventually.
-//         let field_decl_type = dy::TupleTerm::from((st::Utf8String, st::Type));
+        //         // TEMP HACK: This will be a real type eventually.
+        //         let field_decl_type = dy::TupleTerm::from((st::Utf8String, st::Type));
         // Verify that the parameters are correctly typed, and form the field_decl_v.
         let field_decl_v/*: Vec<(String, dy::Value)>*/ = parameter_t.into_inner().into_iter().enumerate().map(
             |(i, mut field_decl): (usize, dy::Value)| -> Result<(String, dy::Value)> {
@@ -36,7 +54,10 @@ impl dy::Constructor for Struct {
         ).collect::<Result<Vec<(String, dy::Value)>>>()?;
         Ok(dy::StructTerm::new(field_decl_v)?)
     }
-    fn deserialize_parameters_and_construct(&self, reader: &mut dyn std::io::Read) -> Result<Self::ConstructedType> {
+    fn deserialize_parameters_and_construct(
+        &self,
+        reader: &mut dyn std::io::Read,
+    ) -> Result<Self::ConstructedType> {
         use st::Deserializable;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
