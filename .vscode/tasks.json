@@ -1,0 +1,35 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "sept build",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "test",
+                "--package",
+                "sept",
+                "--all-features",
+                "--no-run"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$rustc",
+                    "fileLocation": [
+                        "relative"
+                    ]
+                }
+            ]
+        }
+    ]
+}
