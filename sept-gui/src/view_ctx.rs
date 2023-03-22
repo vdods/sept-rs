@@ -95,6 +95,8 @@ impl ViewCtx {
             ANSIColor::DARK_YELLOW
         } else if type_id == TypeId::of::<sept::dy::ArrayTerm>() {
             ANSIColor::DARK_RED
+        } else if type_id == TypeId::of::<sept::dy::OrderedMapTerm>() {
+            ANSIColor::DARK_MAGENTA
         } else if type_id == TypeId::of::<sept::dy::StructTerm>()
             || type_id == TypeId::of::<sept::dy::StructTermTerm>()
         {
@@ -170,6 +172,8 @@ impl ViewCtx {
             ANSIColor::BRIGHT_YELLOW
         } else if type_id == TypeId::of::<sept::dy::ArrayTerm>() {
             ANSIColor::BRIGHT_RED
+        } else if type_id == TypeId::of::<sept::dy::OrderedMapTerm>() {
+            ANSIColor::BRIGHT_MAGENTA
         } else if type_id == TypeId::of::<sept::dy::StructTerm>()
             || type_id == TypeId::of::<sept::dy::StructTermTerm>()
         {

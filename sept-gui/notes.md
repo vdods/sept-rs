@@ -4,7 +4,7 @@
 
 Initial implementation of sept-gui.
 -   First goal is to create initial viewer components for existing sept data types, so that any sept data (which is inductively defined from those types) can be rendered.
--   Second goal is to add a notion of a cursor.  The cursor should have a canonical path which ideally is the same as the query path for the sept data, which is displayed in the view footer.  Cursor should be rendered over the whole element that it addresses.  There should be keyboard control of the cursor.
+-   Second goal is to add a notion of a cursor.  The cursor should have a canonical path which ideally is the same as the query path for the sept data, which is displayed in the view footer.  Cursor should be rendered over the whole element that it addresses.  There should be fine-grained keyboard control of the cursor, including structure-aware navigation and selection.
 -   Second goal is to add editing capabilities to those components, so it's possible to create/edit/delete sept data.  Need to handle invalid intermediate states of input (e.g. when you type `1.04e` on the way to typing `1.04e3` for a float value).
 
 Notes on viewer components for various types

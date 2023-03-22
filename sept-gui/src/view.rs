@@ -142,6 +142,7 @@ impl_view_using_to_string!(sept::st::Float32);
 impl_view_using_to_string!(sept::st::Float64);
 impl_view_using_to_string!(sept::st::Utf8String);
 impl_view_using_to_string!(sept::st::Array);
+impl_view_using_to_string!(sept::st::OrderedMap);
 impl_view_using_to_string!(sept::st::Struct);
 impl_view_using_to_string!(sept::st::Tuple);
 impl_view_using_to_string!(sept::st::GlobalSymRef);
@@ -159,6 +160,7 @@ impl_view_using_to_string!(sept::st::Float32Type);
 impl_view_using_to_string!(sept::st::Float64Type);
 impl_view_using_to_string!(sept::st::Utf8StringType);
 impl_view_using_to_string!(sept::st::ArrayType);
+impl_view_using_to_string!(sept::st::OrderedMapType);
 impl_view_using_to_string!(sept::st::StructType);
 impl_view_using_to_string!(sept::st::TupleType);
 impl_view_using_to_string!(sept::st::GlobalSymRefType);
@@ -481,6 +483,138 @@ impl View for sept::dy::ArrayTerm {
             layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, "]", view_ctx.color_for::<Self>(), view_ctx);
+        render_type_annotation_for(
+            self,
+            layout_job,
+            view_ctx,
+            Some(format!(" (len: {})", self.len()).as_str()),
+        );
+    }
+}
+
+/// This one is for OrderedMapTerm key-value pairs.
+impl View for (&sept::dy::Value, &mut sept::dy::Value) {
+    fn update_expanded(
+        &mut self,
+        ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        // TEMP HACK -- because the key is immutable and update (for now) requires mutability,
+        // just dumbly clone the key first.
+        // TODO: The real solution would be to pass in (1) a reference to the containing OrderedMapTerm,
+        // and (2) a clone of the key, so that if it's modified, it can actually affect the change.
+        // This may also have to reference any edit overlays (which would be part of ViewCtx) that haven't been applied.
+        let mut layout_job =
+            self.0
+                .clone()
+                .update_expanded(ui, view_ctx, continuation_layout_job_o);
+        layout_job_append(
+            &mut layout_job,
+            " => ",
+            view_ctx.color_for::<sept::dy::OrderedMapTerm>(),
+            view_ctx,
+        );
+        // We pass in layout_job as continuation_layout_job_o so that it renders starting on the same
+        // line as " => ".
+        let layout_job = self.1.update_expanded(ui, view_ctx, Some(layout_job));
+        // Return this to the outer context
+        layout_job
+    }
+    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        // TEMP HACK -- because the key is immutable and update (for now) requires mutability,
+        // just dumbly clone the key first.
+        // TODO: The real solution would be to pass in (1) a reference to the containing OrderedMapTerm,
+        // and (2) a clone of the key, so that if it's modified, it can actually affect the change.
+        // This may also have to reference any edit overlays (which would be part of ViewCtx) that haven't been applied.
+        self.0.clone().update_inline(layout_job, view_ctx);
+        layout_job_append(
+            layout_job,
+            " => ",
+            view_ctx.color_for::<sept::dy::OrderedMapTerm>(),
+            view_ctx,
+        );
+        self.1.update_inline(layout_job, view_ctx);
+    }
+}
+
+impl View for sept::dy::OrderedMapTerm {
+    fn update_expanded(
+        &mut self,
+        ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
+
+        if self.is_empty() {
+            layout_job_append(
+                &mut layout_job,
+                "{}",
+                view_ctx.color_for::<Self>(),
+                view_ctx,
+            );
+            render_type_annotation_for(
+                self,
+                &mut layout_job,
+                view_ctx,
+                Some(format!(" (len: {})", self.len()).as_str()),
+            );
+            return layout_job;
+        }
+
+        layout_job_append(&mut layout_job, "{", view_ctx.color_for::<Self>(), view_ctx);
+        ui.label(layout_job);
+
+        {
+            let mut view_ctx_g = view_ctx.push_nesting_depth();
+            for mut key_value_pair in self.iter_mut() {
+                ui.horizontal(|ui| {
+                    ui.label(indentation_for::<Self>(&mut view_ctx_g));
+
+                    ui.vertical(|ui| {
+                        let mut layout_job = key_value_pair.update(ui, &mut view_ctx_g, None);
+                        layout_job_append(
+                            &mut layout_job,
+                            ",",
+                            view_ctx_g.color_for::<Self>(),
+                            &mut view_ctx_g,
+                        );
+                        ui.label(layout_job);
+                    });
+                });
+            }
+        }
+
+        let mut layout_job = LayoutJob::default();
+        layout_job_append(&mut layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
+        render_type_annotation_for(
+            self,
+            &mut layout_job,
+            view_ctx,
+            Some(format!(" (len: {})", self.len()).as_str()),
+        );
+        // Return this to the outer context.
+        layout_job
+    }
+    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        if self.is_empty() {
+            layout_job_append(layout_job, "{}", view_ctx.color_for::<Self>(), view_ctx);
+            render_type_annotation_for(
+                self,
+                layout_job,
+                view_ctx,
+                Some(format!(" (len: {})", self.len()).as_str()),
+            );
+            return;
+        }
+
+        layout_job_append(layout_job, "{ ", view_ctx.color_for::<Self>(), view_ctx);
+        for mut key_value_pair in self.iter_mut() {
+            key_value_pair.update_inline(layout_job, view_ctx);
+            layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
+        }
+        layout_job_append(layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
         render_type_annotation_for(
             self,
             layout_job,
@@ -909,6 +1043,8 @@ impl View for sept::dy::Value {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::dy::ArrayTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_mut::<sept::dy::OrderedMapTerm>() {
+            term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::dy::TupleTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::Void>() {
@@ -956,6 +1092,10 @@ impl View for sept::dy::Value {
         } else if let Some(term) = self.downcast_mut::<sept::st::Array>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::st::ArrayType>() {
+            term.update_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMap>() {
+            term.update_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMapType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_mut::<sept::dy::StructTermTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -1036,6 +1176,8 @@ impl View for sept::dy::Value {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::dy::ArrayTerm>() {
             term.update_inline(layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_mut::<sept::dy::OrderedMapTerm>() {
+            term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::dy::TupleTerm>() {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::Void>() {
@@ -1083,6 +1225,10 @@ impl View for sept::dy::Value {
         } else if let Some(term) = self.downcast_mut::<sept::st::Array>() {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::st::ArrayType>() {
+            term.update_inline(layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMap>() {
+            term.update_inline(layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMapType>() {
             term.update_inline(layout_job, view_ctx);
         } else if let Some(term) = self.downcast_mut::<sept::dy::StructTermTerm>() {
             term.update_inline(layout_job, view_ctx);

@@ -1993,6 +1993,7 @@ dependencies = [
  "derive_more",
  "eframe",
  "egui",
+ "maplit",
  "sept",
  "serde",
  "tracing",

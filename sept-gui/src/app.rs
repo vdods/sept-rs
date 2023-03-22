@@ -48,6 +48,18 @@ impl Default for App {
         let a2 =
             sept::dy::ArrayTerm::from(vec![true.into(), 606i32.into(), a1.into(), false.into()]);
 
+        let m0 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {});
+        let m1 = sept::dy::OrderedMapTerm::from(
+            maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
+        );
+        let m2 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {
+            sept::dy::OrderedMapTerm::from(maplit::btreemap! { false.into() => 123u32.into() }).into() => 505.606f64.into(),
+            true.into() => sept::st::Void.into(),
+            sept::st::Bool.into() => sept::dy::OrderedMapTerm::from(
+                maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
+            ).into()
+        });
+
         let t1 = sept::dy::TupleTerm::from(vec![
             true.into(),
             false.into(),
@@ -154,6 +166,9 @@ impl Default for App {
         let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
             a2.into(),
             sept::dy::ArrayTerm::from(vec![]).into(),
+            m0.into(),
+            m1.into(),
+            m2.into(),
             t1.into(),
             t2.into(),
             sept::dy::TupleTerm::from(vec![]).into(),

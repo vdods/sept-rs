@@ -13,6 +13,8 @@ derive_more = "0.99.17"
 egui = "0.20"
 # eframe = { version = "0.21", features = ["persistence"] }
 eframe = { version = "0.20", features = ["persistence"] }
+# This is only used in the test code to construct OrderedMapTerm
+maplit = "1.0.2"
 sept = { path = "../sept" }
 serde = { version = "1", features = [
     "derive",
