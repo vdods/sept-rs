@@ -1,6 +1,5 @@
 use crate::{
-    dy::{self, IntoValue, RUNTIME_LA},
-    parser,
+    dy, parser,
     st::{self, Stringifiable, TermTrait},
     Error, Result,
 };
@@ -134,7 +133,7 @@ impl From<Box<ValueGuts>> for Value {
     }
 }
 
-impl<T: TermTrait + IntoValue + 'static> From<T> for Value {
+impl<T: TermTrait + dy::IntoValue + 'static> From<T> for Value {
     fn from(t: T) -> Self {
         Self(Box::new(t))
     }
@@ -263,9 +262,6 @@ impl TermTrait for Value {
                 .unwrap()
                 .abstract_type_of(self.as_ref()),
         )
-    }
-}
-
     }
 }
 
