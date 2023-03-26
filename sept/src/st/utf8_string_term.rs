@@ -106,6 +106,21 @@ impl TermTrait for String {
     }
 }
 
+// TEMP HACK maybe
+impl TermTrait for &'static str {
+    type AbstractTypeType = st::Utf8String;
+
+    fn is_parametric(&self) -> bool {
+        true
+    }
+    fn is_type(&self) -> bool {
+        false
+    }
+    fn abstract_type(&self) -> Self::AbstractTypeType {
+        Self::AbstractTypeType {}
+    }
+}
+
 impl st::TestValues for String {
     fn fixed_test_values() -> Vec<Self> {
         vec!["", "a", "abc", "\n", "\t", "日本"]
