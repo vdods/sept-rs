@@ -25,6 +25,17 @@ impl dy::Deconstruct for ArrayTerm {
     }
 }
 
+impl st::Deserializable for ArrayTerm {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        let len = st::read_len(reader)?;
+        let mut element_v = Vec::with_capacity(len);
+        for _ in 0..len {
+            element_v.push(dy::Value::deserialize(reader)?);
+        }
+        Ok(Self(element_v))
+    }
+}
+
 impl std::fmt::Display for ArrayTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", &self.stringify())
@@ -37,16 +48,6 @@ impl Inhabits<Array> for ArrayTerm {
     }
 }
 
-impl st::Deserializable for ArrayTerm {
-    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
-        let len = st::read_len(reader)?;
-        let mut element_v = Vec::with_capacity(len);
-        for _ in 0..len {
-            element_v.push(dy::Value::deserialize(reader)?);
-        }
-        Ok(Self(element_v))
-    }
-}
 
 impl st::Serializable for ArrayTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {

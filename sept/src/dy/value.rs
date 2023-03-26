@@ -29,14 +29,14 @@ impl AsRef<ValueGuts> for Value {
 
 impl Clone for Value {
     fn clone(&self) -> Self {
-        Value(RUNTIME_LA.read().unwrap().clone(self.as_ref()))
+        Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_ref()))
     }
 }
 
 impl dy::Constructor for Value {
     type ConstructedType = Value;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
-        Ok(RUNTIME_LA
+        Ok(dy::RUNTIME_LA
             .read()
             .unwrap()
             .construct(self.as_ref(), parameter_t)?)
@@ -45,7 +45,7 @@ impl dy::Constructor for Value {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        Ok(RUNTIME_LA
+        Ok(dy::RUNTIME_LA
             .read()
             .unwrap()
             .deserialize_parameters_and_construct(self.as_ref(), reader)?)
@@ -55,7 +55,7 @@ impl dy::Constructor for Value {
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "Value(")?;
-        RUNTIME_LA.read().unwrap().debug(self.as_ref(), f)?;
+        dy::RUNTIME_LA.read().unwrap().debug(self.as_ref(), f)?;
         write!(f, ")")?;
         Ok(())
     }
@@ -64,10 +64,10 @@ impl std::fmt::Debug for Value {
 impl dy::Deconstruct for Value {
     fn deconstruct(self) -> dy::Deconstruction {
         // TODO: Implement self-consuming deconstruct in Runtime.
-        RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
+        dy::RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
     }
     fn deconstructed(&self) -> dy::Deconstruction {
-        RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
+        dy::RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
     }
 }
 
@@ -89,6 +89,30 @@ impl std::ops::DerefMut for Value {
 //         write!(f, "Value({})", &self.stringify())
 //     }
 // }
+
+impl st::Deserializable for Value {
+    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
+        // First read the SerializedTopLevelCode to decide what to do.
+        match st::SerializedTopLevelCode::read(reader)? {
+            st::SerializedTopLevelCode::Construction => {
+                // Deserialize the constructor.
+                let constructor = Value::deserialize(reader)?;
+                // Deserialize the parameters and construct the Value.
+                use dy::Constructor;
+                Ok(constructor.deserialize_parameters_and_construct(reader)?)
+            }
+            st::SerializedTopLevelCode::NonParametric => {
+                // The NonParametricTermCode plays the role of the constructor, and there are
+                // no parameters as you might have guessed.
+                let non_parametric_term_code = st::NonParametricTermCode::read(reader)?;
+                Ok(dy::RUNTIME_LA
+                    .read()
+                    .unwrap()
+                    .non_parametric_term_from_code(non_parametric_term_code)?)
+            }
+        }
+    }
+}
 
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
@@ -125,23 +149,23 @@ impl std::str::FromStr for Value {
 
 impl st::Inhabits<Value> for Value {
     fn inhabits(&self, rhs: &Value) -> bool {
-        RUNTIME_LA
+        dy::RUNTIME_LA
             .read()
             .unwrap()
             .inhabits(self.as_ref(), rhs.as_ref())
     }
 }
 
-impl<T: st::TypeTrait + IntoValue + 'static> st::Inhabits<T> for Value {
+impl<T: st::TypeTrait + dy::IntoValue + 'static> st::Inhabits<T> for Value {
     fn inhabits(&self, rhs: &T) -> bool {
         let rhs_: &ValueGuts = rhs;
-        RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs_)
+        dy::RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs_)
     }
 }
 
 impl Ord for Value {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        RUNTIME_LA
+        dy::RUNTIME_LA
             .read()
             .unwrap()
             .cmp(self.as_ref(), other.as_ref())
@@ -150,40 +174,19 @@ impl Ord for Value {
 
 impl PartialEq<Value> for Value {
     fn eq(&self, other: &Value) -> bool {
-        RUNTIME_LA.read().unwrap().eq(self.as_ref(), other.as_ref())
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .eq(self.as_ref(), other.as_ref())
     }
 }
 
 impl PartialOrd for Value {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        RUNTIME_LA
+        dy::RUNTIME_LA
             .read()
             .unwrap()
             .partial_cmp(self.as_ref(), other.as_ref())
-    }
-}
-
-impl st::Deserializable for Value {
-    fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
-        // First read the SerializedTopLevelCode to decide what to do.
-        match st::SerializedTopLevelCode::read(reader)? {
-            st::SerializedTopLevelCode::Construction => {
-                // Deserialize the constructor.
-                let constructor = Value::deserialize(reader)?;
-                // Deserialize the parameters and construct the Value.
-                use dy::Constructor;
-                Ok(constructor.deserialize_parameters_and_construct(reader)?)
-            }
-            st::SerializedTopLevelCode::NonParametric => {
-                // The NonParametricTermCode plays the role of the constructor, and there are
-                // no parameters as you might have guessed.
-                let non_parametric_term_code = st::NonParametricTermCode::read(reader)?;
-                Ok(dy::RUNTIME_LA
-                    .read()
-                    .unwrap()
-                    .non_parametric_term_from_code(non_parametric_term_code)?)
-            }
-        }
     }
 }
 
@@ -240,7 +243,7 @@ impl st::Serializable for Value {
 
 impl Stringifiable for Value {
     fn stringify(&self) -> String {
-        RUNTIME_LA.read().unwrap().stringify(self.as_ref())
+        dy::RUNTIME_LA.read().unwrap().stringify(self.as_ref())
     }
 }
 
@@ -248,13 +251,21 @@ impl TermTrait for Value {
     type AbstractTypeType = Value;
 
     fn is_parametric(&self) -> bool {
-        RUNTIME_LA.read().unwrap().is_parametric(self.as_ref())
+        dy::RUNTIME_LA.read().unwrap().is_parametric(self.as_ref())
     }
     fn is_type(&self) -> bool {
-        RUNTIME_LA.read().unwrap().is_type(self.as_ref())
+        dy::RUNTIME_LA.read().unwrap().is_type(self.as_ref())
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Value(RUNTIME_LA.read().unwrap().abstract_type_of(self.as_ref()))
+        Value(
+            dy::RUNTIME_LA
+                .read()
+                .unwrap()
+                .abstract_type_of(self.as_ref()),
+        )
+    }
+}
+
     }
 }
 
@@ -270,7 +281,7 @@ impl Value {
         *self.0.downcast::<T>().unwrap()
     }
     pub fn dereferenced<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-        Ok(RUNTIME_LA.read().unwrap().dereferenced(self.as_ref())?)
+        Ok(dy::RUNTIME_LA.read().unwrap().dereferenced(self.as_ref())?)
     }
     /// If this Value contains dy::Deconstruction, then it calls reconstruct on it, otherwise
     /// returns an error.  The call to reconstruct may return an error.
@@ -292,14 +303,14 @@ impl Value {
         Ok(())
     }
     fn nondereferencing_abstract_type(&self) -> Self {
-        RUNTIME_LA
+        dy::RUNTIME_LA
             .read()
             .unwrap()
             .nondereferencing_abstract_type_of(self.as_ref())
             .into()
     }
     fn nondereferencing_is_parametric(&self) -> bool {
-        RUNTIME_LA
+        dy::RUNTIME_LA
             .read()
             .unwrap()
             .nondereferencing_is_parametric(self.as_ref())
