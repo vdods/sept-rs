@@ -1684,6 +1684,8 @@ fn test_parse_deconstruction() {
     //     test_parse_deconstruction_case("Float32(4.e10)", dy::Value::from(4.0e10f32));
     //     test_parse_deconstruction_case("Float32(-.01)", dy::Value::from(-0.01f32));
 
+    // TODO: Add test cases for UnicodeChar
+
     test_parse_deconstruction_case(
         "Utf8String(\"blah\\n\\thh\")",
         dy::Value::from(String::from("blah\n\thh")),

@@ -9,7 +9,7 @@ use crate::{
         LocalSymRefType, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32, Sint32Type,
         Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType, Term, True, TrueType, Tuple,
         TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8,
-        Uint8Type, Utf8String, Utf8StringType, Void, VoidType,
+        Uint8Type, UnicodeChar, UnicodeCharType, Utf8String, Utf8StringType, Void, VoidType,
     },
     Result,
 };
@@ -119,6 +119,7 @@ impl Runtime {
         runtime.register_term::<u64>().unwrap();
         runtime.register_term::<f32>().unwrap();
         runtime.register_term::<f64>().unwrap();
+        runtime.register_term::<char>().unwrap();
         runtime.register_term::<String>().unwrap();
         runtime.register_term::<Void>().unwrap();
         runtime.register_term::<ArrayTerm>().unwrap();
@@ -153,6 +154,8 @@ impl Runtime {
         runtime.register_type::<Float64>().unwrap();
         runtime.register_type::<Float32Type>().unwrap();
         runtime.register_type::<Float64Type>().unwrap();
+        runtime.register_type::<UnicodeChar>().unwrap();
+        runtime.register_type::<UnicodeCharType>().unwrap();
         runtime.register_type::<Utf8String>().unwrap();
         runtime.register_type::<Utf8StringType>().unwrap();
         runtime.register_type::<VoidType>().unwrap();
@@ -201,6 +204,9 @@ impl Runtime {
         runtime.register_non_parametric_term::<Uint64>().unwrap();
         runtime.register_non_parametric_term::<Float32>().unwrap();
         runtime.register_non_parametric_term::<Float64>().unwrap();
+        runtime
+            .register_non_parametric_term::<UnicodeChar>()
+            .unwrap();
         runtime.register_non_parametric_term::<BoolType>().unwrap();
         runtime.register_non_parametric_term::<Sint8Type>().unwrap();
         runtime
@@ -227,6 +233,9 @@ impl Runtime {
             .unwrap();
         runtime
             .register_non_parametric_term::<Float64Type>()
+            .unwrap();
+        runtime
+            .register_non_parametric_term::<UnicodeCharType>()
             .unwrap();
         runtime
             .register_non_parametric_term::<Utf8String>()
@@ -336,6 +345,8 @@ impl Runtime {
             runtime.reregister_as_eq::<Float64>().unwrap();
             runtime.reregister_as_eq::<Float32Type>().unwrap();
             runtime.reregister_as_eq::<Float64Type>().unwrap();
+            runtime.reregister_as_eq::<UnicodeChar>().unwrap();
+            runtime.reregister_as_eq::<UnicodeCharType>().unwrap();
             runtime.reregister_as_eq::<VoidType>().unwrap();
             runtime.reregister_as_eq::<Array>().unwrap();
             runtime.reregister_as_eq::<ArrayType>().unwrap();

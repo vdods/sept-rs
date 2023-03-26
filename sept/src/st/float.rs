@@ -84,7 +84,7 @@ impl dy::Constructor for Float64 {
         let mut parameter_v: Vec<dy::Value> = parameter_t.into();
         let mut parameter: dy::Value = parameter_v.pop().unwrap();
         match parameter.downcast_mut::<f64>() {
-            Some(string) => Ok(std::mem::take(string)),
+            Some(x) => Ok(std::mem::take(x)),
             None => Err(anyhow::anyhow!(
                 "{}.construct expected parameter of type Float64, but got one of type {:?}",
                 self.stringify(),

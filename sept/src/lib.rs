@@ -53,14 +53,6 @@ macro_rules! for_each_parametric_term {
                 $e
             },
             {
-                type T = $crate::st::Float32Term;
-                $e
-            },
-            {
-                type T = $crate::st::Float64Term;
-                $e
-            },
-            {
                 type T = $crate::st::Sint8Term;
                 $e
             },
@@ -94,6 +86,22 @@ macro_rules! for_each_parametric_term {
             },
             {
                 type T = $crate::st::Utf8StringTerm;
+                $e
+            },
+            {
+                type T = $crate::st::Float32Term;
+                $e
+            },
+            {
+                type T = $crate::st::Float64Term;
+                $e
+            },
+            // {
+            //     type T = $crate::st::AsciiCharTerm;
+            //     $e
+            // },
+            {
+                type T = $crate::st::UnicodeCharTerm;
                 $e
             },
         )

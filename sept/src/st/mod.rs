@@ -35,6 +35,9 @@ mod tuple;
 mod tuple_type;
 mod r#type;
 mod type_trait;
+mod unicode_char;
+mod unicode_char_term;
+mod unicode_char_type;
 mod utf8_string;
 mod utf8_string_term;
 mod utf8_string_type;
@@ -85,6 +88,9 @@ pub use crate::st::{
     tuple::Tuple,
     tuple_type::TupleType,
     type_trait::TypeTrait,
+    unicode_char::UnicodeChar,
+    unicode_char_term::UnicodeCharTerm,
+    unicode_char_type::UnicodeCharType,
     utf8_string::Utf8String,
     utf8_string_term::Utf8StringTerm,
     utf8_string_type::Utf8StringType,
@@ -198,6 +204,10 @@ macro_rules! for_each_non_parametric_term {
             },
             //             { type T = $crate::st::AsciiChar;                  $e },
             {
+                type T = $crate::st::UnicodeChar;
+                $e
+            },
+            {
                 type T = $crate::st::BoolType;
                 $e
             },
@@ -242,6 +252,10 @@ macro_rules! for_each_non_parametric_term {
                 $e
             },
             //             { type T = $crate::st::AsciiCharType;                  $e },
+            {
+                type T = $crate::st::UnicodeCharType;
+                $e
+            },
             {
                 type T = $crate::st::Utf8String;
                 $e

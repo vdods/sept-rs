@@ -62,157 +62,159 @@ pub enum NonParametricTermCode {
     Uint64 = 0x17,
     Float32 = 0x18,
     Float64 = 0x19,
-    AsciiChar = 0x1A, // TODO: Add UnicodeChar later and whatever else -- TODO: Maybe Ascii should be an abstract type
+    AsciiChar = 0x1A,
+    UnicodeChar = 0x1B,
 
     // POD Type Types
     /// Sole inhabitant is Bool.
-    BoolType = 0x1B,
+    BoolType = 0x1C,
     /// Sole inhabitant is Sint8.
-    Sint8Type = 0x1C,
+    Sint8Type = 0x1D,
     /// Sole inhabitant is Sint16.
-    Sint16Type = 0x1D,
+    Sint16Type = 0x1E,
     /// Sole inhabitant is Sint32.
-    Sint32Type = 0x1E,
+    Sint32Type = 0x1F,
     /// Sole inhabitant is Sint64.
-    Sint64Type = 0x1F,
+    Sint64Type = 0x20,
     /// Sole inhabitant is Uint8.
-    Uint8Type = 0x20,
+    Uint8Type = 0x21,
     /// Sole inhabitant is Uint16.
-    Uint16Type = 0x21,
+    Uint16Type = 0x22,
     /// Sole inhabitant is Uint32
-    Uint32Type = 0x22,
+    Uint32Type = 0x23,
     /// Sole inhabitant is Uint64
-    Uint64Type = 0x23,
+    Uint64Type = 0x24,
     /// Sole inhabitant is Float32
-    Float32Type = 0x24,
+    Float32Type = 0x25,
     /// Sole inhabitant is Float64
-    Float64Type = 0x25,
+    Float64Type = 0x26,
     /// Sole inhabitant is AsciiChar.
-    AsciiCharType = 0x26,
+    AsciiCharType = 0x27,
+    UnicodeCharType = 0x28,
 
-    Utf8String = 0x27,
+    Utf8String = 0x29,
     /// Sole inhabitant is Utf8String.
-    Utf8StringType = 0x28,
+    Utf8StringType = 0x2A,
 
     // Other Types related to POD Types
     /// Isomorphic to Union(Sint8, Sint16, Sint32, Sint64).
     // TODO: Maybe allow this to construct Sint(N) where N is the number of bits, and e.g. Sint(32)
     // would be isomorphic to Sint32.
-    Sint = 0x29,
+    Sint = 0x2B,
     /// Isomorphic to Union(Uint8, Uint16, Uint32, Uint64).
     // TODO: Maybe allow this to construct Uint(N) where N is the number of bits, and e.g. Uint(32)
     // would be isomorphic to Uint32.
-    Uint = 0x2A,
+    Uint = 0x2C,
     /// Isomorphic to Union(Float32,Float64).
-    Float = 0x2B,
+    Float = 0x2D,
     /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  Pod : PodType.
-    Pod = 0x2C,
+    Pod = 0x2E,
 
     /// Isomorphic to Union(Sint8Type, Sint16Type, Sint32Type, Sint64Type).
-    SintType = 0x2D,
+    SintType = 0x2F,
     /// Isomorphic to Union(Uint8Type, Uint16Type, Uint32Type, Uint64Type).
-    UintType = 0x2E,
+    UintType = 0x30,
     /// Isomorphic to Union(Float32Type,Float64Type).
-    FloatType = 0x2F,
+    FloatType = 0x31,
     // TODO: Add CHAR types
     /// Isomorphic to Union(BoolType, SintType, UintType, FloatType) (TODO: Somehow add Pod as an inhabitant)
-    PodType = 0x30,
+    PodType = 0x32,
     // TODO: Add semantic classes like Positive, Negative, NonPositive, NonNegative, Zero
     /// Inhabitants have the form Union(T1,...,TN) -- implemented as UnionTerm.
-    Union = 0x31,
+    Union = 0x33,
     /// Inhabitants have the form Intersection(T1,...,TN) -- implemented as IntersectionTerm.
-    Intersection = 0x32,
+    Intersection = 0x34,
     /// Inhabitants have the form Negation(T) -- implemented as NegationTerm.
-    Negation = 0x33,
+    Negation = 0x35,
     /// Inhabitants have the form Difference(T,U1,...,UN) -- implemented as DifferenceTerm.
-    Difference = 0x34,
+    Difference = 0x36,
 
     /// Sole inhabitant is Union.
-    UnionType = 0x35,
+    UnionType = 0x37,
     /// Sole inhabitant is Intersection.
-    IntersectionType = 0x36,
+    IntersectionType = 0x38,
     /// Sole inhabitant is Negation.
-    NegationType = 0x37,
+    NegationType = 0x39,
     /// Sole inhabitant is Difference.
-    DifferenceType = 0x38,
+    DifferenceType = 0x3A,
 
     // TODO: UnionType, IntersectionType, etc.
     /// Inhabitants are ArrayES, ArrayE, ArrayS, Array.
-    ArrayType = 0x39,
+    ArrayType = 0x3B,
     /// Inhabitants have the form ArrayES(T,N) -- implemented as ArrayESTerm.
-    ArrayES = 0x3A,
+    ArrayES = 0x3C,
     /// Inhabitants have the form ArrayE(T) -- implemented as ArrayETerm.
-    ArrayE = 0x3B,
+    ArrayE = 0x3D,
     /// Inhabitants have the form ArrayS(N) -- implemented as ArraySTerm.
-    ArrayS = 0x3C,
+    ArrayS = 0x3E,
     /// Inhabitants have the form Array(...) -- implemented as ArrayTerm.
-    Array = 0x3D,
+    Array = 0x3F,
 
     /// Inhabitants are OrderedMapDC, OrderedMapD, OrderedMapC, OrderedMap.
-    OrderedMapType = 0x3E,
+    OrderedMapType = 0x40,
     /// Inhabitants have the form OrderedMapDC(Domain,Codomain) -- implemented as OrderedMapDCTerm.
-    OrderedMapDC = 0x3F,
+    OrderedMapDC = 0x41,
     /// Inhabitants have the form OrderedMapD(Domain) -- implemented as OrderedMapDTerm.
-    OrderedMapD = 0x40,
+    OrderedMapD = 0x42,
     /// Inhabitants have the form OrderedMapC(Codomain) -- implemented as OrderedMapCTerm.
-    OrderedMapC = 0x41,
+    OrderedMapC = 0x43,
     /// Inhabitants have the form OrderedMap(...) -- implemented as OrderedMapTerm.
-    OrderedMap = 0x42,
+    OrderedMap = 0x44,
 
     // Sole inhabitant is Tuple.
-    TupleType = 0x43,
+    TupleType = 0x45,
     /// Inhabitants have the form Tuple(...) -- implemented as TupleTerm.
-    Tuple = 0x44,
+    Tuple = 0x46,
 
     /// Sole inhabitant is Struct.
-    StructType = 0x45,
+    StructType = 0x47,
     /// Inhabitants have the form Struct(...) -- implemented by StructTerm.  Inhabitants are specific
     /// structs.  Struct itself is a metatype which constructs structs.  An instance of a particular
     /// struct would be Struct(...)(...) and is implemented by StructTermTerm.
-    Struct = 0x46,
+    Struct = 0x48,
 
     //
     // Reference-related terms
     //
     /// Sole inhabitant is MemRef.
-    MemRefType = 0x47,
+    MemRefType = 0x49,
     /// Inhabitants have the form MemRef(&d), where d is Data.
-    MemRef = 0x48,
+    MemRef = 0x4A,
     /// Sole inhabitant is GlobalSymRef.
-    GlobalSymRefType = 0x49,
+    GlobalSymRefType = 0x4B,
     /// Inhabitants have the form GlobalSymRef("<symbol-id>") -- implemented as GlobalSymRefTerm.
-    GlobalSymRef = 0x4A,
+    GlobalSymRef = 0x4C,
     /// Sole inhabitant is LocalSymRef.
-    LocalSymRefType = 0x4B,
+    LocalSymRefType = 0x4D,
     /// Inhabitants have the form LocalSymRef("<symbol-id>", <shared-ptr-to-symbol-table>) --
     /// implemented as LocalSymRefTerm.
-    LocalSymRef = 0x4C,
+    LocalSymRef = 0x4E,
 
-    PlaceholderType = 0x4D,
-    Placeholder = 0x4E,
+    PlaceholderType = 0x4F,
+    Placeholder = 0x50,
 
-    FreevarType = 0x4F,
-    Freevar = 0x50,
+    FreevarType = 0x51,
+    Freevar = 0x52,
 
     //
     // Control terms
     //
     /// Sole inhabitant is Output.
-    OutputType = 0x51,
+    OutputType = 0x53,
     /// Inhabitants have the form Output(V) for some value V.
-    Output = 0x52,
+    Output = 0x54,
     /// Sole inhabitant is ClearOutput.
-    ClearOutputType = 0x53,
+    ClearOutputType = 0x55,
     /// Singleton.
-    ClearOutput = 0x54,
+    ClearOutput = 0x56,
     /// Sole inhabitant is EndOfFile.
-    EndOfFileType = 0x55,
+    EndOfFileType = 0x57,
     /// Singleton.
-    EndOfFile = 0x56,
+    EndOfFile = 0x58,
     /// Sole inhabitant is RequestSyncInput
-    RequestSyncInputType = 0x57,
+    RequestSyncInputType = 0x59,
     /// Inhabitants have the form RequestSyncInput(T) for some type T.
-    RequestSyncInput = 0x58,
+    RequestSyncInput = 0x5A,
 
     // TODO: Ideally there could be an "Unspecified(u8)" in which the u8 value is disjoint
     // with the above values, and so it would use niche logic and not take up more storage than u8.
