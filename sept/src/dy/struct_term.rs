@@ -60,6 +60,12 @@ impl StructTerm {
         }
         true
     }
+    pub fn index_of_named_field(&self, field_name: &str) -> Result<usize> {
+        Ok(*self
+            .name_index_m
+            .get(field_name)
+            .ok_or_else(|| anyhow::anyhow!("StructTerm had no field with name {:?}", field_name))?)
+    }
 }
 
 impl dy::Constructor for StructTerm {
