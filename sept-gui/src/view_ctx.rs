@@ -1,4 +1,5 @@
-use crate::{ANSIColor, ViewCtxNestingGuard, ViewCtxTAGuard};
+use crate::{ANSIColor, ViewCtxNestingGuard, ViewCtxRenderAddressGuard, ViewCtxTAGuard};
+use std::cmp::Ordering;
 
 /// Provides control over how things are rendered.
 pub struct ViewCtx {
@@ -18,6 +19,10 @@ pub struct ViewCtx {
     pub show_type_annotations: bool,
     /// Indicates if the names of StructTerm fields should be shown before their values in StructTermTerm.
     pub show_struct_field_name_hints: bool,
+    /// This is the address of the current cursor.
+    pub cursor_address: sept::dy::TupleTerm,
+    /// This is the address of the currently-being-rendered term.
+    pub render_address: sept::dy::TupleTerm,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -38,6 +43,9 @@ impl ViewCtx {
             inline_at_nesting_depth: 0,
             show_type_annotations: true,
             show_struct_field_name_hints: true,
+            cursor_address: sept::dy::TupleTerm::from(vec![0u32.into(), 2u32.into(), 8u32.into()]),
+            // cursor_address: sept::dy::TupleTerm::from(vec![]),
+            render_address: sept::dy::TupleTerm::from(vec![]),
         }
     }
     pub fn push_nesting_depth<'a>(&'a mut self) -> ViewCtxNestingGuard<'a> {
@@ -48,6 +56,35 @@ impl ViewCtx {
         show_type_annotations: bool,
     ) -> ViewCtxTAGuard<'a> {
         ViewCtxTAGuard::new(self, show_type_annotations)
+    }
+    pub fn push_address_token<'a>(
+        &'a mut self,
+        address_token: sept::dy::Value,
+    ) -> ViewCtxRenderAddressGuard<'a> {
+        ViewCtxRenderAddressGuard::new(self, address_token)
+    }
+    /// This returns (foreground_color, background_color) based on the given foreground_color and the
+    /// current state of highlightedness based on the render_address compared to the cursor_address.
+    pub fn set_highlight_if_necessary(
+        &self,
+        foreground_color: egui::Color32,
+    ) -> (egui::Color32, egui::Color32) {
+        if self.render_address_is_subaddress_of_cursor_address() {
+            (foreground_color, self.color_for_cursor_background())
+        } else {
+            (foreground_color, egui::Color32::TRANSPARENT)
+        }
+    }
+    fn render_address_is_subaddress_of_cursor_address(&self) -> bool {
+        if let Some(ordering) =
+            sept::dy::prefix_partial_cmp(&self.render_address, &self.cursor_address)
+        {
+            // An address A is a "subaddress" of address B if B <= A, i.e. the specific data value that A addresses is
+            // "contained within" the data value that B addresses.
+            ordering.is_ge()
+        } else {
+            false
+        }
     }
     pub fn indent_str(&self) -> &str {
         if self.show_expanded_item_indicator {
@@ -61,10 +98,19 @@ impl ViewCtx {
             .current_nesting_depth
             .cmp(&self.inline_at_nesting_depth)
         {
-            std::cmp::Ordering::Less => LayoutMode::Expanded,
-            std::cmp::Ordering::Equal => LayoutMode::BoundaryLevelInline,
-            std::cmp::Ordering::Greater => LayoutMode::InteriorLevelInline,
+            Ordering::Less => LayoutMode::Expanded,
+            Ordering::Equal => LayoutMode::BoundaryLevelInline,
+            Ordering::Greater => LayoutMode::InteriorLevelInline,
         }
+    }
+    pub fn color_for_cursor_background(&self) -> egui::Color32 {
+        let opaque_color = ANSIColor::DARK_MAGENTA;
+        egui::Color32::from_rgba_unmultiplied(
+            opaque_color.r(),
+            opaque_color.g(),
+            opaque_color.b(),
+            0x0C,
+        )
     }
     pub fn color_for_type_annotation(&self) -> egui::Color32 {
         ANSIColor::BRIGHT_BLACK

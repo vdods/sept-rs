@@ -16,7 +16,7 @@ use crate::{
 use std::{
     any::TypeId,
     collections::{HashMap, HashSet},
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
 
 pub type DebugFn =
@@ -1509,9 +1509,54 @@ impl Runtime {
 }
 
 // This sucks, and so does Runtime::dereferenced and dereferenced_inner, and all the call sites in this file.
+// TODO: Use MaybeDereferencedValue::read at call sites that suck.
+// TODO: Rename to DereferencedValue.
 pub enum MaybeDereferencedValue<'a> {
     NonRef(&'a ValueGuts),
     Ref(Arc<RwLock<dy::Value>>),
+}
+
+// // TEMP HACK
+// impl<'a> std::fmt::Debug for MaybeDereferencedValue<'a> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             MaybeDereferencedValue::NonRef(value_guts) => value_guts.fmt(f),
+//             MaybeDereferencedValue::Ref(value_la) => {
+//                 let value_g = value_la.read().unwrap();
+//                 value_g.fmt(f)
+//             }
+//         }
+//     }
+// }
+
+impl<'a> MaybeDereferencedValue<'a> {
+    pub fn read(&'a self) -> MaybeDereferencedValueReadGuard<'a> {
+        match self {
+            MaybeDereferencedValue::NonRef(value_guts) => {
+                MaybeDereferencedValueReadGuard::<'a>::NonRef(*value_guts)
+            }
+            MaybeDereferencedValue::Ref(value_la) => {
+                MaybeDereferencedValueReadGuard::<'a>::Ref(value_la.read().unwrap())
+            }
+        }
+    }
+}
+
+/// This exists because the RwLock inside MaybeDereferencedValue requires acquiring a RwLockReadGuard
+/// in order to get to a reference to the value inside.
+pub enum MaybeDereferencedValueReadGuard<'a> {
+    NonRef(&'a ValueGuts),
+    Ref(RwLockReadGuard<'a, dy::Value>),
+}
+
+impl<'a> std::ops::Deref for MaybeDereferencedValueReadGuard<'a> {
+    type Target = ValueGuts;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MaybeDereferencedValueReadGuard::NonRef(value_guts) => *value_guts,
+            MaybeDereferencedValueReadGuard::Ref(value_g) => value_g.as_ref(),
+        }
+    }
 }
 
 lazy_static::lazy_static! {

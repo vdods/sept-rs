@@ -5,14 +5,14 @@ pub trait View {
     /// If continuation_layout_job_o is not None, then it must be used for whatever the first line in
     /// the item rendering is.  If there's only one line in the rendering, then it would also be returned.
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob;
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx);
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx);
     fn update(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -34,22 +34,31 @@ pub trait View {
 fn layout_job_append(
     layout_job: &mut LayoutJob,
     text: &str,
-    color: egui::Color32,
+    foreground_color: egui::Color32,
     view_ctx: &ViewCtx,
 ) {
-    layout_job.append(
-        text,
-        0.0,
-        egui::TextFormat::simple(view_ctx.font_id.clone(), color),
-    );
+    let (foreground_color, background_color) =
+        view_ctx.set_highlight_if_necessary(foreground_color);
+    let text_format = egui::TextFormat {
+        font_id: view_ctx.font_id.clone(),
+        color: foreground_color,
+        background: background_color,
+        ..Default::default()
+    };
+    layout_job.append(text, 0.0, text_format);
 }
 
 fn indentation_for<T: 'static>(view_ctx: &ViewCtx) -> LayoutJob {
-    LayoutJob::simple_singleline(
-        view_ctx.indent_str().to_string(),
-        view_ctx.font_id.clone(),
-        view_ctx.color_for_indentation_for::<T>(),
-    )
+    let foreground_color = view_ctx.color_for_indentation_for::<T>();
+    let (foreground_color, background_color) =
+        view_ctx.set_highlight_if_necessary(foreground_color);
+    let text_format = egui::TextFormat {
+        font_id: view_ctx.font_id.clone(),
+        color: foreground_color,
+        background: background_color,
+        ..Default::default()
+    };
+    LayoutJob::single_section(view_ctx.indent_str().to_string(), text_format)
 }
 
 fn render_type_annotation_for<T: sept::st::TermTrait>(
@@ -77,7 +86,7 @@ macro_rules! impl_view_using_to_string {
     ($ty:ty) => {
         impl View for $ty {
             fn update_expanded(
-                &mut self,
+                &self,
                 _ui: &mut egui::Ui,
                 view_ctx: &mut ViewCtx,
                 continuation_layout_job_o: Option<LayoutJob>,
@@ -94,7 +103,7 @@ macro_rules! impl_view_using_to_string {
                 layout_job
             }
             fn update_inline(
-                &mut self,
+                &self,
                 layout_job: &mut egui::text::LayoutJob,
                 view_ctx: &mut ViewCtx,
             ) {
@@ -202,7 +211,7 @@ fn render_str_as_literal_without_quotes(
 
 impl View for sept::st::Utf8StringTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -239,6 +248,8 @@ impl View for sept::st::Utf8StringTerm {
 
             let mut view_ctx_g = view_ctx.push_nesting_depth();
 
+            // TODO: Figure out if lines should be addressable (maybe that requires a "line view" object.)
+            // TODO: Probably need to have render_str_as_literal_without_quotes handle the cursor
             for line in self.split_inclusive('\n') {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
@@ -275,7 +286,7 @@ impl View for sept::st::Utf8StringTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         layout_job_append(
             layout_job,
             "\"",
@@ -306,7 +317,7 @@ impl View for sept::st::Utf8StringTerm {
 
 impl View for sept::dy::GlobalSymRefTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         _ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -315,7 +326,7 @@ impl View for sept::dy::GlobalSymRefTerm {
         self.update_inline(&mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         let (resolved, path, at_color, quote_color, regular_char_color, escape_char_color) =
             match global_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -357,7 +368,7 @@ impl View for sept::dy::GlobalSymRefTerm {
 
 impl View for sept::dy::LocalSymRefTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         _ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -366,7 +377,7 @@ impl View for sept::dy::LocalSymRefTerm {
         self.update_inline(&mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let local_symbol_table_g = self.local_symbol_table().read().unwrap();
         let (resolved, path, dollar_color, quote_color, regular_char_color, escape_char_color) =
             match local_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -408,7 +419,7 @@ impl View for sept::dy::LocalSymRefTerm {
 
 impl View for sept::dy::ArrayTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -436,11 +447,13 @@ impl View for sept::dy::ArrayTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for element in self.iter_mut() {
+            for (i, element) in self.iter().enumerate() {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
 
                     ui.vertical(|ui| {
+                        let mut view_ctx_g =
+                            view_ctx_g.push_address_token(sept::dy::Value::from(i as u32));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -465,7 +478,7 @@ impl View for sept::dy::ArrayTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.is_empty() {
             layout_job_append(layout_job, "[]", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -478,9 +491,15 @@ impl View for sept::dy::ArrayTerm {
         }
 
         layout_job_append(layout_job, "[ ", view_ctx.color_for::<Self>(), view_ctx);
-        for element in self.iter_mut() {
-            element.update_inline(layout_job, view_ctx);
-            layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
+        for (i, element) in self.iter().enumerate() {
+            {
+                let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
+                element.update_inline(layout_job, &mut view_ctx_g);
+                layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
+            }
+            // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
+            // data is not highlighted.
+            layout_job_append(layout_job, " ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, "]", view_ctx.color_for::<Self>(), view_ctx);
         render_type_annotation_for(
@@ -493,22 +512,17 @@ impl View for sept::dy::ArrayTerm {
 }
 
 /// This one is for OrderedMapTerm key-value pairs.
-impl View for (&sept::dy::Value, &mut sept::dy::Value) {
+impl View for (&sept::dy::Value, &sept::dy::Value) {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
-        // TEMP HACK -- because the key is immutable and update (for now) requires mutability,
-        // just dumbly clone the key first.
-        // TODO: The real solution would be to pass in (1) a reference to the containing OrderedMapTerm,
-        // and (2) a clone of the key, so that if it's modified, it can actually affect the change.
-        // This may also have to reference any edit overlays (which would be part of ViewCtx) that haven't been applied.
-        let mut layout_job =
-            self.0
-                .clone()
-                .update_expanded(ui, view_ctx, continuation_layout_job_o);
+        // TODO: Implement addressing of key vs value
+        let mut layout_job = self
+            .0
+            .update_expanded(ui, view_ctx, continuation_layout_job_o);
         layout_job_append(
             &mut layout_job,
             " => ",
@@ -521,13 +535,8 @@ impl View for (&sept::dy::Value, &mut sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
-        // TEMP HACK -- because the key is immutable and update (for now) requires mutability,
-        // just dumbly clone the key first.
-        // TODO: The real solution would be to pass in (1) a reference to the containing OrderedMapTerm,
-        // and (2) a clone of the key, so that if it's modified, it can actually affect the change.
-        // This may also have to reference any edit overlays (which would be part of ViewCtx) that haven't been applied.
-        self.0.clone().update_inline(layout_job, view_ctx);
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.0.update_inline(layout_job, view_ctx);
         layout_job_append(
             layout_job,
             " => ",
@@ -540,7 +549,7 @@ impl View for (&sept::dy::Value, &mut sept::dy::Value) {
 
 impl View for sept::dy::OrderedMapTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -568,11 +577,14 @@ impl View for sept::dy::OrderedMapTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for mut key_value_pair in self.iter_mut() {
+            for key_value_pair in self.iter() {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
 
                     ui.vertical(|ui| {
+                        // TODO: Is it possible to push a reference to the address token here instead?
+                        let mut view_ctx_g =
+                            view_ctx_g.push_address_token(key_value_pair.0.clone());
                         let mut layout_job = key_value_pair.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -597,7 +609,7 @@ impl View for sept::dy::OrderedMapTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.is_empty() {
             layout_job_append(layout_job, "{}", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -610,9 +622,16 @@ impl View for sept::dy::OrderedMapTerm {
         }
 
         layout_job_append(layout_job, "{ ", view_ctx.color_for::<Self>(), view_ctx);
-        for mut key_value_pair in self.iter_mut() {
-            key_value_pair.update_inline(layout_job, view_ctx);
-            layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
+        for key_value_pair in self.iter() {
+            {
+                // TODO: Is it possible to push a reference to the address token here?
+                let mut view_ctx_g = view_ctx.push_address_token(key_value_pair.0.clone());
+                key_value_pair.update_inline(layout_job, &mut view_ctx_g);
+                layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
+            }
+            // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
+            // data is not highlighted.
+            layout_job_append(layout_job, " ", view_ctx.color_for::<Self>(), &view_ctx);
         }
         layout_job_append(layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
         render_type_annotation_for(
@@ -626,7 +645,7 @@ impl View for sept::dy::OrderedMapTerm {
 
 impl View for sept::dy::TupleTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -654,11 +673,13 @@ impl View for sept::dy::TupleTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for element in self.iter_mut() {
+            for (i, element) in self.iter().enumerate() {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
 
                     ui.vertical(|ui| {
+                        let mut view_ctx_g =
+                            view_ctx_g.push_address_token(sept::dy::Value::from(i as u32));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -683,7 +704,7 @@ impl View for sept::dy::TupleTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.is_empty() {
             layout_job_append(layout_job, "()", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -696,9 +717,15 @@ impl View for sept::dy::TupleTerm {
         }
 
         layout_job_append(layout_job, "( ", view_ctx.color_for::<Self>(), view_ctx);
-        for element in self.iter_mut() {
-            element.update_inline(layout_job, view_ctx);
-            layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
+        for (i, element) in self.iter().enumerate() {
+            {
+                let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
+                element.update_inline(layout_job, &mut view_ctx_g);
+                layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
+            }
+            // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
+            // data is not highlighted.
+            layout_job_append(layout_job, " ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, ")", view_ctx.color_for::<Self>(), view_ctx);
         render_type_annotation_for(
@@ -712,7 +739,7 @@ impl View for sept::dy::TupleTerm {
 
 impl View for (String, sept::dy::Value) {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -721,6 +748,7 @@ impl View for (String, sept::dy::Value) {
 
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
+        // TODO: Need to figure out how to address field name vs field type
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
         // There's probably never a reason to render a field_name expanded.
         field_name.update_inline(&mut layout_job, &mut view_ctx_g);
@@ -736,7 +764,7 @@ impl View for (String, sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let (field_name, field_type) = self;
 
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
@@ -753,7 +781,7 @@ impl View for (String, sept::dy::Value) {
 
 impl View for sept::dy::StructTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
@@ -794,11 +822,14 @@ impl View for sept::dy::StructTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for element in self.field_decl_v.iter_mut() {
+            for element in self.field_decl_v.iter() {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
 
                     ui.vertical(|ui| {
+                        // TODO: Is it possible to push a reference to the address token here?
+                        let mut view_ctx_g =
+                            view_ctx_g.push_address_token(sept::dy::Value::from(element.0.clone()));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -823,7 +854,7 @@ impl View for sept::dy::StructTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.field_decl_v.is_empty() {
             {
                 let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
@@ -840,9 +871,17 @@ impl View for sept::dy::StructTerm {
             sept::st::Struct.update_inline(layout_job, &mut view_ctx_g);
         }
         layout_job_append(layout_job, " { ", view_ctx.color_for::<Self>(), view_ctx);
-        for element in self.field_decl_v.iter_mut() {
-            element.update_inline(layout_job, view_ctx);
-            layout_job_append(layout_job, ", ", view_ctx.color_for::<Self>(), view_ctx);
+        for element in self.field_decl_v.iter() {
+            {
+                // TODO: Is it possible to push a reference to the address token here?
+                let mut view_ctx_g =
+                    view_ctx.push_address_token(sept::dy::Value::from(element.0.clone()));
+                element.update_inline(layout_job, &mut view_ctx_g);
+                layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
+            }
+            // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
+            // data is not highlighted.
+            layout_job_append(layout_job, " ", view_ctx.color_for::<Self>(), view_ctx);
         }
         layout_job_append(layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
         render_type_annotation_for(self, layout_job, view_ctx, None);
@@ -851,14 +890,14 @@ impl View for sept::dy::StructTerm {
 
 impl View for sept::dy::StructTermTerm {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut layout_job = {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            self.declared_type_mut()
+            self.declared_type()
                 .update_expanded(ui, &mut view_ctx_g, continuation_layout_job_o)
         };
         // TODO: Maybe there should be some syntax for "construction"
@@ -870,33 +909,26 @@ impl View for sept::dy::StructTermTerm {
         );
         ui.label(layout_job);
 
-        // TODO: Figure out how to guarantee correct resolution of self.r#type into StructTerm.
-        // TEMP HACK -- this is very wasteful, but just clone it for now to get the job done, and
-        // sort out the efficient way later.  This awkwardness is needed partly because the "update"
-        // methods expect `&mut self`, and can't use `&self` to simply render.
-        let mut direct_type = match self.declared_type().dereferenced().unwrap() {
-            sept::dy::MaybeDereferencedValue::NonRef(value_guts) => value_guts
-                .downcast_ref::<sept::dy::StructTerm>()
-                .expect("StructTermTerm's r#type field did not dereference into StructTerm")
-                .clone(),
-            sept::dy::MaybeDereferencedValue::Ref(value_la) => value_la
-                .read()
-                .unwrap()
-                .downcast_ref::<sept::dy::StructTerm>()
-                .expect("StructTermTerm's r#type field did not dereference into StructTerm")
-                .clone(),
-        };
+        // Here is where we resolve the StructTermTerm's r#type into a StructTerm.
+        let dereferenced = self.declared_type().dereferenced().unwrap();
+        let dereferenced_g = dereferenced.read();
+        let direct_type = dereferenced_g
+            .downcast_ref::<sept::dy::StructTerm>()
+            .expect("StructTermTerm's r#type field did not dereference into StructTerm");
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for ((field_name, _field_type), field_value) in std::iter::zip(
-                direct_type.field_decl_v.iter_mut(),
-                self.field_tuple_mut().iter_mut(),
-            ) {
+            for ((field_name, _field_type), field_value) in
+                std::iter::zip(direct_type.field_decl_v.iter(), self.field_tuple().iter())
+            {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
 
                     ui.vertical(|ui| {
+                        // TODO: Is it possible to push a reference to the address token here?
+                        let mut view_ctx_g = view_ctx_g
+                            .push_address_token(sept::dy::Value::from(field_name.clone()));
+
                         let mut layout_job = LayoutJob::default();
                         // There's probably never a reason to render the field name expanded.
                         if view_ctx_g.show_struct_field_name_hints {
@@ -928,54 +960,57 @@ impl View for sept::dy::StructTermTerm {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            self.declared_type_mut()
+            self.declared_type()
                 .update_inline(layout_job, &mut view_ctx_g);
         }
         // TODO: It's a space for now, but maybe there should be some syntax for "construction"
         layout_job_append(layout_job, " { ", view_ctx.color_for::<Self>(), view_ctx);
 
-        // TODO: Figure out how to guarantee correct resolution of self.r#type into StructTerm.
-        // TEMP HACK -- this is very wasteful, but just clone it for now to get the job done, and
-        // sort out the efficient way later.  This awkwardness is needed partly because the "update"
-        // methods expect `&mut self`, and can't use `&self` to simply render.
-        let mut direct_type = match self.declared_type().dereferenced().unwrap() {
-            sept::dy::MaybeDereferencedValue::NonRef(value_guts) => value_guts
-                .downcast_ref::<sept::dy::StructTerm>()
-                .expect("StructTermTerm's r#type field did not dereference into StructTerm")
-                .clone(),
-            sept::dy::MaybeDereferencedValue::Ref(value_la) => value_la
-                .read()
-                .unwrap()
-                .downcast_ref::<sept::dy::StructTerm>()
-                .expect("StructTermTerm's r#type field did not dereference into StructTerm")
-                .clone(),
-        };
+        // Here is where we resolve the StructTermTerm's r#type into a StructTerm.
+        let dereferenced = self.declared_type().dereferenced().unwrap();
+        let dereferenced_g = dereferenced.read();
+        let direct_type = dereferenced_g
+            .downcast_ref::<sept::dy::StructTerm>()
+            .expect("StructTermTerm's r#type field did not dereference into StructTerm");
 
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
-            for ((field_name, _field_type), field_value) in std::iter::zip(
-                direct_type.field_decl_v.iter_mut(),
-                self.field_tuple_mut().iter_mut(),
-            ) {
-                // let mut layout_job = LayoutJob::default();
-                // There's probably never a reason to render the field name expanded.
-                if view_ctx_g.show_struct_field_name_hints {
+            for ((field_name, _field_type), field_value) in
+                std::iter::zip(direct_type.field_decl_v.iter(), self.field_tuple().iter())
+            {
+                {
+                    // TODO: Is it possible to push a reference to the address token here?
+                    let mut view_ctx_g =
+                        view_ctx_g.push_address_token(sept::dy::Value::from(field_name.clone()));
+
+                    // let mut layout_job = LayoutJob::default();
+                    // There's probably never a reason to render the field name expanded.
+                    if view_ctx_g.show_struct_field_name_hints {
+                        layout_job_append(
+                            layout_job,
+                            format!("{:?}: ", field_name).as_str(),
+                            view_ctx_g.color_for_type_annotation(),
+                            &mut view_ctx_g,
+                        );
+                    }
+                    // let mut layout_job =
+                    //     field_value.update(ui, &mut view_ctx_g, Some(layout_job));
+                    field_value.update_inline(layout_job, &mut view_ctx_g);
                     layout_job_append(
                         layout_job,
-                        format!("{:?}: ", field_name).as_str(),
-                        view_ctx_g.color_for_type_annotation(),
+                        ",",
+                        view_ctx_g.color_for::<Self>(),
                         &mut view_ctx_g,
                     );
                 }
-                // let mut layout_job =
-                //     field_value.update(ui, &mut view_ctx_g, Some(layout_job));
-                field_value.update_inline(layout_job, &mut view_ctx_g);
+                // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
+                // data is not highlighted.
                 layout_job_append(
                     layout_job,
-                    ", ",
+                    " ",
                     view_ctx_g.color_for::<Self>(),
                     &mut view_ctx_g,
                 );
@@ -990,136 +1025,136 @@ impl View for sept::dy::StructTermTerm {
 
 impl View for sept::dy::Value {
     fn update_expanded(
-        &mut self,
+        &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
-        if let Some(term) = self.downcast_mut::<sept::st::BoolTerm>() {
+        if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64Term>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8StringTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::ArrayTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::OrderedMapTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::OrderedMapTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::TupleTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::TupleTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Void>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Void>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::VoidType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::VoidType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Bool>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Bool>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::BoolType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::BoolType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::True>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::True>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::TrueType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::TrueType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::False>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::False>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::FalseType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::FalseType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::EmptyType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::EmptyType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64Type>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8String>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8String>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8StringType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Array>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Array>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::ArrayType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::ArrayType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMap>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMap>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMapType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMapType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::StructTermTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::StructTermTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::StructTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::StructTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Struct>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Struct>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::StructType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::StructType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::Tuple>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Tuple>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::TupleType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::TupleType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::GlobalSymRefTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::GlobalSymRefTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRef>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRef>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRefType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRefType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::dy::LocalSymRefTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::LocalSymRefTerm>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRef>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRef>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRefType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRefType>() {
             term.update_expanded(ui, view_ctx, continuation_layout_job_o)
         } else {
             use sept::st::Stringifiable;
@@ -1127,132 +1162,132 @@ impl View for sept::dy::Value {
             unimplemented!("not yet");
         }
     }
-    fn update_inline(&mut self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
-        if let Some(term) = self.downcast_mut::<sept::st::BoolTerm>() {
+        if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64Term>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64Term>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8StringTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::ArrayTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::OrderedMapTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::OrderedMapTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::TupleTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::TupleTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Void>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Void>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::VoidType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::VoidType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Bool>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Bool>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::BoolType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::BoolType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::True>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::True>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::TrueType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::TrueType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::False>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::False>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::FalseType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::FalseType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::EmptyType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::EmptyType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint8Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint16Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Sint64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint8Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint16Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Uint64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float32Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float32Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Float64Type>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Float64Type>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8String>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8String>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Utf8StringType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Array>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Array>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::ArrayType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::ArrayType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMap>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMap>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::OrderedMapType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMapType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::StructTermTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::StructTermTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::StructTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::StructTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Struct>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Struct>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::StructType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::StructType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::Tuple>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::Tuple>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::TupleType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::TupleType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::GlobalSymRefTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::GlobalSymRefTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRef>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRef>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::GlobalSymRefType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRefType>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::dy::LocalSymRefTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::dy::LocalSymRefTerm>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRef>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRef>() {
             term.update_inline(layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_mut::<sept::st::LocalSymRefType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRefType>() {
             term.update_inline(layout_job, view_ctx);
         } else {
             use sept::st::Stringifiable;

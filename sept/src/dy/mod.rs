@@ -38,7 +38,7 @@ pub use crate::dy::{
     symbol_table::SymbolTable,
     terminal_deconstruction::TerminalDeconstruction,
     transparent_ref_trait::TransparentRefTrait,
-    tuple_term::TupleTerm,
+    tuple_term::{prefix_partial_cmp, TupleTerm},
     value::{Value, ValueGuts},
 };
 pub use anyhow::{Error, Result};

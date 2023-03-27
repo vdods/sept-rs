@@ -337,7 +337,7 @@ Notes regarding query as it applies to cursor/selection and as it applies to mod
 -   For modification, keeping in mind the need for undo/redo, each modification has to be recorded formally, and the whole address with the representational query tokens should be included in that, because that's what translates user input to modifications in the data.  Each formal modification must consist of a forward and backward modification, so that they're reversable.  These modifications will eventually be part of a formal algebra (algebroid?) of data which formally define the "diff" logic for sept data.
 
 Implementation notes
--   Get addressing working.  An address is simply a tuple of addressing values which uniquely identify a piece of data in an aggregate.
+-   Addressing.  An address is simply a tuple of addressing values which uniquely identify a piece of data in an aggregate.
 -   Get cursor highlighting working.  A basic cursor is simply an address which causes that item to be highlighted.
 -   Implement default representation query tokens (come up with a better name than that) in the ViewCtx, so that the representation is known.
 -   Allow changing of the ViewCtx's default representation query tokens, so that the user can view data in different representations.
@@ -346,3 +346,9 @@ Implementation notes
     -   Representation query tokens (these could be thought of as being appended to the address)
     -   The specific modification to that representation.  This is representation dependent.
         -   Maybe actually the specific UI events are recorded instead, and simply played through the representation?  Though this would couple the UI events with the representational logic.
+
+## 2023.03.26
+
+Notes on cursor, keyboard events, and prep work for handling data modifications:
+-   Keyboard events really need to be handled in implementations of `View`, since keyboard events are interpreted differently based on the configuration of the view (e.g. inline vs expanded).
+-   Because data modifications will be handled via formal modification commands, and not in the `mut`-based immediate paradigm of `egui`, the `self` field of the methods of `View` should be made non-`mut`.  This way, immutable data can be traversed naturally (in particular, `OrderedMap` terms' keys).

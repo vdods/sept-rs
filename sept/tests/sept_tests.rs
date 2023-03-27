@@ -297,6 +297,71 @@ fn test_tuples() {
     assert_eq!(t4, t5);
 }
 
+fn test_prefix_partial_cmp_case(
+    lhs: &TupleTerm,
+    rhs: &TupleTerm,
+    expected_result: Option<std::cmp::Ordering>,
+) {
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    let expected_result_of_reversed_cmp = expected_result.map(|ordering| ordering.reverse());
+    assert_eq!(dy::prefix_partial_cmp(lhs, rhs), expected_result);
+    assert_eq!(
+        dy::prefix_partial_cmp(rhs, lhs),
+        expected_result_of_reversed_cmp
+    );
+}
+
+#[test]
+#[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
+fn test_prefix_partial_cmp() {
+    let empty = TupleTerm::from(vec![]);
+    let a1 = TupleTerm::from(vec![111u32.into()]);
+    let a1_2 = TupleTerm::from(vec![111u32.into(), 222u32.into()]);
+    let b1 = TupleTerm::from(vec![true.into()]);
+    let b1_2 = TupleTerm::from(vec![true.into(), false.into()]);
+    let c = TupleTerm::from(vec![111u32.into(), false.into()]);
+    let d = TupleTerm::from(vec![true.into(), 222u32.into()]);
+
+    use std::cmp::Ordering::{Equal, Greater, Less};
+
+    // Check each pair (this checks (lhs, rhs) and (rhs, lhs))
+
+    test_prefix_partial_cmp_case(&empty, &empty, Some(Equal));
+    test_prefix_partial_cmp_case(&empty, &a1, Some(Less));
+    test_prefix_partial_cmp_case(&empty, &a1_2, Some(Less));
+    test_prefix_partial_cmp_case(&empty, &b1, Some(Less));
+    test_prefix_partial_cmp_case(&empty, &b1_2, Some(Less));
+    test_prefix_partial_cmp_case(&empty, &c, Some(Less));
+    test_prefix_partial_cmp_case(&empty, &d, Some(Less));
+
+    test_prefix_partial_cmp_case(&a1, &a1, Some(Equal));
+    test_prefix_partial_cmp_case(&a1, &a1_2, Some(Less));
+    test_prefix_partial_cmp_case(&a1, &b1, None);
+    test_prefix_partial_cmp_case(&a1, &b1_2, None);
+    test_prefix_partial_cmp_case(&a1, &c, Some(Less));
+    test_prefix_partial_cmp_case(&a1, &d, None);
+
+    test_prefix_partial_cmp_case(&a1_2, &a1_2, Some(Equal));
+    test_prefix_partial_cmp_case(&a1_2, &b1, None);
+    test_prefix_partial_cmp_case(&a1_2, &b1_2, None);
+    test_prefix_partial_cmp_case(&a1_2, &c, None);
+    test_prefix_partial_cmp_case(&a1_2, &d, None);
+
+    test_prefix_partial_cmp_case(&b1, &b1, Some(Equal));
+    test_prefix_partial_cmp_case(&b1, &b1_2, Some(Less));
+    test_prefix_partial_cmp_case(&b1, &c, None);
+    test_prefix_partial_cmp_case(&b1, &d, Some(Less));
+
+    test_prefix_partial_cmp_case(&b1_2, &b1_2, Some(Equal));
+    test_prefix_partial_cmp_case(&b1_2, &c, None);
+    test_prefix_partial_cmp_case(&b1_2, &d, None);
+
+    test_prefix_partial_cmp_case(&c, &c, Some(Equal));
+    test_prefix_partial_cmp_case(&c, &d, None);
+
+    test_prefix_partial_cmp_case(&d, &d, Some(Equal));
+}
+
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn test_abstract_type() {

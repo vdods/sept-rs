@@ -288,3 +288,35 @@ impl TupleTerm {
         self.0
     }
 }
+
+/// Let A and B be sequences.  A <= B is defined by A being a prefix of B, i.e. len(A) <= len(B) and
+/// A[i] == B[i] for i in 0..len(A).  Obviously A == B if their elements are the same.  A is not comparable with B
+/// if neither is a prefix of the other, i.e. if there is some j such that A[j] != B[j].
+// TODO: Formalize this somehow if/when appropriate, this random function isn't actually part of the sept data model.
+pub fn prefix_partial_cmp(lhs: &[dy::Value], rhs: &[dy::Value]) -> Option<std::cmp::Ordering> {
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    let (shorter, longer, reversed) = match lhs.len().cmp(&rhs.len()) {
+        Less => (lhs, rhs, false),
+        Equal => (lhs, rhs, false),
+        Greater => (rhs, lhs, true),
+    };
+    for i in 0..shorter.len() {
+        if shorter[i] != longer[i] {
+            // If they differ in any element, they're not comparable.
+            return None;
+        }
+    }
+    // If it made it this far, they are equal in all mutually-indexed elements.
+    if shorter.len() == longer.len() {
+        // If they also have the same length, then they're simply equal.
+        Some(Equal)
+    } else {
+        // Otherwise, one is less than the other.
+        if reversed {
+            // Have to account for if lhs and rhs were reversed.
+            Some(Greater)
+        } else {
+            Some(Less)
+        }
+    }
+}
