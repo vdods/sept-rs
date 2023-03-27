@@ -1140,20 +1140,115 @@ impl View for sept::dy::TupleTerm {
 }
 
 impl View for (String, sept::dy::Value) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        // Because self is a pair, its len is 2.
+        let self_len = 2u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::K)
+            {
+                // Enter this key-value pair at element 0.
+                // TODO: Consider making a "k" term to use here instead.
+                view_ctx.cursor_address_push(0u32.into());
+            } else if input_g.consume_key(Modifiers::NONE, Key::V) {
+                // Enter this key-value pair at element 1.
+                // TODO: Consider making a "v" term to use here instead.
+                view_ctx.cursor_address_push(1u32.into());
+            }
+        } else if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to this key-value pair.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home)
+                || input_g.consume_key(Modifiers::NONE, Key::PageUp)
+            {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End)
+                || input_g.consume_key(Modifiers::NONE, Key::PageDown)
+            {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(1u32.into());
+                // TODO: use ui.scroll_to_me
+            } else {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                let element_index_value = view_ctx.cursor_address_pop();
+                if element_index_value.is::<u32>() {
+                    let mut element_index = element_index_value.downcast_into::<u32>();
+                    if element_index <= 1 {
+                        // TODO: Handle one-past-the-end index for insertions
+                        element_index = element_index
+                            .saturating_add_signed(element_index_delta)
+                            .min(self_len - 1);
+                        view_ctx.cursor_address_push(element_index.into());
+                        // TODO: use ui.scroll_to_me
+                    } else {
+                        tracing::warn!(
+                            "Invalid address token {} under key-value pair with address {}",
+                            element_index,
+                            view_ctx.render_address
+                        );
+                    }
+                } else {
+                    tracing::warn!(
+                        "Invalid address token {} under key-value pair with address {}",
+                        element_index_value,
+                        view_ctx.render_address
+                    );
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
         let (field_name, field_type) = self;
 
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
         // TODO: Need to figure out how to address field name vs field type
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-        // There's probably never a reason to render a field_name expanded.
-        field_name.update_inline(ui, &mut layout_job, &mut view_ctx_g);
+        {
+            let mut view_ctx_g = view_ctx_g.push_address_token(0u32.into());
+            // There's probably never a reason to render a field_name expanded.
+            field_name.update_inline(ui, &mut layout_job, &mut view_ctx_g);
+        }
         layout_job_append(
             &mut layout_job,
             ": ",
@@ -1162,22 +1257,33 @@ impl View for (String, sept::dy::Value) {
         );
         // We pass in layout_job as continuation_layout_job_o so that it renders starting on the same
         // line as ": ".
-        let layout_job = field_type.update_expanded(ui, &mut view_ctx_g, Some(layout_job));
+        let layout_job = {
+            let mut view_ctx_g = view_ctx_g.push_address_token(1u32.into());
+            field_type.update_expanded(ui, &mut view_ctx_g, Some(layout_job))
+        };
         // Return this to the outer context
         layout_job
     }
     fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
         let (field_name, field_type) = self;
 
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-        field_name.update_inline(ui, layout_job, &mut view_ctx_g);
+        {
+            let mut view_ctx_g = view_ctx_g.push_address_token(0u32.into());
+            field_name.update_inline(ui, layout_job, &mut view_ctx_g);
+        }
         layout_job_append(
             layout_job,
             ": ",
             view_ctx_g.color_for::<sept::dy::StructTerm>(),
             &mut view_ctx_g,
         );
-        field_type.update_inline(ui, layout_job, &mut view_ctx_g);
+        {
+            let mut view_ctx_g = view_ctx_g.push_address_token(1u32.into());
+            field_type.update_inline(ui, layout_job, &mut view_ctx_g);
+        }
     }
 }
 
@@ -1404,18 +1510,156 @@ impl View for sept::dy::StructTerm {
 }
 
 impl View for sept::dy::StructTermTerm {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        let self_len = self.field_tuple().len() as u32;
+
+        // Here is where we resolve the StructTermTerm's r#type into a StructTerm.
+        let dereferenced = self.declared_type().dereferenced().unwrap();
+        let dereferenced_g = dereferenced.read();
+        let direct_type = dereferenced_g
+            .downcast_ref::<sept::dy::StructTerm>()
+            .expect("StructTermTerm's r#type field did not dereference into StructTerm");
+        assert_eq!(direct_type.field_decl_v.len(), self.field_tuple().len());
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
+                // Enter this StructTermTerm at the first field name, but only if there is one.
+                if let Some(first_field_decl) = direct_type.field_decl_v.first() {
+                    view_ctx.cursor_address_push(first_field_decl.0.clone().into());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: Use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::T) {
+                // Enter this StructTermTerm at the "type".
+                // TEMP HACK -- use the string "type" for now, but later probably use a non-parametric term.
+                // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
+                view_ctx.cursor_address_push("type".to_string().into());
+            }
+        } else if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to this StructTermTerm.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                if let Some(first_field_decl) = direct_type.field_decl_v.first() {
+                    view_ctx.cursor_address_push(first_field_decl.0.clone().into());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                if let Some(last_field_decl) = direct_type.field_decl_v.last() {
+                    view_ctx.cursor_address_push(last_field_decl.0.clone().into());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: use ui.scroll_to_me
+            } else {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                // TODO: Factor this out into a function
+                let mut element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                if element_index_delta != 0 {
+                    let field_name_value = view_ctx.cursor_address_pop();
+                    let field_name = field_name_value
+                        .downcast_ref::<String>()
+                        .map(|s| s.as_str())
+                        .unwrap_or("");
+                    match direct_type.index_of_named_field(field_name) {
+                        Ok(field_index) => {
+                            let new_field_index = (field_index as u32)
+                                .saturating_add_signed(element_index_delta)
+                                .min(self_len - 1);
+                            let new_field_name =
+                                direct_type.field_decl_v[new_field_index as usize].0.clone();
+                            view_ctx.cursor_address_push(new_field_name.into());
+                        }
+                        Err(_) => {
+                            tracing::warn!(
+                                "Invalid address token (field name) {:?} under StructTermTerm with address {}",
+                                field_name,
+                                view_ctx.render_address
+                            );
+                            // Just push the thing back on so we don't change state.
+                            view_ctx.cursor_address_push(field_name_value);
+                        }
+                    };
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
         let mut layout_job = {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
+            // TEMP HACK -- use the string "type" for now.  later, probably use a char or a non-parametric term that's even more terse.
+            // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
+            let mut view_ctx_g = view_ctx_g.push_address_token("type".to_string().into());
             self.declared_type()
                 .update_expanded(ui, &mut view_ctx_g, continuation_layout_job_o)
         };
+
         // TODO: Maybe there should be some syntax for "construction"
+
+        if self.field_tuple().is_empty() {
+            layout_job_append(
+                &mut layout_job,
+                " {}",
+                view_ctx.color_for::<Self>(),
+                view_ctx,
+            );
+            // TODO: Figure out if this should be conditional somehow, since it's often redundant.
+            render_type_annotation_for(self, &mut layout_job, view_ctx, None);
+            return layout_job;
+        }
+
         layout_job_append(
             &mut layout_job,
             " {",
@@ -1470,18 +1714,32 @@ impl View for sept::dy::StructTermTerm {
 
         let mut layout_job = LayoutJob::default();
         layout_job_append(&mut layout_job, "}", view_ctx.color_for::<Self>(), view_ctx);
-        // TODO: Figure out if this should be conditional somehow.
+        // TODO: Figure out if this should be conditional somehow, since it's often redundant.
         render_type_annotation_for(self, &mut layout_job, view_ctx, None);
         // Return this to the outer context
         layout_job
     }
     fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
+            // TEMP HACK -- use the string "type" for now.  later, probably use a char or a non-parametric term that's even more terse.
+            // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
+            let mut view_ctx_g = view_ctx_g.push_address_token("type".to_string().into());
             self.declared_type()
                 .update_inline(ui, layout_job, &mut view_ctx_g);
         }
+
         // TODO: It's a space for now, but maybe there should be some syntax for "construction"
+
+        if self.field_tuple().is_empty() {
+            layout_job_append(layout_job, " {}", view_ctx.color_for::<Self>(), view_ctx);
+            // TODO: Figure out if this should be conditional somehow.
+            render_type_annotation_for(self, layout_job, view_ctx, None);
+            return;
+        }
+
         layout_job_append(layout_job, " { ", view_ctx.color_for::<Self>(), view_ctx);
 
         // Here is where we resolve the StructTermTerm's r#type into a StructTerm.

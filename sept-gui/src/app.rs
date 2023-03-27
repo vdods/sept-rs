@@ -108,6 +108,10 @@ impl Default for App {
         let st0 = sept::dy::StructTerm::new(vec![].into()).unwrap();
 
         use sept::dy::Constructor;
+
+        // Make an empty StructTermTerm
+        let stt0 = st0.construct(sept::dy::TupleTerm::from(vec![])).unwrap();
+
         let stt1 = st1
             .construct(sept::dy::TupleTerm::from(vec![
                 28u8.into(),
@@ -175,6 +179,7 @@ impl Default for App {
             sept::dy::TupleTerm::from(vec![]).into(),
             st0.into(),
             st1.into(),
+            stt0.into(),
             stt1.into(),
             s0.into(),
             s1.into(),
