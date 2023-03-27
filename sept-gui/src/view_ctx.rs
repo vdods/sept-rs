@@ -20,13 +20,21 @@ pub struct ViewCtx {
     /// Indicates if the names of StructTerm fields should be shown before their values in StructTermTerm.
     pub show_struct_field_name_hints: bool,
     /// This is the address of the current cursor.
-    pub cursor_address: sept::dy::TupleTerm,
+    pub cursor_address_o: Option<sept::dy::TupleTerm>,
     /// This is the address of the currently-being-rendered term.
     pub render_address: sept::dy::TupleTerm,
+    /// The number of elements to skip using PageUp/PageDown.
+    pub page_up_down_delta: u32,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LayoutMode {
+    Expanded,
+    Inline,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LayoutDiscriminant {
     Expanded,
     BoundaryLevelInline,
     InteriorLevelInline,
@@ -43,9 +51,10 @@ impl ViewCtx {
             inline_at_nesting_depth: 0,
             show_type_annotations: true,
             show_struct_field_name_hints: true,
-            cursor_address: sept::dy::TupleTerm::from(vec![0u32.into(), 2u32.into(), 8u32.into()]),
-            // cursor_address: sept::dy::TupleTerm::from(vec![]),
+            // Note that there is no cursor to begin with.
+            cursor_address_o: None,
             render_address: sept::dy::TupleTerm::from(vec![]),
+            page_up_down_delta: 4u32,
         }
     }
     pub fn push_nesting_depth<'a>(&'a mut self) -> ViewCtxNestingGuard<'a> {
@@ -75,13 +84,49 @@ impl ViewCtx {
             (foreground_color, egui::Color32::TRANSPARENT)
         }
     }
+    pub fn cursor_address_push(&mut self, address_token: sept::dy::Value) {
+        if let Some(cursor_address) = self.cursor_address_o.as_mut() {
+            cursor_address.push(address_token);
+        } else {
+            panic!("No cursor_address to push to");
+        }
+    }
+    pub fn cursor_address_pop(&mut self) -> sept::dy::Value {
+        if let Some(cursor_address) = self.cursor_address_o.as_mut() {
+            cursor_address
+                .pop()
+                .expect("programmer error: can't pop from cursor_address because it was empty")
+        } else {
+            panic!("No cursor_address to pop from");
+        }
+    }
+    pub fn render_address_is_cursor_address(&self) -> bool {
+        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+            self.render_address == *cursor_address
+        } else {
+            false
+        }
+    }
+    pub fn render_address_is_parent_of_cursor_address(&self) -> bool {
+        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+            sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
+                == Some(std::cmp::Ordering::Less)
+                && self.render_address.len() + 1 == cursor_address.len()
+        } else {
+            false
+        }
+    }
     fn render_address_is_subaddress_of_cursor_address(&self) -> bool {
-        if let Some(ordering) =
-            sept::dy::prefix_partial_cmp(&self.render_address, &self.cursor_address)
-        {
-            // An address A is a "subaddress" of address B if B <= A, i.e. the specific data value that A addresses is
-            // "contained within" the data value that B addresses.
-            ordering.is_ge()
+        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+            if let Some(ordering) =
+                sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
+            {
+                // An address A is a "subaddress" of address B if B <= A, i.e. the specific data value that A addresses is
+                // "contained within" the data value that B addresses.
+                ordering.is_ge()
+            } else {
+                false
+            }
         } else {
             false
         }
@@ -94,13 +139,20 @@ impl ViewCtx {
         }
     }
     pub fn layout_mode(&self) -> LayoutMode {
+        if self.current_nesting_depth < self.inline_at_nesting_depth {
+            LayoutMode::Expanded
+        } else {
+            LayoutMode::Inline
+        }
+    }
+    pub fn layout_discriminant(&self) -> LayoutDiscriminant {
         match self
             .current_nesting_depth
             .cmp(&self.inline_at_nesting_depth)
         {
-            Ordering::Less => LayoutMode::Expanded,
-            Ordering::Equal => LayoutMode::BoundaryLevelInline,
-            Ordering::Greater => LayoutMode::InteriorLevelInline,
+            Ordering::Less => LayoutDiscriminant::Expanded,
+            Ordering::Equal => LayoutDiscriminant::BoundaryLevelInline,
+            Ordering::Greater => LayoutDiscriminant::InteriorLevelInline,
         }
     }
     pub fn color_for_cursor_background(&self) -> egui::Color32 {
@@ -109,7 +161,7 @@ impl ViewCtx {
             opaque_color.r(),
             opaque_color.g(),
             opaque_color.b(),
-            0x0C,
+            0x10,
         )
     }
     pub fn color_for_type_annotation(&self) -> egui::Color32 {

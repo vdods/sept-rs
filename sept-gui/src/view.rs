@@ -1,7 +1,10 @@
-use crate::{ANSIColor, LayoutMode, ViewCtx};
+use crate::{ANSIColor, LayoutDiscriminant, LayoutMode, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
 pub trait View {
+    fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx) {
+        // Do nothing by default.
+    }
     /// If continuation_layout_job_o is not None, then it must be used for whatever the first line in
     /// the item rendering is.  If there's only one line in the rendering, then it would also be returned.
     fn update_expanded(
@@ -10,21 +13,25 @@ pub trait View {
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob;
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx);
+    /// update_inline shouldn't add anything to `ui`, it should add things to `layout_job`.  The `ui`
+    /// parameter is only there so update_inline has access to events.
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx);
     fn update(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
-        match view_ctx.layout_mode() {
-            LayoutMode::Expanded => self.update_expanded(ui, view_ctx, continuation_layout_job_o),
-            LayoutMode::BoundaryLevelInline => {
+        match view_ctx.layout_discriminant() {
+            LayoutDiscriminant::Expanded => {
+                self.update_expanded(ui, view_ctx, continuation_layout_job_o)
+            }
+            LayoutDiscriminant::BoundaryLevelInline => {
                 let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
-                self.update_inline(&mut layout_job, view_ctx);
+                self.update_inline(ui, &mut layout_job, view_ctx);
                 layout_job
             }
-            LayoutMode::InteriorLevelInline => {
+            LayoutDiscriminant::InteriorLevelInline => {
                 panic!("programmer error: this should not be called from InteriorLevelInline");
             }
         }
@@ -104,6 +111,7 @@ macro_rules! impl_view_using_to_string {
             }
             fn update_inline(
                 &self,
+                _ui: &mut Ui,
                 layout_job: &mut egui::text::LayoutJob,
                 view_ctx: &mut ViewCtx,
             ) {
@@ -286,7 +294,7 @@ impl View for sept::st::Utf8StringTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         layout_job_append(
             layout_job,
             "\"",
@@ -318,15 +326,15 @@ impl View for sept::st::Utf8StringTerm {
 impl View for sept::dy::GlobalSymRefTerm {
     fn update_expanded(
         &self,
-        _ui: &mut Ui,
+        ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
-        self.update_inline(&mut layout_job, view_ctx);
+        self.update_inline(ui, &mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         let (resolved, path, at_color, quote_color, regular_char_color, escape_char_color) =
             match global_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -369,15 +377,15 @@ impl View for sept::dy::GlobalSymRefTerm {
 impl View for sept::dy::LocalSymRefTerm {
     fn update_expanded(
         &self,
-        _ui: &mut Ui,
+        ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
-        self.update_inline(&mut layout_job, view_ctx);
+        self.update_inline(ui, &mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let local_symbol_table_g = self.local_symbol_table().read().unwrap();
         let (resolved, path, dollar_color, quote_color, regular_char_color, escape_char_color) =
             match local_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -418,12 +426,96 @@ impl View for sept::dy::LocalSymRefTerm {
 }
 
 impl View for sept::dy::ArrayTerm {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        let self_len = self.len() as u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
+                // Enter this ArrayTerm at element 0.
+                view_ctx.cursor_address_push(0u32.into());
+            }
+        } else if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to this ArrayTerm.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push((self_len - 1).into());
+                // TODO: use ui.scroll_to_me
+            } else if self_len > 0 {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut element_index_delta = 0u32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta += self_len - 1u32.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta +=
+                                self_len - view_ctx.page_up_down_delta.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                            element_index_delta += self_len - 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta +=
+                                self_len - view_ctx.page_up_down_delta.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                let element_index_value = view_ctx.cursor_address_pop();
+                if element_index_value.is::<u32>() {
+                    let mut element_index = element_index_value.downcast_into::<u32>();
+                    // TODO: Handle one-past-the-end index for insertions
+                    element_index = (element_index + element_index_delta) % self_len;
+                    view_ctx.cursor_address_push(element_index.into());
+                    // TODO: use ui.scroll_to_me
+                } else {
+                    tracing::warn!(
+                        "Invalid address token {} under ArrayTerm with address {}",
+                        element_index_value,
+                        view_ctx.render_address
+                    );
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
         if self.is_empty() {
@@ -478,7 +570,9 @@ impl View for sept::dy::ArrayTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
         if self.is_empty() {
             layout_job_append(layout_job, "[]", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -494,7 +588,7 @@ impl View for sept::dy::ArrayTerm {
         for (i, element) in self.iter().enumerate() {
             {
                 let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
-                element.update_inline(layout_job, &mut view_ctx_g);
+                element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
             // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
@@ -535,25 +629,142 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
-        self.0.update_inline(layout_job, view_ctx);
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.0.update_inline(ui, layout_job, view_ctx);
         layout_job_append(
             layout_job,
             " => ",
             view_ctx.color_for::<sept::dy::OrderedMapTerm>(),
             view_ctx,
         );
-        self.1.update_inline(layout_job, view_ctx);
+        self.1.update_inline(ui, layout_job, view_ctx);
     }
 }
 
 impl View for sept::dy::OrderedMapTerm {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        let self_len = self.len() as u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
+                // Enter this OrderedMapTerm at the first key, but only if there is one.
+                if let Some(first_key) = self.keys().nth(0) {
+                    view_ctx.cursor_address_push(first_key.clone());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: Use ui.scroll_to_me
+            }
+        } else if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to this OrderedMapTerm.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                if let Some(first_key) = self.keys().nth(0) {
+                    view_ctx.cursor_address_push(first_key.clone());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                if let Some(first_key) = self.keys().rev().nth(0) {
+                    view_ctx.cursor_address_push(first_key.clone());
+                } else {
+                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                }
+                // TODO: use ui.scroll_to_me
+            } else {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                // TODO: Factor this out into a function
+                let mut element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta -= 1
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                if element_index_delta != 0 {
+                    let key = view_ctx.cursor_address_pop();
+                    if !self.contains_key(&key) {
+                        tracing::warn!(
+                            "Invalid address token {} under OrderedMapTerm with address {}",
+                            key,
+                            view_ctx.render_address
+                        );
+                    } else {
+                        let new_key = if element_index_delta < 0 {
+                            let element_abs_delta = (element_index_delta.abs() as u32) % self_len;
+                            let new_key = self
+                                .range(..=&key)
+                                .rev()
+                                .chain(self.range(&key..).rev())
+                                .nth(element_abs_delta as usize)
+                                .unwrap()
+                                .0
+                                .clone();
+                            new_key
+                        } else {
+                            assert!(element_index_delta > 0);
+                            let element_abs_delta = (element_index_delta as u32) % self_len;
+                            let new_key = self
+                                .range(&key..)
+                                .chain(self.range(..&key))
+                                .nth(element_abs_delta as usize)
+                                .unwrap()
+                                .0
+                                .clone();
+                            new_key
+                        };
+                        view_ctx.cursor_address_push(new_key);
+                    }
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
         if self.is_empty() {
@@ -609,7 +820,9 @@ impl View for sept::dy::OrderedMapTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
         if self.is_empty() {
             layout_job_append(layout_job, "{}", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -626,7 +839,7 @@ impl View for sept::dy::OrderedMapTerm {
             {
                 // TODO: Is it possible to push a reference to the address token here?
                 let mut view_ctx_g = view_ctx.push_address_token(key_value_pair.0.clone());
-                key_value_pair.update_inline(layout_job, &mut view_ctx_g);
+                key_value_pair.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
             // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
@@ -644,12 +857,96 @@ impl View for sept::dy::OrderedMapTerm {
 }
 
 impl View for sept::dy::TupleTerm {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        let self_len = self.len() as u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
+                // Enter this TupleTerm at element 0.
+                view_ctx.cursor_address_push(0u32.into());
+            }
+        } else if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to this TupleTerm.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push((self_len - 1).into());
+                // TODO: use ui.scroll_to_me
+            } else if self_len > 0 {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut element_index_delta = 0u32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta += self_len - 1u32.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta +=
+                                self_len - view_ctx.page_up_down_delta.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                            element_index_delta += self_len - 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta +=
+                                self_len - view_ctx.page_up_down_delta.wrapping_rem(self_len);
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                let element_index_value = view_ctx.cursor_address_pop();
+                if element_index_value.is::<u32>() {
+                    let mut element_index = element_index_value.downcast_into::<u32>();
+                    // TODO: Handle one-past-the-end index for insertions
+                    element_index = (element_index + element_index_delta) % self_len;
+                    view_ctx.cursor_address_push(element_index.into());
+                    // TODO: use ui.scroll_to_me
+                } else {
+                    tracing::warn!(
+                        "Invalid address token {} under TupleTerm with address {}",
+                        element_index_value,
+                        view_ctx.render_address
+                    );
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
         if self.is_empty() {
@@ -704,7 +1001,9 @@ impl View for sept::dy::TupleTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
         if self.is_empty() {
             layout_job_append(layout_job, "()", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(
@@ -720,7 +1019,7 @@ impl View for sept::dy::TupleTerm {
         for (i, element) in self.iter().enumerate() {
             {
                 let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
-                element.update_inline(layout_job, &mut view_ctx_g);
+                element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
             // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
@@ -751,7 +1050,7 @@ impl View for (String, sept::dy::Value) {
         // TODO: Need to figure out how to address field name vs field type
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
         // There's probably never a reason to render a field_name expanded.
-        field_name.update_inline(&mut layout_job, &mut view_ctx_g);
+        field_name.update_inline(ui, &mut layout_job, &mut view_ctx_g);
         layout_job_append(
             &mut layout_job,
             ": ",
@@ -764,18 +1063,18 @@ impl View for (String, sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         let (field_name, field_type) = self;
 
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-        field_name.update_inline(layout_job, &mut view_ctx_g);
+        field_name.update_inline(ui, layout_job, &mut view_ctx_g);
         layout_job_append(
             layout_job,
             ": ",
             view_ctx_g.color_for::<sept::dy::StructTerm>(),
             &mut view_ctx_g,
         );
-        field_type.update_inline(layout_job, &mut view_ctx_g);
+        field_type.update_inline(ui, layout_job, &mut view_ctx_g);
     }
 }
 
@@ -791,7 +1090,7 @@ impl View for sept::dy::StructTerm {
         if self.field_decl_v.is_empty() {
             {
                 let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-                sept::st::Struct.update_inline(&mut layout_job, &mut view_ctx_g);
+                sept::st::Struct.update_inline(ui, &mut layout_job, &mut view_ctx_g);
             }
             layout_job_append(
                 &mut layout_job,
@@ -810,7 +1109,7 @@ impl View for sept::dy::StructTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            sept::st::Struct.update_inline(&mut layout_job, &mut view_ctx_g);
+            sept::st::Struct.update_inline(ui, &mut layout_job, &mut view_ctx_g);
         }
         layout_job_append(
             &mut layout_job,
@@ -854,11 +1153,11 @@ impl View for sept::dy::StructTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         if self.field_decl_v.is_empty() {
             {
                 let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-                sept::st::Struct.update_inline(layout_job, &mut view_ctx_g);
+                sept::st::Struct.update_inline(ui, layout_job, &mut view_ctx_g);
             }
             layout_job_append(layout_job, " {}", view_ctx.color_for::<Self>(), view_ctx);
             render_type_annotation_for(self, layout_job, view_ctx, None);
@@ -868,7 +1167,7 @@ impl View for sept::dy::StructTerm {
 
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
-            sept::st::Struct.update_inline(layout_job, &mut view_ctx_g);
+            sept::st::Struct.update_inline(ui, layout_job, &mut view_ctx_g);
         }
         layout_job_append(layout_job, " { ", view_ctx.color_for::<Self>(), view_ctx);
         for element in self.field_decl_v.iter() {
@@ -876,7 +1175,7 @@ impl View for sept::dy::StructTerm {
                 // TODO: Is it possible to push a reference to the address token here?
                 let mut view_ctx_g =
                     view_ctx.push_address_token(sept::dy::Value::from(element.0.clone()));
-                element.update_inline(layout_job, &mut view_ctx_g);
+                element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
             // Have to handle the space separately so it doesn't get highlighted with the item, if the outer
@@ -960,11 +1259,11 @@ impl View for sept::dy::StructTermTerm {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
             self.declared_type()
-                .update_inline(layout_job, &mut view_ctx_g);
+                .update_inline(ui, layout_job, &mut view_ctx_g);
         }
         // TODO: It's a space for now, but maybe there should be some syntax for "construction"
         layout_job_append(layout_job, " { ", view_ctx.color_for::<Self>(), view_ctx);
@@ -998,7 +1297,7 @@ impl View for sept::dy::StructTermTerm {
                     }
                     // let mut layout_job =
                     //     field_value.update(ui, &mut view_ctx_g, Some(layout_job));
-                    field_value.update_inline(layout_job, &mut view_ctx_g);
+                    field_value.update_inline(ui, layout_job, &mut view_ctx_g);
                     layout_job_append(
                         layout_job,
                         ",",
@@ -1162,133 +1461,133 @@ impl View for sept::dy::Value {
             unimplemented!("not yet");
         }
     }
-    fn update_inline(&self, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
         if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float32Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Term>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint16>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint32>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint64>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint8>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint16>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint32>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint64>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float32>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::ArrayTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::OrderedMapTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::TupleTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Void>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::VoidType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Bool>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::BoolType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::True>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::TrueType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::False>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::FalseType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::EmptyType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint16Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint32Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint64Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint8Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint16Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint32Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Uint64Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float32Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Type>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Utf8String>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Array>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::ArrayType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMap>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::OrderedMapType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::StructTermTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::StructTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Struct>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::StructType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Tuple>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::TupleType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::GlobalSymRefTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRef>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::GlobalSymRefType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::LocalSymRefTerm>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRef>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRefType>() {
-            term.update_inline(layout_job, view_ctx);
+            term.update_inline(ui, layout_job, view_ctx);
         } else {
             use sept::st::Stringifiable;
             tracing::error!("View not implemented for {}", self.stringify());

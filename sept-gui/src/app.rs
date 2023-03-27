@@ -18,6 +18,7 @@ impl Default for App {
         let a1 = sept::dy::ArrayTerm::from(vec![
             true.into(),
             false.into(),
+            sept::dy::ArrayTerm::from(vec![]).into(),
             123i8.into(),
             200u8.into(),
             12345i16.into(),
@@ -188,6 +189,7 @@ impl Default for App {
 
         let mut view_ctx = ViewCtx::new();
         view_ctx.inline_at_nesting_depth = 2;
+        view_ctx.cursor_address_o = Some(sept::dy::TupleTerm::from(vec![]));
 
         Self {
             value,
@@ -236,6 +238,34 @@ impl eframe::App for App {
         });
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            // Render the cursor address.  Unfortunately because this has to be rendered before
+            // the CentralPanel, this gets updated with a slight delay after the events that change
+            // the cursor address.
+            if let Some(self_view_ctx_cursor_address) = self.view_ctx.cursor_address_o.as_ref() {
+                ui.horizontal(|ui| {
+                    ui.label("Cursor Address:");
+
+                    // Use a fresh ViewCtx specific for the cursor address rendering, separate from the CentralPanel's one.
+                    let mut view_ctx = ViewCtx::new();
+                    // Don't show type annotations or struct field name hints in the cursor address; it should be compact.
+                    view_ctx.show_type_annotations = false;
+                    view_ctx.show_struct_field_name_hints = false;
+                    // TODO: Make it super compact by eliminating spaces.
+
+                    let old_item_spacing = ui.spacing().item_spacing;
+                    ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
+                    // ui.spacing_mut().item_spacing.x = 0.0;
+
+                    ui.vertical(|ui| {
+                        let layout_job =
+                            self_view_ctx_cursor_address.update(ui, &mut view_ctx, None);
+                        ui.label(layout_job);
+                    });
+
+                    ui.spacing_mut().item_spacing = old_item_spacing;
+                });
+            }
+
             ui.horizontal_wrapped(|ui| {
                 ui.label("Inlining Depth:");
                 ui.add(
@@ -291,6 +321,7 @@ impl eframe::App for App {
                 .show(ui, |ui| {
                     let old_item_spacing = ui.spacing().item_spacing;
                     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
+                    // ui.spacing_mut().item_spacing.x = 0.0;
 
                     ui.vertical(|ui| {
                         let layout_job = self.value.update(ui, &mut self.view_ctx, None);
@@ -300,14 +331,5 @@ impl eframe::App for App {
                     ui.spacing_mut().item_spacing = old_item_spacing;
                 });
         });
-
-        // if false {
-        //     egui::Window::new("Window").show(ctx, |ui| {
-        //         ui.label("Windows can be moved by dragging them.");
-        //         ui.label("They are automatically sized based on contents.");
-        //         ui.label("You can turn on resizing and scrolling if you like.");
-        //         ui.label("You would normally chose either panels OR windows.");
-        //     });
-        // }
     }
 }
