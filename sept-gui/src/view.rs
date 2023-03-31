@@ -2,8 +2,10 @@ use crate::{ANSIColor, LayoutDiscriminant, LayoutMode, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
 pub trait View {
-    fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
         // Do nothing by default.
+        let _ = ui;
+        let _ = view_ctx;
     }
     /// If continuation_layout_job_o is not None, then it must be used for whatever the first line in
     /// the item rendering is.  If there's only one line in the rendering, then it would also be returned.
@@ -82,6 +84,40 @@ fn render_type_annotation_for<T: sept::st::TermTrait>(
         layout_job_append(
             layout_job,
             format!(": {}{}", term.abstract_type().stringify(), extra_text).as_str(),
+            view_ctx.color_for_type_annotation(),
+            view_ctx,
+        );
+    }
+}
+
+// Bit of a hack because `str` can't impl `sept::st::TermTrait`.
+fn render_type_annotation_for_str(
+    layout_job: &mut LayoutJob,
+    view_ctx: &mut ViewCtx,
+    extra_text_o: Option<&str>,
+) {
+    if view_ctx.show_type_annotations {
+        use sept::st::Stringifiable;
+        let extra_text = extra_text_o.unwrap_or("");
+        layout_job_append(
+            layout_job,
+            format!(": {}{}", sept::st::Utf8String.stringify(), extra_text).as_str(),
+            view_ctx.color_for_type_annotation(),
+            view_ctx,
+        );
+    }
+}
+
+fn render_postfix_annotation(
+    layout_job: &mut LayoutJob,
+    view_ctx: &mut ViewCtx,
+    postfix_text: &str,
+) {
+    // TODO: Use a different ViewCtx config var
+    if view_ctx.show_type_annotations {
+        layout_job_append(
+            layout_job,
+            postfix_text,
             view_ctx.color_for_type_annotation(),
             view_ctx,
         );
@@ -186,58 +222,289 @@ impl_view_using_to_string!(sept::st::LocalSymRefType);
 fn render_str_as_literal_without_quotes(
     text: &str,
     layout_job: &mut LayoutJob,
-    view_ctx: &ViewCtx,
+    view_ctx: &mut ViewCtx,
     regular_char_color: egui::Color32,
     escape_char_color: egui::Color32,
+    char_index_begin: usize,
 ) {
-    let mut buffer = String::new();
-    for c in text.chars() {
-        // This is a bit inelegant, but fine for now.
+    for (c_index, c) in text.chars().enumerate() {
+        let mut view_ctx_g =
+            view_ctx.push_render_address_token(((c_index + char_index_begin) as u32).into());
+
+        // TEMP HACK -- handle char by char for now.  Maybe this is plenty efficient, hopefully LayoutJob does
+        // the correct buffering.
         if c == '\\' || c == '\"' || (c as u32) < (' ' as u32) || (c as u32) > ('~' as u32) {
-            // Output the existing buffer, if any contents.
-            if !buffer.is_empty() {
-                layout_job_append(layout_job, buffer.as_str(), regular_char_color, view_ctx);
-                buffer.clear();
-            }
-            // Output the escape char.
             layout_job_append(
                 layout_job,
                 c.escape_default().to_string().as_str(),
                 escape_char_color,
-                view_ctx,
+                &mut view_ctx_g,
             );
         } else {
-            buffer.push(c);
+            layout_job_append(
+                layout_job,
+                c.to_string().as_str(),
+                regular_char_color,
+                &mut view_ctx_g,
+            );
         }
-    }
-    // Output the existing buffer, if any contents.
-    if !buffer.is_empty() {
-        layout_job_append(layout_job, buffer.as_str(), regular_char_color, view_ctx);
-        buffer.clear();
     }
 }
 
-impl View for sept::st::Utf8StringTerm {
+#[derive(Debug, derive_more::Deref)]
+pub struct Utf8StringTermLineView<'a>(&'a str);
+
+impl<'a> View for Utf8StringTermLineView<'a> {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        // TEMP HACK: Unfortunately have to compute the number of lines each time.  Maybe this could be
+        // cached in the ViewCtx.  For truly large strings this hack is not a viable solution.
+        let line_count = self.split_inclusive('\n').count() as u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_parent_of_cursor_address() {
+            // Enter while in line mode goes into char mode for that line.
+            if input_g.consume_key(Modifiers::NONE, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::C)
+            {
+                // Enter this Utf8StringTerm in "char" view at element 0.
+                view_ctx.cursor_address_push("char".to_string().into());
+                view_ctx.cursor_address_push(0u32.into());
+            } else if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to the outer address.  First, pop the element index.
+                view_ctx.cursor_address_pop();
+                // Now pop the "line" view token.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push((line_count - 1).into());
+                // TODO: use ui.scroll_to_me
+            } else if line_count > 0 {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                let element_index_value = view_ctx.cursor_address_pop();
+                if element_index_value.is::<u32>() {
+                    let mut element_index = element_index_value.downcast_into::<u32>();
+                    // TODO: Handle one-past-the-end index for insertions
+                    element_index = element_index
+                        .saturating_add_signed(element_index_delta)
+                        .min(line_count - 1);
+                    view_ctx.cursor_address_push(element_index.into());
+                    // TODO: use ui.scroll_to_me
+                } else {
+                    tracing::warn!(
+                        "Invalid address token {} under Utf8StringTermLineView with address {}",
+                        element_index_value,
+                        view_ctx.render_address
+                    );
+                    // Push element_index_value back, so that the pushes and pops don't become unbalanced.
+                    view_ctx.cursor_address_push(element_index_value);
+                }
+            }
+        } else if let Some(subaddress_token_v) =
+            view_ctx.cursor_match_subaddress_of_render_address(&sept::dy::TupleTerm::from(vec![
+                sept::st::Uint32.into(),
+                // NOTE: This would best be TypeOf("char")
+                sept::st::Utf8String.into(),
+                sept::st::Uint32.into(),
+            ]))
+        {
+            let line = self
+                .split_inclusive('\n')
+                .nth(subaddress_token_v[0].downcast_ref::<u32>().unwrap().clone() as usize)
+                .unwrap();
+            let line_char_count = line.chars().count() as u32;
+
+            // Handle movement in "line" "char" mode.
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to the outer address.  First, pop the element index.
+                view_ctx.cursor_address_pop();
+                // Now pop the "char" view token.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push((line_char_count - 1).into());
+                // TODO: use ui.scroll_to_me
+            } else if line_char_count > 0 {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut line_element_index_delta = 0i32;
+                let mut char_element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // In this case, lines are layed out vertically and chars are layed out horizontally,
+                        // so arrow left/right should increase/decrease the line char element index, whereas arrow up/down
+                        // should increase/decrease the line element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                            line_element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                            line_element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            char_element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            char_element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            line_element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            line_element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, lines and chars are layed out horizontally, so arrow left/right should
+                        // increase/decrease the char element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            char_element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            char_element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            char_element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            char_element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                // Handle up/down arrow to change line index.
+                if line_element_index_delta != 0 {
+                    // Pop 3 tokens off; the char element index, "char", and then the line element index.
+                    let char_element_index_value = view_ctx.cursor_address_pop();
+                    view_ctx.cursor_address_pop();
+                    let line_element_index_value = view_ctx.cursor_address_pop();
+                    if line_element_index_value.is::<u32>() {
+                        let mut line_element_index =
+                            line_element_index_value.downcast_into::<u32>();
+                        // TODO: Handle one-past-the-end index for insertions
+                        line_element_index = line_element_index
+                            .saturating_add_signed(line_element_index_delta)
+                            .min(line_count - 1);
+                        // Push everything back.
+                        view_ctx.cursor_address_push(line_element_index.into());
+                        view_ctx.cursor_address_push("char".to_string().into());
+                        // NOTE: This char index may be out of range.
+                        // TODO: Handle this.  Note that this seems to be implicitly and accidentally handled
+                        // probably by the "key up" event that follows this key event, where it triggers the
+                        // char_element_index_delta-handling else clause down below.  This isn't actually
+                        // stable, so implement it for real.
+                        view_ctx.cursor_address_push(char_element_index_value);
+                        // TODO: use ui.scroll_to_me
+                    } else {
+                        tracing::warn!(
+                            "Invalid address token {} under Utf8StringTermLineView+char with address {}",
+                            char_element_index_value,
+                            view_ctx.render_address
+                        );
+                        // Push all the stuff back on, so that the pushes and pops don't become unbalanced.
+                        view_ctx.cursor_address_push(line_element_index_value);
+                        view_ctx.cursor_address_push("char".to_string().into());
+                        view_ctx.cursor_address_push(char_element_index_value);
+                    }
+                } else {
+                    let char_element_index_value = view_ctx.cursor_address_pop();
+                    // TODO: Make it wrap to the next/previous line.
+                    if char_element_index_value.is::<u32>() {
+                        let mut char_element_index =
+                            char_element_index_value.downcast_into::<u32>();
+                        // TODO: Handle one-past-the-end index for insertions
+                        char_element_index = char_element_index
+                            .saturating_add_signed(char_element_index_delta)
+                            .min(line_char_count - 1);
+                        view_ctx.cursor_address_push(char_element_index.into());
+                        // TODO: use ui.scroll_to_me
+                    } else {
+                        tracing::warn!(
+                            "Invalid address token {} under Utf8StringTermLineView+char with address {}",
+                            char_element_index_value,
+                            view_ctx.render_address
+                        );
+                        // Push element_index_value back, so that the pushes and pops don't become unbalanced.
+                        view_ctx.cursor_address_push(char_element_index_value);
+                    }
+                }
+            }
+        }
+    }
     fn update_expanded(
         &self,
         ui: &mut Ui,
         view_ctx: &mut ViewCtx,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
+        let mut view_ctx_g = view_ctx.push_render_address_token("line".to_string().into());
+
+        self.handle_events(ui, &mut view_ctx_g);
+
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
 
         if self.is_empty() {
             layout_job_append(
                 &mut layout_job,
                 "\"\"",
-                view_ctx.color_for_utf8string_quotes(),
-                view_ctx,
+                view_ctx_g.color_for_utf8string_quotes(),
+                &mut view_ctx_g,
             );
-            render_type_annotation_for(
-                self,
+            // TODO: Maybe also annotate number of bytes
+            let line_count = self.split_inclusive('\n').count();
+            let char_count = self.chars().count();
+            render_type_annotation_for_str(
                 &mut layout_job,
-                view_ctx,
-                Some(format!(" (len: {})", self.len()).as_str()),
+                &mut view_ctx_g,
+                Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
             );
             return layout_job;
         }
@@ -245,25 +512,28 @@ impl View for sept::st::Utf8StringTerm {
         layout_job_append(
             &mut layout_job,
             "\"",
-            view_ctx.color_for_utf8string_quotes(),
-            view_ctx,
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
         );
         ui.label(layout_job);
 
         {
-            let regular_char_color = view_ctx.color_for::<Self>();
-            let escape_char_color = view_ctx.color_for_utf8string_escape_chars();
+            let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+            let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
 
-            let mut view_ctx_g = view_ctx.push_nesting_depth();
+            let mut view_ctx_g = view_ctx_g.push_nesting_depth();
 
-            // TODO: Figure out if lines should be addressable (maybe that requires a "line view" object.)
-            // TODO: Probably need to have render_str_as_literal_without_quotes handle the cursor
-            for line in self.split_inclusive('\n') {
+            for (line_index, line) in self.split_inclusive('\n').enumerate() {
                 ui.horizontal(|ui| {
-                    ui.label(indentation_for::<Self>(&mut view_ctx_g));
+                    ui.label(indentation_for::<sept::st::Utf8StringTerm>(&mut view_ctx_g));
 
                     // The content itself expects to be in a vertical.
                     ui.vertical(|ui| {
+                        let mut view_ctx_g =
+                            view_ctx_g.push_render_address_token((line_index as u32).into());
+                        let mut view_ctx_g =
+                            view_ctx_g.push_render_address_token("char".to_string().into());
+
                         let mut layout_job = LayoutJob::default();
                         render_str_as_literal_without_quotes(
                             line,
@@ -271,6 +541,14 @@ impl View for sept::st::Utf8StringTerm {
                             &mut view_ctx_g,
                             regular_char_color,
                             escape_char_color,
+                            0,
+                        );
+                        // Annotation which shows how many chars are in this line (TODO: Make this configurable)
+                        let line_char_count = line.chars().count();
+                        render_postfix_annotation(
+                            &mut layout_job,
+                            &mut view_ctx_g,
+                            format!(" (chars: {})", line_char_count).as_str(),
                         );
                         ui.label(layout_job);
                     });
@@ -282,44 +560,405 @@ impl View for sept::st::Utf8StringTerm {
         layout_job_append(
             &mut layout_job,
             "\"",
-            view_ctx.color_for_utf8string_quotes(),
-            view_ctx,
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
         );
-        render_type_annotation_for(
-            self,
+        // TODO: Maybe also annotate number of bytes
+        let line_count = self.split_inclusive('\n').count();
+        let char_count = self.chars().count();
+        render_type_annotation_for_str(
             &mut layout_job,
-            view_ctx,
-            Some(format!(" (len: {})", self.len()).as_str()),
+            &mut view_ctx_g,
+            Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
         );
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        let mut view_ctx_g = view_ctx.push_render_address_token("line".to_string().into());
+
+        self.handle_events(ui, &mut view_ctx_g);
+
         layout_job_append(
             layout_job,
             "\"",
-            view_ctx.color_for_utf8string_quotes(),
-            view_ctx,
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
         );
+        {
+            // let mut layout_job = LayoutJob::default();
+
+            let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+            let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
+
+            let mut view_ctx_g = view_ctx_g.push_nesting_depth();
+
+            // let mut char_index_begin = 0usize;
+            for (line_index, line) in self.split_inclusive('\n').enumerate() {
+                // ui.horizontal(|ui| {
+                // ui.label(indentation_for::<Self>(&mut view_ctx_g));
+
+                // The content itself expects to be in a vertical.
+                // ui.vertical(|ui| {
+                let mut view_ctx_g =
+                    view_ctx_g.push_render_address_token((line_index as u32).into());
+
+                let mut view_ctx_g =
+                    view_ctx_g.push_render_address_token("char".to_string().into());
+                render_str_as_literal_without_quotes(
+                    line,
+                    layout_job,
+                    &mut view_ctx_g,
+                    regular_char_color,
+                    escape_char_color,
+                    // char_index_begin,
+                    0,
+                );
+                // });
+                // });
+                // char_index_begin += line.chars().count();
+            }
+            // ui.label(layout_job);
+        }
+        layout_job_append(
+            layout_job,
+            "\"",
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
+        );
+        // TODO: Maybe also annotate number of bytes
+        let line_count = self.split_inclusive('\n').count();
+        let char_count = self.chars().count();
+        render_type_annotation_for_str(
+            layout_job,
+            &mut view_ctx_g,
+            Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
+        );
+    }
+}
+
+#[derive(Debug, derive_more::Deref)]
+pub struct Utf8StringTermCharView<'a>(&'a str);
+
+impl<'a> View for Utf8StringTermCharView<'a> {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+        // TEMP HACK: Unfortunately have to compute the number of chars each time.  Maybe this could be
+        // cached in the ViewCtx.  For truly large strings this hack is not a viable solution.
+        let char_count = self.chars().count() as u32;
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_parent_of_cursor_address() {
+            if input_g.consume_key(Modifiers::ALT, Key::Enter)
+                || input_g.consume_key(Modifiers::NONE, Key::Escape)
+            {
+                // Escape back to the outer address.  First, pop the element index.
+                view_ctx.cursor_address_pop();
+                // Now pop the "char" view token.
+                view_ctx.cursor_address_pop();
+            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push(0u32.into());
+                // TODO: use ui.scroll_to_me
+            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
+                view_ctx.cursor_address_pop();
+                view_ctx.cursor_address_push((char_count - 1).into());
+                // TODO: use ui.scroll_to_me
+            } else if char_count > 0 {
+                // Handle arrow keys for element navigation.
+                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                let mut element_index_delta = 0i32;
+                match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => {
+                        // TODO: Make arrow up/down increment line
+                        // In this case, elements are still horizontal, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                    }
+                    LayoutMode::Inline => {
+                        // In this case, elements are horizontal, so arrow left/right should increase/decrease the element index.
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                            element_index_delta -= 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                            element_index_delta += 1;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
+                            element_index_delta -= view_ctx.page_up_down_delta as i32;
+                        }
+                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
+                            element_index_delta += view_ctx.page_up_down_delta as i32;
+                        }
+                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    }
+                };
+                let element_index_value = view_ctx.cursor_address_pop();
+                if element_index_value.is::<u32>() {
+                    let mut element_index = element_index_value.downcast_into::<u32>();
+                    // TODO: Handle one-past-the-end index for insertions
+                    element_index = element_index
+                        .saturating_add_signed(element_index_delta)
+                        .min(char_count - 1);
+                    view_ctx.cursor_address_push(element_index.into());
+                    // TODO: use ui.scroll_to_me
+                } else {
+                    tracing::warn!(
+                        "Invalid address token {} under Utf8StringTermCharView with address {}",
+                        element_index_value,
+                        view_ctx.render_address
+                    );
+                    // Push element_index_value back, so that the pushes and pops don't become unbalanced.
+                    view_ctx.cursor_address_push(element_index_value);
+                }
+            }
+        }
+    }
+    fn update_expanded(
+        &self,
+        ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
+
+        self.handle_events(ui, &mut view_ctx_g);
+
+        let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
+
+        if self.is_empty() {
+            layout_job_append(
+                &mut layout_job,
+                "\"\"",
+                view_ctx_g.color_for_utf8string_quotes(),
+                &mut view_ctx_g,
+            );
+            // TODO: Maybe also annotate number of bytes
+            let line_count = self.split_inclusive('\n').count();
+            let char_count = self.chars().count();
+            render_type_annotation_for_str(
+                &mut layout_job,
+                &mut view_ctx_g,
+                Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
+            );
+            return layout_job;
+        }
+
+        layout_job_append(
+            &mut layout_job,
+            "\"",
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
+        );
+        ui.label(layout_job);
+
+        {
+            let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+            let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
+
+            let mut view_ctx_g = view_ctx_g.push_nesting_depth();
+
+            let mut char_index_begin = 0usize;
+            for (_line_index, line) in self.split_inclusive('\n').enumerate() {
+                ui.horizontal(|ui| {
+                    ui.label(indentation_for::<sept::st::Utf8StringTerm>(&mut view_ctx_g));
+
+                    // The content itself expects to be in a vertical.
+                    ui.vertical(|ui| {
+                        let mut layout_job = LayoutJob::default();
+                        render_str_as_literal_without_quotes(
+                            line,
+                            &mut layout_job,
+                            &mut view_ctx_g,
+                            regular_char_color,
+                            escape_char_color,
+                            char_index_begin,
+                        );
+                        // Annotation which shows how many chars are in this line (TODO: Make this configurable)
+                        let line_char_count = line.chars().count();
+                        render_postfix_annotation(
+                            &mut layout_job,
+                            &mut view_ctx_g,
+                            format!(" (chars: {})", line_char_count).as_str(),
+                        );
+                        ui.label(layout_job);
+                    });
+                });
+                char_index_begin += line.chars().count();
+            }
+        }
+
+        let mut layout_job = LayoutJob::default();
+        layout_job_append(
+            &mut layout_job,
+            "\"",
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
+        );
+        // TODO: Maybe also annotate number of bytes
+        let line_count = self.split_inclusive('\n').count();
+        let char_count = self.chars().count();
+        render_type_annotation_for_str(
+            &mut layout_job,
+            &mut view_ctx_g,
+            Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
+        );
+        // Return this to the outer context.
+        layout_job
+    }
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
+
+        self.handle_events(ui, &mut view_ctx_g);
+
+        layout_job_append(
+            layout_job,
+            "\"",
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
+        );
+        let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+        let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
         render_str_as_literal_without_quotes(
             self,
             layout_job,
-            view_ctx,
-            view_ctx.color_for::<Self>(),
-            view_ctx.color_for_utf8string_escape_chars(),
+            &mut view_ctx_g,
+            regular_char_color,
+            escape_char_color,
+            0,
         );
         layout_job_append(
             layout_job,
             "\"",
-            view_ctx.color_for_utf8string_quotes(),
-            view_ctx,
+            view_ctx_g.color_for_utf8string_quotes(),
+            &mut view_ctx_g,
         );
-        render_type_annotation_for(
-            self,
+        // TODO: Maybe also annotate number of bytes
+        let line_count = self.split_inclusive('\n').count();
+        let char_count = self.chars().count();
+        render_type_annotation_for_str(
             layout_job,
-            view_ctx,
-            Some(format!(" (len: {})", self.len()).as_str()),
+            &mut view_ctx_g,
+            Some(format!(" (lines: {}, chars: {})", line_count, char_count).as_str()),
         );
+    }
+}
+
+impl View for sept::st::Utf8StringTerm {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+        use egui::{Key, Modifiers};
+
+        let mut input_g = ui.input_mut();
+        if view_ctx.render_address_is_cursor_address() {
+            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
+                // Which mode ("line" vs "char") to enter depends on which LayoutMode we're in.
+                let mode = match view_ctx.layout_mode() {
+                    LayoutMode::Expanded => "line",
+                    LayoutMode::Inline => "char",
+                };
+                view_ctx.cursor_address_push(mode.to_string().into());
+                view_ctx.cursor_address_push(0u32.into());
+            } else if input_g.consume_key(Modifiers::NONE, Key::L) {
+                // Explicitly enter this Utf8StringTerm in "line" view at element 0.
+                view_ctx.cursor_address_push("line".to_string().into());
+                view_ctx.cursor_address_push(0u32.into());
+            } else if input_g.consume_key(Modifiers::NONE, Key::C) {
+                // Enter this Utf8StringTerm in "char" view at element 0.
+                view_ctx.cursor_address_push("char".to_string().into());
+                view_ctx.cursor_address_push(0u32.into());
+            }
+        }
+    }
+    fn update_expanded(
+        &self,
+        ui: &mut Ui,
+        view_ctx: &mut ViewCtx,
+        continuation_layout_job_o: Option<LayoutJob>,
+    ) -> LayoutJob {
+        self.handle_events(ui, view_ctx);
+
+        // If cursor address is a proper subaddress of render address (meaning render address is a proper prefix of
+        // cursor address), then we should "follow" the next token in the cursor, since that's what the cursor is
+        // meant to be viewing.
+        if let Some(guide_token) = view_ctx.cursor_address_guide_token() {
+            match guide_token.downcast_ref::<String>().map(|x| x.as_str()) {
+                Some("line") => {
+                    // TODO: Does this need to call update instead of update_expanded?
+                    return Utf8StringTermLineView(self).update_expanded(
+                        ui,
+                        view_ctx,
+                        continuation_layout_job_o,
+                    );
+                }
+                Some("char") => {
+                    // TODO: Does this need to call update instead of update_expanded?
+                    return Utf8StringTermCharView(self).update_expanded(
+                        ui,
+                        view_ctx,
+                        continuation_layout_job_o,
+                    );
+                }
+                Some(mode) => {
+                    tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
+                }
+                None => {
+                    use sept::st::Stringifiable;
+                    tracing::warn!(
+                        "Invalid view mode {} for Utf8StringTerm",
+                        guide_token.stringify()
+                    );
+                }
+            }
+        }
+
+        // There was no guide token, so just do what the LayoutMode expects.  Because we're in update_expanded,
+        // use "line" view.
+        // TODO: Does this need to call update instead of update_expanded?
+        Utf8StringTermLineView(self).update_expanded(ui, view_ctx, continuation_layout_job_o)
+    }
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+        self.handle_events(ui, view_ctx);
+
+        // If cursor address is a proper subaddress of render address (meaning render address is a proper prefix of
+        // cursor address), then we should "follow" the next token in the cursor, since that's what the cursor is
+        // meant to be viewing.
+        if let Some(guide_token) = view_ctx.cursor_address_guide_token() {
+            match guide_token.downcast_ref::<String>().map(|x| x.as_str()) {
+                Some("line") => {
+                    // TODO: Does this need to call update instead of update_expanded?
+                    return Utf8StringTermLineView(self).update_inline(ui, layout_job, view_ctx);
+                }
+                Some("char") => {
+                    // TODO: Does this need to call update instead of update_expanded?
+                    return Utf8StringTermCharView(self).update_inline(ui, layout_job, view_ctx);
+                }
+                Some(mode) => {
+                    tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
+                }
+                None => {
+                    use sept::st::Stringifiable;
+                    tracing::warn!(
+                        "Invalid view mode {} for Utf8StringTerm",
+                        guide_token.stringify()
+                    );
+                }
+            }
+        }
+
+        // There was no guide token, so just do what the LayoutMode expects.  Because we're in update_inline,
+        // use "char" view.
+        // TODO: Does this need to call update instead of update_inline?
+        Utf8StringTermCharView(self).update_inline(ui, layout_job, view_ctx)
     }
 }
 
@@ -366,6 +1005,7 @@ impl View for sept::dy::GlobalSymRefTerm {
             view_ctx,
             regular_char_color,
             escape_char_color,
+            0,
         );
         layout_job_append(layout_job, "\"", quote_color, view_ctx);
         if resolved {
@@ -417,6 +1057,7 @@ impl View for sept::dy::LocalSymRefTerm {
             view_ctx,
             regular_char_color,
             escape_char_color,
+            0,
         );
         layout_job_append(layout_job, "\"", quote_color, view_ctx);
         if resolved {
@@ -544,7 +1185,7 @@ impl View for sept::dy::ArrayTerm {
 
                     ui.vertical(|ui| {
                         let mut view_ctx_g =
-                            view_ctx_g.push_address_token(sept::dy::Value::from(i as u32));
+                            view_ctx_g.push_render_address_token(sept::dy::Value::from(i as u32));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -586,7 +1227,8 @@ impl View for sept::dy::ArrayTerm {
         layout_job_append(layout_job, "[ ", view_ctx.color_for::<Self>(), view_ctx);
         for (i, element) in self.iter().enumerate() {
             {
-                let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
+                let mut view_ctx_g =
+                    view_ctx.push_render_address_token(sept::dy::Value::from(i as u32));
                 element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
@@ -706,7 +1348,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
 
         // TODO: Implement addressing of key vs value
         let mut layout_job = {
-            let mut view_ctx_g = view_ctx.push_address_token(0u32.into());
+            let mut view_ctx_g = view_ctx.push_render_address_token(0u32.into());
             self.0
                 .update_expanded(ui, &mut view_ctx_g, continuation_layout_job_o)
         };
@@ -719,7 +1361,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
         // We pass in layout_job as continuation_layout_job_o so that it renders starting on the same
         // line as " => ".
         let layout_job = {
-            let mut view_ctx_g = view_ctx.push_address_token(1u32.into());
+            let mut view_ctx_g = view_ctx.push_render_address_token(1u32.into());
             self.1
                 .update_expanded(ui, &mut view_ctx_g, Some(layout_job))
         };
@@ -730,7 +1372,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
         self.handle_events(ui, view_ctx);
 
         {
-            let mut view_ctx_g = view_ctx.push_address_token(0u32.into());
+            let mut view_ctx_g = view_ctx.push_render_address_token(0u32.into());
             self.0.update_inline(ui, layout_job, &mut view_ctx_g);
         }
         layout_job_append(
@@ -740,7 +1382,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
             view_ctx,
         );
         {
-            let mut view_ctx_g = view_ctx.push_address_token(1u32.into());
+            let mut view_ctx_g = view_ctx.push_render_address_token(1u32.into());
             self.1.update_inline(ui, layout_job, &mut view_ctx_g);
         }
     }
@@ -899,7 +1541,7 @@ impl View for sept::dy::OrderedMapTerm {
                     ui.vertical(|ui| {
                         // TODO: Is it possible to push a reference to the address token here instead?
                         let mut view_ctx_g =
-                            view_ctx_g.push_address_token(key_value_pair.0.clone());
+                            view_ctx_g.push_render_address_token(key_value_pair.0.clone());
                         let mut layout_job = key_value_pair.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -942,7 +1584,7 @@ impl View for sept::dy::OrderedMapTerm {
         for key_value_pair in self.iter() {
             {
                 // TODO: Is it possible to push a reference to the address token here?
-                let mut view_ctx_g = view_ctx.push_address_token(key_value_pair.0.clone());
+                let mut view_ctx_g = view_ctx.push_render_address_token(key_value_pair.0.clone());
                 key_value_pair.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
@@ -1079,7 +1721,7 @@ impl View for sept::dy::TupleTerm {
 
                     ui.vertical(|ui| {
                         let mut view_ctx_g =
-                            view_ctx_g.push_address_token(sept::dy::Value::from(i as u32));
+                            view_ctx_g.push_render_address_token(sept::dy::Value::from(i as u32));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -1121,7 +1763,8 @@ impl View for sept::dy::TupleTerm {
         layout_job_append(layout_job, "( ", view_ctx.color_for::<Self>(), view_ctx);
         for (i, element) in self.iter().enumerate() {
             {
-                let mut view_ctx_g = view_ctx.push_address_token(sept::dy::Value::from(i as u32));
+                let mut view_ctx_g =
+                    view_ctx.push_render_address_token(sept::dy::Value::from(i as u32));
                 element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
@@ -1245,7 +1888,7 @@ impl View for (String, sept::dy::Value) {
         // TODO: Need to figure out how to address field name vs field type
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
         {
-            let mut view_ctx_g = view_ctx_g.push_address_token(0u32.into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token(0u32.into());
             // There's probably never a reason to render a field_name expanded.
             field_name.update_inline(ui, &mut layout_job, &mut view_ctx_g);
         }
@@ -1258,7 +1901,7 @@ impl View for (String, sept::dy::Value) {
         // We pass in layout_job as continuation_layout_job_o so that it renders starting on the same
         // line as ": ".
         let layout_job = {
-            let mut view_ctx_g = view_ctx_g.push_address_token(1u32.into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token(1u32.into());
             field_type.update_expanded(ui, &mut view_ctx_g, Some(layout_job))
         };
         // Return this to the outer context
@@ -1271,7 +1914,7 @@ impl View for (String, sept::dy::Value) {
 
         let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
         {
-            let mut view_ctx_g = view_ctx_g.push_address_token(0u32.into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token(0u32.into());
             field_name.update_inline(ui, layout_job, &mut view_ctx_g);
         }
         layout_job_append(
@@ -1281,7 +1924,7 @@ impl View for (String, sept::dy::Value) {
             &mut view_ctx_g,
         );
         {
-            let mut view_ctx_g = view_ctx_g.push_address_token(1u32.into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token(1u32.into());
             field_type.update_inline(ui, layout_job, &mut view_ctx_g);
         }
     }
@@ -1447,8 +2090,8 @@ impl View for sept::dy::StructTerm {
 
                     ui.vertical(|ui| {
                         // TODO: Is it possible to push a reference to the address token here?
-                        let mut view_ctx_g =
-                            view_ctx_g.push_address_token(sept::dy::Value::from(element.0.clone()));
+                        let mut view_ctx_g = view_ctx_g
+                            .push_render_address_token(sept::dy::Value::from(element.0.clone()));
                         let mut layout_job = element.update(ui, &mut view_ctx_g, None);
                         layout_job_append(
                             &mut layout_job,
@@ -1496,7 +2139,7 @@ impl View for sept::dy::StructTerm {
             {
                 // TODO: Is it possible to push a reference to the address token here?
                 let mut view_ctx_g =
-                    view_ctx.push_address_token(sept::dy::Value::from(element.0.clone()));
+                    view_ctx.push_render_address_token(sept::dy::Value::from(element.0.clone()));
                 element.update_inline(ui, layout_job, &mut view_ctx_g);
                 layout_job_append(layout_job, ",", view_ctx_g.color_for::<Self>(), &view_ctx_g);
             }
@@ -1641,7 +2284,7 @@ impl View for sept::dy::StructTermTerm {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
             // TEMP HACK -- use the string "type" for now.  later, probably use a char or a non-parametric term that's even more terse.
             // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
-            let mut view_ctx_g = view_ctx_g.push_address_token("type".to_string().into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token("type".to_string().into());
             self.declared_type()
                 .update_expanded(ui, &mut view_ctx_g, continuation_layout_job_o)
         };
@@ -1686,7 +2329,7 @@ impl View for sept::dy::StructTermTerm {
                     ui.vertical(|ui| {
                         // TODO: Is it possible to push a reference to the address token here?
                         let mut view_ctx_g = view_ctx_g
-                            .push_address_token(sept::dy::Value::from(field_name.clone()));
+                            .push_render_address_token(sept::dy::Value::from(field_name.clone()));
 
                         let mut layout_job = LayoutJob::default();
                         // There's probably never a reason to render the field name expanded.
@@ -1726,7 +2369,7 @@ impl View for sept::dy::StructTermTerm {
             let mut view_ctx_g = view_ctx.push_show_type_annotations(false);
             // TEMP HACK -- use the string "type" for now.  later, probably use a char or a non-parametric term that's even more terse.
             // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
-            let mut view_ctx_g = view_ctx_g.push_address_token("type".to_string().into());
+            let mut view_ctx_g = view_ctx_g.push_render_address_token("type".to_string().into());
             self.declared_type()
                 .update_inline(ui, layout_job, &mut view_ctx_g);
         }
@@ -1756,8 +2399,8 @@ impl View for sept::dy::StructTermTerm {
             {
                 {
                     // TODO: Is it possible to push a reference to the address token here?
-                    let mut view_ctx_g =
-                        view_ctx_g.push_address_token(sept::dy::Value::from(field_name.clone()));
+                    let mut view_ctx_g = view_ctx_g
+                        .push_render_address_token(sept::dy::Value::from(field_name.clone()));
 
                     // let mut layout_job = LayoutJob::default();
                     // There's probably never a reason to render the field name expanded.

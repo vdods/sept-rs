@@ -76,6 +76,10 @@ Consider using "text view" concept from tui-experiment in which the specific map
     -   Finish and merge work-in-progress branch regarding serialization.
     -   Implement element addressing in sept crate.
     -   Implement cursor
+-   David DeConde suggests using the VIM keyboard shortcuts for navigation in order to have "free" avenue for adoption by an existing segment of users.
+    -   https://www.maketecheasier.com/cheatsheet/vim-keyboard-shortcuts/
+-   This may be useful:
+    -   https://docs.rs/supercow/latest/supercow/ -- like Cow (copy on write), but allegedly better.
 
 ### Wonky Ideas on Editing
 
@@ -352,3 +356,37 @@ Implementation notes
 Notes on cursor, keyboard events, and prep work for handling data modifications:
 -   Keyboard events really need to be handled in implementations of `View`, since keyboard events are interpreted differently based on the configuration of the view (e.g. inline vs expanded).
 -   Because data modifications will be handled via formal modification commands, and not in the `mut`-based immediate paradigm of `egui`, the `self` field of the methods of `View` should be made non-`mut`.  This way, immutable data can be traversed naturally (in particular, `OrderedMap` terms' keys).
+
+## 2023.03.27
+
+Notes on cursor, keyboard events, and prep work for handling data modifications for strings:
+-   Strings are shown in one of two `LayoutMode`s:
+    -   `Expanded`: as a sequence of newline-delimited lines, or
+    -   `Inline`: as a single character sequence.
+-   When the string is entered (via Enter key, or `"`), it should push a cursor address token which depends on the `LayoutMode`:
+    -   `Expanded`: it should push a "lines view" token (for now just use the string "lines"), and then `0`, meaning that the cursor is addressing the 0th line of the string.
+    -   `Inline`: it should simply push `0`, understanding that integers naturally index the chars of a string.  Though maybe for consistency there could be a "chars" token before the `0`.
+-   If the cursor is in a "lines" view of a string and Enter is pressed (or `c`?), then it should push a "chars" token and `0`, so that it's addressing the 0th char of the current line.
+-   It should be possible to explicitly enter the "lines" or "chars" view of a string regardless of what its `LayoutMode` is.  This can be done by pressing `l` or `c` instead of Enter or `"`.  Enter or `"` gets you whatever the default for the `LayoutMode` is.
+-   When in "lines" "chars" mode (i.e. chars of lines), probably moving the cursor before the first or after the last char on that line should cause it to go to the previous/next line, so as to not violate the principle of least surprise.
+-   There should also be a "bytes" view of a string.  A view into bytes should be its own thing, having its own view parameters (e.g. number base, some sort of aligned grid display, could run hex digits all together for a compact form, etc).
+
+With container/aggregate data types, it's necessary to be able to append elements "at the end", so some placeholder UI is needed for:
+-   When the container is empty and the user enters it.  There should be some visual indicator of the cursor indicating that it's ready to append items but that there are no items present.
+-   When the cursor is already in the container but goes one past the last item, where the intention is to append items.  Again, there should be some visual indicator of the cursor.
+-   Probably use a sentinel "end" cursor token to indicate this (in the sense of programming language ranges having the form begin..end where end is exclusive).  Might this idea naturally extend to insertion of items before the first item?
+
+## 2023.03.31
+
+Idea for "conventional" cursor navigation:
+-   Simply do an ordered traversal of the leaf AST nodes via left/right arrow keys.  This order depends on the specific view of each type.  Up/down arrow keys should navigate to what's above or below, which is dependent on what else is layed out in the view, and can't necessarily be determined from the data alone.
+
+Notes for improvement of cursor-related work:
+-   Cursor is hard to see, especially when it's moving.  Do one of the following:
+    -   Make a high contrast outline around the background highlight
+    -   Make the cursor blink
+    -   Make the cursor be high contrast somehow
+-   The various string views (line, char, and line-char) are a bit disjointed.  UX improvements:
+    -   line mode: This seems fine for now.
+    -   char mode: when the line wraps, the up/down arrow keys really should go up/down visually so as not to violate the principle of least surprise.  Similarly, page up/down should go vertically when the line wraps.  Conventionally, up/down and page up/down always go vertically.  Though maybe char mode is really just a special mode that is meant to be more programmatic and less about UX.  line-char mode is generally better UX.
+    -   line-char mode: This is working the best, but the cursor should wrap to prev/next line when it goes off the end of the current line to be like conventional text editors.  However, it still has the problem that when it's displaying in LayoutMode::Inline, up/down and page/up down should move vertically in the view.  Still need to figure out how to do this sort of hit detection in egui.

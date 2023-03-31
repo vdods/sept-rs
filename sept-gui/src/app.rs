@@ -127,6 +127,8 @@ impl Default for App {
 
         let s0 = String::new();
         let s1 = "+++ one day, a big hippo came along and wrecked\teverything.\nyes, i mean absolutely everything!\nthere was nothing left.\n\n\tnothing left but hippos.".to_string();
+        // Very long string.
+        let s2 = "blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh".to_string();
 
         let gsr0 = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".to_string());
         // NOTE: This uses the dereferenced StructTerm as the type and not the GlobalSymRefTerm as intended.
@@ -168,6 +170,10 @@ impl Default for App {
             "also doesn't resolve".into(),
         );
 
+        // TEMP HACK
+        // let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![s1.into()]).into();
+        // let value: sept::dy::Value = s1.into();
+
         let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
             a2.into(),
             sept::dy::ArrayTerm::from(vec![]).into(),
@@ -183,6 +189,7 @@ impl Default for App {
             stt1.into(),
             s0.into(),
             s1.into(),
+            s2.into(),
             gsr0.into(),
             stt2.into(),
             stt3.into(),
@@ -233,10 +240,17 @@ impl eframe::App for App {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if !frame.is_web() {
+                    // No File > Quit on web pages.
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
                         if ui.button("Quit").clicked() {
                             frame.close();
                         }
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        let _ = frame;
+                        let _ = ui;
                     }
                 });
             });

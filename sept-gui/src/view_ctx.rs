@@ -22,6 +22,7 @@ pub struct ViewCtx {
     /// This is the address of the current cursor.
     pub cursor_address_o: Option<sept::dy::TupleTerm>,
     /// This is the address of the currently-being-rendered term.
+    // TODO: This should probably be renamed to "update address", although I don't really like "update" either.
     pub render_address: sept::dy::TupleTerm,
     /// The number of elements to skip using PageUp/PageDown.
     pub page_up_down_delta: u32,
@@ -66,7 +67,7 @@ impl ViewCtx {
     ) -> ViewCtxTAGuard<'a> {
         ViewCtxTAGuard::new(self, show_type_annotations)
     }
-    pub fn push_address_token<'a>(
+    pub fn push_render_address_token<'a>(
         &'a mut self,
         address_token: sept::dy::Value,
     ) -> ViewCtxRenderAddressGuard<'a> {
@@ -116,6 +117,47 @@ impl ViewCtx {
             false
         }
     }
+    /// Returns the matching postfix address iff cursor_address is a subaddress of render_address and the
+    /// postfix tokens in cursor_address beyond render_address inhabit the given subaddress_type_t.
+    pub fn cursor_match_subaddress_of_render_address(
+        &self,
+        subaddress_type_t: &sept::dy::TupleTerm,
+    ) -> Option<&[sept::dy::Value]> {
+        if let Some(subaddress_token_v) = self.cursor_address_is_subaddress_of_render_address() {
+            if subaddress_token_v.len() != subaddress_type_t.len() {
+                return None;
+            }
+            for i in 0..subaddress_token_v.len() {
+                use sept::st::Inhabits;
+                if !subaddress_token_v[i].inhabits(&subaddress_type_t[i]) {
+                    return None;
+                }
+            }
+            Some(&subaddress_token_v)
+        } else {
+            None
+        }
+    }
+    fn cursor_address_is_subaddress_of_render_address(&self) -> Option<&[sept::dy::Value]> {
+        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+            if let Some(ordering) =
+                sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
+            {
+                if ordering.is_lt() {
+                    assert!(self.render_address.len() <= cursor_address.len());
+                    // An address A is a "subaddress" of address B if B <= A, i.e. the specific data value that A addresses is
+                    // "contained within" the data value that B addresses.
+                    Some(&cursor_address.as_slice()[self.render_address.len()..])
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
     fn render_address_is_subaddress_of_cursor_address(&self) -> bool {
         if let Some(cursor_address) = self.cursor_address_o.as_ref() {
             if let Some(ordering) =
@@ -129,6 +171,25 @@ impl ViewCtx {
             }
         } else {
             false
+        }
+    }
+    /// If cursor_address is a proper subaddress of render_address, then render_address can "follow"
+    /// cursor_address.  This will return Some(token) with the next address token to push onto render_address
+    /// if it's possible to "follow" (in this case, call that token the "guide token"), otherwise None.
+    /// To give concrete examples, if render_address is (0, 2) and cursor_address is (0, 2, "line", 1),
+    /// then the guide token is "line", whereas if render_address is (0, 2) and cursor_address is (0, 1)
+    /// or (1, 2, "line", 1) or (0,), then the guide token isn't defined, and this method returns None.
+    pub fn cursor_address_guide_token(&self) -> Option<&sept::dy::Value> {
+        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+            match sept::dy::prefix_partial_cmp(&self.render_address, cursor_address) {
+                Some(std::cmp::Ordering::Less) => {
+                    assert!(cursor_address.len() > self.render_address.len());
+                    Some(&cursor_address[self.render_address.len()])
+                }
+                _ => None,
+            }
+        } else {
+            None
         }
     }
     pub fn indent_str(&self) -> &str {
