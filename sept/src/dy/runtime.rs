@@ -993,7 +993,7 @@ impl Runtime {
             Some(debug_fn) => Ok(debug_fn(x, f)?),
             None => {
                 // panic!("no debug fn found for {}", self.label_of_value_guts(x));
-                log::warn!(
+                log::trace!(
                     "no debug fn found for {}; returning generic default",
                     self.label_of_value_guts(x)
                 );
@@ -1007,7 +1007,7 @@ impl Runtime {
             Some(stringify_fn) => stringify_fn(x),
             None => {
                 panic!("no stringify fn found for {}", self.label_of_value_guts(x));
-                //                 log::warn!("no stringify fn found for {}; returning generic default", self.label_of_value_guts(x));
+                //                 log::trace!("no stringify fn found for {}; returning generic default", self.label_of_value_guts(x));
                 //                 format!("InstanceOf({})", self.label_of_value_guts(x))
             }
         }
@@ -1164,7 +1164,7 @@ impl Runtime {
             }
             None => {
                 // panic!("no eq fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!(
+                log::trace!(
                     "no eq fn found for ({}, {}); returning default value of false",
                     self.label_of_value_guts(lhs),
                     self.label_of_value_guts(rhs)
@@ -1232,7 +1232,7 @@ impl Runtime {
                 // then the two values are incomparable.
 
                 // panic!("no partial_cmp fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!(
+                log::trace!(
                     "no partial_cmp fn found for ({}, {}); returning default value of None",
                     self.label_of_type_id(lhs_type_id),
                     self.label_of_type_id(rhs_type_id)
@@ -1277,7 +1277,7 @@ impl Runtime {
             Some(inhabits_fn) => inhabits_fn(x, t),
             None => {
                 // panic!("no inhabits fn found for {:?}", (lhs_type_id, rhs_type_id)),
-                log::warn!(
+                log::trace!(
                     "no inhabits fn found for ({}, {}); returning default value of false",
                     self.label_of_value_guts(x),
                     self.label_of_value_guts(t)
@@ -1308,7 +1308,7 @@ impl Runtime {
                     "no abstract_type fn found for {}",
                     self.label_of_value_guts(x)
                 );
-                //                 log::warn!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
+                //                 log::trace!("no abstract_type fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 //                 Box::new(Type)
             }
         }
@@ -1321,7 +1321,7 @@ impl Runtime {
             None => {
                 panic!("no clone fn found for {}", self.label_of_value_guts(x));
                 // There's probably no reasonable default.
-                //                 log::warn!("no clone fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
+                //                 log::trace!("no clone fn found for {}; returning default value of Box::<ValueGuts>::new(Type{{ }})", self.label_of(type_id));
                 //                 Box::new(Type)
             }
         }
@@ -1350,7 +1350,7 @@ impl Runtime {
                     self.label_of_value_guts(x)
                 );
                 // NOTE: A default here probably doesn't make any sense.
-                //                 log::warn!("no is_parametric fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+                //                 log::trace!("no is_parametric fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
                 //                 false
             }
         }
@@ -1372,7 +1372,7 @@ impl Runtime {
             None => {
                 panic!("no is_type fn found for {}", self.label_of_value_guts(x));
                 // NOTE: A default here probably doesn't make any sense.
-                //                 log::warn!("no is_type fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
+                //                 log::trace!("no is_type fn found for ({}, {}); returning default value of false", self.label_of(type_id_pair.0), self.label_of(type_id_pair.1));
                 //                 false
             }
         }
