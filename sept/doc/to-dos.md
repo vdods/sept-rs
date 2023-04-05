@@ -307,3 +307,4 @@
 -   Maybe use the crate `funty` and its "fundamental" traits to clean up some of the POD types.
 -   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `Deconstruct` and `Construct` can be implemented for `LocalSymRefTerm`.
 -   Rename Ascii* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
+-   Make Stringifiable's stringify() function work like std::fmt::Display, taking a writer instead of producing a String.

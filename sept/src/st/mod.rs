@@ -4,6 +4,7 @@ mod r#bool;
 mod bool_term;
 mod bool_type;
 mod deserializable;
+mod diff_trait;
 mod empty_type;
 mod r#false;
 mod false_type;
@@ -50,6 +51,7 @@ pub use crate::st::{
     bool_term::BoolTerm,
     bool_type::BoolType,
     deserializable::{read_len, Deserializable},
+    diff_trait::{DiffTrait, ElementDeletion, ElementDeletionTerm, ElementInsertion, ElementInsertionTerm, ElementReplacement, ElementReplacementTerm},
     empty_type::EmptyType,
     false_type::FalseType,
     float::{Float32, Float64},

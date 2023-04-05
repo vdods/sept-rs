@@ -1,5 +1,23 @@
 # `sept-gui` Design Notes
 
+## 2021.10.18
+
+From conversation with Ellie: data creation could be done on a mobile device using a “symbol palette” and search bars and autocomplete, etc, and we were comparing it to writing it out in text, and she came up with the perfect analogy — writing it out in text is like writing it out in long hand, where it’s a useful way to learn at first, but eventually you want something more structured and fast, so you switch to short hand, which would be the optimized input method with view/model architecture for sept data.
+
+## 2022.01.17
+
+Ideas for mobile device UI
+-   Have a kind of “palette” of commonly used input for efficient selection
+-   Use a press and draw through a hierarchy of menus to quickly select an item from the menu. Some thinking needs to be done for how to make this work when the menu changes and ideally people don’t have to relearn the muscle memory movements to adapt.
+-   Voice activated input
+-   Ideas for mobile input: somehow keep the positions of the swipe buttons fixed, by reserving space for new ones, so that existing button positions don’t have to change when a new one is added
+-   Could also maybe use a direct mapping onto lyx-like input, like ctrl/alt is pressing on a button, and then swipe through a sequence of letter mappings, which could even be the same mappings as in the tui app.
+-   Might want to use a better swipe keyboard layout, like in a circle, so that the swipes are much more easily distinguishable.
+-   This circular keyboard could be more generally useful since existing swipe keyboard on a qwerty layout suck.
+
+TUI/GUI
+-   LyX-like keyboard shortcuts to make creating sept data be as fast as one can think it; ctrl/alt+key and then a sequence of keys to navigate a menu hierarchy. This would be more robust to change, since one change wouldn’t screw up the other letter mappings
+
 ## 2023.03.02
 
 Initial implementation of sept-gui.
@@ -390,3 +408,38 @@ Notes for improvement of cursor-related work:
     -   line mode: This seems fine for now.
     -   char mode: when the line wraps, the up/down arrow keys really should go up/down visually so as not to violate the principle of least surprise.  Similarly, page up/down should go vertically when the line wraps.  Conventionally, up/down and page up/down always go vertically.  Though maybe char mode is really just a special mode that is meant to be more programmatic and less about UX.  line-char mode is generally better UX.
     -   line-char mode: This is working the best, but the cursor should wrap to prev/next line when it goes off the end of the current line to be like conventional text editors.  However, it still has the problem that when it's displaying in LayoutMode::Inline, up/down and page/up down should move vertically in the view.  Still need to figure out how to do this sort of hit detection in egui.
+
+Still to do:
+-   Views into numerical types (ints and floats).  Just use base 10 for now.
+
+Notes for editing of data
+-   It probably makes sense to formally track the cursor in the log of data modification commands.  This way, each command doesn't have to have a full copy of the address of the value being edited.
+-   Data modification commands
+    -   For Utf8StringTerm
+        -   InsertChar -- inverse is DeleteChar
+            -   insert_address
+            -   char_to_insert
+        -   DeleteChar -- inverse is InsertChar
+            -   delete_address
+            -   char_to_delete -- this makes this command invertible
+        -   ReplaceChar -- inverse is itself, but with new_char and old_char reversed
+            -   replace_address
+            -   new_char
+            -   old_char
+        -   InsertSubString -- inverse is DeleteSubString
+            -   insert_address
+            -   string_to_insert
+        -   DeleteSubString -- inverse is InsertSubString
+            -   delete_address
+            -   string_to_delete -- this makes this command invertible
+        -   ReplaceSubString -- inverse is itself, but with new_string and old_string reversed
+            -   replace_address
+            -   old_string
+            -   new_string
+
+Notes on editing of data through a view, e.g. a string representation of an int
+-   In the ideal case, each individual data modification to the view is a valid modification to the underlying data.
+-   However, some data has constraints that aren't structurally enforced by the view representation.  For example, rendering an int as a base 10 string of digits.  In that case, modifications to the string may cause that string to not parse as an int.  There might be legitimate intermediate edits to the view that are simply part of a sequence of edits that get back to a valid data value.
+    -   When a valid modification is made to a view, the modification should take effect in the underlying data immediately.
+    -   When the view has invalid data, it should be kept in ViewCtx as an edit overlay, and will simply wait until it's changed to be a valid modification before applying it to the underlying data.  This edit overlay will create a copy of the last valid value of the view (e.g. the base 10 string rendering of an int), along with the address that the edit overlay applies to, and allow edits to that string until it becomes a valid modification, at which point it will apply the change and delete the edit overlay.  This will be needed in particular for modifying OrderedMapTerm or StructTerm where there are higher-order uniqueness constraints.
+    -   There will eventually be higher order constraints that involve multiple data elements, and some sort of edit overlay situation needs to be figured out for those.

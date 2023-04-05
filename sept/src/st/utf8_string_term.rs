@@ -17,6 +17,102 @@ impl dy::Deconstruct for String {
     }
 }
 
+// TODO: Maybe move this elsewhere so as not to clog up this file
+fn replace_single_char_in_string(
+    s: &mut String,
+    char_index: usize,
+    expected_existing_char_o: Option<char>,
+    replacement: &str,
+) -> Result<()> {
+    // Find the slice index range that this char occupies
+    let mut char_indices = s.char_indices().skip(char_index);
+    let char_index_start = match char_indices.next() {
+        Some((char_byte_index, existing_char)) => {
+            if let Some(expected_existing_char) = expected_existing_char_o {
+                anyhow::ensure!(
+                    existing_char == expected_existing_char,
+                    "replacement encountered different existing char ({:?}) than expected ({:?})",
+                    existing_char,
+                    expected_existing_char
+                );
+            }
+            char_byte_index
+        }
+        None => s.len(),
+    };
+    let char_index_end = match char_indices.next() {
+        Some((char_byte_index, _)) => char_byte_index,
+        None => s.len(),
+    };
+    // Now replace that range with the given char.
+    s.replace_range(char_index_start..char_index_end, replacement);
+    Ok(())
+}
+
+// TODO: Maybe move this elsewhere so as not to clog up this file
+impl st::DiffTrait<String> for st::ElementInsertionTerm<String, u32, char> {
+    type Inverse = st::ElementDeletionTerm<String, u32, char>;
+    // type Error = std::convert::Infallible;
+    fn apply_in_place(&self, target: &mut String) -> Result<()> {
+        // NOTE: This allows inserting at the end of the String using any char index at the end or after.
+        // 'x' is just a dummy char.
+        let (char_byte_index, _) = target
+            .char_indices()
+            .nth(self.element_index as usize)
+            .unwrap_or_else(|| (target.len(), 'x'));
+        target.insert(char_byte_index, self.insertion_data);
+        Ok(())
+    }
+    fn into_inverse(self) -> Self::Inverse {
+        st::ElementDeletionTerm::new(self.element_index, self.insertion_data)
+    }
+}
+
+// TODO: Maybe move this elsewhere so as not to clog up this file
+impl st::DiffTrait<String> for st::ElementDeletionTerm<String, u32, char> {
+    // type Target = st::Utf8StringTerm;
+    type Inverse = st::ElementInsertionTerm<String, u32, char>;
+    // type Error = anyhow::Error;
+    fn apply_in_place(&self, target: &mut String) -> Result<()> {
+        let (char_byte_index, char_to_delete) = target
+            .char_indices()
+            .nth(self.element_index as usize)
+            .ok_or_else(|| anyhow::anyhow!("char_index out of range"))?;
+        anyhow::ensure!(
+            char_to_delete == self.deletion_data,
+            "char to delete was {:?} but expected to delete char {:?}",
+            char_to_delete,
+            self.deletion_data
+        );
+        target.remove(char_byte_index);
+        Ok(())
+    }
+    fn into_inverse(self) -> Self::Inverse {
+        st::ElementInsertionTerm::new(self.element_index, self.deletion_data)
+    }
+}
+
+// TODO: Maybe move this elsewhere so as not to clog up this file
+impl st::DiffTrait<String> for st::ElementReplacementTerm<String, u32, char> {
+    // type Target = st::Utf8StringTerm;
+    type Inverse = st::ElementReplacementTerm<String, u32, char>;
+    // type Error = anyhow::Error;
+    fn apply_in_place(&self, target: &mut String) -> Result<()> {
+        // TODO: This format could be made into one that uses a local buffer so as not to allocate.
+        // TODO: Have this check the index
+        replace_single_char_in_string(
+            target,
+            self.element_index as usize,
+            Some(self.old_data),
+            format!("{}", self.new_data).as_str(),
+        )?;
+        Ok(())
+    }
+    fn into_inverse(self) -> Self::Inverse {
+        st::ElementReplacementTerm::new(self.element_index, self.new_data, self.old_data)
+    }
+}
+
 impl Inhabits<st::Utf8String> for String {
     fn inhabits(&self, _rhs: &st::Utf8String) -> bool {
         true

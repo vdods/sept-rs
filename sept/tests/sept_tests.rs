@@ -1872,6 +1872,101 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<StructTermTerm>();
 }
 
+fn test_diff_case<T: PartialEq + st::TermTrait, D: st::DiffTrait<T>>(
+    target: &T,
+    diff: &D,
+    expected_intermediate: &T,
+) {
+    use st::DiffTrait;
+
+    let mut t = target.clone();
+    diff.apply_in_place(&mut t).expect("pass");
+    assert_eq!(t, *expected_intermediate);
+    diff.inverse().apply_in_place(&mut t).expect("pass");
+    assert_eq!(t, *target);
+}
+
+fn test_diff_case_as_value<
+    T: dy::IntoValue + PartialEq + st::TermTrait,
+    D: st::DiffTrait<T> + dy::IntoValue,
+>(
+    target: &T,
+    diff: &D,
+    expected_intermediate: &T,
+) {
+    use st::DiffTrait;
+
+    let diff_value = dy::Value::from(diff.clone());
+    let mut target_value = dy::Value::from(target.clone());
+    log::trace!("test_diff_case_as_value; -- start ----------------------------------------");
+    log::trace!(
+        "test_diff_case_as_value; target_value: {}",
+        target_value.stringify()
+    );
+    log::trace!(
+        "test_diff_case_as_value; diff_value: {}",
+        diff_value.stringify()
+    );
+    diff_value.apply_in_place(&mut target_value).expect("pass");
+    log::trace!(
+        "test_diff_case_as_value; target_value after diff apply_in_place: {}",
+        target_value.stringify()
+    );
+
+    assert_eq!(
+        *target_value.downcast_ref::<T>().unwrap(),
+        *expected_intermediate
+    );
+    let diff_inv_value = diff_value.inverse();
+    log::trace!(
+        "test_diff_case_as_value; diff_inv_value: {}",
+        diff_inv_value.stringify()
+    );
+    diff_inv_value
+        .apply_in_place(&mut target_value)
+        .expect("pass");
+    log::trace!(
+        "test_diff_case_as_value; target_value after diff's inverse apply_in_place: {}",
+        target_value.stringify()
+    );
+    assert_eq!(*target_value.downcast_ref::<T>().unwrap(), *target);
+    log::trace!("test_diff_case_as_value; -- done ----------------------------------------");
+}
+
+#[test]
+#[serial_test::serial]
+fn test_diff_utf8string() {
+    let s = "ab 日本語 ab".to_string();
+
+    type Ins = st::ElementInsertionTerm<String, u32, char>;
+
+    test_diff_case(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
+    test_diff_case(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
+    test_diff_case(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
+    test_diff_case(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
+    test_diff_case(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
+
+    test_diff_case_as_value(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
+    test_diff_case_as_value(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
+    test_diff_case_as_value(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
+    test_diff_case_as_value(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
+    test_diff_case_as_value(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
+}
+
 //
 // TEMP TESTING
 //

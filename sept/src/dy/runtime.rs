@@ -36,6 +36,8 @@ pub type DeserializeParametersAndConstructFn =
     fn(constructor: &ValueGuts, reader: &mut dyn std::io::Read) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
+pub type DiffApplyInPlaceFn = fn(diff: &ValueGuts, target: &mut ValueGuts) -> Result<()>;
+pub type DiffIntoInverseFn = fn(diff: dy::Value) -> Result<dy::Value>;
 
 struct RegisteredCmpFn {
     cmp_fn: CmpFn,
@@ -90,6 +92,8 @@ pub struct Runtime {
         HashMap<&'static str, NonParametricTermInstantiateFn>,
     non_parametric_term_instantiate_from_code_fn_m:
         HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
+    diff_apply_in_place_fn_m: HashMap<(TypeId, TypeId), DiffApplyInPlaceFn>,
+    diff_into_inverse_fn_m: HashMap<TypeId, DiffIntoInverseFn>,
 }
 
 impl Runtime {
@@ -125,6 +129,37 @@ impl Runtime {
         runtime.register_term::<ArrayTerm>().unwrap();
         runtime.register_term::<OrderedMapTerm>().unwrap();
         runtime.register_term::<StructTermTerm>().unwrap();
+
+        // TEMP HACK: Note, this need to specify generic params for particular terms sucks.
+        // Not sure what the right way forward is though.
+        // runtime
+        //     .register_term::<st::ElementInsertionTerm<String, u32, char>>()
+        //     .unwrap();
+        // runtime
+        //     .register_term::<st::ElementDeletionTerm<String, u32, char>>()
+        //     .unwrap();
+        // runtime
+        //     .register_term::<st::ElementReplacementTerm<String, u32, char>>()
+        //     .unwrap();
+        // TEMP HACK: instead of of register_term, simply register clone.
+        runtime
+            .register_clone::<st::ElementInsertionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_clone::<st::ElementDeletionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_clone::<st::ElementReplacementTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_stringify::<st::ElementInsertionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_stringify::<st::ElementDeletionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_stringify::<st::ElementReplacementTerm<String, u32, char>>()
+            .unwrap();
 
         // Register types
         runtime.register_type::<Term>().unwrap();
@@ -176,6 +211,11 @@ impl Runtime {
         runtime.register_type::<StructTerm>().unwrap();
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
+
+        // TEMP HACK
+        // runtime.register_type::<st::ElementInsertion>().unwrap();
+        // runtime.register_type::<st::ElementDeletion>().unwrap();
+        // runtime.register_type::<st::ElementReplacement>().unwrap();
 
         // Register non-parametric term instantiate functions.
         runtime.register_non_parametric_term::<Term>().unwrap();
@@ -423,6 +463,17 @@ impl Runtime {
             .unwrap();
         runtime
             .register_dereferenced_once::<LocalSymRefTerm>()
+            .unwrap();
+
+        // TEMP HACK
+        runtime
+            .register_diff::<String, st::ElementInsertionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_diff::<String, st::ElementDeletionTerm<String, u32, char>>()
+            .unwrap();
+        runtime
+            .register_diff::<String, st::ElementReplacementTerm<String, u32, char>>()
             .unwrap();
 
         runtime
@@ -956,6 +1007,57 @@ impl Runtime {
             }
             None => {}
         }
+        Ok(())
+    }
+    pub fn register_diff<Target: st::TermTrait, Diff: st::DiffTrait<Target>>(
+        &mut self,
+    ) -> Result<()>
+    where
+        Diff::Inverse: dy::IntoValue,
+    {
+        let type_id_of_diff = TypeId::of::<Diff>();
+        let type_id_pair = (TypeId::of::<Target>(), type_id_of_diff);
+
+        let diff_apply_in_place_fn = |diff: &ValueGuts, target: &mut ValueGuts| -> Result<()> {
+            Ok(diff
+                .downcast_ref::<Diff>()
+                .unwrap()
+                .apply_in_place(target.downcast_mut::<Target>().unwrap())?)
+        };
+        let diff_into_inverse_fn = |diff: dy::Value| -> Result<dy::Value> {
+            Ok(dy::Value::from(diff.downcast_into::<Diff>().into_inverse()))
+        };
+
+        match self
+            .diff_apply_in_place_fn_m
+            .insert(type_id_pair, diff_apply_in_place_fn)
+        {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered diff_apply_in_place fn for (Target: {}, Diff: {}); term types that produced the collision were (Target: {}, Diff: {})",
+                    self.label_of_type_id(type_id_pair.0),
+                    self.label_of_type_id(type_id_pair.1),
+                    std::any::type_name::<Target>(),
+                    std::any::type_name::<Diff>()
+                );
+            }
+            None => {}
+        }
+
+        match self
+            .diff_into_inverse_fn_m
+            .insert(type_id_of_diff, diff_into_inverse_fn)
+        {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered diff_into_inverse fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id_pair.0),
+                    std::any::type_name::<Diff>()
+                );
+            }
+            None => {}
+        }
+
         Ok(())
     }
 
@@ -1505,6 +1607,30 @@ impl Runtime {
     /// Returns true iff T is a term that's been registered in this Runtime.
     pub fn is_registered_term<T: st::TermTrait>(&self) -> bool {
         self.term_s.contains(&TypeId::of::<T>())
+    }
+    pub fn diff_apply_in_place(&self, diff: &ValueGuts, target: &mut ValueGuts) -> Result<()> {
+        let type_id_pair = (target.type_id(), diff.type_id());
+        match self.diff_apply_in_place_fn_m.get(&type_id_pair) {
+            Some(diff_apply_in_place_fn) => Ok(diff_apply_in_place_fn(diff, target)?),
+            None => {
+                panic!(
+                    "no diff_apply_in_place fn found for (Target: {}, Diff: {})",
+                    self.label_of_value_guts(target),
+                    self.label_of_value_guts(diff)
+                );
+            }
+        }
+    }
+    pub fn diff_into_inverse(&self, diff: dy::Value) -> Result<dy::Value> {
+        match self.diff_into_inverse_fn_m.get(&diff.type_id()) {
+            Some(diff_into_inverse_fn) => Ok(diff_into_inverse_fn(diff)?),
+            None => {
+                panic!(
+                    "no diff_into_inverse fn found for {}",
+                    self.label_of_value_guts(diff.as_ref())
+                );
+            }
+        }
     }
 }
 

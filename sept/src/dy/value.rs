@@ -312,3 +312,21 @@ impl Value {
             .nondereferencing_is_parametric(self.as_ref())
     }
 }
+
+impl st::DiffTrait<Value> for Value {
+    type Inverse = Value;
+    // type Error = Error;
+    fn apply_in_place(&self, target: &mut Value) -> Result<()> {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .diff_apply_in_place(self.as_ref(), target.as_mut())
+    }
+    fn into_inverse(self) -> Self::Inverse {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .diff_into_inverse(self)
+            .expect("TODO: Need to handle this error; probably actually need TryDiff trait.")
+    }
+}

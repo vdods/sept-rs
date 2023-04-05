@@ -65,3 +65,44 @@ Writing to different segments is trickier than serialization of conventional dat
     -   They could be kept separate so that modifications to the file require little extra processing.
 -   Have one output stream, but buffer the two others in memory, apply post-processing, and then write the two memory buffers to the stream.
 
+## 2023.04.04
+
+### Diff Feature
+
+After initial implementation `st::DiffTrait` and a small set of impls that act as diffs on `String`, it's clear that using `st`-paradigm diff types is not feasible for a POC/MVP, as the number of impls is some product of diff operations and targets.  Also, there isn't yet a need to have perfectly, strongly typed results of diffs.  Instead, a more feasible approach to use for the POC/MVP is to use general diff types that simply store their parameters as `dy::Value` typed variables.  Then the number of impls is less, and is more tractably flexible for purposes of actually achieving a POC/MVP in a reasonable timeframe.
+
+Is "diff" the right word here?  "Transformation" would be more correct, but the existing understanding of diffs would make for easier adoption, simply because it's not a scary word.  In a category theory context, this might be called a morphism in the category of typed data (this is assuming that that's a well-defined category; definitely worth attempting to establish that and give a solid mathematical basis to all this stuff), maybe "DataMorphism".
+
+Kinds of diffs:
+-   Kinds of diffs operating on containers, generally:
+    -   ElementInsertion
+        -   index: should be a kind of int
+        -   data
+    -   ElementDeletion
+        -   index: should be a kind of int
+        -   data
+    -   ElementReplacement (technically this is a delete followed by an insert, but it's more efficient to have them in a single operation)
+        -   index: should be a kind of int
+        -   old_data
+        -   new_data
+    -   ElementRangeInsertion
+        -   index: should be a kind of int
+        -   data: should contain appropriate elements
+    -   ElementRangeDeletion
+        -   index_begin: should be a kind of int
+        -   index_end: should be a kind of int
+        -   data: should identify the elements being deleted
+    -   ElementRangeReplacement (technically this is a delete followed by an insert, but it's more efficient to have them in a single operation)
+        -   index: should be a kind of int
+        -   old_data: should identify the elements being deleted
+        -   new_data: should contain appropriate elements
+-   Kinds of diffs operating on any type
+    -   NoOp -- this is the identity diff; no change.
+    -   Replace
+        -   old_value
+        -   new_value
+    -   SetToDefault -- if there is a default value; e.g. empty container, zero, false, etc.
+
+After the POC/MVP, a formal category of data morphisms should be defined, so that composition of data morphisms is formally defined (in general, this is simply a sequence of morphisms, but in some cases, related morphisms can collapse together to produce something simpler; e.g. a sequence of adjacent `ElementInsertion`s could produce a single `ElementRangeInsertion`).  Note that the reason the diff types seem to have redundant data (e.g. the `data` field in `ElementDeletion`) is (1) to make them invertible, and (2) to be able to check if a given composition is well-defined or if it's a conflicting change.
+
+Another feature that "diff" would call for is computing the diff between two pieces of data.
