@@ -60,6 +60,36 @@ impl st::Deserializable for f64 {
     }
 }
 
+impl dy::Queryable for f32 {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            unimplemented!("TODO: implement views, e.g. different number bases");
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
+impl dy::Queryable for f64 {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            unimplemented!("TODO: implement views, e.g. different number bases");
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
 impl st::Serializable for f32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)

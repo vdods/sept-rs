@@ -112,6 +112,61 @@ impl st::Deserializable for StructTermTerm {
     }
 }
 
+impl dy::Queryable for StructTermTerm {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            // Eat the first address token, interpreting it as the field index or name.  Check if it's the
+            // field index first, since that should be faster by its usage conventions.  TEMP HACK:
+            // Assume u32 index for now.
+            // TODO: Support other queries here, such as `Len` (though this would require returning
+            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
+            // a value without a memory address))
+
+            if let Some(field_index) = address_v[0].downcast_ref::<u32>() {
+                let field_value = self
+                    .field_t
+                    .get(*field_index as usize)
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("StructTermTerm::query field index out of bounds")
+                    })?
+                    .as_ref();
+                // Recurse with the remainder of the address.
+                dy::RUNTIME_LA
+                    .read()
+                    .unwrap()
+                    .query(field_value, &address_v[1..])
+            } else if let Some(field_name) = address_v[0].downcast_ref::<String>() {
+                // Have to resolve the type in order to do the name lookup.
+                let field_index = {
+                    let direct_type = self.declared_type().dereferenced()?;
+                    let direct_type_g = direct_type.read();
+                    let direct_type_struct_term = direct_type_g.downcast_ref::<dy::StructTerm>().ok_or_else(|| anyhow::anyhow!("StructTermTerm::query could not resolve direct_type into a StructTerm"))?;
+                    direct_type_struct_term.index_of_named_field(field_name.as_str())?
+                };
+                let field_value = self
+                    .field_t
+                    .get(field_index)
+                    .ok_or_else(|| anyhow::anyhow!("OrderedMapTerm::query key not found"))?
+                    .as_ref();
+                // Recurse with the remainder of the address.
+                dy::RUNTIME_LA
+                    .read()
+                    .unwrap()
+                    .query(field_value, &address_v[1..])
+            } else {
+                unimplemented!("TODO: Other views, if any");
+            }
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
 impl st::Serializable for StructTermTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // This is a bit redundant, in that the case of serializing dy::Value::from(struct_term_term),

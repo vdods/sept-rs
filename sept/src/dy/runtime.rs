@@ -19,6 +19,8 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard},
 };
 
+// TODO: Make this into a single row per singly-registered term.  Pairs of terms for
+// certain functionality still have to be registered separately.
 pub type DebugFn =
     fn(x: &ValueGuts, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error>;
 pub type StringifyFn = fn(x: &ValueGuts) -> String;
@@ -36,6 +38,8 @@ pub type DeserializeParametersAndConstructFn =
     fn(constructor: &ValueGuts, reader: &mut dyn std::io::Read) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
+pub type QueryFn =
+    for<'a> fn(queryable: &'a ValueGuts, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts>;
 pub type DiffApplyInPlaceFn = fn(diff: &ValueGuts, target: &mut ValueGuts) -> Result<()>;
 pub type DiffIntoInverseFn = fn(diff: dy::Value) -> Result<dy::Value>;
 
@@ -92,6 +96,7 @@ pub struct Runtime {
         HashMap<&'static str, NonParametricTermInstantiateFn>,
     non_parametric_term_instantiate_from_code_fn_m:
         HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
+    query_fn_m: HashMap<TypeId, QueryFn>,
     diff_apply_in_place_fn_m: HashMap<(TypeId, TypeId), DiffApplyInPlaceFn>,
     diff_into_inverse_fn_m: HashMap<TypeId, DiffIntoInverseFn>,
 }
@@ -486,6 +491,7 @@ impl Runtime {
         T: st::TermTrait
             + dy::Deconstruct
             + std::fmt::Debug
+            + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -502,6 +508,7 @@ impl Runtime {
         );
         self.register_label::<T>()?;
         self.register_debug::<T>()?;
+        self.register_query::<T>()?;
         self.register_serialize::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
@@ -518,6 +525,7 @@ impl Runtime {
         T: st::TypeTrait
             + dy::Deconstruct
             + std::fmt::Debug
+            + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -1008,6 +1016,23 @@ impl Runtime {
             None => {}
         }
         Ok(())
+    }
+    pub fn register_query<T: dy::Queryable + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        let query_fn: QueryFn =
+            |queryable: &ValueGuts, address_v: &[dy::Value]| -> Result<&dy::ValueGuts> {
+                queryable.downcast_ref::<T>().unwrap().query(address_v)
+            };
+        match self.query_fn_m.insert(type_id, query_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered query fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => Ok(()),
+        }
     }
     pub fn register_diff<Target: st::TermTrait, Diff: st::DiffTrait<Target>>(
         &mut self,
@@ -1607,6 +1632,19 @@ impl Runtime {
     /// Returns true iff T is a term that's been registered in this Runtime.
     pub fn is_registered_term<T: st::TermTrait>(&self) -> bool {
         self.term_s.contains(&TypeId::of::<T>())
+    }
+    pub fn query<'a>(
+        &self,
+        queryable: &'a ValueGuts,
+        address_v: &[dy::Value],
+    ) -> Result<&'a dy::ValueGuts> {
+        match self.query_fn_m.get(&queryable.type_id()) {
+            Some(query_fn) => query_fn(queryable, address_v),
+            None => Err(anyhow::anyhow!(
+                "no query fn found for  `{}`",
+                self.label_of_value_guts(queryable)
+            )),
+        }
     }
     pub fn diff_apply_in_place(&self, diff: &ValueGuts, target: &mut ValueGuts) -> Result<()> {
         let type_id_pair = (target.type_id(), diff.type_id());

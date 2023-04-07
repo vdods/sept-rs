@@ -28,6 +28,21 @@ impl<N: NonParametricTermTrait> st::Deserializable for N {
     }
 }
 
+impl<N: NonParametricTermTrait> dy::Queryable for N {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            unimplemented!("TODO: implement views, if any");
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
 impl<N: NonParametricTermTrait> st::Serializable for N {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::NonParametric.write(writer)?)

@@ -65,6 +65,31 @@ impl Inhabits<OrderedMap> for OrderedMapTerm {
     }
 }
 
+impl dy::Queryable for OrderedMapTerm {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            // Eat the first address token, interpreting it as the key.
+            // TODO: Support other queries here, such as `Len` (though this would require returning
+            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
+            // a value without a memory address))
+            let key = &address_v[0];
+            let value = self
+                .get(key)
+                .ok_or_else(|| anyhow::anyhow!("OrderedMapTerm::query key not found"))?
+                .as_ref();
+            // Recurse with the remainder of the address.
+            dy::RUNTIME_LA.read().unwrap().query(value, &address_v[1..])
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
 impl st::Serializable for OrderedMapTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding

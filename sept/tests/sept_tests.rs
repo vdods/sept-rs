@@ -1872,6 +1872,173 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<StructTermTerm>();
 }
 
+#[test]
+#[serial_test::serial]
+fn test_queryable_array_term() {
+    let a = ArrayTerm::from(vec![
+        "abc".to_string().into(),
+        123.456f32.into(),
+        true.into(),
+        Void.into(),
+    ]);
+
+    use dy::Queryable;
+
+    assert_eq!(
+        a.query(&[])
+            .expect("pass")
+            .downcast_ref::<ArrayTerm>()
+            .expect("pass"),
+        &a
+    );
+    assert_eq!(
+        a.query(&[0u32.into()])
+            .expect("pass")
+            .downcast_ref::<String>()
+            .expect("pass"),
+        a[0].downcast_ref::<String>().expect("pass")
+    );
+    assert_eq!(
+        a.query(&[1u32.into()])
+            .expect("pass")
+            .downcast_ref::<f32>()
+            .expect("pass"),
+        a[1].downcast_ref::<f32>().expect("pass")
+    );
+    assert_eq!(
+        a.query(&[2u32.into()])
+            .expect("pass")
+            .downcast_ref::<bool>()
+            .expect("pass"),
+        a[2].downcast_ref::<bool>().expect("pass")
+    );
+    assert_eq!(
+        a.query(&[3u32.into()])
+            .expect("pass")
+            .downcast_ref::<Void>()
+            .expect("pass"),
+        a[3].downcast_ref::<Void>().expect("pass")
+    );
+    a.query(&[4u32.into()]).expect_err("pass");
+}
+
+fn test_diffable_case<T: dy::Diffable + PartialEq, D: dy::Diff>(
+    target: &T,
+    diff: &D,
+    expected_intermediate: &T,
+) {
+    use dy::Diffable;
+
+    assert!(target.diff_is_mutation_in_place(diff).expect("pass"));
+
+    let mut t = target.clone();
+    t.apply_diff_in_place(&[], diff).expect("pass");
+    assert_eq!(t, *expected_intermediate);
+
+    let diff_inverse = diff.inverse();
+    assert!(t.diff_is_mutation_in_place(&diff_inverse).expect("pass"));
+    t.apply_diff_in_place(&[], &diff_inverse).expect("pass");
+    assert_eq!(t, *target);
+}
+
+#[test]
+#[serial_test::serial]
+fn test_diffable() {
+    let s = "ab 日本語 ab".to_string();
+
+    type Ins = dy::ElementInsertionTerm;
+
+    let case_v = [
+        (
+            Ins {
+                index: 0u32.into(),
+                data: 'X'.into(),
+            },
+            "Xab 日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 0u32.into(),
+                data: '字'.into(),
+            },
+            "字ab 日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 1u32.into(),
+                data: 'X'.into(),
+            },
+            "aXb 日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 1u32.into(),
+                data: '字'.into(),
+            },
+            "a字b 日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 3u32.into(),
+                data: 'X'.into(),
+            },
+            "ab X日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 3u32.into(),
+                data: '字'.into(),
+            },
+            "ab 字日本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 4u32.into(),
+                data: 'X'.into(),
+            },
+            "ab 日X本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 4u32.into(),
+                data: '字'.into(),
+            },
+            "ab 日字本語 ab".to_string(),
+        ),
+        (
+            Ins {
+                index: 8u32.into(),
+                data: 'X'.into(),
+            },
+            "ab 日本語 aXb".to_string(),
+        ),
+        (
+            Ins {
+                index: 8u32.into(),
+                data: '字'.into(),
+            },
+            "ab 日本語 a字b".to_string(),
+        ),
+        (
+            Ins {
+                index: 9u32.into(),
+                data: 'X'.into(),
+            },
+            "ab 日本語 abX".to_string(),
+        ),
+        (
+            Ins {
+                index: 9u32.into(),
+                data: '字'.into(),
+            },
+            "ab 日本語 ab字".to_string(),
+        ),
+    ];
+    for (diff, expected_intermediate_term) in case_v.iter() {
+        test_diffable_case(&s, diff, expected_intermediate_term);
+    }
+}
+
 fn test_diff_case<T: PartialEq + st::TermTrait, D: st::DiffTrait<T>>(
     target: &T,
     diff: &D,

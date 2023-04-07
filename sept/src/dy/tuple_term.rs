@@ -220,6 +220,39 @@ impl st::Deserializable for TupleTerm {
     }
 }
 
+impl dy::Queryable for TupleTerm {
+    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
+        if address_v.is_empty() {
+            Ok(self)
+        } else {
+            // Eat the first address token, interpreting it as the array index.
+            // TODO: Support other queries here, such as `Len` (though this would require returning
+            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
+            // a value without a memory address))
+            // TEMP HACK: Assume u32 index for now, but should support other int types too
+            let index = *address_v[0]
+                .downcast_ref::<u32>()
+                .ok_or_else(|| anyhow::anyhow!("TupleTerm::query expected u32 index"))?;
+            let element = self
+                .get(index as usize)
+                .ok_or_else(|| anyhow::anyhow!("TupleTerm::query index out of bounds"))?
+                .as_ref();
+            // Recurse with the remainder of the address.
+            dy::RUNTIME_LA
+                .read()
+                .unwrap()
+                .query(element, &address_v[1..])
+
+            // TODO: Other views, like `type` and `len`.
+        }
+    }
+    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
+        unimplemented!("blah");
+        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
+        // `Len`) wouldn't support this.
+    }
+}
+
 impl st::Serializable for TupleTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)

@@ -98,11 +98,29 @@ Kinds of diffs:
         -   new_data: should contain appropriate elements
 -   Kinds of diffs operating on any type
     -   NoOp -- this is the identity diff; no change.
-    -   Replace
+    -   Replacement
         -   old_value
         -   new_value
-    -   SetToDefault -- if there is a default value; e.g. empty container, zero, false, etc.
+    -   SetToDefault -- if there is a default value; e.g. empty container, zero, false, etc.  This is equivalent to Replacement where new_value is the default value for the target type.
+    -   SetFromDefault -- inverse to SetToDefault.  Requires the old_value to be the default value for the target type.
 
 After the POC/MVP, a formal category of data morphisms should be defined, so that composition of data morphisms is formally defined (in general, this is simply a sequence of morphisms, but in some cases, related morphisms can collapse together to produce something simpler; e.g. a sequence of adjacent `ElementInsertion`s could produce a single `ElementRangeInsertion`).  Note that the reason the diff types seem to have redundant data (e.g. the `data` field in `ElementDeletion`) is (1) to make them invertible, and (2) to be able to check if a given composition is well-defined or if it's a conflicting change.
 
 Another feature that "diff" would call for is computing the diff between two pieces of data.
+
+In practice, a diff will be applied to a value nested within some larger aggregate of data, and that value will be addressed via a sequence of address tokens.  Thus there really is a hierarchy of induced diffs on aggregate data types. For example, given the aggregate "root" data:
+
+    Array(Array(1, "abc", true), Tuple(), Void)
+
+say we want to apply a diff `D` to the string `"abc"`.  This requires addressing that string, and applying an "addressed diff".  The address of the string is `Tuple(0, 1)`, so the diff to the root data is something like
+
+    AddressedDiff { address: Tuple(0, 1), diff: D }
+
+This, itself is a diff which is accepted by aggregate data types.  It would be useful to formalize addressing of data in order to be sure this is a well-defined concept.  Some requirements:
+-   Sequences of diffs should be supported, ideally not requiring a full address for each individual diff term.
+-   Addressing should support general read-only queries.
+-   "View Term"s should act like addresses in that each one gives a particular view into the addressed data.  E.g. `line`, `char`, `byte` view terms for `Utf8String`.  These view terms will have to handle diffs themselves.  A diff applied to a view term should produce a diff that operates directly on the underlying data, to attempt to keep diffs as canonical as possible (otherwise, how does one combine or conflict-check two diffs that operate on different views of the same data?).
+
+Thus formal data addressing needs to handle:
+-   Query (read-only)
+-   Mutation (application of diffs).  Note that it's possible for a diff to change the type of a value, and that change has to be compatible with whatever aggregate data type contains the value (if any).
