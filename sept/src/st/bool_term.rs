@@ -82,6 +82,18 @@ impl dy::Queryable for bool {
     }
 }
 
+impl dy::QueryableDynTrait for bool {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for bool {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
 impl st::Serializable for bool {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)

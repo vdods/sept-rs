@@ -10,7 +10,9 @@ impl std::str::FromStr for Format {
         match s {
             "bin" => Ok(Format::Bin),
             "txt" => Ok(Format::Txt),
-            _ => { anyhow::bail!("unrecognized Format {:?}; must be \"bin\" or \"txt\"", s); }
+            _ => {
+                anyhow::bail!("unrecognized Format {:?}; must be \"bin\" or \"txt\"", s);
+            }
         }
     }
 }
@@ -18,10 +20,10 @@ impl std::str::FromStr for Format {
 #[derive(Clone, Debug, clap::Parser)]
 pub struct CmdFlags {
     /// Specify which format the input should be read in as.  Values are bin or txt.  Default is bin.
-    #[clap(default_value = "bin", env = "SEPT_CAT_IN", long, short='i')]
+    #[clap(default_value = "bin", env = "SEPT_CAT_IN", long, short = 'i')]
     pub r#in: Format,
     /// Specify which format the output should be written out as.  Values are bin or txt.  Default is txt.
-    #[clap(default_value = "txt", env = "SEPT_CAT_OUT", long, short='o')]
+    #[clap(default_value = "txt", env = "SEPT_CAT_OUT", long, short = 'o')]
     pub r#out: Format,
 }
 
@@ -56,6 +58,7 @@ fn main() -> anyhow::Result<()> {
     match cmd_flags.r#out {
         Format::Bin => {
             let mut stdout = std::io::stdout();
+            use sept::st::Serializable;
             value.serialize(&mut stdout)?;
             Ok(())
         }

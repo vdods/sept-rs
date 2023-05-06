@@ -18,7 +18,8 @@ impl dy::Deconstruct for String {
 }
 
 // TODO: Maybe move this elsewhere so as not to clog up this file
-fn replace_single_char_in_string(
+#[allow(unused)]
+pub fn replace_single_char_in_string(
     s: &mut String,
     char_index: usize,
     expected_existing_char_o: Option<char>,
@@ -50,66 +51,118 @@ fn replace_single_char_in_string(
 }
 
 // TODO: Maybe move this elsewhere so as not to clog up this file
-impl st::DiffTrait<String> for st::ElementInsertionTerm<String, u32, char> {
-    type Inverse = st::ElementDeletionTerm<String, u32, char>;
-    // type Error = std::convert::Infallible;
-    fn apply_in_place(&self, target: &mut String) -> Result<()> {
-        // NOTE: This allows inserting at the end of the String using any char index at the end or after.
-        // 'x' is just a dummy char.
-        let (char_byte_index, _) = target
-            .char_indices()
-            .nth(self.element_index as usize)
-            .unwrap_or_else(|| (target.len(), 'x'));
-        target.insert(char_byte_index, self.insertion_data);
-        Ok(())
-    }
-    fn into_inverse(self) -> Self::Inverse {
-        st::ElementDeletionTerm::new(self.element_index, self.insertion_data)
-    }
+#[allow(unused)]
+pub fn replace_substr_in_string(
+    s: &mut String,
+    substr_char_index_start: usize,
+    existing_substr: &str,
+    replacement: &str,
+) -> Result<()> {
+    // Check that the existing_substr actually matches, and get the begin and end byte index values within s.
+    let byte_index_start = s
+        .char_indices()
+        .skip(substr_char_index_start)
+        .next()
+        // The use of unwrap_or makes substr_char_index_start a bit more forgiving, but also doesn't produce
+        // precise errors regarding invalid index values.  'x' is a dummy value that is discarded.
+        .unwrap_or((s.len(), 'x'))
+        .0;
+    let actual_existing_substr_o =
+        s.get(byte_index_start..byte_index_start + existing_substr.len());
+    anyhow::ensure!(
+        actual_existing_substr_o == Some(existing_substr),
+        "replacement encountered different existing substr ({:?}) than expected ({:?})",
+        actual_existing_substr_o,
+        Some(existing_substr)
+    );
+    let byte_index_end = byte_index_start + existing_substr.len();
+    // Do the replacement.
+    s.replace_range(byte_index_start..byte_index_end, replacement);
+    Ok(())
 }
 
-// TODO: Maybe move this elsewhere so as not to clog up this file
-impl st::DiffTrait<String> for st::ElementDeletionTerm<String, u32, char> {
-    // type Target = st::Utf8StringTerm;
-    type Inverse = st::ElementInsertionTerm<String, u32, char>;
-    // type Error = anyhow::Error;
-    fn apply_in_place(&self, target: &mut String) -> Result<()> {
-        let (char_byte_index, char_to_delete) = target
-            .char_indices()
-            .nth(self.element_index as usize)
-            .ok_or_else(|| anyhow::anyhow!("char_index out of range"))?;
-        anyhow::ensure!(
-            char_to_delete == self.deletion_data,
-            "char to delete was {:?} but expected to delete char {:?}",
-            char_to_delete,
-            self.deletion_data
-        );
-        target.remove(char_byte_index);
-        Ok(())
-    }
-    fn into_inverse(self) -> Self::Inverse {
-        st::ElementInsertionTerm::new(self.element_index, self.deletion_data)
-    }
-}
+// // TODO: Maybe move this elsewhere so as not to clog up this file
+// impl st::DiffTrait<String> for st::ElementInsertionTerm<String, u32, char> {
+//     type Inverse = st::ElementDeletionTerm<String, u32, char>;
+//     // type Error = std::convert::Infallible;
+//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
+//         // NOTE: This allows inserting at the end of the String using any char index at the end or after.
+//         // 'x' is just a dummy char.
+//         let (char_byte_index, _) = target
+//             .char_indices()
+//             .nth(self.element_index as usize)
+//             .unwrap_or_else(|| (target.len(), 'x'));
+//         target.insert(char_byte_index, self.insertion_data);
+//         Ok(())
+//     }
+//     fn into_inverse(self) -> Self::Inverse {
+//         st::ElementDeletionTerm::new(self.element_index, self.insertion_data)
+//     }
+// }
 
-// TODO: Maybe move this elsewhere so as not to clog up this file
-impl st::DiffTrait<String> for st::ElementReplacementTerm<String, u32, char> {
-    // type Target = st::Utf8StringTerm;
-    type Inverse = st::ElementReplacementTerm<String, u32, char>;
-    // type Error = anyhow::Error;
-    fn apply_in_place(&self, target: &mut String) -> Result<()> {
-        // TODO: This format could be made into one that uses a local buffer so as not to allocate.
-        // TODO: Have this check the index
-        replace_single_char_in_string(
-            target,
-            self.element_index as usize,
-            Some(self.old_data),
-            format!("{}", self.new_data).as_str(),
-        )?;
-        Ok(())
-    }
-    fn into_inverse(self) -> Self::Inverse {
-        st::ElementReplacementTerm::new(self.element_index, self.new_data, self.old_data)
+// // TODO: Maybe move this elsewhere so as not to clog up this file
+// impl st::DiffTrait<String> for st::ElementDeletionTerm<String, u32, char> {
+//     // type Target = st::Utf8StringTerm;
+//     type Inverse = st::ElementInsertionTerm<String, u32, char>;
+//     // type Error = anyhow::Error;
+//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
+//         let (char_byte_index, char_to_delete) = target
+//             .char_indices()
+//             .nth(self.element_index as usize)
+//             .ok_or_else(|| anyhow::anyhow!("char_index out of range"))?;
+//         anyhow::ensure!(
+//             char_to_delete == self.deletion_data,
+//             "char to delete was {:?} but expected to delete char {:?}",
+//             char_to_delete,
+//             self.deletion_data
+//         );
+//         target.remove(char_byte_index);
+//         Ok(())
+//     }
+//     fn into_inverse(self) -> Self::Inverse {
+//         st::ElementInsertionTerm::new(self.element_index, self.deletion_data)
+//     }
+// }
+
+// // TODO: Maybe move this elsewhere so as not to clog up this file
+// impl st::DiffTrait<String> for st::ElementReplacementTerm<String, u32, char> {
+//     // type Target = st::Utf8StringTerm;
+//     type Inverse = st::ElementReplacementTerm<String, u32, char>;
+//     // type Error = anyhow::Error;
+//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
+//         // TODO: This format could be made into one that uses a local buffer so as not to allocate.
+//         // TODO: Have this check the index
+//         replace_single_char_in_string(
+//             target,
+//             self.element_index as usize,
+//             Some(self.old_data),
+//             format!("{}", self.new_data).as_str(),
+//         )?;
+//         Ok(())
+//     }
+//     fn into_inverse(self) -> Self::Inverse {
+//         st::ElementReplacementTerm::new(self.element_index, self.new_data, self.old_data)
+//     }
+// }
+
+impl dy::Editable for String {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        // TEMP HACK -- this is rather silly, but is a quick way to get the right behavior for now.
+        use dy::QueryMutTrait;
+        // Re-borrow the address iterator items with a shorter lifetime.
+        // let mut address_i = address_i.map(|x| &*x);
+        // Note that this can't be Self, because this introduces a new, shorter lifetime.
+        dy::Utf8StringTermMutView::new(self)
+            // .run_query_mut(&mut address_i)?
+            .run_query_mut(address_i)?
+            .apply_edit(edit)
     }
 }
 
@@ -147,6 +200,18 @@ impl dy::Queryable for String {
         unimplemented!("blah");
         // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
         // `Len`) wouldn't support this.
+    }
+}
+
+impl dy::QueryableDynTrait for String {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::Utf8StringTermView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for String {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::Utf8StringTermMutView::new(self)
     }
 }
 
@@ -217,7 +282,6 @@ impl TermTrait for String {
     }
 }
 
-// TEMP HACK maybe
 impl TermTrait for &'static str {
     type AbstractTypeType = st::Utf8String;
 

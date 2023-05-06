@@ -1,9 +1,15 @@
+// NOTE: This will become defunct. The new diff interface is much more flexible, and doesn't
+// require the Diffable trait to enumerate the kinds of diffs it supports. Instead, it just
+// requires the Diffable trait to implement a single method, apply_diff_in_place, which can
+// handle any kind of diff. This is much more flexible, and allows for diffs to be defined
+// dynamically, rather than statically (as is the case with the Diff trait in the other file).
+
 use crate::{dy, st, Result};
 
-// NOTE: This is the simplest possible interface for diffs, but may not be the most extensible,
-// since once a type implements this trait, the kinds of diffs it can handle are fixed (due to
-// the fact that it has to enumerate the kinds of supported diffs in code, which can't later be
-// changed).
+// NOTE: This will become defunct.
+// NOTE: This is the simplest possible interface for diffs, but is not extensible, since once a
+// type implements this trait, the kinds of diffs it can handle are fixed (due to the fact that
+// it has to enumerate the kinds of supported diffs in code, which can't later be changed).
 pub trait Diffable: st::TermTrait {
     /// Returns true iff the specified diff doesn't change the type of self, and therefore can
     /// be applied self in-place (via apply_diff_in_place).
@@ -19,7 +25,7 @@ pub trait Diffable: st::TermTrait {
 
 impl Diffable for st::Utf8StringTerm {
     fn diff_is_mutation_in_place(&self, diff: &dy::ValueGuts) -> Result<bool> {
-        let retval = if let Some(_) = diff.downcast_ref::<dy::NoOp>() {
+        let retval = if let Some(_) = diff.downcast_ref::<st::NoOp>() {
             // Nothing to do.
             true
         } else if let Some(replacement_term) = diff.downcast_ref::<dy::ReplacementTerm>() {
@@ -49,7 +55,7 @@ impl Diffable for st::Utf8StringTerm {
             address_v.is_empty(),
             "Utf8StringTerm only supports apply_diff_in_place for terminal addresses"
         );
-        if let Some(_) = diff.downcast_ref::<dy::NoOp>() {
+        if let Some(_) = diff.downcast_ref::<st::NoOp>() {
             // Nothing to do.
         } else if let Some(replacement_term) = diff.downcast_ref::<dy::ReplacementTerm>() {
             // Just need to check the type(s).

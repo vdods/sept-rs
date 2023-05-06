@@ -342,6 +342,110 @@ impl dy::Queryable for u64 {
     }
 }
 
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for i8 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for i16 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for i32 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for i64 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for u8 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for u16 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for u32 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for u64 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for i8 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for i16 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for i32 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for i64 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for u8 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for u16 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for u32 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for u64 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
 impl st::Serializable for i8 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)

@@ -55,7 +55,7 @@ impl StructTermTerm {
     pub fn new_checked(r#type: dy::Value, field_t: dy::TupleTerm) -> Result<Self> {
         let type_maybe_dereferenced = r#type.dereferenced()?;
         match type_maybe_dereferenced {
-            dy::MaybeDereferencedValue::NonRef(type_value_guts) => {
+            dy::MaybeDereferencedValue::Ref(type_value_guts) => {
                 match type_value_guts.downcast_ref::<dy::StructTerm>() {
                     Some(struct_term) => {
                         struct_term.verify_inhabitation_by(&field_t)?;
@@ -65,7 +65,7 @@ impl StructTermTerm {
                     }
                 }
             }
-            dy::MaybeDereferencedValue::Ref(type_value_la) => {
+            dy::MaybeDereferencedValue::ValueLA(type_value_la) => {
                 let type_value_g = type_value_la.read().unwrap();
                 match type_value_g.downcast_ref::<dy::StructTerm>() {
                     Some(struct_term) => {

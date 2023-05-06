@@ -1,14 +1,20 @@
-use crate::{View, ViewCtx};
-use std::sync::{Arc, RwLock};
+use crate::{Model, View, ViewCtx, ViewOptions};
+use std::{
+    collections::VecDeque,
+    sync::{Arc, RwLock},
+};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct App {
+    // TODO: Re-enable serde
     #[serde(skip)]
-    value: sept::dy::Value,
+    model: Model,
     #[serde(skip)]
-    view_ctx: ViewCtx,
+    cursor_address: sept::dy::TupleTerm,
+    #[serde(skip)]
+    view_options: ViewOptions,
     #[serde(skip)]
     local_symbol_table_la: Arc<RwLock<sept::dy::SymbolTable>>,
 }
@@ -174,7 +180,7 @@ impl Default for App {
         // let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![s1.into()]).into();
         // let value: sept::dy::Value = s1.into();
 
-        let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
+        let root_value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
             a2.into(),
             sept::dy::ArrayTerm::from(vec![]).into(),
             m0.into(),
@@ -198,14 +204,19 @@ impl Default for App {
             lsr1.into(),
         ])
         .into();
-
-        let mut view_ctx = ViewCtx::new();
-        view_ctx.inline_at_nesting_depth = 2;
-        view_ctx.cursor_address_o = Some(sept::dy::TupleTerm::from(vec![]));
+        let root_value_la = Arc::new(RwLock::new(root_value));
+        let model = Model {
+            root_value_la,
+            applied_edit_v: VecDeque::new(),
+        };
+        // Start with the cursor on the root value.
+        let cursor_address = sept::dy::TupleTerm::from(vec![]);
+        let view_options = ViewOptions::default();
 
         Self {
-            value,
-            view_ctx,
+            model,
+            cursor_address,
+            view_options,
             local_symbol_table_la,
         }
     }
@@ -260,69 +271,81 @@ impl eframe::App for App {
             // Render the cursor address.  Unfortunately because this has to be rendered before
             // the CentralPanel, this gets updated with a slight delay after the events that change
             // the cursor address.
-            if let Some(self_view_ctx_cursor_address) = self.view_ctx.cursor_address_o.as_ref() {
-                ui.horizontal(|ui| {
-                    ui.label("Cursor Address:");
+            ui.horizontal(|ui| {
+                ui.label("Cursor Address:");
 
-                    // Use a fresh ViewCtx specific for the cursor address rendering, separate from the CentralPanel's one.
-                    let mut view_ctx = ViewCtx::new();
-                    // Don't show type annotations or struct field name hints in the cursor address; it should be compact.
-                    view_ctx.show_type_annotations = false;
-                    view_ctx.show_struct_field_name_hints = false;
-                    // TODO: Make it super compact by eliminating spaces.
+                // Create a model for the cursor address.
+                let model = Model {
+                    root_value_la: Arc::new(RwLock::new(self.cursor_address.clone().into())),
+                    applied_edit_v: VecDeque::new(),
+                };
+                // Set the rendering options specific for rendering the cursor address.  These options
+                // are to make it very compact.
+                // TODO: Make it super compact by eliminating spaces.
+                let view_options = ViewOptions {
+                    inline_at_nesting_depth: 0,
+                    show_type_annotations: false,
+                    show_struct_field_name_hints: false,
+                    ..Default::default()
+                };
+                // Create a ViewCtx to be used for rendering the cursor address.  It itself does not
+                // have a cursor address, since the user is not interacting with it.
+                let mut view_ctx = ViewCtx::new(&model, &view_options, None);
 
-                    let old_item_spacing = ui.spacing().item_spacing;
-                    ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
-                    // ui.spacing_mut().item_spacing.x = 0.0;
+                let old_item_spacing = ui.spacing().item_spacing;
+                ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
+                // ui.spacing_mut().item_spacing.x = 0.0;
 
-                    ui.vertical(|ui| {
-                        let layout_job =
-                            self_view_ctx_cursor_address.update(ui, &mut view_ctx, None);
-                        ui.label(layout_job);
-                    });
-
-                    ui.spacing_mut().item_spacing = old_item_spacing;
+                ui.vertical(|ui| {
+                    let layout_job = self.cursor_address.update(ui, &mut view_ctx, None);
+                    ui.label(layout_job);
                 });
-            }
+
+                ui.spacing_mut().item_spacing = old_item_spacing;
+            });
 
             ui.horizontal_wrapped(|ui| {
                 ui.label("Inlining Depth:");
                 ui.add(
-                    egui::DragValue::new(&mut self.view_ctx.inline_at_nesting_depth).speed(0.0625),
+                    egui::DragValue::new(&mut self.view_options.inline_at_nesting_depth)
+                        .speed(0.0625),
                 );
 
                 ui.checkbox(
-                    &mut self.view_ctx.show_expanded_item_indicator,
+                    &mut self.view_options.show_expanded_item_indicator,
                     "Expanded Item Indicator",
                 );
 
-                ui.checkbox(&mut self.view_ctx.show_type_annotations, "Type Annotations");
+                ui.checkbox(
+                    &mut self.view_options.show_type_annotations,
+                    "Type Annotations",
+                );
 
                 ui.checkbox(
-                    &mut self.view_ctx.show_struct_field_name_hints,
+                    &mut self.view_options.show_struct_field_name_hints,
                     "Struct Field Name Hints",
                 );
 
                 ui.label("Font:");
                 ui.add(
-                    egui::DragValue::new(&mut self.view_ctx.font_id.size)
+                    egui::DragValue::new(&mut self.view_options.font_id.size)
                         .clamp_range(6.0..=30.0)
                         .max_decimals(0)
                         .suffix("pt")
                         .speed(0.0625),
                 );
                 egui::ComboBox::from_id_source("font family combobox")
-                    .selected_text(format!("{:?}", &mut self.view_ctx.font_id.family))
+                    .selected_text(format!("{:?}", &mut self.view_options.font_id.family))
                     .show_ui(ui, |ui| {
                         // ui.style_mut().wrap = Some(false);
                         ui.set_min_width(60.0);
                         ui.selectable_value(
-                            &mut self.view_ctx.font_id.family,
+                            &mut self.view_options.font_id.family,
                             egui::FontFamily::Monospace,
                             "Monospace",
                         );
                         ui.selectable_value(
-                            &mut self.view_ctx.font_id.family,
+                            &mut self.view_options.font_id.family,
                             egui::FontFamily::Proportional,
                             "Proportional",
                         );
@@ -334,6 +357,17 @@ impl eframe::App for App {
 
         // Note that the CentralPanel must be added after side panels.
         egui::CentralPanel::default().show(ctx, |ui| {
+            // tracing::trace!("App::update; events:");
+            // for event in ui.input().events.iter() {
+            //     tracing::trace!("    {:?}", event);
+            // }
+
+            let mut view_ctx = ViewCtx::new(
+                &self.model,
+                &self.view_options,
+                Some(&mut self.cursor_address),
+            );
+
             egui::ScrollArea::vertical()
                 .always_show_scroll(true)
                 .auto_shrink([false, true])
@@ -343,12 +377,33 @@ impl eframe::App for App {
                     // ui.spacing_mut().item_spacing.x = 0.0;
 
                     ui.vertical(|ui| {
-                        let layout_job = self.value.update(ui, &mut self.view_ctx, None);
+                        let layout_job = self.model.root_value_la.read().unwrap().update(
+                            ui,
+                            &mut view_ctx,
+                            None,
+                        );
                         ui.label(layout_job);
                     });
 
                     ui.spacing_mut().item_spacing = old_item_spacing;
                 });
+
+            // Apply each edit to the root value.
+            {
+                let mut root_value_g = self.model.root_value_la.write().unwrap();
+                for addressed_edit in view_ctx.enqueued_edit_v.drain(..) {
+                    tracing::trace!("App::update; applying edit {:?}", addressed_edit);
+                    use sept::dy::Editable;
+                    root_value_g
+                        .query_mut_and_apply_edit(
+                            &mut addressed_edit.address.iter(),
+                            addressed_edit.edit.clone(),
+                        )
+                        .expect("TODO: handle error");
+                    // Store each edit in the undo queue.
+                    self.model.applied_edit_v.push_back(addressed_edit);
+                }
+            }
         });
     }
 }

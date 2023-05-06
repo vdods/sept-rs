@@ -40,6 +40,23 @@ pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
 pub type QueryFn =
     for<'a> fn(queryable: &'a ValueGuts, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts>;
+#[allow(unused)] // TEMP HACK
+                 // pub type Query2Fn = for<'a> fn(
+                 //     query_subject_b: Box<dy::ValueGuts>,
+                 //     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+                 // ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
+                 // pub type AsQueryTraitFn = for<'a> fn(x: &'a ValueGuts) -> &'a dyn dy::QueryTrait<'a>;
+                 // TEMP HACK
+pub type Query2Fn = for<'a> fn(
+    query_subject: &'a dy::ValueGuts,
+    address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
+// pub type ApplyEditFn = fn(x: &mut ValueGuts, edit: dy::Value) -> Result<()>;
+// pub type MakeQueryFn = for<'a> fn(
+//     x: &'a dy::ValueGuts,
+//     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+// ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
+// pub type AsQueryTraitFn = for<'a> fn(x: &'a ValueGuts) -> &'a dyn dy::QueryTrait<'a>;
 pub type DiffApplyInPlaceFn = fn(diff: &ValueGuts, target: &mut ValueGuts) -> Result<()>;
 pub type DiffIntoInverseFn = fn(diff: dy::Value) -> Result<dy::Value>;
 
@@ -58,6 +75,68 @@ struct RegisteredPartialCmpFn {
     is_transposed: bool,
 }
 
+pub trait QueryAdapterTrait: Send + Sync {
+    fn make_and_run_query<'a>(
+        &self,
+        query_subject: &'a ValueGuts,
+        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
+    where
+        Self: 'a;
+}
+
+pub struct QueryAdapter<T: dy::QueryableDynTrait>(std::marker::PhantomData<T>);
+
+unsafe impl<T: dy::QueryableDynTrait> Send for QueryAdapter<T> {}
+unsafe impl<T: dy::QueryableDynTrait> Sync for QueryAdapter<T> {}
+
+impl<T: dy::QueryableDynTrait + 'static> QueryAdapterTrait for QueryAdapter<T> {
+    fn make_and_run_query<'a>(
+        &self,
+        query_subject: &'a ValueGuts,
+        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
+    where
+        Self: 'a,
+    {
+        query_subject
+            .downcast_ref::<T>()
+            .unwrap()
+            .make_and_run_query(address_i)
+    }
+}
+
+pub trait QueryMutAdapterTrait: Send + Sync {
+    fn make_and_run_query_mut<'a>(
+        &self,
+        query_subject: &'a mut ValueGuts,
+        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>>
+    where
+        Self: 'a;
+}
+
+pub struct QueryMutAdapter<T: dy::QueryableMutDynTrait>(std::marker::PhantomData<T>);
+
+unsafe impl<T: dy::QueryableMutDynTrait> Send for QueryMutAdapter<T> {}
+unsafe impl<T: dy::QueryableMutDynTrait> Sync for QueryMutAdapter<T> {}
+
+impl<T: dy::QueryableMutDynTrait + 'static> QueryMutAdapterTrait for QueryMutAdapter<T> {
+    fn make_and_run_query_mut<'a>(
+        &self,
+        query_subject: &'a mut ValueGuts,
+        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>>
+    where
+        Self: 'a,
+    {
+        query_subject
+            .downcast_mut::<T>()
+            .unwrap()
+            .make_and_run_query_mut(address_i)
+    }
+}
+
 /// The sept Runtime is what supports the sept data model; it tracks what types are registered
 /// and the various inhabitation and subtyping (and other) relationships.
 #[derive(Default)]
@@ -65,8 +144,7 @@ pub struct Runtime {
     // TODO: [po]set of types (poset based on which relationship?)
     // TODO: [po]set of terms(?)
 
-    // TODO: See about collecting many of these into a common map, since many of them will have
-    // identical indexes.
+    // TODO: See about collecting many of these into a common map, since many of them have identical indexes.
 
     // TODO: A way to iterate over NonParametricTerms, Terms, Types, etc.
     non_parametric_term_code_m: HashMap<TypeId, st::NonParametricTermCode>,
@@ -97,6 +175,11 @@ pub struct Runtime {
     non_parametric_term_instantiate_from_code_fn_m:
         HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
     query_fn_m: HashMap<TypeId, QueryFn>,
+    query2_fn_m: HashMap<TypeId, Box<dyn QueryAdapterTrait>>,
+    query2_mut_fn_m: HashMap<TypeId, Box<dyn QueryMutAdapterTrait>>,
+    // query2_fn_m: HashMap<TypeId, Query2Fn>,
+    // as_query_trait_fn_m: HashMap<TypeId, AsQueryTraitFn>,
+    // apply_edit_fn_m: HashMap<TypeId, ApplyEditFn>,
     diff_apply_in_place_fn_m: HashMap<(TypeId, TypeId), DiffApplyInPlaceFn>,
     diff_into_inverse_fn_m: HashMap<TypeId, DiffIntoInverseFn>,
 }
@@ -135,36 +218,74 @@ impl Runtime {
         runtime.register_term::<OrderedMapTerm>().unwrap();
         runtime.register_term::<StructTermTerm>().unwrap();
 
-        // TEMP HACK: Note, this need to specify generic params for particular terms sucks.
-        // Not sure what the right way forward is though.
-        // runtime
-        //     .register_term::<st::ElementInsertionTerm<String, u32, char>>()
-        //     .unwrap();
-        // runtime
-        //     .register_term::<st::ElementDeletionTerm<String, u32, char>>()
-        //     .unwrap();
-        // runtime
-        //     .register_term::<st::ElementReplacementTerm<String, u32, char>>()
-        //     .unwrap();
-        // TEMP HACK: instead of of register_term, simply register clone.
-        runtime
-            .register_clone::<st::ElementInsertionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_clone::<st::ElementDeletionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_clone::<st::ElementReplacementTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_stringify::<st::ElementInsertionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_stringify::<st::ElementDeletionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_stringify::<st::ElementReplacementTerm<String, u32, char>>()
-            .unwrap();
+        runtime.register_term::<st::NoOp>().unwrap();
+        runtime.register_term::<st::Insertion>().unwrap();
+        runtime.register_term::<st::Deletion>().unwrap();
+        runtime.register_term::<st::Replacement>().unwrap();
+        runtime.register_term::<dy::InsertionTerm>().unwrap();
+        runtime.register_term::<dy::DeletionTerm>().unwrap();
+        runtime.register_term::<dy::ReplacementTerm>().unwrap();
+
+        // TEMP HACK -- these should be included in register_term
+        runtime.register_query2::<bool>().unwrap();
+        runtime.register_query2::<False>().unwrap();
+        runtime.register_query2::<True>().unwrap();
+        runtime.register_query2::<i8>().unwrap();
+        runtime.register_query2::<i16>().unwrap();
+        runtime.register_query2::<i32>().unwrap();
+        runtime.register_query2::<i64>().unwrap();
+        runtime.register_query2::<u8>().unwrap();
+        runtime.register_query2::<u16>().unwrap();
+        runtime.register_query2::<u32>().unwrap();
+        runtime.register_query2::<u64>().unwrap();
+        runtime.register_query2::<f32>().unwrap();
+        runtime.register_query2::<f64>().unwrap();
+        runtime.register_query2::<char>().unwrap();
+        runtime.register_query2::<String>().unwrap();
+        runtime.register_query2::<Void>().unwrap();
+        runtime.register_query2::<ArrayTerm>().unwrap();
+        runtime.register_query2::<TupleTerm>().unwrap();
+        runtime.register_query2::<OrderedMapTerm>().unwrap();
+
+        runtime.register_query2_mut::<bool>().unwrap();
+        runtime.register_query2_mut::<False>().unwrap();
+        runtime.register_query2_mut::<True>().unwrap();
+        runtime.register_query2_mut::<i8>().unwrap();
+        runtime.register_query2_mut::<i16>().unwrap();
+        runtime.register_query2_mut::<i32>().unwrap();
+        runtime.register_query2_mut::<i64>().unwrap();
+        runtime.register_query2_mut::<u8>().unwrap();
+        runtime.register_query2_mut::<u16>().unwrap();
+        runtime.register_query2_mut::<u32>().unwrap();
+        runtime.register_query2_mut::<u64>().unwrap();
+        runtime.register_query2_mut::<f32>().unwrap();
+        runtime.register_query2_mut::<f64>().unwrap();
+        runtime.register_query2_mut::<char>().unwrap();
+        runtime.register_query2_mut::<String>().unwrap();
+        runtime.register_query2_mut::<Void>().unwrap();
+        runtime.register_query2_mut::<ArrayTerm>().unwrap();
+        runtime.register_query2_mut::<TupleTerm>().unwrap();
+        runtime.register_query2_mut::<OrderedMapTerm>().unwrap();
+
+        // runtime.register_apply_edit::<bool>().unwrap();
+        // runtime.register_apply_edit::<False>().unwrap();
+        // runtime.register_apply_edit::<True>().unwrap();
+        // runtime.register_apply_edit::<i8>().unwrap();
+        // runtime.register_apply_edit::<i16>().unwrap();
+        // runtime.register_apply_edit::<i32>().unwrap();
+        // runtime.register_apply_edit::<i64>().unwrap();
+        // runtime.register_apply_edit::<u8>().unwrap();
+        // runtime.register_apply_edit::<u16>().unwrap();
+        // runtime.register_apply_edit::<u32>().unwrap();
+        // runtime.register_apply_edit::<u64>().unwrap();
+        // runtime.register_apply_edit::<f32>().unwrap();
+        // runtime.register_apply_edit::<f64>().unwrap();
+        // runtime.register_apply_edit::<char>().unwrap();
+        // runtime.register_apply_edit::<String>().unwrap();
+        // runtime.register_apply_edit::<Void>().unwrap();
+        // runtime.register_apply_edit::<ArrayTerm>().unwrap();
+        // runtime.register_apply_edit::<TupleTerm>().unwrap();
+        // runtime.register_apply_edit::<OrderedMapTerm>().unwrap();
 
         // Register types
         runtime.register_type::<Term>().unwrap();
@@ -470,17 +591,6 @@ impl Runtime {
             .register_dereferenced_once::<LocalSymRefTerm>()
             .unwrap();
 
-        // TEMP HACK
-        runtime
-            .register_diff::<String, st::ElementInsertionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_diff::<String, st::ElementDeletionTerm<String, u32, char>>()
-            .unwrap();
-        runtime
-            .register_diff::<String, st::ElementReplacementTerm<String, u32, char>>()
-            .unwrap();
-
         runtime
     }
 
@@ -491,7 +601,7 @@ impl Runtime {
         T: st::TermTrait
             + dy::Deconstruct
             + std::fmt::Debug
-            + dy::Queryable
+            // + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -508,7 +618,7 @@ impl Runtime {
         );
         self.register_label::<T>()?;
         self.register_debug::<T>()?;
-        self.register_query::<T>()?;
+        // self.register_query::<T>()?;
         self.register_serialize::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
@@ -525,7 +635,7 @@ impl Runtime {
         T: st::TypeTrait
             + dy::Deconstruct
             + std::fmt::Debug
-            + dy::Queryable
+            // + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -1034,57 +1144,126 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_diff<Target: st::TermTrait, Diff: st::DiffTrait<Target>>(
-        &mut self,
-    ) -> Result<()>
-    where
-        Diff::Inverse: dy::IntoValue,
-    {
-        let type_id_of_diff = TypeId::of::<Diff>();
-        let type_id_pair = (TypeId::of::<Target>(), type_id_of_diff);
+    // pub fn register_diff<Target: st::TermTrait, Diff: st::DiffTrait<Target>>(
+    //     &mut self,
+    // ) -> Result<()>
+    // where
+    //     Diff::Inverse: dy::IntoValue,
+    // {
+    //     let type_id_of_diff = TypeId::of::<Diff>();
+    //     let type_id_pair = (TypeId::of::<Target>(), type_id_of_diff);
 
-        let diff_apply_in_place_fn = |diff: &ValueGuts, target: &mut ValueGuts| -> Result<()> {
-            Ok(diff
-                .downcast_ref::<Diff>()
-                .unwrap()
-                .apply_in_place(target.downcast_mut::<Target>().unwrap())?)
-        };
-        let diff_into_inverse_fn = |diff: dy::Value| -> Result<dy::Value> {
-            Ok(dy::Value::from(diff.downcast_into::<Diff>().into_inverse()))
-        };
+    //     let diff_apply_in_place_fn = |diff: &ValueGuts, target: &mut ValueGuts| -> Result<()> {
+    //         Ok(diff
+    //             .downcast_ref::<Diff>()
+    //             .unwrap()
+    //             .apply_in_place(target.downcast_mut::<Target>().unwrap())?)
+    //     };
+    //     let diff_into_inverse_fn = |diff: dy::Value| -> Result<dy::Value> {
+    //         Ok(dy::Value::from(diff.downcast_into::<Diff>().into_inverse()))
+    //     };
 
-        match self
-            .diff_apply_in_place_fn_m
-            .insert(type_id_pair, diff_apply_in_place_fn)
-        {
+    //     match self
+    //         .diff_apply_in_place_fn_m
+    //         .insert(type_id_pair, diff_apply_in_place_fn)
+    //     {
+    //         Some(_) => {
+    //             anyhow::bail!(
+    //                 "collision with already-registered diff_apply_in_place fn for (Target: {}, Diff: {}); term types that produced the collision were (Target: {}, Diff: {})",
+    //                 self.label_of_type_id(type_id_pair.0),
+    //                 self.label_of_type_id(type_id_pair.1),
+    //                 std::any::type_name::<Target>(),
+    //                 std::any::type_name::<Diff>()
+    //             );
+    //         }
+    //         None => {}
+    //     }
+
+    //     match self
+    //         .diff_into_inverse_fn_m
+    //         .insert(type_id_of_diff, diff_into_inverse_fn)
+    //     {
+    //         Some(_) => {
+    //             anyhow::bail!(
+    //                 "collision with already-registered diff_into_inverse fn for {}; term type that produced the collision was {}",
+    //                 self.label_of_type_id(type_id_pair.0),
+    //                 std::any::type_name::<Diff>()
+    //             );
+    //         }
+    //         None => {}
+    //     }
+
+    //     Ok(())
+    // }
+    pub fn register_query2<T: dy::QueryableDynTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        // This is what carries the type information.
+        let query2_fn = QueryAdapter::<T>(std::marker::PhantomData);
+        // Store the adapter in a box as a trait object
+        let query2_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query2_fn);
+        match self.query2_fn_m.insert(type_id, query2_fn_b) {
             Some(_) => {
                 anyhow::bail!(
-                    "collision with already-registered diff_apply_in_place fn for (Target: {}, Diff: {}); term types that produced the collision were (Target: {}, Diff: {})",
-                    self.label_of_type_id(type_id_pair.0),
-                    self.label_of_type_id(type_id_pair.1),
-                    std::any::type_name::<Target>(),
-                    std::any::type_name::<Diff>()
+                    "collision with already-registered query2 fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
                 );
             }
-            None => {}
+            None => Ok(()),
         }
-
-        match self
-            .diff_into_inverse_fn_m
-            .insert(type_id_of_diff, diff_into_inverse_fn)
-        {
-            Some(_) => {
-                anyhow::bail!(
-                    "collision with already-registered diff_into_inverse fn for {}; term type that produced the collision was {}",
-                    self.label_of_type_id(type_id_pair.0),
-                    std::any::type_name::<Diff>()
-                );
-            }
-            None => {}
-        }
-
-        Ok(())
     }
+    pub fn register_query2_mut<T: dy::QueryableMutDynTrait + 'static>(&mut self) -> Result<()> {
+        let type_id = TypeId::of::<T>();
+        // This is what carries the type information.
+        let query2_mut_fn = QueryMutAdapter::<T>(std::marker::PhantomData);
+        // Store the adapter in a box as a trait object
+        let query2_mut_fn_b: Box<dyn QueryMutAdapterTrait> = Box::new(query2_mut_fn);
+        match self.query2_mut_fn_m.insert(type_id, query2_mut_fn_b) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered query2_mut fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => Ok(()),
+        }
+    }
+    // NOTE: I think this is not necessary because run_query_mut returns Box<dyn QueryMutViewTrait>
+    // and doesn't need to go through the runtime.
+    // pub fn register_apply_edit<T: dy::QueryMutViewTrait + 'static>(&mut self) -> Result<()> {
+    //     let type_id = TypeId::of::<T>();
+    //     let apply_edit_fn = |x: &mut dy::ValueGuts, edit: dy::Value| -> Result<()> {
+    //         x.downcast_mut::<T>().unwrap().apply_edit(edit)
+    //     };
+    //     match self.apply_edit_fn_m.insert(type_id, apply_edit_fn) {
+    //         Some(_) => {
+    //             anyhow::bail!(
+    //                 "collision with already-registered apply_edit fn for {}; term type that produced the collision was {}",
+    //                 self.label_of_type_id(type_id),
+    //                 std::any::type_name::<T>()
+    //             );
+    //         }
+    //         None => Ok(()),
+    //     }
+    // }
+
+    // pub fn register_as_query_trait<'a, T: dy::QueryTrait<'a> + 'static>(&mut self) -> Result<()> {
+    //     panic!("NO");
+    //     // let type_id = TypeId::of::<T>();
+    //     // let as_query_trait_fn: AsQueryTraitFn =
+    //     //     |x: &'_ ValueGuts| -> &'_ dyn dy::QueryTrait<'_> { x.downcast_ref::<T>().unwrap() };
+    //     // match self.as_query_trait_fn_m.insert(type_id, as_query_trait_fn) {
+    //     //     Some(_) => {
+    //     //         anyhow::bail!(
+    //     //             "collision with already-registered as_query_trait fn for {}; term type that produced the collision was {}",
+    //     //             self.label_of_type_id(type_id),
+    //     //             std::any::type_name::<T>()
+    //     //         );
+    //     //     }
+    //     //     None => Ok(()),
+    //     // }
+    // }
 
     pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(
         &'a self,
@@ -1171,28 +1350,29 @@ impl Runtime {
         // Handle referential transparency.
         let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
+        // TODO: Should be able to use deref here instead of a match clause.
         match (lhs_dereferenced, rhs_dereferenced) {
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => self.cmp_impl(lhs_value_guts, rhs_value_guts),
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let rhs_value_g = rhs_value_la.read().unwrap();
                 self.cmp_impl(lhs_value_guts, rhs_value_g.as_ref())
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 self.cmp_impl(lhs_value_g.as_ref(), rhs_value_guts)
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 let rhs_value_g = rhs_value_la.read().unwrap();
@@ -1244,26 +1424,26 @@ impl Runtime {
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
         match (lhs_dereferenced, rhs_dereferenced) {
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => self.eq_impl(lhs_value_guts, rhs_value_guts),
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let rhs_value_g = rhs_value_la.read().unwrap();
                 self.eq_impl(lhs_value_guts, rhs_value_g.as_ref())
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 self.eq_impl(lhs_value_g.as_ref(), rhs_value_guts)
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 let rhs_value_g = rhs_value_la.read().unwrap();
@@ -1309,26 +1489,26 @@ impl Runtime {
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
         match (lhs_dereferenced, rhs_dereferenced) {
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => self.partial_cmp_impl(lhs_value_guts, rhs_value_guts),
             (
-                MaybeDereferencedValue::NonRef(lhs_value_guts),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::Ref(lhs_value_guts),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let rhs_value_g = rhs_value_la.read().unwrap();
                 self.partial_cmp_impl(lhs_value_guts, rhs_value_g.as_ref())
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::NonRef(rhs_value_guts),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::Ref(rhs_value_guts),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 self.partial_cmp_impl(lhs_value_g.as_ref(), rhs_value_guts)
             }
             (
-                MaybeDereferencedValue::Ref(lhs_value_la),
-                MaybeDereferencedValue::Ref(rhs_value_la),
+                MaybeDereferencedValue::ValueLA(lhs_value_la),
+                MaybeDereferencedValue::ValueLA(rhs_value_la),
             ) => {
                 let lhs_value_g = lhs_value_la.read().unwrap();
                 let rhs_value_g = rhs_value_la.read().unwrap();
@@ -1374,24 +1554,27 @@ impl Runtime {
         let t_maybe_dereferenced = self.dereferenced(t).expect("dereferenced failed");
         match (x_maybe_dereferenced, t_maybe_dereferenced) {
             (
-                MaybeDereferencedValue::NonRef(x_value_guts),
-                MaybeDereferencedValue::NonRef(t_value_guts),
+                MaybeDereferencedValue::Ref(x_value_guts),
+                MaybeDereferencedValue::Ref(t_value_guts),
             ) => self.inhabits_impl(x_value_guts, t_value_guts),
             (
-                MaybeDereferencedValue::NonRef(x_value_guts),
-                MaybeDereferencedValue::Ref(t_value_la),
+                MaybeDereferencedValue::Ref(x_value_guts),
+                MaybeDereferencedValue::ValueLA(t_value_la),
             ) => {
                 let t_value_g = t_value_la.read().unwrap();
                 self.inhabits_impl(x_value_guts, t_value_g.as_ref())
             }
             (
-                MaybeDereferencedValue::Ref(x_value_la),
-                MaybeDereferencedValue::NonRef(t_value_guts),
+                MaybeDereferencedValue::ValueLA(x_value_la),
+                MaybeDereferencedValue::Ref(t_value_guts),
             ) => {
                 let x_value_g = x_value_la.read().unwrap();
                 self.inhabits_impl(x_value_g.as_ref(), t_value_guts)
             }
-            (MaybeDereferencedValue::Ref(x_value_la), MaybeDereferencedValue::Ref(t_value_la)) => {
+            (
+                MaybeDereferencedValue::ValueLA(x_value_la),
+                MaybeDereferencedValue::ValueLA(t_value_la),
+            ) => {
                 let x_value_g = x_value_la.read().unwrap();
                 let t_value_g = t_value_la.read().unwrap();
                 self.inhabits_impl(x_value_g.as_ref(), t_value_g.as_ref())
@@ -1417,10 +1600,10 @@ impl Runtime {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
-            MaybeDereferencedValue::NonRef(x_value_guts) => {
+            MaybeDereferencedValue::Ref(x_value_guts) => {
                 self.nondereferencing_abstract_type_of(x_value_guts)
             }
-            MaybeDereferencedValue::Ref(x_value_la) => {
+            MaybeDereferencedValue::ValueLA(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
                 self.nondereferencing_abstract_type_of(x_value_g.as_ref())
             }
@@ -1458,10 +1641,10 @@ impl Runtime {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
-            MaybeDereferencedValue::NonRef(x_value_guts) => {
+            MaybeDereferencedValue::Ref(x_value_guts) => {
                 self.nondereferencing_is_parametric(x_value_guts)
             }
-            MaybeDereferencedValue::Ref(x_value_la) => {
+            MaybeDereferencedValue::ValueLA(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
                 self.nondereferencing_is_parametric(x_value_g.as_ref())
             }
@@ -1486,8 +1669,8 @@ impl Runtime {
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
-            MaybeDereferencedValue::NonRef(x_value_guts) => self.is_type_impl(x_value_guts),
-            MaybeDereferencedValue::Ref(x_value_la) => {
+            MaybeDereferencedValue::Ref(x_value_guts) => self.is_type_impl(x_value_guts),
+            MaybeDereferencedValue::ValueLA(x_value_la) => {
                 let x_value_g = x_value_la.read().unwrap();
                 self.is_type_impl(x_value_g.as_ref())
             }
@@ -1535,10 +1718,10 @@ impl Runtime {
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
     pub fn dereferenced<'a>(&self, x: &'a ValueGuts) -> Result<MaybeDereferencedValue<'a>> {
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
-            Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::Ref(
+            Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::ValueLA(
                 self.dereferenced_inner(dereferenced_once_fn(x)?)?,
             )),
-            None => Ok(MaybeDereferencedValue::NonRef(x)),
+            None => Ok(MaybeDereferencedValue::Ref(x)),
         }
     }
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
@@ -1641,7 +1824,7 @@ impl Runtime {
         match self.query_fn_m.get(&queryable.type_id()) {
             Some(query_fn) => query_fn(queryable, address_v),
             None => Err(anyhow::anyhow!(
-                "no query fn found for  `{}`",
+                "no query fn found for `{}`",
                 self.label_of_value_guts(queryable)
             )),
         }
@@ -1670,14 +1853,74 @@ impl Runtime {
             }
         }
     }
+    pub fn query2<'a>(
+        &self,
+        query_subject: &'a ValueGuts,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>> {
+        match self.query2_fn_m.get(&query_subject.type_id()) {
+            Some(query2_fn_b) => query2_fn_b.make_and_run_query(query_subject, address_i),
+            None => Err(anyhow::anyhow!(
+                "no query2 fn found for `{}`",
+                self.label_of_value_guts(query_subject)
+            )),
+        }
+    }
+    pub fn query2_mut<'a>(
+        &self,
+        query_subject: &'a mut ValueGuts,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>> {
+        match self.query2_mut_fn_m.get(&query_subject.type_id()) {
+            Some(query2_mut_fn_b) => {
+                query2_mut_fn_b.make_and_run_query_mut(query_subject, address_i)
+            }
+            None => Err(anyhow::anyhow!(
+                "no query2_mut fn found for `{}`",
+                self.label_of_value_guts(query_subject)
+            )),
+        }
+    }
+    // pub fn query2<'a>(
+    //     &self,
+    //     query_subject: &ValueGuts,
+    //     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+    // ) -> Result<Box<dyn dy::QueryViewTrait + 'a>> {
+    //     match self.query2_fn_m.get(&query_subject.type_id()) {
+    //         Some(query2_fn_b) => query2_fn_b.call(query_subject, address_i),
+    //         None => Err(anyhow::anyhow!(
+    //             "no query2 fn found for `{}`",
+    //             self.label_of_value_guts(query_subject)
+    //         )),
+    //     }
+    // }
+    // pub fn as_query_trait<'a>(&self, x: &'a ValueGuts) -> Result<&'a dyn dy::QueryTrait<'a>> {
+    //     match self.as_query_trait_fn_m.get(&x.type_id()) {
+    //         Some(as_query_trait_fn) => Ok(as_query_trait_fn(x)),
+    //         None => Err(anyhow::anyhow!(
+    //             "no as_query_trait fn found for `{}`",
+    //             self.label_of_value_guts(x)
+    //         )),
+    //     }
+    // }
+    // pub fn apply_edit(&self, x: &mut ValueGuts, edit: dy::Value) -> Result<()> {
+    //     match self.apply_edit_fn_m.get(&x.type_id()) {
+    //         Some(apply_edit_fn) => apply_edit_fn(x, edit),
+    //         None => Err(anyhow::anyhow!(
+    //             "no apply_edit fn found for `{}`",
+    //             self.label_of_value_guts(x)
+    //         )),
+    //     }
+    // }
 }
 
 // This sucks, and so does Runtime::dereferenced and dereferenced_inner, and all the call sites in this file.
 // TODO: Use MaybeDereferencedValue::read at call sites that suck.
-// TODO: Rename to DereferencedValue.
+// TODO: Could this use Cow<'a, ValueGuts> instead? ValueGuts would need to impl ToOwned.  In this
+// case, the name could be ValueCow.  If so, would Arc<RwLock<...>> be necessary, or could it just be dy::Value?
 pub enum MaybeDereferencedValue<'a> {
-    NonRef(&'a ValueGuts),
-    Ref(Arc<RwLock<dy::Value>>),
+    Ref(&'a ValueGuts),
+    ValueLA(Arc<RwLock<dy::Value>>),
 }
 
 // // TEMP HACK
@@ -1696,11 +1939,11 @@ pub enum MaybeDereferencedValue<'a> {
 impl<'a> MaybeDereferencedValue<'a> {
     pub fn read(&'a self) -> MaybeDereferencedValueReadGuard<'a> {
         match self {
-            MaybeDereferencedValue::NonRef(value_guts) => {
-                MaybeDereferencedValueReadGuard::<'a>::NonRef(*value_guts)
+            MaybeDereferencedValue::Ref(value_guts) => {
+                MaybeDereferencedValueReadGuard::<'a>::Ref(*value_guts)
             }
-            MaybeDereferencedValue::Ref(value_la) => {
-                MaybeDereferencedValueReadGuard::<'a>::Ref(value_la.read().unwrap())
+            MaybeDereferencedValue::ValueLA(value_la) => {
+                MaybeDereferencedValueReadGuard::<'a>::ValueG(value_la.read().unwrap())
             }
         }
     }
@@ -1709,16 +1952,16 @@ impl<'a> MaybeDereferencedValue<'a> {
 /// This exists because the RwLock inside MaybeDereferencedValue requires acquiring a RwLockReadGuard
 /// in order to get to a reference to the value inside.
 pub enum MaybeDereferencedValueReadGuard<'a> {
-    NonRef(&'a ValueGuts),
-    Ref(RwLockReadGuard<'a, dy::Value>),
+    Ref(&'a ValueGuts),
+    ValueG(RwLockReadGuard<'a, dy::Value>),
 }
 
 impl<'a> std::ops::Deref for MaybeDereferencedValueReadGuard<'a> {
     type Target = ValueGuts;
     fn deref(&self) -> &Self::Target {
         match self {
-            MaybeDereferencedValueReadGuard::NonRef(value_guts) => *value_guts,
-            MaybeDereferencedValueReadGuard::Ref(value_g) => value_g.as_ref(),
+            MaybeDereferencedValueReadGuard::Ref(value_guts) => *value_guts,
+            MaybeDereferencedValueReadGuard::ValueG(value_g) => value_g.as_ref(),
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::{ANSIColor, LayoutDiscriminant, LayoutMode, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
 pub trait View {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         // Do nothing by default.
         let _ = ui;
         let _ = view_ctx;
@@ -12,16 +12,16 @@ pub trait View {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob;
     /// update_inline shouldn't add anything to `ui`, it should add things to `layout_job`.  The `ui`
     /// parameter is only there so update_inline has access to events.
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx);
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>);
     fn update(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         match view_ctx.layout_discriminant() {
@@ -44,7 +44,7 @@ fn layout_job_append(
     layout_job: &mut LayoutJob,
     text: &str,
     foreground_color: egui::Color32,
-    view_ctx: &ViewCtx,
+    view_ctx: &ViewCtx<'_>,
 ) {
     let (foreground_color, background_color) =
         view_ctx.set_highlight_if_necessary(foreground_color);
@@ -57,7 +57,7 @@ fn layout_job_append(
     layout_job.append(text, 0.0, text_format);
 }
 
-fn indentation_for<T: 'static>(view_ctx: &ViewCtx) -> LayoutJob {
+fn indentation_for<T: 'static>(view_ctx: &ViewCtx<'_>) -> LayoutJob {
     let foreground_color = view_ctx.color_for_indentation_for::<T>();
     let (foreground_color, background_color) =
         view_ctx.set_highlight_if_necessary(foreground_color);
@@ -73,12 +73,12 @@ fn indentation_for<T: 'static>(view_ctx: &ViewCtx) -> LayoutJob {
 fn render_type_annotation_for<T: sept::st::TermTrait>(
     term: &T,
     layout_job: &mut LayoutJob,
-    view_ctx: &mut ViewCtx,
+    view_ctx: &mut ViewCtx<'_>,
     extra_text_o: Option<&str>,
 ) where
     <T as sept::st::TermTrait>::AbstractTypeType: sept::st::Stringifiable,
 {
-    if view_ctx.show_type_annotations {
+    if view_ctx.should_show_type_annotations() {
         use sept::st::Stringifiable;
         let extra_text = extra_text_o.unwrap_or("");
         layout_job_append(
@@ -93,10 +93,10 @@ fn render_type_annotation_for<T: sept::st::TermTrait>(
 // Bit of a hack because `str` can't impl `sept::st::TermTrait`.
 fn render_type_annotation_for_str(
     layout_job: &mut LayoutJob,
-    view_ctx: &mut ViewCtx,
+    view_ctx: &mut ViewCtx<'_>,
     extra_text_o: Option<&str>,
 ) {
-    if view_ctx.show_type_annotations {
+    if view_ctx.should_show_type_annotations() {
         use sept::st::Stringifiable;
         let extra_text = extra_text_o.unwrap_or("");
         layout_job_append(
@@ -110,11 +110,11 @@ fn render_type_annotation_for_str(
 
 fn render_postfix_annotation(
     layout_job: &mut LayoutJob,
-    view_ctx: &mut ViewCtx,
+    view_ctx: &mut ViewCtx<'_>,
     postfix_text: &str,
 ) {
     // TODO: Use a different ViewCtx config var
-    if view_ctx.show_type_annotations {
+    if view_ctx.should_show_type_annotations() {
         layout_job_append(
             layout_job,
             postfix_text,
@@ -131,7 +131,7 @@ macro_rules! impl_view_using_to_string {
             fn update_expanded(
                 &self,
                 _ui: &mut egui::Ui,
-                view_ctx: &mut ViewCtx,
+                view_ctx: &mut ViewCtx<'_>,
                 continuation_layout_job_o: Option<LayoutJob>,
             ) -> egui::text::LayoutJob {
                 let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
@@ -149,7 +149,7 @@ macro_rules! impl_view_using_to_string {
                 &self,
                 _ui: &mut Ui,
                 layout_job: &mut egui::text::LayoutJob,
-                view_ctx: &mut ViewCtx,
+                view_ctx: &mut ViewCtx<'_>,
             ) {
                 use sept::st::Stringifiable;
                 layout_job_append(
@@ -222,7 +222,7 @@ impl_view_using_to_string!(sept::st::LocalSymRefType);
 fn render_str_as_literal_without_quotes(
     text: &str,
     layout_job: &mut LayoutJob,
-    view_ctx: &mut ViewCtx,
+    view_ctx: &mut ViewCtx<'_>,
     regular_char_color: egui::Color32,
     escape_char_color: egui::Color32,
     char_index_begin: usize,
@@ -251,11 +251,51 @@ fn render_str_as_literal_without_quotes(
     }
 }
 
+/// This operates in-place on the event vector, and returns the text of the egui::Event::Text
+/// that was extracted, or None if no Text event was extracted.
+fn extract_text_from_events(event_v: &mut Vec<egui::Event>) -> Option<String> {
+    let mut text_o: Option<String> = None;
+    event_v.retain_mut(|event| {
+        if let egui::Event::Text(string) = event {
+            // Take the string so we don't alloc.
+            let mut s = String::new();
+            std::mem::swap(string, &mut s);
+            text_o = Some(s);
+            // Don't retain this, since we extracted it.
+            false
+        } else {
+            // Retain everything else.
+            true
+        }
+    });
+    text_o
+}
+
+/// This operates in-place on the event vector, and returns the text of the egui::Event::Paste
+/// that was extracted, or None if no Paste event was extracted.
+fn extract_paste_from_events(event_v: &mut Vec<egui::Event>) -> Option<String> {
+    let mut text_o: Option<String> = None;
+    event_v.retain_mut(|event| {
+        if let egui::Event::Paste(string) = event {
+            // Take the string so we don't alloc.
+            let mut s = String::new();
+            std::mem::swap(string, &mut s);
+            text_o = Some(s);
+            // Don't retain this, since we extracted it.
+            false
+        } else {
+            // Retain everything else.
+            true
+        }
+    });
+    text_o
+}
+
 #[derive(Debug, derive_more::Deref)]
 pub struct Utf8StringTermLineView<'a>(&'a str);
 
 impl<'a> View for Utf8StringTermLineView<'a> {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // TEMP HACK: Unfortunately have to compute the number of lines each time.  Maybe this could be
         // cached in the ViewCtx.  For truly large strings this hack is not a viable solution.
@@ -350,6 +390,7 @@ impl<'a> View for Utf8StringTermLineView<'a> {
                 sept::st::Uint32.into(),
             ]))
         {
+            // TODO: This crashes if the string is empty; fix it.
             let line = self
                 .split_inclusive('\n')
                 .nth(subaddress_token_v[0].downcast_ref::<u32>().unwrap().clone() as usize)
@@ -420,6 +461,56 @@ impl<'a> View for Utf8StringTermLineView<'a> {
                         // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
                     }
                 };
+
+                // TEMP HACK
+                // Handle editing
+                {
+                    if input_g.consume_key(Modifiers::NONE, Key::Delete) {
+                        let cursor_char = {
+                            // This unwrap shouldn't fail because we presumably have a cursor here.
+                            let cursor_address = view_ctx.cursor_address_o.as_ref().unwrap();
+                            let root_value_g = view_ctx.model.root_value_la.read().unwrap();
+                            use sept::dy::QueryableDynTrait;
+                            let query_b = root_value_g
+                                .make_and_run_query(&mut cursor_address.iter())
+                                .unwrap();
+                            let cursor_value_la = query_b.queried_value().unwrap();
+                            // This unrap shouldn't fail because querying this view should always produce a char.
+                            let cursor_char =
+                                *cursor_value_la.read().downcast_ref::<char>().unwrap();
+                            cursor_char
+                        };
+                        view_ctx.append_edit(
+                            sept::dy::DeletionTerm {
+                                old_data: cursor_char.into(),
+                            }
+                            .into(),
+                        );
+                    } else if input_g.consume_key(Modifiers::NONE, Key::Backspace) {
+                        // This is harder, because you have to alter the cursor first (in particular, all
+                        // the logic regarding boundary conditions, etc).  Don't do anything for now.
+                    }
+                    if let Some(text) = extract_text_from_events(&mut input_g.events) {
+                        // TODO: This also involves updating the cursor in real time.
+                        // TODO: Handle insertion of whole strings at a time.  For now, just do one char at a time.
+                        for c in text.chars() {
+                            view_ctx
+                                .append_edit(sept::dy::InsertionTerm { new_data: c.into() }.into());
+                            // Advance the cursor by one as well.
+                            char_element_index_delta += 1;
+                        }
+                    }
+                    if let Some(text) = extract_paste_from_events(&mut input_g.events) {
+                        // TODO: This also involves updating the cursor in real time.
+                        // TODO: Handle insertion of whole strings at a time.  For now, just do one char at a time.
+                        for c in text.chars() {
+                            view_ctx
+                                .append_edit(sept::dy::InsertionTerm { new_data: c.into() }.into());
+                            // Advance the cursor by one as well.
+                            char_element_index_delta += 1;
+                        }
+                    }
+                }
                 // Handle up/down arrow to change line index.
                 if line_element_index_delta != 0 {
                     // Pop 3 tokens off; the char element index, "char", and then the line element index.
@@ -482,7 +573,7 @@ impl<'a> View for Utf8StringTermLineView<'a> {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut view_ctx_g = view_ctx.push_render_address_token("line".to_string().into());
@@ -574,7 +665,7 @@ impl<'a> View for Utf8StringTermLineView<'a> {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         let mut view_ctx_g = view_ctx.push_render_address_token("line".to_string().into());
 
         self.handle_events(ui, &mut view_ctx_g);
@@ -641,7 +732,7 @@ impl<'a> View for Utf8StringTermLineView<'a> {
 pub struct Utf8StringTermCharView<'a>(&'a str);
 
 impl<'a> View for Utf8StringTermCharView<'a> {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // TEMP HACK: Unfortunately have to compute the number of chars each time.  Maybe this could be
         // cached in the ViewCtx.  For truly large strings this hack is not a viable solution.
@@ -727,7 +818,7 @@ impl<'a> View for Utf8StringTermCharView<'a> {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
@@ -816,7 +907,7 @@ impl<'a> View for Utf8StringTermCharView<'a> {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
 
         self.handle_events(ui, &mut view_ctx_g);
@@ -855,7 +946,7 @@ impl<'a> View for Utf8StringTermCharView<'a> {
 }
 
 impl View for sept::st::Utf8StringTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
 
         let mut input_g = ui.input_mut();
@@ -882,7 +973,7 @@ impl View for sept::st::Utf8StringTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -926,7 +1017,7 @@ impl View for sept::st::Utf8StringTerm {
         // TODO: Does this need to call update instead of update_expanded?
         Utf8StringTermLineView(self).update_expanded(ui, view_ctx, continuation_layout_job_o)
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         // If cursor address is a proper subaddress of render address (meaning render address is a proper prefix of
@@ -966,14 +1057,14 @@ impl View for sept::dy::GlobalSymRefTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
         self.update_inline(ui, &mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         let (resolved, path, at_color, quote_color, regular_char_color, escape_char_color) =
             match global_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -1018,14 +1109,14 @@ impl View for sept::dy::LocalSymRefTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
         self.update_inline(ui, &mut layout_job, view_ctx);
         layout_job
     }
-    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         let local_symbol_table_g = self.local_symbol_table().read().unwrap();
         let (resolved, path, dollar_color, quote_color, regular_char_color, escape_char_color) =
             match local_symbol_table_g.resolved_symbol_path(self.symbol_id.as_str()) {
@@ -1067,7 +1158,7 @@ impl View for sept::dy::LocalSymRefTerm {
 }
 
 impl View for sept::dy::ArrayTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         let self_len = self.len() as u32;
 
@@ -1151,7 +1242,7 @@ impl View for sept::dy::ArrayTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -1210,7 +1301,7 @@ impl View for sept::dy::ArrayTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         if self.is_empty() {
@@ -1248,7 +1339,7 @@ impl View for sept::dy::ArrayTerm {
 
 /// This one is for OrderedMapTerm key-value pairs.
 impl View for (&sept::dy::Value, &sept::dy::Value) {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // Because self is a pair, its len is 2.
         let self_len = 2u32;
@@ -1341,7 +1432,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -1368,7 +1459,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         {
@@ -1389,7 +1480,7 @@ impl View for (&sept::dy::Value, &sept::dy::Value) {
 }
 
 impl View for sept::dy::OrderedMapTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // let self_len = self.len() as u32;
 
@@ -1476,7 +1567,7 @@ impl View for sept::dy::OrderedMapTerm {
                         );
                     } else {
                         let new_key = if element_index_delta < 0 {
-                            let range = self.range(..=&key);
+                            let range = self.range::<sept::dy::Value, _>(..=&key);
                             let range_len = range.clone().count() as u32;
                             assert!(range_len > 0);
                             let element_abs_delta =
@@ -1490,7 +1581,7 @@ impl View for sept::dy::OrderedMapTerm {
                             new_key
                         } else {
                             assert!(element_index_delta > 0);
-                            let mut range = self.range(&key..);
+                            let mut range = self.range::<sept::dy::Value, _>(&key..);
                             let range_len = range.clone().count() as u32;
                             assert!(range_len > 0);
                             let element_abs_delta = (element_index_delta as u32).min(range_len - 1);
@@ -1506,7 +1597,7 @@ impl View for sept::dy::OrderedMapTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -1566,7 +1657,7 @@ impl View for sept::dy::OrderedMapTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         if self.is_empty() {
@@ -1603,7 +1694,7 @@ impl View for sept::dy::OrderedMapTerm {
 }
 
 impl View for sept::dy::TupleTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         let self_len = self.len() as u32;
 
@@ -1687,7 +1778,7 @@ impl View for sept::dy::TupleTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -1746,7 +1837,7 @@ impl View for sept::dy::TupleTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         if self.is_empty() {
@@ -1783,7 +1874,7 @@ impl View for sept::dy::TupleTerm {
 }
 
 impl View for (String, sept::dy::Value) {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // Because self is a pair, its len is 2.
         let self_len = 2u32;
@@ -1876,7 +1967,7 @@ impl View for (String, sept::dy::Value) {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -1907,7 +1998,7 @@ impl View for (String, sept::dy::Value) {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         let (field_name, field_type) = self;
@@ -1931,7 +2022,7 @@ impl View for (String, sept::dy::Value) {
 }
 
 impl View for sept::dy::StructTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         let self_len = self.field_decl_v.len() as u32;
 
@@ -2043,7 +2134,7 @@ impl View for sept::dy::StructTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -2116,7 +2207,7 @@ impl View for sept::dy::StructTerm {
         // Return this to the outer context.
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         if self.field_decl_v.is_empty() {
@@ -2153,7 +2244,7 @@ impl View for sept::dy::StructTerm {
 }
 
 impl View for sept::dy::StructTermTerm {
-    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx) {
+    fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         let self_len = self.field_tuple().len() as u32;
 
@@ -2275,7 +2366,7 @@ impl View for sept::dy::StructTermTerm {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         self.handle_events(ui, view_ctx);
@@ -2362,7 +2453,7 @@ impl View for sept::dy::StructTermTerm {
         // Return this to the outer context
         layout_job
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         self.handle_events(ui, view_ctx);
 
         {
@@ -2443,7 +2534,7 @@ impl View for sept::dy::Value {
     fn update_expanded(
         &self,
         ui: &mut Ui,
-        view_ctx: &mut ViewCtx,
+        view_ctx: &mut ViewCtx<'_>,
         continuation_layout_job_o: Option<LayoutJob>,
     ) -> LayoutJob {
         // TODO: figure out best way to efficiently get the View trait out of here,
@@ -2578,7 +2669,7 @@ impl View for sept::dy::Value {
             unimplemented!("not yet");
         }
     }
-    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx) {
+    fn update_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
         if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {

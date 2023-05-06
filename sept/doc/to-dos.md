@@ -308,3 +308,7 @@
 -   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `Deconstruct` and `Construct` can be implemented for `LocalSymRefTerm`.
 -   Rename Ascii* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
 -   Make Stringifiable's stringify() function work like std::fmt::Display, taking a writer instead of producing a String.
+-   This shouldn't produce a warning:
+
+        [2023-05-05T22:52:37.796819980 WARN sept/src/dy/runtime.rs:1229] Runtime is using TypeId to be able to `cmp` different types (u32, u32); this ordering is not stable between builds because TypeId is not stable between builds.
+-   Change the "line" and "char" queries of Utf8StringTerm to use 'l' and 'c'.  This saves screen space and memory (no heap allocation beyond the dy::Value's Box).

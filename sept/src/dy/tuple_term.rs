@@ -75,6 +75,27 @@ impl std::fmt::Display for TupleTerm {
     }
 }
 
+impl dy::Editable for TupleTerm {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        // TEMP HACK -- this is rather silly, but is a quick way to get the right behavior for now.
+        use dy::QueryMutTrait;
+        // Re-borrow the address iterator items with a shorter lifetime.
+        // let mut address_i = address_i.map(|x| &*x);
+        // Note that this can't be Self, because this introduces a new, shorter lifetime.
+        dy::TupleTermMutView::new(self)
+            // .run_query_mut(&mut address_i)?
+            .run_query_mut(address_i)?
+            .apply_edit(edit)
+    }
+}
+
 // Hacky way to get Rust-syntax-tuple-valued constructors for a tuples of length 0-6.
 // TODO: Maybe implement a macro to handle these.
 
@@ -250,6 +271,18 @@ impl dy::Queryable for TupleTerm {
         unimplemented!("blah");
         // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
         // `Len`) wouldn't support this.
+    }
+}
+
+impl dy::QueryableDynTrait for TupleTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::TupleTermView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for TupleTerm {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::TupleTermMutView::new(self)
     }
 }
 

@@ -59,6 +59,22 @@ impl std::fmt::Display for OrderedMapTerm {
     }
 }
 
+impl dy::Editable for OrderedMapTerm {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        use dy::QueryMutTrait;
+        dy::OrderedMapTermMutView::new(self)
+            .run_query_mut(address_i)?
+            .apply_edit(edit)
+    }
+}
+
 impl Inhabits<OrderedMap> for OrderedMapTerm {
     fn inhabits(&self, _: &OrderedMap) -> bool {
         true
@@ -87,6 +103,18 @@ impl dy::Queryable for OrderedMapTerm {
         unimplemented!("blah");
         // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
         // `Len`) wouldn't support this.
+    }
+}
+
+impl dy::QueryableDynTrait for OrderedMapTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::OrderedMapTermView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for OrderedMapTerm {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::OrderedMapTermMutView::new(self)
     }
 }
 

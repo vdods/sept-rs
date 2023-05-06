@@ -216,6 +216,13 @@ pub enum NonParametricTermCode {
     /// Inhabitants have the form RequestSyncInput(T) for some type T.
     RequestSyncInput = 0x5A,
 
+    // Edit types
+    /// No-op edit.
+    NoOp = 0x5B,
+    Insertion = 0x5C,
+    Deletion = 0x5D,
+    Replacement = 0x5E,
+
     // TODO: Ideally there could be an "Unspecified(u8)" in which the u8 value is disjoint
     // with the above values, and so it would use niche logic and not take up more storage than u8.
     // this could be used for application-specific values, though that would hinder interoperability.

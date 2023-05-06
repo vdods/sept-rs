@@ -443,3 +443,73 @@ Notes on editing of data through a view, e.g. a string representation of an int
     -   When a valid modification is made to a view, the modification should take effect in the underlying data immediately.
     -   When the view has invalid data, it should be kept in ViewCtx as an edit overlay, and will simply wait until it's changed to be a valid modification before applying it to the underlying data.  This edit overlay will create a copy of the last valid value of the view (e.g. the base 10 string rendering of an int), along with the address that the edit overlay applies to, and allow edits to that string until it becomes a valid modification, at which point it will apply the change and delete the edit overlay.  This will be needed in particular for modifying OrderedMapTerm or StructTerm where there are higher-order uniqueness constraints.
     -   There will eventually be higher order constraints that involve multiple data elements, and some sort of edit overlay situation needs to be figured out for those.
+
+## 2023.04.22
+
+Notes for simplest possible implementation of query/edit.
+-   Goal is to use the view/model pattern as purely as possible.
+-   Use Queryable trait with
+    -   query (immutable) which takes an iterator of address tokens and produces a query view object (this has to be generic, so it should be something like `Arc<RwLock<dyn QueryView>>`, where `QueryView` is a trait).
+    -   query_mut (mutable), analogous, produces a mutable query view.
+    -   Maybe actually there's only one query method, and the (im)mutability of the thing is controlled by the runtime checks.
+        This would reduce code duplication, though may have other drawbacks.
+-   The query view should be able to
+    -   Indicate the type of the value that would be returned
+    -   Return (a reference to) the value
+    -   In the case of mutable query view, it should be able to apply an edit value.
+    -   A query view type necessarily has an associated lifetime, which is the lifetime of the original queried value.
+    -   Perhaps in the future, it should be able to produce a list of the valid next query address tokens, as well as the valid edit types.
+-   Example:
+    -   Let the data be
+
+            [
+                "hippo\nOSTRICH",
+                true,
+                { 123 => 456 },
+                { { "a" => "b", "c" => "d" } => 9000, { "x" => "y", "z" => "w" } => 9009 },
+                Struct { "name": Utf8String, "age": Uint8 },
+                Struct { "name": Utf8String, "age": Uint8 } { "Ftanley", 100 },
+            ]
+
+    -   Query `()` should return a reference (which is a query view) to the whole array.
+    -   Query `(0)` should return a reference (which is a query view) to the string.
+    -   Query `(0, "line", 0)` should return a `Utf8StringLine` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line is being viewed.  That query view object should indicate the type of the value is Utf8String and should be able to produce the value `"hippo\n"`.
+        -   An edit to this query view should edit the substring `"hippo\n"` within the larger string.
+    -   Query `(0, "line", 1, "char", 0)` should return a `Utf8StringLineChar` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line and char is being viewed.  That query view object should indicate the type of the value is UnicodeChar and should be able to produce the value `'O'`.
+    -   Query `(0, "line", "count")` (this is made-up for now) should return a query view object which returns the number of lines in the string.  It should not be editable.
+        -   An edit to this query view should edit the character `'O'` within the larger string.
+    -   Query `(1)` should return a reference to the boolean.
+    -   Query `(2)` should return a reference to the OrderedMapTerm `{ 123 => 456 }`.
+    -   Query `(2, 'v', 123)` should return a reference to `456` (the value associated with the key `123`).
+        -   An edit to this query view should edit the value `456` within the OrderedMapTerm, which can be done "directly" (in Rust and C++).
+    -   Query `(2, 'k', 123)` should return an `OrderedMapKeyView` to the key `123` within the OrderedMapTerm
+        -   An edit to this query view would need to handle checking if the new key value is already present, and if not, removing the pre-edit key-value pair, modifying the key, and re-adding the key-value pair with the new key.
+    -   Query `(2, 'kv', 123)` should return an `OrderedMapKeyValueView` to the key-value pair `123 => 456` within the OrderedMapTerm.
+    -   Query `(2, 'kv', 123, 'k')` should return an `OrderedMapKeyView` query view to the key within the key-value pair `123 => 456` within the OrderedMapTerm.
+    -   Query `(2, 'kv', 123, 'v')` should return an `OrderedMapValueView` query view to to the value within the key-value pair `123 => 456` within the OrderedMapTerm.
+    -   Query `(3, 'k', { "a" => "b", "c" => "d"}, 'k', "a")` should essentially create a stack of query view objects whose outermost one refers to the `"a"` key.
+        -   An edit to this query view should first apply the edit to the outermost one (which is a view into the `"a"` key), which causes the edit to propagate to the next inner one (which is a view into the `{ "a" => "b", "c" => "d"}` key), which carries through with the edit.
+    -   Future possibilities:
+        -   Query `(0, "line")` could return a query view which is the sequence of lines in that Utf8StringTerm.
+        -   Query `(2, 'k')` could return a query view which is the ordered set of keys of that OrderedMapTerm.
+        -   Etc.
+        -   Advanced queries could produce things like
+            -   Stats on arrays of numbers
+            -   Histograms
+            -   A Kernel Density Estimation of a given array of values
+            -   Various other ML models of arrays of values
+            -   A categorization of elements from an aggregate type into a map which maps categories to sets of the elements falling into the respective categories.
+        -   It will be necessary that these queries are extensible (likely using the Runtime registration pattern) so that the overall data model is extensible.
+
+## 2023.05.07
+
+Design notes for better event-handling
+-   I've recently gotten formal query and edit working, so that data within the aggregate "root value" can be individually addressed and edited, and this makes for a nice basis for implementing an edit UI.
+-   Each of the views should implement
+    -   Handling of events
+    -   Rendering
+        -   Inline
+        -   Expanded
+-   The current handling of events is rather monolithic, where events meant for a "child" view are handled by a parent view, and this is hard to manage.  It would be better if each view handled its own events directly.
+-   There should be cursor movement methods in view_ctx to make it easier for views to modify the cursor, since the cursor needs to be modified while handling editing events (e.g. interleaving updating the cursor with the handling of keypress events (which each cause a char insertion)).
+-   The view objects in sept should be used, but traits in sept-gui should be used to implement event handling and rendering, since they use egui-specific types.  It's possible that later sept will provide an abstraction of this which can easily plug into other UI frameworks, including TUI frameworks.

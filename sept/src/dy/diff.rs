@@ -1,5 +1,12 @@
+// NOTE: This will become defunct. The new diff interface is much more flexible, and doesn't
+// require the Diffable trait to enumerate the kinds of diffs it supports. Instead, it just
+// requires the Diffable trait to implement a single method, apply_diff_in_place, which can
+// handle any kind of diff. This is much more flexible, and allows for diffs to be defined
+// dynamically, rather than statically (as is the case with the Diff trait below).
+
 use crate::{dy, st};
 
+// NOTE: This will become defunct.
 pub trait Diff: st::TermTrait {
     fn into_inverse(self) -> dy::Value;
     fn inverse(&self) -> dy::Value {
@@ -9,76 +16,28 @@ pub trait Diff: st::TermTrait {
 
 // TODO: Move into appropriate places
 
-// TODO: This belongs in st
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    // st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
-)]
-#[st_term_trait(
-    AbstractTypeType = "st::Term",
-    is_parametric = "false",
-    is_type = "false"
-)]
-pub struct NoOp;
+// #[derive(Clone, Debug, dy::IntoValue, PartialEq, st::TermTrait)]
+// #[st_term_trait(
+//     AbstractTypeType = "Replacement",
+//     is_parametric = "true",
+//     is_type = "false"
+// )]
+// pub struct ReplacementTerm {
+//     pub old_data: dy::Value,
+//     pub new_data: dy::Value,
+// }
 
-impl Diff for NoOp {
-    fn into_inverse(self) -> dy::Value {
-        self.into()
-    }
-}
+// impl Diff for ReplacementTerm {
+//     fn into_inverse(self) -> dy::Value {
+//         ReplacementTerm {
+//             old_data: self.new_data,
+//             new_data: self.old_data,
+//         }
+//         .into()
+//     }
+// }
 
-// TODO: This belongs in st
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    // st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
-)]
-#[st_term_trait(
-    AbstractTypeType = "st::Type",
-    is_parametric = "false",
-    is_type = "true"
-)]
-pub struct Replacement;
-
-impl st::Inhabits<st::Type> for Replacement {
-    fn inhabits(&self, _rhs: &st::Type) -> bool {
-        true
-    }
-}
-
-#[derive(Clone, Debug, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(
-    AbstractTypeType = "Replacement",
-    is_parametric = "true",
-    is_type = "false"
-)]
-pub struct ReplacementTerm {
-    pub old_data: dy::Value,
-    pub new_data: dy::Value,
-}
-
-impl Diff for ReplacementTerm {
-    fn into_inverse(self) -> dy::Value {
-        ReplacementTerm {
-            old_data: self.new_data,
-            new_data: self.old_data,
-        }
-        .into()
-    }
-}
+// TEMP HACK: keep these for now.
 
 #[derive(Clone, Debug, dy::IntoValue, PartialEq, st::TermTrait)]
 #[st_term_trait(

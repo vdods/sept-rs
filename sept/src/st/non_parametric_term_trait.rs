@@ -3,7 +3,9 @@ use crate::{dy, st, Result};
 /// A NonParametricTermTrait (NonParametricTermTrait) is one that has no "state", i.e. each
 /// NonParametricTermTrait is a singleton.  It's recommended to derive this trait using
 /// derive(st::NonParametricTermTrait).
-pub trait NonParametricTermTrait: st::TermTrait + dy::IntoValue + Clone + Copy {
+pub trait NonParametricTermTrait:
+    st::TermTrait + dy::IntoValue + Eq + PartialEq + Clone + Copy
+{
     /// The name of this term.
     // TODO: Might need to worry about namespacing later.  For now, this is considered a kind of keyword.
     const IDENTIFIER: &'static str;
@@ -40,6 +42,18 @@ impl<N: NonParametricTermTrait> dy::Queryable for N {
         unimplemented!("blah");
         // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
         // `Len`) wouldn't support this.
+    }
+}
+
+impl<N: NonParametricTermTrait> dy::QueryableDynTrait for N {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+impl<N: NonParametricTermTrait> dy::QueryableMutDynTrait for N {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
     }
 }
 

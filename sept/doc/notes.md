@@ -124,3 +124,38 @@ This, itself is a diff which is accepted by aggregate data types.  It would be u
 Thus formal data addressing needs to handle:
 -   Query (read-only)
 -   Mutation (application of diffs).  Note that it's possible for a diff to change the type of a value, and that change has to be compatible with whatever aggregate data type contains the value (if any).
+
+## 2023.04.06
+
+Further refinement of diffs:
+-   `Diffable` and `Diff` are better than the statically typed diffs, but because `Diffable` doesn't specify a specific kind of diff that it accepts, `Diffable` must implement support for all supported diff types, and is therefore not extensible, so is not a feasible solution.
+-   Using `dy::Value` in the diff types was much more tractable than the fully statically-typed diffs.
+-   `Diffable` should instead accept a single diff type as a generic parameter, so that the impl is specific to one task, and that the diffable type is extensible in what diffs it works with.  Then, each specific diff-diffable pair can be registered with the runtime so that it works in the `dy` context as well.
+-   The diff `ElementReplacement` is actually not necessary, given the `address_v` param of the `apply_diff_in_place` method.  This could be done using the `Replacement` diff, and externalizing the element index to the `address_v` param.
+-   Could the diffs `ElementInsertion` and `ElementDeletion` be simplified to `Insertion` and `Deletion`, moving the element index to the `address_v` param?  Are `Insertion` and `Deletion` actually meaningful in isolation?  Yes, they could be diffs on a set container type in which there's no notion of index.  For insertion into a map container, probably a more specific key-value pair insertion/deletion diff would be used.
+-   One unresolved design element is how to handle different combinations of address tokens and diff types?  For example, there are several ways (currently) to address subdata of Utf8StringTerm: via "line" view, via "char" view, via "line-char" view, and (eventually) via "byte" view.  However, having to have a single handler for the diff type precludes extending this case list in the future, since it involves a trait impl.  One solution would involve somehow specifying a pattern to match a particular address suffix.  This could naturally be done via type inhabitation.  The advantage of this is that more than one address token can be used to determine what diff handler to use.  The disadvantage of this is that it's more complicated.
+-   Simpler would be to only match one address token at a time.  So the runtime would branch on (diffable_type, next_address_token_type_o, diff_type).  Maybe the associated static types could be `NonterminalDiffable` (accepts a specifically-typed next address token as well as the "rest" of the address (but as an iterator of `&dy::ValueGuts`)) and `TerminalDiffable` (accepts no address tokens at all).  Then each of these represent single nodes in the state machine that parses and handles the diff operation.  The advantage is that the scheme is simpler.  The disadvantage is that the handling can only depend on a single "next" address token, which may limit certain kinds of expressivity.
+-   In a way, queryable and diffable are, or should be, coupled together, since they have to obey the same addressing rules.  At the very least, they need to be compatible.  For example, doing a replacement on a given address should cause the query on that address to return the new value.
+
+It occurred to me that "diff" isn't exactly the right terminology for this stuff based on the existing vernacular.  "Diff" is the difference between files, which this is analogous to, but specific changes to files are called "patches".  Though I don't really think "patch" is a useful terminology for these concepts.  Maybe "change" or "edit".  Though ideally this term could work in the context of the category theory of structured data as well.
+
+Design challenge:
+    How to actually carry out an edit to some nested element of an aggregate key in an OrderedMapTerm?  E.g. modify the 'a' to 'b' in:
+
+        m := OrderedMapTerm(('a', 123) => "Thingy")
+
+    The edit would have the form
+
+        self: m
+        address: (key, ('a', 123), 0)
+        operation: ReplacementTerm(old_data: 'a', new_data: 'b')
+
+    noting that after this, the "replaced" value 'b' has a different address altogether:
+
+        address: (key, ('b', 123), 0)
+
+    In order to make this particular edit, it must be correctly identified that `m`'s element with key ('a', 123) must be removed so that the key-value pair can be re-added with a different key ('b', 123).  Furthermore, if there is an OrderedMapTerm nested within the key for the outer OrderedMapTerm, this process has to happen in an analogously nested way.  It's possible that the edit results in a violation of the overall constraint of the data type.
+
+    In order to achieve this nested kind of edit, as the edit "passes" the `key` address token, it needs to remove the key-value pair addressed by that key from the OrderedMapTerm, apply the edit to the removed key portion of the key-value pair, and then attempt to re-add the key-value pair to the OrderedMapTerm.  This re-addition process can fail.  If so, to not violate the principle of least surprise, it should revert the OrderedMapTerm to its previous state before returning the error.  Ideally it could check for constraint violation before modifying anything, but that's probably very hard to do in general.
+
+    For now, don't remove the key-value pair, but rather clone the whole thing, recurse the edit call to the key portion of the key-value pair, and if that completes successfully, add the new key-value pair and remove the old one.  This will get expensive the more complex the nesting of OrderedMapTerm-s within keys is.

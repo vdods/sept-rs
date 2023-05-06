@@ -3,9 +3,156 @@ use crate::{
     st::{self, Stringifiable, TermTrait},
     Error, Result,
 };
-use std::any::Any;
+// use std::any::Any;
 
-pub type ValueGuts = dyn Any + Send + Sync;
+pub trait FancyAny: std::any::Any {
+    fn as_any<'a>(&'a self) -> &'a (dyn std::any::Any + Send + Sync);
+    fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn std::any::Any + Send + Sync);
+    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAny + Send + Sync);
+    // // TODO
+    // // fn type_name(&self) -> &'static str;
+}
+
+impl<T: std::any::Any + Send + Sync> FancyAny for T {
+    fn as_any<'a>(&'a self) -> &'a (dyn std::any::Any + Send + Sync) {
+        self
+    }
+    fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn std::any::Any + Send + Sync) {
+        self
+    }
+    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAny + Send + Sync) {
+        self
+    }
+}
+
+pub type ValueGuts = dyn std::any::Any + Send + Sync;
+// pub type ValueGuts = dyn FancyAny + Send + Sync;
+pub type ValueGuts2 = dyn FancyAny + Send + Sync;
+
+impl ValueGuts2 {
+    pub fn is<T: std::any::Any>(&self) -> bool {
+        // <dyn std::any::Any + Send + Sync>::is::<T>(self)
+        self.as_any().is::<T>()
+    }
+    // pub fn downcast<T: std::any::Any, A: Allocator>(self: Box<ValueGuts>) -> Result<Box<T, A>> {
+    //     unimplemented!("blah");
+    // }
+    pub fn downcast_ref<T: std::any::Any>(&self) -> Option<&T> {
+        // std::any::Any::downcast_ref(self)
+        self.as_any().downcast_ref::<T>()
+    }
+    pub fn downcast_mut<T: std::any::Any>(&mut self) -> Option<&mut T> {
+        // std::any::Any::downcast_mut(self)
+        self.as_any_mut().downcast_mut::<T>()
+    }
+}
+
+// impl<A: Allocator> Box<dyn FancyAny + Send + Sync, A> {
+//     pub fn downcast<T: std::any::Any>(self) -> Result<Box<T, A>, Self> {
+//         unimplemented!("blah");
+//     }
+// }
+
+impl std::fmt::Debug for ValueGuts2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ValueGuts(")?;
+        dy::RUNTIME_LA.read().unwrap().debug(self.as_any(), f)?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
+
+impl ToOwned for ValueGuts2 {
+    type Owned = Value;
+    fn to_owned(&self) -> Self::Owned {
+        Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_any()))
+    }
+    fn clone_into(&self, target: &mut Self::Owned) {
+        target.0 = dy::RUNTIME_LA.read().unwrap().clone(self.as_any());
+    }
+}
+
+impl PartialEq for ValueGuts2 {
+    fn eq(&self, other: &Self) -> bool {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .eq(self.as_any(), other.as_any())
+    }
+}
+
+impl Eq for ValueGuts2 {}
+
+impl PartialOrd for ValueGuts2 {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .partial_cmp(self.as_any(), other.as_any())
+    }
+}
+
+impl Ord for ValueGuts2 {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .cmp(self.as_any(), other.as_any())
+    }
+}
+
+// // TEMP EXPERIMENTAL
+// #[derive(derive_more::Deref)]
+// pub struct ValueGutsRef<'a>(&'a ValueGuts);
+
+// pub struct ValueGutsThingy(ValueGuts);
+
+// // TEMP EXPERIMENTAL
+// impl std::borrow::ToOwned for ValueGutsThingy {
+//     type Owned = Value;
+//     fn to_owned(&self) -> Self::Owned {
+//         Value(dy::RUNTIME_LA.read().unwrap().clone(&self.0))
+//     }
+//     fn clone_into(&self, target: &mut Self::Owned) {
+//         target.0 = dy::RUNTIME_LA.read().unwrap().clone(&self.0);
+//     }
+// }
+
+// // TEMP EXPERIMENTAL
+// impl<T: dy::IntoValue> std::borrow::ToOwned for T {
+//     type Owned = Value;
+//     fn to_owned(&self) -> Self::Owned {
+//         Value(dy::RUNTIME_LA.read().unwrap().clone(self))
+//     }
+//     fn clone_into(&self, target: &mut Self::Owned) {
+//         target.0 = dy::RUNTIME_LA.read().unwrap().clone(self);
+//     }
+// }
+
+// // TEMP EXPERIMENTAL
+// impl<'a> std::borrow::ToOwned for ValueGutsRef<'a> {
+//     type Owned = Value;
+//     fn to_owned(&self) -> Self::Owned {
+//         Value(dy::RUNTIME_LA.read().unwrap().clone(self))
+//     }
+//     fn clone_into(&self, target: &mut Self::Owned) {
+//         target.0 = dy::RUNTIME_LA.read().unwrap().clone(self);
+//     }
+// }
+
+// // TEMP EXPERIMENTAL
+// impl<'a> std::borrow::Borrow<ValueGutsRef<'a>> for Value {
+//     fn borrow(&self) -> &ValueGutsRef<'a> {
+//         ValueGutsRef(self.0.borrow())
+//     }
+// }
+
+// TEMP EXPERIMENTAL
+impl std::borrow::Borrow<ValueGuts2> for Value {
+    fn borrow(&self) -> &ValueGuts2 {
+        self.0.as_fancy_any()
+    }
+}
 
 /// This is the central runtime data type for sept.  Its methods will call into the corresponding
 /// methods of the runtime.
@@ -119,6 +266,22 @@ impl std::fmt::Display for Value {
     }
 }
 
+impl dy::Editable for Value {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        use dy::QueryMutTrait;
+        dy::ValueMutView::new(self)
+            .run_query_mut(address_i)?
+            .apply_edit(edit)
+    }
+}
+
 impl Eq for Value {}
 
 /// This prevents directly nested Value-s, e.g. Value(Value(123u32)), since that's never what we want.
@@ -186,6 +349,41 @@ impl PartialOrd for Value {
             .read()
             .unwrap()
             .partial_cmp(self.as_ref(), other.as_ref())
+    }
+}
+
+// impl<'b> dy::QueryTrait<'b> for Value {
+// impl<'b> dy::QueryTrait for Value {
+//     fn run_query<'a>(
+//         self,
+//         address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+//     ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
+//     where
+//         Self: 'a, // where
+//                   //     'b: 'a,
+//     {
+//         dy::RUNTIME_LA
+//             .read()
+//             .unwrap()
+//             .query2(self.into(), address_i)
+//     }
+// }
+
+// impl dy::QueryViewTrait for Value {
+//     fn queried_value<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
+//         Ok(dy::MaybeDereferencedValue::Ref(self.as_ref()))
+//     }
+// }
+
+impl dy::QueryableDynTrait for Value {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::ValueView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for Value {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::ValueMutView::new(self)
     }
 }
 
@@ -273,7 +471,8 @@ impl Value {
         self.0
     }
     /// This will return the downcasted value, consuming self, or panic if the cast fails.
-    pub fn downcast_into<T: st::TermTrait>(self) -> T {
+    // pub fn downcast_into<T: st::TermTrait>(self) -> T {
+    pub fn downcast_into<T: std::any::Any>(self) -> T {
         *self.0.downcast::<T>().unwrap()
     }
     pub fn dereferenced<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
@@ -313,20 +512,20 @@ impl Value {
     }
 }
 
-impl st::DiffTrait<Value> for Value {
-    type Inverse = Value;
-    // type Error = Error;
-    fn apply_in_place(&self, target: &mut Value) -> Result<()> {
-        dy::RUNTIME_LA
-            .read()
-            .unwrap()
-            .diff_apply_in_place(self.as_ref(), target.as_mut())
-    }
-    fn into_inverse(self) -> Self::Inverse {
-        dy::RUNTIME_LA
-            .read()
-            .unwrap()
-            .diff_into_inverse(self)
-            .expect("TODO: Need to handle this error; probably actually need TryDiff trait.")
-    }
-}
+// impl st::DiffTrait<Value> for Value {
+//     type Inverse = Value;
+//     // type Error = Error;
+//     fn apply_in_place(&self, target: &mut Value) -> Result<()> {
+//         dy::RUNTIME_LA
+//             .read()
+//             .unwrap()
+//             .diff_apply_in_place(self.as_ref(), target.as_mut())
+//     }
+//     fn into_inverse(self) -> Self::Inverse {
+//         dy::RUNTIME_LA
+//             .read()
+//             .unwrap()
+//             .diff_into_inverse(self)
+//             .expect("TODO: Need to handle this error; probably actually need TryDiff trait.")
+//     }
+// }

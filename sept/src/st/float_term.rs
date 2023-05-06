@@ -90,6 +90,33 @@ impl dy::Queryable for f64 {
     }
 }
 
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for f32 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+// TODO: Replace this with the full set of queries
+impl dy::QueryableDynTrait for f64 {
+    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
+        dy::GenericView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for f32 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+impl dy::QueryableMutDynTrait for f64 {
+    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
+        dy::GenericMutView::new(self)
+    }
+}
+
+
 impl st::Serializable for f32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
