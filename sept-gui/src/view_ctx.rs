@@ -1,10 +1,12 @@
 use crate::{
-    AddressedEdit, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
+    ANSIColor, AddressedEdit, Command, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
     ViewCtxRenderAddressGuard, ViewCtxTAGuard, ViewOptions,
 };
 use std::{cmp::Ordering, collections::VecDeque};
 
 /// Provides control over how things are rendered.
+// TODO: Maybe this should be called UpdateCtx, and there could be a separate context for EventHandler.
+// Though that also would be a problem because both need to be able to output commands.
 pub struct ViewCtx<'a> {
     /// This is the sept::dy::Value that's being viewed.  It will be passed in from the thing
     /// that's rendering this view.
@@ -20,8 +22,9 @@ pub struct ViewCtx<'a> {
     pub current_nesting_depth: u32,
     /// If Some(_), will override self.view_options.show_type_annotations.
     pub override_show_type_annotations_o: Option<bool>,
-    /// This is the queue of edits generated this frame that should be applied after the frame is done rendering.
-    pub enqueued_edit_v: VecDeque<AddressedEdit>,
+    /// This is the queue of commands generated this frame that should be executed after
+    /// the frame is done rendering.
+    pub enqueued_command_v: VecDeque<Command>,
 }
 
 impl<'b> ViewCtx<'b> {
@@ -37,8 +40,11 @@ impl<'b> ViewCtx<'b> {
             render_address: sept::dy::TupleTerm::from(vec![]),
             current_nesting_depth: 0,
             override_show_type_annotations_o: None,
-            enqueued_edit_v: VecDeque::new(),
+            enqueued_command_v: VecDeque::new(),
         }
+    }
+    pub fn cursor_address(&self) -> &sept::dy::TupleTerm {
+        self.cursor_address_o.as_deref().unwrap()
     }
     pub fn push_nesting_depth<'a>(&'a mut self) -> ViewCtxNestingGuard<'a, 'b>
     where
@@ -68,7 +74,12 @@ impl<'b> ViewCtx<'b> {
         self.override_show_type_annotations_o
             .unwrap_or(self.view_options.show_type_annotations)
     }
-    pub fn append_edit(&mut self, edit: sept::dy::Value) {
+    pub fn enqueue_command(&mut self, command: Command) {
+        self.enqueued_command_v.push_back(command);
+    }
+    /// This puts the given edit together with the current cursor_address in an AddressedEdit
+    /// which will be applied to the root value.
+    pub fn enqueue_root_value_edit(&mut self, edit: sept::dy::Value) {
         let addressed_edit = AddressedEdit {
             address: self
                 .cursor_address_o
@@ -77,30 +88,49 @@ impl<'b> ViewCtx<'b> {
                 .unwrap(),
             edit,
         };
-        tracing::trace!("ViewCtx::append_edit; {:?}", addressed_edit);
-        self.enqueued_edit_v.push_back(addressed_edit);
+        tracing::trace!("ViewCtx::enqueue_root_value_edit; {:?}", addressed_edit);
+        self.enqueued_command_v
+            .push_back(Command::RootValueEdit(addressed_edit));
+    }
+    /// The given AddressedEdit will be applied to the cursor_address.
+    pub fn enqueue_cursor_edit(&mut self, addressed_edit: AddressedEdit) {
+        tracing::trace!("ViewCtx::enqueue_cursor_edit; {:?}", addressed_edit);
+        self.enqueued_command_v
+            .push_back(Command::CursorEdit(addressed_edit));
     }
     /// This returns (foreground_color, background_color) based on the given foreground_color and the
     /// current state of highlightedness based on the render_address compared to the cursor_address.
+    // TODO: Consider making a struct for the return type.
     pub fn set_highlight_if_necessary(
         &self,
         foreground_color: egui::Color32,
-    ) -> (egui::Color32, egui::Color32) {
+    ) -> (egui::Color32, egui::Color32, egui::Stroke) {
         if self.render_address_is_subaddress_of_cursor_address() {
-            (foreground_color, self.color_for_cursor_background())
+            (
+                foreground_color,
+                self.color_for_cursor_background(),
+                egui::Stroke {
+                    width: 1.0,
+                    color: ANSIColor::BRIGHT_WHITE,
+                },
+            )
         } else {
-            (foreground_color, egui::Color32::TRANSPARENT)
+            (
+                foreground_color,
+                egui::Color32::TRANSPARENT,
+                egui::Stroke::NONE,
+            )
         }
     }
     pub fn cursor_address_push(&mut self, address_token: sept::dy::Value) {
-        if let Some(cursor_address) = self.cursor_address_o.as_mut() {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
             cursor_address.push(address_token);
         } else {
             panic!("No cursor_address to push to");
         }
     }
     pub fn cursor_address_pop(&mut self) -> sept::dy::Value {
-        if let Some(cursor_address) = self.cursor_address_o.as_mut() {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
             cursor_address
                 .pop()
                 .expect("programmer error: can't pop from cursor_address because it was empty")
@@ -108,16 +138,87 @@ impl<'b> ViewCtx<'b> {
             panic!("No cursor_address to pop from");
         }
     }
+    /// Returns a reference to the nth-to-last token.
+    pub fn cursor_address_nth_to_last_token(&self, n: usize) -> &sept::dy::Value {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
+            cursor_address
+                .iter()
+                .rev()
+                .nth(n)
+                .expect("programmer error: cursor_address had insufficient tokens")
+        } else {
+            panic!("cursor_address_o was None");
+        }
+    }
+    /// Returns a mutable reference to the nth-to-last token.
+    pub fn cursor_address_nth_to_last_token_mut(&mut self, n: usize) -> &mut sept::dy::Value {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
+            cursor_address
+                .iter_mut()
+                .rev()
+                .nth(n)
+                .expect("programmer error: cursor_address had insufficient tokens")
+        } else {
+            panic!("cursor_address_o was None");
+        }
+    }
+    /// This assumes that the last token in the cursor address is a u32.
+    pub fn cursor_address_last_token_u32_set(&mut self, new_value: u32) {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
+            let last_token_u32 = cursor_address.last_mut().expect("programmer error: can't set cursor_address last token because cursor_address was empty").downcast_mut::<u32>().expect("programmer error: can't set cursor_address last token because it isn't a u32");
+            *last_token_u32 = new_value;
+        } else {
+            panic!("No cursor_address to set");
+        }
+    }
+    // /// This assumes that the nth-to-last token in the cursor address is a u32.
+    // pub fn cursor_address_nth_to_last_token_u32_set(&mut self, new_value: u32) {
+    //     if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
+    //         let nth_to_last_token_u32 = cursor_address.iter_mut().rev().nth(n).expect("programmer error: can't set cursor_address nth-to-last token because cursor_address was empty").downcast_mut::<u32>().expect("programmer error: can't set cursor_address last token because it isn't a u32");
+    //         *nth_to_last_token_u32 = new_value;
+    //     } else {
+    //         panic!("No cursor_address to set");
+    //     }
+    // }
+    /// This assumes that the last token in the cursor address is a u32, and will use
+    /// u32::saturating_add_signed to apply the increment, and will also saturate at the
+    /// given max value.
+    pub fn cursor_address_last_token_u32_increment_by(&mut self, increment: i32, max: u32) {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
+            let last_token_u32 = cursor_address.last_mut().expect("programmer error: can't increment cursor_address last token because cursor_address was empty").downcast_mut::<u32>().expect("programmer error: can't increment cursor_address last token because it isn't a u32");
+            *last_token_u32 = last_token_u32.saturating_add_signed(increment).min(max);
+        } else {
+            panic!("No cursor_address to increment");
+        }
+    }
+    /// This assumes that the nth-to-last token in the cursor address is a u32, and will use
+    /// u32::saturating_add_signed to apply the increment, and will also saturate at the
+    /// given max value.
+    pub fn cursor_address_nth_to_last_token_u32_increment_by(
+        &mut self,
+        n: usize,
+        increment: i32,
+        max: u32,
+    ) {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref_mut() {
+            let nth_to_last_token_u32 = cursor_address.iter_mut().rev().nth(n).expect("programmer error: can't increment cursor_address nth-to-last token because cursor_address had insufficient tokens").downcast_mut::<u32>().expect("programmer error: can't increment cursor_address nth-to-last token because it isn't a u32");
+            *nth_to_last_token_u32 = nth_to_last_token_u32
+                .saturating_add_signed(increment)
+                .min(max);
+        } else {
+            panic!("No cursor_address to increment");
+        }
+    }
     pub fn render_address_is_cursor_address(&self) -> bool {
-        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
-            self.render_address == **cursor_address
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
+            self.render_address == *cursor_address
         } else {
             false
         }
     }
     pub fn render_address_is_parent_of_cursor_address(&self) -> bool {
-        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
-            sept::dy::prefix_partial_cmp(&self.render_address, *cursor_address)
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
+            sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
                 == Some(std::cmp::Ordering::Less)
                 && self.render_address.len() + 1 == cursor_address.len()
         } else {
@@ -146,7 +247,7 @@ impl<'b> ViewCtx<'b> {
         }
     }
     fn cursor_address_is_subaddress_of_render_address(&self) -> Option<&[sept::dy::Value]> {
-        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
             if let Some(ordering) =
                 sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
             {
@@ -166,7 +267,7 @@ impl<'b> ViewCtx<'b> {
         }
     }
     fn render_address_is_subaddress_of_cursor_address(&self) -> bool {
-        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
             if let Some(ordering) =
                 sept::dy::prefix_partial_cmp(&self.render_address, cursor_address)
             {
@@ -187,7 +288,7 @@ impl<'b> ViewCtx<'b> {
     /// then the guide token is "line", whereas if render_address is (0, 2) and cursor_address is (0, 1)
     /// or (1, 2, "line", 1) or (0,), then the guide token isn't defined, and this method returns None.
     pub fn cursor_address_guide_token(&self) -> Option<&sept::dy::Value> {
-        if let Some(cursor_address) = self.cursor_address_o.as_ref() {
+        if let Some(cursor_address) = self.cursor_address_o.as_deref() {
             match sept::dy::prefix_partial_cmp(&self.render_address, cursor_address) {
                 Some(std::cmp::Ordering::Less) => {
                     assert!(cursor_address.len() > self.render_address.len());

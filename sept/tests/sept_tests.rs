@@ -5,7 +5,7 @@ use sept::{
         self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, OrderedMapTerm,
         StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
     },
-    parser, scanner,
+    parser, qv, scanner,
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
         Float64, Float64Type, Inhabits, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32,
@@ -60,6 +60,79 @@ fn overall_init() {
             )
         })
         .init();
+}
+
+fn test_replace_single_char_in_string_case(
+    target_string: &str,
+    char_index: usize,
+    expected_existing_char_o: Option<char>,
+    replacement: &str,
+    expected_result: &str,
+) {
+    let mut string = target_string.to_string();
+    sept::st::replace_single_char_in_string(
+        &mut string,
+        char_index,
+        expected_existing_char_o,
+        replacement,
+    )
+    .expect("pass");
+    assert_eq!(string.as_str(), expected_result);
+}
+
+fn test_replace_single_char_in_string_case_negative(
+    target_string: &str,
+    char_index: usize,
+    expected_existing_char_o: Option<char>,
+    replacement: &str,
+) {
+    let mut string = target_string.to_string();
+    sept::st::replace_single_char_in_string(
+        &mut string,
+        char_index,
+        expected_existing_char_o,
+        replacement,
+    )
+    .expect_err("pass");
+}
+
+#[test]
+fn test_replace_single_char_in_string() {
+    test_replace_single_char_in_string_case("", 0, None, "a", "a");
+    test_replace_single_char_in_string_case("", 0, None, "ab", "ab");
+    test_replace_single_char_in_string_case("", 0, None, "ab", "ab");
+    test_replace_single_char_in_string_case("a", 0, None, "ab", "ab");
+    test_replace_single_char_in_string_case("a", 0, Some('a'), "b", "b");
+    test_replace_single_char_in_string_case("a", 0, Some('a'), "bb", "bb");
+    test_replace_single_char_in_string_case("a", 0, Some('a'), "bbb", "bbb");
+    test_replace_single_char_in_string_case("ab", 0, Some('a'), "b", "bb");
+    test_replace_single_char_in_string_case("ab", 1, Some('b'), "a", "aa");
+    test_replace_single_char_in_string_case("ab", 1, Some('b'), "aa", "aaa");
+    test_replace_single_char_in_string_case("ab", 1, Some('b'), "aaa", "aaaa");
+    test_replace_single_char_in_string_case("abc", 0, Some('a'), "b", "bbc");
+    test_replace_single_char_in_string_case("abc", 1, Some('b'), "a", "aac");
+    test_replace_single_char_in_string_case("abc", 2, Some('c'), "b", "abb");
+    test_replace_single_char_in_string_case("abc", 2, Some('c'), "ab", "abab");
+    test_replace_single_char_in_string_case("abc", 2, Some('c'), "d", "abd");
+
+    test_replace_single_char_in_string_case("", 0, None, "日", "日");
+    test_replace_single_char_in_string_case("", 0, None, "日本", "日本");
+    test_replace_single_char_in_string_case("", 0, None, "日本", "日本");
+    test_replace_single_char_in_string_case("日", 0, None, "日本", "日本");
+    test_replace_single_char_in_string_case("日", 0, Some('日'), "本", "本");
+    test_replace_single_char_in_string_case("日", 0, Some('日'), "本本", "本本");
+    test_replace_single_char_in_string_case("日", 0, Some('日'), "本本本", "本本本");
+    test_replace_single_char_in_string_case("日本", 0, Some('日'), "本", "本本");
+    test_replace_single_char_in_string_case("日本", 1, Some('本'), "日", "日日");
+    test_replace_single_char_in_string_case("日本", 1, Some('本'), "日日", "日日日");
+    test_replace_single_char_in_string_case("日本", 1, Some('本'), "日日日", "日日日日");
+    test_replace_single_char_in_string_case("日本語", 0, Some('日'), "本", "本本語");
+    test_replace_single_char_in_string_case("日本語", 1, Some('本'), "日", "日日語");
+    test_replace_single_char_in_string_case("日本語", 2, Some('語'), "本", "日本本");
+    test_replace_single_char_in_string_case("日本語", 2, Some('語'), "日本", "日本日本");
+    test_replace_single_char_in_string_case("日本語", 2, Some('語'), "d", "日本d");
+
+    test_replace_single_char_in_string_case_negative("abc", 1, Some('a'), "d");
 }
 
 fn test_replace_substr_in_string_case(
@@ -149,6 +222,31 @@ fn test_replace_substr_in_string() {
     test_replace_substr_in_string_case_negative("abc", 1, "xy", "d");
     test_replace_substr_in_string_case_negative("abc", 1, "a", "d");
     test_replace_substr_in_string_case_negative("abc", 1, "abc", "d");
+}
+
+#[test]
+#[serial_test::serial]
+fn test_split_inclusive_allow_trailing_empty() {
+    assert_eq!(
+        st::split_inclusive_allow_trailing_empty("xsys", 's').collect::<Vec<_>>(),
+        vec!["xs", "ys", ""]
+    );
+    assert_eq!(
+        st::split_inclusive_allow_trailing_empty("xsy", 's').collect::<Vec<_>>(),
+        vec!["xs", "y"]
+    );
+    assert_eq!(
+        st::split_inclusive_allow_trailing_empty("xs", 's').collect::<Vec<_>>(),
+        vec!["xs", ""]
+    );
+    assert_eq!(
+        st::split_inclusive_allow_trailing_empty("x", 's').collect::<Vec<_>>(),
+        vec!["x"]
+    );
+    assert_eq!(
+        st::split_inclusive_allow_trailing_empty("", 's').collect::<Vec<_>>(),
+        vec![""]
+    );
 }
 
 #[test]
@@ -1872,6 +1970,40 @@ fn test_runtime_registrations() {
     sept::for_each_parametric_term!(T, test_runtime_registration_case::<T>());
 }
 
+fn test_utf8_string_term_serialize_deserialize_case(string: String, expected_bytes_written: usize) {
+    let mut buffer = Vec::new();
+    use crate::st::Serializable;
+    let bytes_written = string.serialize(&mut buffer).expect("pass");
+    assert_eq!(bytes_written, expected_bytes_written);
+    use crate::st::Deserializable;
+    // `buffer.as_slice()` is the content, and you have to take a mut ref to it to get a reader.
+    // The content the slice is pointing to doesn't change, but the slice start does change.
+    let reader: &mut dyn std::io::Read = &mut buffer.as_slice();
+    let deserialized_string = String::deserialize(reader).expect("pass");
+    assert_eq!(deserialized_string, string);
+}
+
+#[test]
+fn test_utf8_string_term_serialize_deserialize() {
+    // test_serialize_deserialize_case(&"".to_string());
+    // test_serialize_deserialize_case(&"a".to_string());
+    // test_serialize_deserialize_case(&"\n".to_string());
+    // test_serialize_deserialize_case(&" ".to_string());
+    // test_serialize_deserialize_case(&"ø".to_string());
+    // test_serialize_deserialize_case("blah blah blah".to_string());
+
+    const SIZE_OF_U64: usize = 8;
+    test_utf8_string_term_serialize_deserialize_case("".to_string(), SIZE_OF_U64 + 0);
+    test_utf8_string_term_serialize_deserialize_case("a".to_string(), SIZE_OF_U64 + 1);
+    test_utf8_string_term_serialize_deserialize_case("\n".to_string(), SIZE_OF_U64 + 1);
+    test_utf8_string_term_serialize_deserialize_case(" ".to_string(), SIZE_OF_U64 + 1);
+    test_utf8_string_term_serialize_deserialize_case("ø".to_string(), SIZE_OF_U64 + 2);
+    test_utf8_string_term_serialize_deserialize_case(
+        "blah blah blah".to_string(),
+        SIZE_OF_U64 + 14,
+    );
+}
+
 fn test_serialize_deserialize_case<
     T: PartialEq + st::Deserializable + st::Serializable + st::TermTrait,
 >(
@@ -1961,393 +2093,222 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<StructTermTerm>();
 }
 
-// Queryable is going defunct.
-// #[test]
-// #[serial_test::serial]
-// fn test_queryable_array_term() {
-//     let a = ArrayTerm::from(vec![
-//         "abc".to_string().into(),
-//         123.456f32.into(),
-//         true.into(),
-//         Void.into(),
-//     ]);
-
-//     use dy::Queryable;
-
-//     assert_eq!(
-//         a.query(&[])
-//             .expect("pass")
-//             .downcast_ref::<ArrayTerm>()
-//             .expect("pass"),
-//         &a
-//     );
-//     assert_eq!(
-//         a.query(&[0u32.into()])
-//             .expect("pass")
-//             .downcast_ref::<String>()
-//             .expect("pass"),
-//         a[0].downcast_ref::<String>().expect("pass")
-//     );
-//     assert_eq!(
-//         a.query(&[1u32.into()])
-//             .expect("pass")
-//             .downcast_ref::<f32>()
-//             .expect("pass"),
-//         a[1].downcast_ref::<f32>().expect("pass")
-//     );
-//     assert_eq!(
-//         a.query(&[2u32.into()])
-//             .expect("pass")
-//             .downcast_ref::<bool>()
-//             .expect("pass"),
-//         a[2].downcast_ref::<bool>().expect("pass")
-//     );
-//     assert_eq!(
-//         a.query(&[3u32.into()])
-//             .expect("pass")
-//             .downcast_ref::<Void>()
-//             .expect("pass"),
-//         a[3].downcast_ref::<Void>().expect("pass")
-//     );
-//     a.query(&[4u32.into()]).expect_err("pass");
-// }
-
-// NOTE: dy::Diffable is defunct, so there's no point in testing it.
-
-// fn test_diffable_case<T: dy::Diffable + PartialEq, D: dy::Diff>(
+// fn test_diff_case<'a, T: PartialEq + st::TermTrait, Address, D: st::DiffTrait>(
 //     target: &T,
+//     address_token_i: Address,
 //     diff: &D,
 //     expected_intermediate: &T,
-// ) {
-//     use dy::Diffable;
-
-//     assert!(target.diff_is_mutation_in_place(diff).expect("pass"));
+// ) where
+//     T: st::Diffable<D>,
+//     T: st::Diffable<D::Inverse>,
+//     Address: Iterator<Item = &'a dy::Value> + Clone,
+// {
+//     use st::DiffTrait;
 
 //     let mut t = target.clone();
-//     t.apply_diff_in_place(&[], diff).expect("pass");
+//     log::trace!("test_diff_case; -- start ----------------------------------------");
+//     log::trace!("test_diff_case; target: {:?}", target);
+//     // TODO: Figure out how to print address_token_i reasonably.
+//     log::trace!("test_diff_case; diff: {:?}", diff);
+//     t.apply_diff(address_token_i.clone(), diff).expect("pass");
+//     log::trace!("test_diff_case; after apply_diff; t: {:?}", t);
 //     assert_eq!(t, *expected_intermediate);
-
-//     let diff_inverse = diff.inverse();
-//     assert!(t.diff_is_mutation_in_place(&diff_inverse).expect("pass"));
-//     t.apply_diff_in_place(&[], &diff_inverse).expect("pass");
+//     let diff_inv = diff.inverse();
+//     log::trace!("test_diff_case; diff_inv: {:?}", diff_inv);
+//     t.apply_diff(address_token_i, &diff_inv).expect("pass");
+//     log::trace!("test_diff_case; after apply_diff with diff_inv; t: {:?}", t);
 //     assert_eq!(t, *target);
+//     log::trace!("test_diff_case; -- end ----------------------------------------");
+// }
+
+// fn test_nonterminal_editable_case<
+//     'a,
+//     T: PartialEq + st::TermTrait,
+//     A: st::TermTrait,
+//     E: st::DiffTrait,
+// >(
+//     target: &T,
+//     address_head: &A,
+//     edit: &E,
+//     expected_intermediate: &T,
+// ) where
+//     T: st::NonterminalEditable<A, E>,
+//     T: st::NonterminalEditable<A, E::Inverse>,
+// {
+//     use st::DiffTrait;
+
+//     let mut t = target.clone();
+//     log::trace!(
+//         "test_nonterminal_editable_case; -- start ----------------------------------------"
+//     );
+//     log::trace!("test_nonterminal_editable_case; target: {:?}", target);
+//     log::trace!(
+//         "test_nonterminal_editable_case; address_head: {:?}",
+//         address_head
+//     );
+//     log::trace!("test_nonterminal_editable_case; edit: {:?}", edit);
+//     t.apply_nonterminal_edit(address_head, std::iter::empty(), edit)
+//         .expect("pass");
+//     log::trace!(
+//         "test_nonterminal_editable_case; after apply_diff; t: {:?}",
+//         t
+//     );
+//     assert_eq!(t, *expected_intermediate);
+//     let edit_inv = edit.inverse();
+//     log::trace!("test_nonterminal_editable_case; edit_inv: {:?}", edit_inv);
+//     t.apply_nonterminal_edit(address_head, std::iter::empty(), &edit_inv)
+//         .expect("pass");
+//     log::trace!(
+//         "test_nonterminal_editable_case; after apply_diff with edit_inv; t: {:?}",
+//         t
+//     );
+//     assert_eq!(t, *target);
+//     log::trace!("test_nonterminal_editable_case; -- end ----------------------------------------");
 // }
 
 // #[test]
 // #[serial_test::serial]
-// fn test_diffable() {
+// fn test_nonterminal_editable_utf8string() {
 //     let s = "ab 日本語 ab".to_string();
 
-//     type Ins = dy::ElementInsertionTerm;
+//     type Ins = qv::InsertionTerm;
 
-//     let case_v = [
-//         (
-//             Ins {
-//                 index: 0u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "Xab 日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 0u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "字ab 日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 1u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "aXb 日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 1u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "a字b 日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 3u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "ab X日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 3u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "ab 字日本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 4u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "ab 日X本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 4u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "ab 日字本語 ab".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 8u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "ab 日本語 aXb".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 8u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "ab 日本語 a字b".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 9u32.into(),
-//                 data: 'X'.into(),
-//             },
-//             "ab 日本語 abX".to_string(),
-//         ),
-//         (
-//             Ins {
-//                 index: 9u32.into(),
-//                 data: '字'.into(),
-//             },
-//             "ab 日本語 ab字".to_string(),
-//         ),
-//     ];
-//     for (diff, expected_intermediate_term) in case_v.iter() {
-//         test_diffable_case(&s, diff, expected_intermediate_term);
-//     }
+//     test_nonterminal_editable_case(
+//         &s,
+//         &0u32,
+//         &Ins::new('X'.into()),
+//         &"Xab 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &0u32,
+//         &Ins::new('字'.into()),
+//         &"字ab 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &1u32,
+//         &Ins::new('X'.into()),
+//         &"aXb 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &1u32,
+//         &Ins::new('字'.into()),
+//         &"a字b 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &3u32,
+//         &Ins::new('X'.into()),
+//         &"ab X日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &3u32,
+//         &Ins::new('字'.into()),
+//         &"ab 字日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &4u32,
+//         &Ins::new('X'.into()),
+//         &"ab 日X本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &4u32,
+//         &Ins::new('字'.into()),
+//         &"ab 日字本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &8u32,
+//         &Ins::new('X'.into()),
+//         &"ab 日本語 aXb".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &8u32,
+//         &Ins::new('字'.into()),
+//         &"ab 日本語 a字b".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &9u32,
+//         &Ins::new('X'.into()),
+//         &"ab 日本語 abX".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &9u32,
+//         &Ins::new('字'.into()),
+//         &"ab 日本語 ab字".to_string(),
+//     );
+
+//     type Repl = qv::ReplacementTerm;
+
+//     test_nonterminal_editable_case(
+//         &s,
+//         &0u32,
+//         &Repl::new('a'.into(), 'X'.into()),
+//         &"Xb 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &0u32,
+//         &Repl::new('a'.into(), '字'.into()),
+//         &"字b 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &1u32,
+//         &Repl::new('b'.into(), 'X'.into()),
+//         &"aX 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &1u32,
+//         &Repl::new('b'.into(), '字'.into()),
+//         &"a字 日本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &3u32,
+//         &Repl::new('日'.into(), 'X'.into()),
+//         &"ab X本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &3u32,
+//         &Repl::new('日'.into(), '字'.into()),
+//         &"ab 字本語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &4u32,
+//         &Repl::new('本'.into(), 'X'.into()),
+//         &"ab 日X語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &4u32,
+//         &Repl::new('本'.into(), '字'.into()),
+//         &"ab 日字語 ab".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &8u32,
+//         &Repl::new('b'.into(), 'X'.into()),
+//         &"ab 日本語 aX".to_string(),
+//     );
+//     test_nonterminal_editable_case(
+//         &s,
+//         &8u32,
+//         &Repl::new('b'.into(), '字'.into()),
+//         &"ab 日本語 a字".to_string(),
+//     );
 // }
-
-fn test_diff_case<'a, T: PartialEq + st::TermTrait, Address, D: st::DiffTrait>(
-    target: &T,
-    address_i: Address,
-    diff: &D,
-    expected_intermediate: &T,
-) where
-    T: st::Diffable<D>,
-    T: st::Diffable<D::Inverse>,
-    Address: Iterator<Item = &'a dy::Value> + Clone,
-{
-    use st::DiffTrait;
-
-    let mut t = target.clone();
-    log::trace!("test_diff_case; -- start ----------------------------------------");
-    log::trace!("test_diff_case; target: {:?}", target);
-    // TODO: Figure out how to print address_i reasonably.
-    log::trace!("test_diff_case; diff: {:?}", diff);
-    t.apply_diff(address_i.clone(), diff).expect("pass");
-    log::trace!("test_diff_case; after apply_diff; t: {:?}", t);
-    assert_eq!(t, *expected_intermediate);
-    let diff_inv = diff.inverse();
-    log::trace!("test_diff_case; diff_inv: {:?}", diff_inv);
-    t.apply_diff(address_i, &diff_inv).expect("pass");
-    log::trace!("test_diff_case; after apply_diff with diff_inv; t: {:?}", t);
-    assert_eq!(t, *target);
-    log::trace!("test_diff_case; -- end ----------------------------------------");
-}
-
-fn test_nonterminal_editable_case<
-    'a,
-    T: PartialEq + st::TermTrait,
-    A: st::TermTrait,
-    E: st::DiffTrait,
->(
-    target: &T,
-    address_head: &A,
-    edit: &E,
-    expected_intermediate: &T,
-) where
-    T: st::NonterminalEditable<A, E>,
-    T: st::NonterminalEditable<A, E::Inverse>,
-{
-    use st::DiffTrait;
-
-    let mut t = target.clone();
-    log::trace!(
-        "test_nonterminal_editable_case; -- start ----------------------------------------"
-    );
-    log::trace!("test_nonterminal_editable_case; target: {:?}", target);
-    log::trace!(
-        "test_nonterminal_editable_case; address_head: {:?}",
-        address_head
-    );
-    log::trace!("test_nonterminal_editable_case; edit: {:?}", edit);
-    t.apply_nonterminal_edit(address_head, std::iter::empty(), edit)
-        .expect("pass");
-    log::trace!(
-        "test_nonterminal_editable_case; after apply_diff; t: {:?}",
-        t
-    );
-    assert_eq!(t, *expected_intermediate);
-    let edit_inv = edit.inverse();
-    log::trace!("test_nonterminal_editable_case; edit_inv: {:?}", edit_inv);
-    t.apply_nonterminal_edit(address_head, std::iter::empty(), &edit_inv)
-        .expect("pass");
-    log::trace!(
-        "test_nonterminal_editable_case; after apply_diff with edit_inv; t: {:?}",
-        t
-    );
-    assert_eq!(t, *target);
-    log::trace!("test_nonterminal_editable_case; -- end ----------------------------------------");
-}
-
-#[test]
-#[serial_test::serial]
-fn test_nonterminal_editable_utf8string() {
-    let s = "ab 日本語 ab".to_string();
-
-    // type Ins = st::ElementInsertionTerm<String, u32, char>;
-    type Ins = dy::InsertionTerm;
-
-    test_nonterminal_editable_case(
-        &s,
-        &0u32,
-        &Ins::new('X'.into()),
-        &"Xab 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &0u32,
-        &Ins::new('字'.into()),
-        &"字ab 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &1u32,
-        &Ins::new('X'.into()),
-        &"aXb 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &1u32,
-        &Ins::new('字'.into()),
-        &"a字b 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &3u32,
-        &Ins::new('X'.into()),
-        &"ab X日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &3u32,
-        &Ins::new('字'.into()),
-        &"ab 字日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &4u32,
-        &Ins::new('X'.into()),
-        &"ab 日X本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &4u32,
-        &Ins::new('字'.into()),
-        &"ab 日字本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &8u32,
-        &Ins::new('X'.into()),
-        &"ab 日本語 aXb".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &8u32,
-        &Ins::new('字'.into()),
-        &"ab 日本語 a字b".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &9u32,
-        &Ins::new('X'.into()),
-        &"ab 日本語 abX".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &9u32,
-        &Ins::new('字'.into()),
-        &"ab 日本語 ab字".to_string(),
-    );
-
-    type Repl = dy::ReplacementTerm;
-
-    test_nonterminal_editable_case(
-        &s,
-        &0u32,
-        &Repl::new('a'.into(), 'X'.into()),
-        &"Xb 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &0u32,
-        &Repl::new('a'.into(), '字'.into()),
-        &"字b 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &1u32,
-        &Repl::new('b'.into(), 'X'.into()),
-        &"aX 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &1u32,
-        &Repl::new('b'.into(), '字'.into()),
-        &"a字 日本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &3u32,
-        &Repl::new('日'.into(), 'X'.into()),
-        &"ab X本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &3u32,
-        &Repl::new('日'.into(), '字'.into()),
-        &"ab 字本語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &4u32,
-        &Repl::new('本'.into(), 'X'.into()),
-        &"ab 日X語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &4u32,
-        &Repl::new('本'.into(), '字'.into()),
-        &"ab 日字語 ab".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &8u32,
-        &Repl::new('b'.into(), 'X'.into()),
-        &"ab 日本語 aX".to_string(),
-    );
-    test_nonterminal_editable_case(
-        &s,
-        &8u32,
-        &Repl::new('b'.into(), '字'.into()),
-        &"ab 日本語 a字".to_string(),
-    );
-}
 
 // fn test_diff_case_as_value<
 //     T: dy::IntoValue + PartialEq + st::TermTrait,
@@ -2396,76 +2357,76 @@ fn test_nonterminal_editable_utf8string() {
 //     log::trace!("test_diff_case_as_value; -- done ----------------------------------------");
 // }
 
-#[test]
-#[serial_test::serial]
-fn test_diff_utf8string() {
-    let s = "ab 日本語 ab".to_string();
+// #[test]
+// #[serial_test::serial]
+// fn test_diff_utf8string() {
+//     let s = "ab 日本語 ab".to_string();
 
-    // type Ins = st::ElementInsertionTerm<String, u32, char>;
-    type Ins = dy::InsertionTerm;
+//     // type Ins = st::ElementInsertionTerm<String, u32, char>;
+//     type Ins = qv::InsertionTerm;
 
-    test_diff_case(
-        &s,
-        [0u32.into_value()].iter(),
-        &Ins {
-            new_data: 'X'.into(),
-        },
-        &"Xab 日本語 ab".to_string(),
-    );
-    test_diff_case(
-        &s,
-        [0u32.into_value()].iter(),
-        &Ins {
-            new_data: '字'.into(),
-        },
-        &"字ab 日本語 ab".to_string(),
-    );
-    // test_diff_case(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
-    // test_diff_case(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
-    // test_diff_case(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
-    // test_diff_case(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
+//     test_diff_case(
+//         &s,
+//         [0u32.into_value()].iter(),
+//         &Ins {
+//             new_data: 'X'.into(),
+//         },
+//         &"Xab 日本語 ab".to_string(),
+//     );
+//     test_diff_case(
+//         &s,
+//         [0u32.into_value()].iter(),
+//         &Ins {
+//             new_data: '字'.into(),
+//         },
+//         &"字ab 日本語 ab".to_string(),
+//     );
+//     // test_diff_case(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
+//     // test_diff_case(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
+//     // test_diff_case(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
+//     // test_diff_case(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
 
-    // test_diff_case(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
-    // test_diff_case(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
-    // test_diff_case(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
-    // test_diff_case(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
-    // test_diff_case(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
+//     // test_diff_case(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
+//     // test_diff_case(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
+//     // test_diff_case(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
+//     // test_diff_case(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
+//     // test_diff_case(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
 
-    // test_diff_case_as_value(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
-    // test_diff_case_as_value(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
-}
+//     // test_diff_case_as_value(&s, &Ins::new(0u32, 'X'), &"Xab 日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(0u32, '字'), &"字ab 日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(1u32, 'X'), &"aXb 日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(1u32, '字'), &"a字b 日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(3u32, 'X'), &"ab X日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(3u32, '字'), &"ab 字日本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(4u32, 'X'), &"ab 日X本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(4u32, '字'), &"ab 日字本語 ab".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(8u32, 'X'), &"ab 日本語 aXb".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(8u32, '字'), &"ab 日本語 a字b".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(9u32, 'X'), &"ab 日本語 abX".to_string());
+//     // test_diff_case_as_value(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
+// }
 
-fn test_query_trait_case<Q: dy::QueryTrait>(
-    q_b: Box<Q>,
+fn test_query_trait_case<Q: qv::QueryTrait>(
+    q: Q,
     address_v: &[dy::Value],
     expected_result: dy::Value,
 ) {
-    let query_view = q_b.run_query(&mut address_v.iter()).expect("pass");
-    match query_view.queried_value().expect("pass") {
+    let query_view = Box::new(q).run_query(&mut address_v.iter()).expect("pass");
+    match query_view.eval().expect("pass") {
         dy::MaybeDereferencedValue::Ref(x) => {
             log::debug!(
                 "query_result: {}",
@@ -2493,35 +2454,35 @@ fn test_query_trait_case<Q: dy::QueryTrait>(
 #[serial_test::serial]
 fn test_query_trait_utf8_string_term() {
     let s = "ab 日本語 hippo\nOSTRICH".to_string();
-    test_query_trait_case(dy::Utf8StringTermView::new(&s), &[], s.clone().into_value());
+    test_query_trait_case(qv::Utf8StringTermView::new(&s), &[], s.clone().into_value());
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["char".to_string().into_value(), 0u32.into_value()],
         'a'.into_value(),
     );
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["char".to_string().into_value(), 1u32.into_value()],
         'b'.into_value(),
     );
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["char".to_string().into_value(), 2u32.into_value()],
         ' '.into_value(),
     );
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["char".to_string().into_value(), 3u32.into_value()],
         '日'.into_value(),
     );
 
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["line".to_string().into_value(), 0u32.into_value()],
         "ab 日本語 hippo\n".to_string().into_value(),
     );
     test_query_trait_case(
-        dy::Utf8StringTermView::new(&s),
+        qv::Utf8StringTermView::new(&s),
         &["line".to_string().into_value(), 1u32.into_value()],
         "OSTRICH".to_string().into_value(),
     );
@@ -2536,17 +2497,17 @@ fn test_query_trait_ordered_map_term() {
         dy::OrderedMapTerm::from(maplit::btreemap! { 889u32.into() => "woooooo".to_string().into() }).into() => st::Bool.into(),
     });
     test_query_trait_case(
-        dy::OrderedMapTermView::new(&ordered_map_term),
+        qv::OrderedMapTermView::new(&ordered_map_term),
         &[],
         ordered_map_term.clone().into_value(),
     );
     test_query_trait_case(
-        dy::OrderedMapTermView::new(&ordered_map_term),
+        qv::OrderedMapTermView::new(&ordered_map_term),
         &['k'.into_value(), st::Void.into_value()],
         st::Void.into_value(),
     );
     test_query_trait_case(
-        dy::OrderedMapTermView::new(&ordered_map_term),
+        qv::OrderedMapTermView::new(&ordered_map_term),
         &[
             'k'.into_value(),
             dy::OrderedMapTerm::from(
@@ -2560,7 +2521,7 @@ fn test_query_trait_ordered_map_term() {
         .into(),
     );
     test_query_trait_case(
-        dy::OrderedMapTermView::new(&ordered_map_term),
+        qv::OrderedMapTermView::new(&ordered_map_term),
         &[
             'k'.into_value(),
             dy::OrderedMapTerm::from(
@@ -2573,24 +2534,19 @@ fn test_query_trait_ordered_map_term() {
         889u32.into_value(),
     );
     test_query_trait_case(
-        dy::OrderedMapTermView::new(&ordered_map_term),
+        qv::OrderedMapTermView::new(&ordered_map_term),
         &['v'.into_value(), st::Void.into_value()],
         dy::OrderedMapTerm::from(maplit::btreemap! { 4u32.into() => "blah".to_string().into() })
             .into_value(),
     );
 }
 
-// fn test_query_mut_trait_case<'a, T: dy::QueryableMutDynTrait + PartialEq + st::TermTrait>(
-fn test_query_mut_trait_case<'a, T: dy::Editable + PartialEq + st::TermTrait>(
+fn test_query_mut_trait_case<'a, T: qv::QueryMutAndApplyEditTrait + PartialEq + st::TermTrait>(
     mut x: T,
     address_v: &[dy::Value],
     edit: dy::Value,
     expected_x: T,
 ) {
-    // x.make_and_run_query_mut(&mut address_v.iter())
-    //     .expect("pass")
-    //     .apply_edit(edit)
-    //     .expect("pass");
     x.query_mut_and_apply_edit(&mut address_v.iter(), edit)
         .expect("pass");
     assert_eq!(x, expected_x);
@@ -2603,7 +2559,7 @@ fn test_query_mut_trait_utf8_string_term() {
         (
             "ab 日本語 hippo\nOSTRICH",
             vec![],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: "ab 日本語 hippo\nOSTRICH".to_string().into(),
                 new_data: "something totally different".to_string().into(),
             }
@@ -2613,7 +2569,7 @@ fn test_query_mut_trait_utf8_string_term() {
         (
             "ab 日本語 hippo\nOSTRICH",
             vec!["char".to_string().into_value(), 0u32.into_value()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 'a'.into(),
                 new_data: '字'.into(),
             }
@@ -2623,7 +2579,7 @@ fn test_query_mut_trait_utf8_string_term() {
         (
             "ab 日本語 hippo\nOSTRICH",
             vec!["char".to_string().into_value(), 12u32.into_value()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: '\n'.into(),
                 new_data: '字'.into(),
             }
@@ -2633,7 +2589,7 @@ fn test_query_mut_trait_utf8_string_term() {
         (
             "ab 日本語 hippo\nOSTRICH",
             vec!["line".to_string().into_value(), 0u32.into_value()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: "ab 日本語 hippo\n".to_string().into(),
                 new_data: "a big, fancy ".to_string().into(),
             }
@@ -2648,7 +2604,7 @@ fn test_query_mut_trait_utf8_string_term() {
                 "char".to_string().into_value(),
                 5u32.into_value(),
             ],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: '語'.into(),
                 new_data: 'X'.into(),
             }
@@ -2663,7 +2619,7 @@ fn test_query_mut_trait_utf8_string_term() {
                 "char".to_string().into_value(),
                 5u32.into_value(),
             ],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 'C'.into(),
                 new_data: '語'.into(),
             }
@@ -2694,7 +2650,7 @@ fn test_query_mut_trait_value() {
         (
             123u32.into_value(),
             vec![],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 123u32.into_value(),
                 new_data: st::Bool.into_value(),
             }
@@ -2714,7 +2670,7 @@ fn test_query_mut_trait_array_term() {
         (
             dy::ArrayTerm::from(vec![]),
             vec![],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: dy::ArrayTerm::from(vec![]).into(),
                 new_data: dy::ArrayTerm::from(vec![123i64.into(), st::Bool.into()]).into(),
             }
@@ -2724,7 +2680,7 @@ fn test_query_mut_trait_array_term() {
         (
             dy::ArrayTerm::from(vec![456u32.into(), 101010u32.into()]),
             vec![0u32.into()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 456u32.into(),
                 new_data: dy::ArrayTerm::from(vec![123i64.into(), st::Bool.into()]).into(),
             }
@@ -2741,7 +2697,7 @@ fn test_query_mut_trait_array_term() {
                 101010u32.into(),
             ]),
             vec![1u32.into(), 0u32.into()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 123i64.into(),
                 new_data: 123000000i64.into(),
             }
@@ -2753,7 +2709,10 @@ fn test_query_mut_trait_array_term() {
             ]),
         ),
     ];
-    for (initial_value, address_v, edit, expected_value) in test_case_data_v.into_iter() {
+    for (case_index, (initial_value, address_v, edit, expected_value)) in
+        test_case_data_v.into_iter().enumerate()
+    {
+        log::debug!("case {}", case_index);
         test_query_mut_trait_case(initial_value, address_v.as_slice(), edit, expected_value);
     }
 }
@@ -2765,7 +2724,7 @@ fn test_query_mut_trait_tuple_term() {
         (
             dy::TupleTerm::from(vec![]),
             vec![],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: dy::TupleTerm::from(vec![]).into(),
                 new_data: dy::TupleTerm::from(vec![123i64.into(), st::Bool.into()]).into(),
             }
@@ -2775,7 +2734,7 @@ fn test_query_mut_trait_tuple_term() {
         (
             dy::TupleTerm::from(vec![456u32.into(), 101010u32.into()]),
             vec![0u32.into()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 456u32.into(),
                 new_data: dy::TupleTerm::from(vec![123i64.into(), st::Bool.into()]).into(),
             }
@@ -2792,7 +2751,7 @@ fn test_query_mut_trait_tuple_term() {
                 101010u32.into(),
             ]),
             vec![1u32.into(), 0u32.into()],
-            dy::ReplacementTerm {
+            qv::ReplacementTerm {
                 old_data: 123i64.into(),
                 new_data: 123000000i64.into(),
             }
@@ -2804,7 +2763,10 @@ fn test_query_mut_trait_tuple_term() {
             ]),
         ),
     ];
-    for (initial_value, address_v, edit, expected_value) in test_case_data_v.into_iter() {
+    for (case_index, (initial_value, address_v, edit, expected_value)) in
+        test_case_data_v.into_iter().enumerate()
+    {
+        log::debug!("case {}", case_index);
         test_query_mut_trait_case(initial_value, address_v.as_slice(), edit, expected_value);
     }
 }
@@ -2817,7 +2779,7 @@ fn test_query_mut_trait_ordered_map_term_val() {
             st::Void.into() => 123u32.into(),
         }),
         vec!['v'.into(), st::Void.into()].as_slice(),
-        dy::ReplacementTerm {
+        qv::ReplacementTerm {
             old_data: 123u32.into(),
             new_data: st::Bool.into(),
         }
@@ -2834,7 +2796,7 @@ fn test_query_mut_trait_ordered_map_term_val() {
             }).into(),
         }),
         vec!['v'.into(), st::Void.into(), 'v'.into(), 4u32.into()].as_slice(),
-        dy::ReplacementTerm {
+        qv::ReplacementTerm {
             old_data: "blah".to_string().into(),
             new_data: st::Bool.into(),
         }
@@ -2855,7 +2817,7 @@ fn test_query_mut_trait_ordered_map_term_key() {
             st::Void.into() => 123u32.into(),
         }),
         vec!['k'.into(), st::Void.into()].as_slice(),
-        dy::ReplacementTerm {
+        qv::ReplacementTerm {
             old_data: st::Void.into(),
             new_data: st::Bool.into(),
         }
@@ -2871,7 +2833,7 @@ fn test_query_mut_trait_ordered_map_term_key() {
             st::EmptyType.into() => 123u32.into(),
         }),
         vec!['k'.into(), st::Void.into()].as_slice(),
-        dy::ReplacementTerm {
+        qv::ReplacementTerm {
             old_data: st::Void.into(),
             new_data: st::Bool.into(),
         }
@@ -2884,15 +2846,14 @@ fn test_query_mut_trait_ordered_map_term_key() {
 
     {
         // Negative test -- key collision.
-        use dy::QueryableMutDynTrait;
+        use qv::QueryMutAndApplyEditTrait;
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => 123u32.into(),
             st::EmptyType.into() => 123u32.into(),
         })
-        .make_and_run_query_mut(&mut ['k'.into(), st::Void.into()].iter())
-        .expect("pass")
-        .apply_edit(
-            dy::ReplacementTerm {
+        .query_mut_and_apply_edit(
+            &mut ['k'.into(), st::Void.into()].iter(),
+            qv::ReplacementTerm {
                 old_data: st::Void.into(),
                 new_data: st::EmptyType.into(),
             }
@@ -2919,7 +2880,7 @@ fn test_query_mut_trait_ordered_map_term_key() {
     //         4u32.into(),
     //     ]
     //     .as_slice(),
-    //     dy::ReplacementTerm {
+    //     qv::ReplacementTerm {
     //         old_data: 4u32.into(),
     //         new_data: st::Bool.into(),
     //     }

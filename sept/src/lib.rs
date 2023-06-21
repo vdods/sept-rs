@@ -8,6 +8,7 @@ mod dag;
 pub mod dy;
 pub mod parser;
 mod poset;
+pub mod qv;
 pub mod scanner;
 /// Contains static types and traits.  Theoretically everything here should function without use
 /// of `dy::Value` or the sept runtime, although types in `st` typically also provide impls for

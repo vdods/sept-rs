@@ -1,9 +1,8 @@
 use crate::{
-    dy, parser,
+    dy, parser, qv,
     st::{self, Stringifiable, TermTrait},
     Error, Result,
 };
-// use std::any::Any;
 
 pub trait FancyAny: std::any::Any {
     fn as_any<'a>(&'a self) -> &'a (dyn std::any::Any + Send + Sync);
@@ -65,10 +64,12 @@ impl std::fmt::Debug for ValueGuts2 {
 impl ToOwned for ValueGuts2 {
     type Owned = Value;
     fn to_owned(&self) -> Self::Owned {
-        Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_any()))
+        panic!("temp hack");
+        // Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_any()))
     }
-    fn clone_into(&self, target: &mut Self::Owned) {
-        target.0 = dy::RUNTIME_LA.read().unwrap().clone(self.as_any());
+    fn clone_into(&self, _target: &mut Self::Owned) {
+        panic!("temp hack");
+        // target.0 = dy::RUNTIME_LA.read().unwrap().clone(self.as_any());
     }
 }
 
@@ -161,6 +162,29 @@ impl std::borrow::Borrow<ValueGuts2> for Value {
 #[derive(derive_more::Into)]
 pub struct Value(Box<ValueGuts>);
 
+impl qv::ApplyEditTrait for Value {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        // Handle some of the canonical edits first, and then resort to the Runtime.
+        if edit.is::<st::NoOp>() {
+            // Nothing to do.
+            Ok(())
+        } else if edit.is::<qv::ReplacementTerm>() {
+            let replacement_term = edit.downcast_into::<qv::ReplacementTerm>();
+            anyhow::ensure!(
+                *self == replacement_term.old_data,
+                "ReplacementTerm edit expected current value to match old_data"
+            );
+            *self = replacement_term.new_data;
+            Ok(())
+        } else {
+            dy::RUNTIME_LA
+                .read()
+                .unwrap()
+                .apply_edit(self.as_mut(), edit)
+        }
+    }
+}
+
 impl AsMut<ValueGuts> for Value {
     fn as_mut(&mut self) -> &mut ValueGuts {
         self.0.as_mut()
@@ -175,7 +199,8 @@ impl AsRef<ValueGuts> for Value {
 
 impl Clone for Value {
     fn clone(&self) -> Self {
-        Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_ref()))
+        // Value(dy::RUNTIME_LA.read().unwrap().clone(self.as_ref()))
+        Value::from(dy::RUNTIME_LA.read().unwrap().clone(self.as_ref()))
     }
 }
 
@@ -266,22 +291,6 @@ impl std::fmt::Display for Value {
     }
 }
 
-impl dy::Editable for Value {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        use dy::QueryMutTrait;
-        dy::ValueMutView::new(self)
-            .run_query_mut(address_i)?
-            .apply_edit(edit)
-    }
-}
-
 impl Eq for Value {}
 
 /// This prevents directly nested Value-s, e.g. Value(Value(123u32)), since that's never what we want.
@@ -352,38 +361,41 @@ impl PartialOrd for Value {
     }
 }
 
-// impl<'b> dy::QueryTrait<'b> for Value {
-// impl<'b> dy::QueryTrait for Value {
-//     fn run_query<'a>(
-//         self,
-//         address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-//     ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
-//     where
-//         Self: 'a, // where
-//                   //     'b: 'a,
-//     {
-//         dy::RUNTIME_LA
-//             .read()
-//             .unwrap()
-//             .query2(self.into(), address_i)
+// impl qv::EvalTrait for Value {
+//     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
+//         Ok(dy::MaybeDereferencedValue::make_ref(self.as_ref()))
 //     }
 // }
 
-// impl dy::QueryViewTrait for Value {
-//     fn queried_value<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-//         Ok(dy::MaybeDereferencedValue::Ref(self.as_ref()))
-//     }
-// }
-
-impl dy::QueryableDynTrait for Value {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::ValueView::new(self)
+impl qv::QueryableDynTrait for Value {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::ValueView::new(self))
     }
 }
 
-impl dy::QueryableMutDynTrait for Value {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::ValueMutView::new(self)
+impl qv::QueryMutAndApplyEditTrait for Value {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        // Have to do some extra handling of if the address iterator is empty.
+        let mut address_token_i = address_token_i.peekable();
+        if address_token_i.peek().is_none() {
+            // We have to shunt it to Value::apply_edit because that does special
+            // handling before forwarding it to the Runtime.
+            use qv::ApplyEditTrait;
+            self.apply_edit(edit)
+        } else {
+            dy::RUNTIME_LA.read().unwrap().query_mut_and_apply_edit(
+                self.as_mut(),
+                &mut address_token_i,
+                edit,
+            )
+        }
     }
 }
 
@@ -454,12 +466,18 @@ impl TermTrait for Value {
         dy::RUNTIME_LA.read().unwrap().is_type(self.as_ref())
     }
     fn abstract_type(&self) -> Self::AbstractTypeType {
-        Value(
+        Value::from(
             dy::RUNTIME_LA
                 .read()
                 .unwrap()
                 .abstract_type_of(self.as_ref()),
         )
+        // Value(
+        //     dy::RUNTIME_LA
+        //         .read()
+        //         .unwrap()
+        //         .abstract_type_of(self.as_ref()),
+        // )
     }
 }
 

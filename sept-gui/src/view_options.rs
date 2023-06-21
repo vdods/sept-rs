@@ -18,6 +18,7 @@ pub struct ViewOptions {
     /// Indicates if the names of StructTerm fields should be shown before their values in StructTermTerm.
     pub show_struct_field_name_hints: bool,
     /// The number of elements to skip using PageUp/PageDown.
+    // TODO: This is not a view option, but some sort of config option.
     pub page_up_down_delta: u32,
     // TODO: Add color config
 }
@@ -31,13 +32,19 @@ impl ViewOptions {
         }
     }
     pub fn color_for_cursor_background(&self) -> egui::Color32 {
-        let opaque_color = ANSIColor::DARK_MAGENTA;
-        egui::Color32::from_rgba_unmultiplied(
-            opaque_color.r(),
-            opaque_color.g(),
-            opaque_color.b(),
-            0x10,
-        )
+        if false {
+            // TEMP HACK
+            egui::Color32::TRANSPARENT
+        } else {
+            let opaque_color = ANSIColor::DARK_MAGENTA;
+            egui::Color32::from_rgba_unmultiplied(
+                opaque_color.r(),
+                opaque_color.g(),
+                opaque_color.b(),
+                0x0C,
+                // 0x18,
+            )
+        }
     }
     pub fn color_for_type_annotation(&self) -> egui::Color32 {
         ANSIColor::BRIGHT_BLACK

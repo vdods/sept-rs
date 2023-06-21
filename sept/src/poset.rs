@@ -169,6 +169,7 @@ impl<T: Copy + Debug + Eq + Hash> PartiallyOrderedSet<T> {
     }
 }
 
+// TODO: Move into sept_tests.rs
 #[cfg(test)]
 mod tests {
 

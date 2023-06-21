@@ -4,6 +4,52 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "all build",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "test",
+                "--all-features",
+                "--no-run"
+            ],
+            "group": "build",
+            "presentation": {
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$rustc",
+                    "fileLocation": [
+                        "relative"
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "all check",
+            "type": "shell",
+            "command": "cargo",
+            "args": [
+                "check",
+                "--all-features",
+                "--tests"
+            ],
+            "group": "build",
+            "presentation": {
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$rustc",
+                    "fileLocation": [
+                        "relative"
+                    ]
+                }
+            ]
+        },
+        {
             "label": "sept build",
             "type": "shell",
             "command": "cargo",
@@ -39,10 +85,7 @@
                 "--all-features",
                 "--tests"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"
@@ -66,7 +109,10 @@
                 "sept-gui",
                 "--all-features"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"

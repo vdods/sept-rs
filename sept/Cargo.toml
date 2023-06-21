@@ -12,6 +12,8 @@ edition = "2021"
 anyhow = "1.0.44"
 bind_match = "0.1.2"
 derive_more = "0.99.17"
+# This is only used in the kludge split_inclusive_allow_trailing_empty
+either = "1.8.1"
 enum-as-inner = "0.5.1"
 enum-kinds = "0.5.1"
 enum-map = "2.0.0"

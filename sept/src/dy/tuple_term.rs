@@ -1,7 +1,8 @@
 use crate::{
     dy::{self, Value},
+    qv,
     st::{self, Inhabits, Stringifiable, TermTrait, Tuple},
-    Result,
+    Error, Result,
 };
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -72,27 +73,6 @@ impl std::fmt::Display for TupleTerm {
             }
         }
         write!(f, ")")
-    }
-}
-
-impl dy::Editable for TupleTerm {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        // TEMP HACK -- this is rather silly, but is a quick way to get the right behavior for now.
-        use dy::QueryMutTrait;
-        // Re-borrow the address iterator items with a shorter lifetime.
-        // let mut address_i = address_i.map(|x| &*x);
-        // Note that this can't be Self, because this introduces a new, shorter lifetime.
-        dy::TupleTermMutView::new(self)
-            // .run_query_mut(&mut address_i)?
-            .run_query_mut(address_i)?
-            .apply_edit(edit)
     }
 }
 
@@ -241,48 +221,39 @@ impl st::Deserializable for TupleTerm {
     }
 }
 
-impl dy::Queryable for TupleTerm {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
+impl qv::QueryableDynTrait for TupleTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::TupleTermView::new(self))
+    }
+}
+
+impl qv::EvalTrait for TupleTerm {
+    fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
+        Ok(dy::MaybeDereferencedValue::make_ref(self))
+    }
+}
+
+impl qv::ApplyEditTrait for TupleTerm {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        // TODO: "clear" edit
+        if edit.is::<qv::ReplacementTerm>() {
+            let edit = edit.downcast_into::<qv::ReplacementTerm>();
+            anyhow::ensure!(
+                edit.old_data.is::<dy::TupleTerm>(),
+                "TupleTerm ReplacementTerm edit expected old_data to be TupleTerm"
+            );
+            anyhow::ensure!(
+                edit.new_data.is::<dy::TupleTerm>(),
+                "TupleTerm ReplacementTerm edit expected new_data to be TupleTerm"
+            );
+            let old_tuple_term = edit.old_data.downcast_into::<dy::TupleTerm>();
+            let new_tuple_term = edit.new_data.downcast_into::<dy::TupleTerm>();
+            anyhow::ensure!(*self == old_tuple_term, "TupleTerm ReplacementTerm edit expected current value ({:?}) to match old_data ({:?})", self, old_tuple_term);
+            *self = new_tuple_term;
         } else {
-            // Eat the first address token, interpreting it as the array index.
-            // TODO: Support other queries here, such as `Len` (though this would require returning
-            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
-            // a value without a memory address))
-            // TEMP HACK: Assume u32 index for now, but should support other int types too
-            let index = *address_v[0]
-                .downcast_ref::<u32>()
-                .ok_or_else(|| anyhow::anyhow!("TupleTerm::query expected u32 index"))?;
-            let element = self
-                .get(index as usize)
-                .ok_or_else(|| anyhow::anyhow!("TupleTerm::query index out of bounds"))?
-                .as_ref();
-            // Recurse with the remainder of the address.
-            dy::RUNTIME_LA
-                .read()
-                .unwrap()
-                .query(element, &address_v[1..])
-
-            // TODO: Other views, like `type` and `len`.
+            anyhow::bail!("TupleTerm only supports ReplacementTerm edits")
         }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for TupleTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::TupleTermView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for TupleTerm {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::TupleTermMutView::new(self)
+        Ok(())
     }
 }
 
@@ -309,6 +280,42 @@ impl st::Serializable for TupleTerm {
             bytes_written += element.serialize(writer)?;
         }
         Ok(bytes_written)
+    }
+}
+
+impl qv::SingleQuery<dy::Value> for TupleTerm {
+    type ReturnType<'a> = TupleTermQuery<'a>;
+    type Error = Error;
+    fn run_single_query<'a>(
+        &'a self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(elem_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::TupleTermElemView::new(self, *elem_index as usize)?.into())
+        } else {
+            anyhow::bail!(
+                "TupleTerm::run_single_query; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for TupleTerm {
+    type ReturnType<'a> = TupleTermQueryMut<'a>;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(elem_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::TupleTermElemMutView::new(self, *elem_index as usize)?.into())
+        } else {
+            anyhow::bail!(
+                "TupleTerm::run_single_query_mut; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
     }
 }
 
@@ -383,6 +390,50 @@ pub fn prefix_partial_cmp(lhs: &[dy::Value], rhs: &[dy::Value]) -> Option<std::c
             Some(Greater)
         } else {
             Some(Less)
+        }
+    }
+}
+
+#[derive(Clone, Debug, derive_more::From)]
+pub enum TupleTermQuery<'a> {
+    TupleTermElemView(qv::TupleTermElemView<'a>),
+}
+
+// TODO: Derive
+impl<'b> qv::EvalTrait for TupleTermQuery<'b> {
+    fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
+        match self {
+            Self::TupleTermElemView(v) => v.eval(),
+        }
+    }
+}
+
+#[derive(Debug, derive_more::From)]
+pub enum TupleTermQueryMut<'a> {
+    TupleTermElemMutView(qv::TupleTermElemMutView<'a>),
+}
+
+// TODO: Derive this
+impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermQueryMut<'b> {
+    fn query_mut_and_apply_edit<'s, 'a>(
+        &'s mut self,
+        address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        match self {
+            Self::TupleTermElemMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
+        }
+    }
+}
+
+// TODO: Derive this, because it just forwards to each variant.
+impl<'a> qv::ApplyEditTrait for TupleTermQueryMut<'a> {
+    fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
+        match self {
+            Self::TupleTermElemMutView(v) => v.apply_edit(edit),
         }
     }
 }

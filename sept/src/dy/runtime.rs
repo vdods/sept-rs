@@ -3,6 +3,7 @@ use crate::{
         self, ArrayTerm, GlobalSymRefTerm, LocalSymRefTerm, OrderedMapTerm, StructTerm,
         StructTermTerm, TupleTerm, ValueGuts,
     },
+    qv,
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
         Float64, Float64Type, GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef,
@@ -38,27 +39,7 @@ pub type DeserializeParametersAndConstructFn =
     fn(constructor: &ValueGuts, reader: &mut dyn std::io::Read) -> Result<dy::Value>;
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
-pub type QueryFn =
-    for<'a> fn(queryable: &'a ValueGuts, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts>;
-#[allow(unused)] // TEMP HACK
-                 // pub type Query2Fn = for<'a> fn(
-                 //     query_subject_b: Box<dy::ValueGuts>,
-                 //     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-                 // ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
-                 // pub type AsQueryTraitFn = for<'a> fn(x: &'a ValueGuts) -> &'a dyn dy::QueryTrait<'a>;
-                 // TEMP HACK
-pub type Query2Fn = for<'a> fn(
-    query_subject: &'a dy::ValueGuts,
-    address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
-// pub type ApplyEditFn = fn(x: &mut ValueGuts, edit: dy::Value) -> Result<()>;
-// pub type MakeQueryFn = for<'a> fn(
-//     x: &'a dy::ValueGuts,
-//     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-// ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>;
-// pub type AsQueryTraitFn = for<'a> fn(x: &'a ValueGuts) -> &'a dyn dy::QueryTrait<'a>;
-pub type DiffApplyInPlaceFn = fn(diff: &ValueGuts, target: &mut ValueGuts) -> Result<()>;
-pub type DiffIntoInverseFn = fn(diff: dy::Value) -> Result<dy::Value>;
+pub type ApplyEditFn = fn(x: &mut ValueGuts, edit: dy::Value) -> Result<()>;
 
 struct RegisteredCmpFn {
     cmp_fn: CmpFn,
@@ -79,61 +60,69 @@ pub trait QueryAdapterTrait: Send + Sync {
     fn make_and_run_query<'a>(
         &self,
         query_subject: &'a ValueGuts,
-        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
+        address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
     where
         Self: 'a;
 }
 
-pub struct QueryAdapter<T: dy::QueryableDynTrait>(std::marker::PhantomData<T>);
+pub struct QueryAdapter<T: qv::QueryableDynTrait>(std::marker::PhantomData<T>);
 
-unsafe impl<T: dy::QueryableDynTrait> Send for QueryAdapter<T> {}
-unsafe impl<T: dy::QueryableDynTrait> Sync for QueryAdapter<T> {}
+unsafe impl<T: qv::QueryableDynTrait> Send for QueryAdapter<T> {}
+unsafe impl<T: qv::QueryableDynTrait> Sync for QueryAdapter<T> {}
 
-impl<T: dy::QueryableDynTrait + 'static> QueryAdapterTrait for QueryAdapter<T> {
+impl<T: qv::QueryableDynTrait + 'static> QueryAdapterTrait for QueryAdapter<T> {
     fn make_and_run_query<'a>(
         &self,
         query_subject: &'a ValueGuts,
-        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>>
+        address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
     where
         Self: 'a,
     {
+        assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         query_subject
             .downcast_ref::<T>()
             .unwrap()
-            .make_and_run_query(address_i)
+            .make_and_run_query(address_token_i)
     }
 }
 
-pub trait QueryMutAdapterTrait: Send + Sync {
-    fn make_and_run_query_mut<'a>(
+pub trait QueryMutAndApplyEditAdapterTrait: Send + Sync {
+    fn query_mut_and_apply_edit<'a>(
         &self,
         query_subject: &'a mut ValueGuts,
-        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>>
+        address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
     where
         Self: 'a;
 }
 
-pub struct QueryMutAdapter<T: dy::QueryableMutDynTrait>(std::marker::PhantomData<T>);
+pub struct QueryMutAndApplyEditAdapter<T: qv::QueryMutAndApplyEditTrait>(
+    std::marker::PhantomData<T>,
+);
 
-unsafe impl<T: dy::QueryableMutDynTrait> Send for QueryMutAdapter<T> {}
-unsafe impl<T: dy::QueryableMutDynTrait> Sync for QueryMutAdapter<T> {}
+unsafe impl<T: qv::QueryMutAndApplyEditTrait> Send for QueryMutAndApplyEditAdapter<T> {}
+unsafe impl<T: qv::QueryMutAndApplyEditTrait> Sync for QueryMutAndApplyEditAdapter<T> {}
 
-impl<T: dy::QueryableMutDynTrait + 'static> QueryMutAdapterTrait for QueryMutAdapter<T> {
-    fn make_and_run_query_mut<'a>(
+impl<T: qv::QueryMutAndApplyEditTrait + 'static> QueryMutAndApplyEditAdapterTrait
+    for QueryMutAndApplyEditAdapter<T>
+{
+    fn query_mut_and_apply_edit<'a>(
         &self,
         query_subject: &'a mut ValueGuts,
-        address_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>>
+        address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
     where
         Self: 'a,
     {
+        assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         query_subject
             .downcast_mut::<T>()
             .unwrap()
-            .make_and_run_query_mut(address_i)
+            .query_mut_and_apply_edit(address_token_i, edit)
     }
 }
 
@@ -174,14 +163,9 @@ pub struct Runtime {
         HashMap<&'static str, NonParametricTermInstantiateFn>,
     non_parametric_term_instantiate_from_code_fn_m:
         HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
-    query_fn_m: HashMap<TypeId, QueryFn>,
-    query2_fn_m: HashMap<TypeId, Box<dyn QueryAdapterTrait>>,
-    query2_mut_fn_m: HashMap<TypeId, Box<dyn QueryMutAdapterTrait>>,
-    // query2_fn_m: HashMap<TypeId, Query2Fn>,
-    // as_query_trait_fn_m: HashMap<TypeId, AsQueryTraitFn>,
-    // apply_edit_fn_m: HashMap<TypeId, ApplyEditFn>,
-    diff_apply_in_place_fn_m: HashMap<(TypeId, TypeId), DiffApplyInPlaceFn>,
-    diff_into_inverse_fn_m: HashMap<TypeId, DiffIntoInverseFn>,
+    query_fn_m: HashMap<TypeId, Box<dyn QueryAdapterTrait>>,
+    query_mut_and_apply_edit_fn_m: HashMap<TypeId, Box<dyn QueryMutAndApplyEditAdapterTrait>>,
+    apply_edit_fn_m: HashMap<TypeId, ApplyEditFn>,
 }
 
 impl Runtime {
@@ -222,70 +206,80 @@ impl Runtime {
         runtime.register_term::<st::Insertion>().unwrap();
         runtime.register_term::<st::Deletion>().unwrap();
         runtime.register_term::<st::Replacement>().unwrap();
-        runtime.register_term::<dy::InsertionTerm>().unwrap();
-        runtime.register_term::<dy::DeletionTerm>().unwrap();
-        runtime.register_term::<dy::ReplacementTerm>().unwrap();
+        runtime.register_term::<qv::InsertionTerm>().unwrap();
+        runtime.register_term::<qv::DeletionTerm>().unwrap();
+        runtime.register_term::<qv::ReplacementTerm>().unwrap();
 
         // TEMP HACK -- these should be included in register_term
-        runtime.register_query2::<bool>().unwrap();
-        runtime.register_query2::<False>().unwrap();
-        runtime.register_query2::<True>().unwrap();
-        runtime.register_query2::<i8>().unwrap();
-        runtime.register_query2::<i16>().unwrap();
-        runtime.register_query2::<i32>().unwrap();
-        runtime.register_query2::<i64>().unwrap();
-        runtime.register_query2::<u8>().unwrap();
-        runtime.register_query2::<u16>().unwrap();
-        runtime.register_query2::<u32>().unwrap();
-        runtime.register_query2::<u64>().unwrap();
-        runtime.register_query2::<f32>().unwrap();
-        runtime.register_query2::<f64>().unwrap();
-        runtime.register_query2::<char>().unwrap();
-        runtime.register_query2::<String>().unwrap();
-        runtime.register_query2::<Void>().unwrap();
-        runtime.register_query2::<ArrayTerm>().unwrap();
-        runtime.register_query2::<TupleTerm>().unwrap();
-        runtime.register_query2::<OrderedMapTerm>().unwrap();
+        runtime.register_query::<bool>().unwrap();
+        runtime.register_query::<False>().unwrap();
+        runtime.register_query::<True>().unwrap();
+        runtime.register_query::<i8>().unwrap();
+        runtime.register_query::<i16>().unwrap();
+        runtime.register_query::<i32>().unwrap();
+        runtime.register_query::<i64>().unwrap();
+        runtime.register_query::<u8>().unwrap();
+        runtime.register_query::<u16>().unwrap();
+        runtime.register_query::<u32>().unwrap();
+        runtime.register_query::<u64>().unwrap();
+        runtime.register_query::<f32>().unwrap();
+        runtime.register_query::<f64>().unwrap();
+        runtime.register_query::<char>().unwrap();
+        runtime.register_query::<String>().unwrap();
+        runtime.register_query::<Void>().unwrap();
+        runtime.register_query::<ArrayTerm>().unwrap();
+        runtime.register_query::<TupleTerm>().unwrap();
+        runtime.register_query::<OrderedMapTerm>().unwrap();
 
-        runtime.register_query2_mut::<bool>().unwrap();
-        runtime.register_query2_mut::<False>().unwrap();
-        runtime.register_query2_mut::<True>().unwrap();
-        runtime.register_query2_mut::<i8>().unwrap();
-        runtime.register_query2_mut::<i16>().unwrap();
-        runtime.register_query2_mut::<i32>().unwrap();
-        runtime.register_query2_mut::<i64>().unwrap();
-        runtime.register_query2_mut::<u8>().unwrap();
-        runtime.register_query2_mut::<u16>().unwrap();
-        runtime.register_query2_mut::<u32>().unwrap();
-        runtime.register_query2_mut::<u64>().unwrap();
-        runtime.register_query2_mut::<f32>().unwrap();
-        runtime.register_query2_mut::<f64>().unwrap();
-        runtime.register_query2_mut::<char>().unwrap();
-        runtime.register_query2_mut::<String>().unwrap();
-        runtime.register_query2_mut::<Void>().unwrap();
-        runtime.register_query2_mut::<ArrayTerm>().unwrap();
-        runtime.register_query2_mut::<TupleTerm>().unwrap();
-        runtime.register_query2_mut::<OrderedMapTerm>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<bool>().unwrap();
+        runtime
+            .register_query_mut_and_apply_edit::<False>()
+            .unwrap();
+        runtime.register_query_mut_and_apply_edit::<True>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<i8>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<i16>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<i32>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<i64>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<u8>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<u16>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<u32>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<u64>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<f32>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<f64>().unwrap();
+        runtime.register_query_mut_and_apply_edit::<char>().unwrap();
+        runtime
+            .register_query_mut_and_apply_edit::<String>()
+            .unwrap();
+        runtime.register_query_mut_and_apply_edit::<Void>().unwrap();
+        runtime
+            .register_query_mut_and_apply_edit::<ArrayTerm>()
+            .unwrap();
+        runtime
+            .register_query_mut_and_apply_edit::<TupleTerm>()
+            .unwrap();
+        runtime
+            .register_query_mut_and_apply_edit::<OrderedMapTerm>()
+            .unwrap();
 
-        // runtime.register_apply_edit::<bool>().unwrap();
-        // runtime.register_apply_edit::<False>().unwrap();
-        // runtime.register_apply_edit::<True>().unwrap();
-        // runtime.register_apply_edit::<i8>().unwrap();
-        // runtime.register_apply_edit::<i16>().unwrap();
-        // runtime.register_apply_edit::<i32>().unwrap();
-        // runtime.register_apply_edit::<i64>().unwrap();
-        // runtime.register_apply_edit::<u8>().unwrap();
-        // runtime.register_apply_edit::<u16>().unwrap();
-        // runtime.register_apply_edit::<u32>().unwrap();
-        // runtime.register_apply_edit::<u64>().unwrap();
-        // runtime.register_apply_edit::<f32>().unwrap();
-        // runtime.register_apply_edit::<f64>().unwrap();
-        // runtime.register_apply_edit::<char>().unwrap();
-        // runtime.register_apply_edit::<String>().unwrap();
-        // runtime.register_apply_edit::<Void>().unwrap();
-        // runtime.register_apply_edit::<ArrayTerm>().unwrap();
-        // runtime.register_apply_edit::<TupleTerm>().unwrap();
-        // runtime.register_apply_edit::<OrderedMapTerm>().unwrap();
+        runtime.register_apply_edit::<bool>().unwrap();
+        runtime.register_apply_edit::<False>().unwrap();
+        runtime.register_apply_edit::<True>().unwrap();
+        runtime.register_apply_edit::<i8>().unwrap();
+        runtime.register_apply_edit::<i16>().unwrap();
+        runtime.register_apply_edit::<i32>().unwrap();
+        runtime.register_apply_edit::<i64>().unwrap();
+        runtime.register_apply_edit::<u8>().unwrap();
+        runtime.register_apply_edit::<u16>().unwrap();
+        runtime.register_apply_edit::<u32>().unwrap();
+        runtime.register_apply_edit::<u64>().unwrap();
+        runtime.register_apply_edit::<f32>().unwrap();
+        runtime.register_apply_edit::<f64>().unwrap();
+        runtime.register_apply_edit::<char>().unwrap();
+        runtime.register_apply_edit::<String>().unwrap();
+        runtime.register_apply_edit::<Void>().unwrap();
+        runtime.register_apply_edit::<ArrayTerm>().unwrap();
+        runtime.register_apply_edit::<TupleTerm>().unwrap();
+        runtime.register_apply_edit::<OrderedMapTerm>().unwrap();
 
         // Register types
         runtime.register_type::<Term>().unwrap();
@@ -337,11 +331,6 @@ impl Runtime {
         runtime.register_type::<StructTerm>().unwrap();
         runtime.register_type::<Struct>().unwrap();
         runtime.register_type::<StructType>().unwrap();
-
-        // TEMP HACK
-        // runtime.register_type::<st::ElementInsertion>().unwrap();
-        // runtime.register_type::<st::ElementDeletion>().unwrap();
-        // runtime.register_type::<st::ElementReplacement>().unwrap();
 
         // Register non-parametric term instantiate functions.
         runtime.register_non_parametric_term::<Term>().unwrap();
@@ -601,7 +590,6 @@ impl Runtime {
         T: st::TermTrait
             + dy::Deconstruct
             + std::fmt::Debug
-            // + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -635,7 +623,6 @@ impl Runtime {
         T: st::TypeTrait
             + dy::Deconstruct
             + std::fmt::Debug
-            // + dy::Queryable
             + st::Serializable
             + st::Stringifiable
             + std::cmp::PartialEq
@@ -1127,13 +1114,13 @@ impl Runtime {
         }
         Ok(())
     }
-    pub fn register_query<T: dy::Queryable + 'static>(&mut self) -> Result<()> {
+    pub fn register_query<T: qv::QueryableDynTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        let query_fn: QueryFn =
-            |queryable: &ValueGuts, address_v: &[dy::Value]| -> Result<&dy::ValueGuts> {
-                queryable.downcast_ref::<T>().unwrap().query(address_v)
-            };
-        match self.query_fn_m.insert(type_id, query_fn) {
+        // This is what carries the type information.
+        let query2_fn = QueryAdapter::<T>(std::marker::PhantomData);
+        // Store the adapter in a box as a trait object
+        let query2_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query2_fn);
+        match self.query_fn_m.insert(type_id, query2_fn_b) {
             Some(_) => {
                 anyhow::bail!(
                     "collision with already-registered query fn for {}; term type that produced the collision was {}",
@@ -1144,67 +1131,23 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    // pub fn register_diff<Target: st::TermTrait, Diff: st::DiffTrait<Target>>(
-    //     &mut self,
-    // ) -> Result<()>
-    // where
-    //     Diff::Inverse: dy::IntoValue,
-    // {
-    //     let type_id_of_diff = TypeId::of::<Diff>();
-    //     let type_id_pair = (TypeId::of::<Target>(), type_id_of_diff);
-
-    //     let diff_apply_in_place_fn = |diff: &ValueGuts, target: &mut ValueGuts| -> Result<()> {
-    //         Ok(diff
-    //             .downcast_ref::<Diff>()
-    //             .unwrap()
-    //             .apply_in_place(target.downcast_mut::<Target>().unwrap())?)
-    //     };
-    //     let diff_into_inverse_fn = |diff: dy::Value| -> Result<dy::Value> {
-    //         Ok(dy::Value::from(diff.downcast_into::<Diff>().into_inverse()))
-    //     };
-
-    //     match self
-    //         .diff_apply_in_place_fn_m
-    //         .insert(type_id_pair, diff_apply_in_place_fn)
-    //     {
-    //         Some(_) => {
-    //             anyhow::bail!(
-    //                 "collision with already-registered diff_apply_in_place fn for (Target: {}, Diff: {}); term types that produced the collision were (Target: {}, Diff: {})",
-    //                 self.label_of_type_id(type_id_pair.0),
-    //                 self.label_of_type_id(type_id_pair.1),
-    //                 std::any::type_name::<Target>(),
-    //                 std::any::type_name::<Diff>()
-    //             );
-    //         }
-    //         None => {}
-    //     }
-
-    //     match self
-    //         .diff_into_inverse_fn_m
-    //         .insert(type_id_of_diff, diff_into_inverse_fn)
-    //     {
-    //         Some(_) => {
-    //             anyhow::bail!(
-    //                 "collision with already-registered diff_into_inverse fn for {}; term type that produced the collision was {}",
-    //                 self.label_of_type_id(type_id_pair.0),
-    //                 std::any::type_name::<Diff>()
-    //             );
-    //         }
-    //         None => {}
-    //     }
-
-    //     Ok(())
-    // }
-    pub fn register_query2<T: dy::QueryableDynTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_query_mut_and_apply_edit<T: qv::QueryMutAndApplyEditTrait + 'static>(
+        &mut self,
+    ) -> Result<()> {
         let type_id = TypeId::of::<T>();
         // This is what carries the type information.
-        let query2_fn = QueryAdapter::<T>(std::marker::PhantomData);
+        let query_mut_and_apply_edit_fn =
+            QueryMutAndApplyEditAdapter::<T>(std::marker::PhantomData);
         // Store the adapter in a box as a trait object
-        let query2_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query2_fn);
-        match self.query2_fn_m.insert(type_id, query2_fn_b) {
+        let query_mut_and_apply_edit_fn_b: Box<dyn QueryMutAndApplyEditAdapterTrait> =
+            Box::new(query_mut_and_apply_edit_fn);
+        match self
+            .query_mut_and_apply_edit_fn_m
+            .insert(type_id, query_mut_and_apply_edit_fn_b)
+        {
             Some(_) => {
                 anyhow::bail!(
-                    "collision with already-registered query2 fn for {}; term type that produced the collision was {}",
+                    "collision with already-registered query_mut_and_apply_edit fn for {}; term type that produced the collision was {}",
                     self.label_of_type_id(type_id),
                     std::any::type_name::<T>()
                 );
@@ -1212,16 +1155,15 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_query2_mut<T: dy::QueryableMutDynTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_apply_edit<T: qv::ApplyEditTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
-        // This is what carries the type information.
-        let query2_mut_fn = QueryMutAdapter::<T>(std::marker::PhantomData);
-        // Store the adapter in a box as a trait object
-        let query2_mut_fn_b: Box<dyn QueryMutAdapterTrait> = Box::new(query2_mut_fn);
-        match self.query2_mut_fn_m.insert(type_id, query2_mut_fn_b) {
+        let apply_edit_fn = |x: &mut dy::ValueGuts, edit: dy::Value| -> Result<()> {
+            x.downcast_mut::<T>().unwrap().apply_edit(edit)
+        };
+        match self.apply_edit_fn_m.insert(type_id, apply_edit_fn) {
             Some(_) => {
                 anyhow::bail!(
-                    "collision with already-registered query2_mut fn for {}; term type that produced the collision was {}",
+                    "collision with already-registered apply_edit fn for {}; term type that produced the collision was {}",
                     self.label_of_type_id(type_id),
                     std::any::type_name::<T>()
                 );
@@ -1229,42 +1171,6 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    // NOTE: I think this is not necessary because run_query_mut returns Box<dyn QueryMutViewTrait>
-    // and doesn't need to go through the runtime.
-    // pub fn register_apply_edit<T: dy::QueryMutViewTrait + 'static>(&mut self) -> Result<()> {
-    //     let type_id = TypeId::of::<T>();
-    //     let apply_edit_fn = |x: &mut dy::ValueGuts, edit: dy::Value| -> Result<()> {
-    //         x.downcast_mut::<T>().unwrap().apply_edit(edit)
-    //     };
-    //     match self.apply_edit_fn_m.insert(type_id, apply_edit_fn) {
-    //         Some(_) => {
-    //             anyhow::bail!(
-    //                 "collision with already-registered apply_edit fn for {}; term type that produced the collision was {}",
-    //                 self.label_of_type_id(type_id),
-    //                 std::any::type_name::<T>()
-    //             );
-    //         }
-    //         None => Ok(()),
-    //     }
-    // }
-
-    // pub fn register_as_query_trait<'a, T: dy::QueryTrait<'a> + 'static>(&mut self) -> Result<()> {
-    //     panic!("NO");
-    //     // let type_id = TypeId::of::<T>();
-    //     // let as_query_trait_fn: AsQueryTraitFn =
-    //     //     |x: &'_ ValueGuts| -> &'_ dyn dy::QueryTrait<'_> { x.downcast_ref::<T>().unwrap() };
-    //     // match self.as_query_trait_fn_m.insert(type_id, as_query_trait_fn) {
-    //     //     Some(_) => {
-    //     //         anyhow::bail!(
-    //     //             "collision with already-registered as_query_trait fn for {}; term type that produced the collision was {}",
-    //     //             self.label_of_type_id(type_id),
-    //     //             std::any::type_name::<T>()
-    //     //         );
-    //     //     }
-    //     //     None => Ok(()),
-    //     // }
-    // }
-
     pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(
         &'a self,
     ) -> Option<&'a BinaryPredicate> {
@@ -1309,6 +1215,7 @@ impl Runtime {
     }
     // Note that this does not use referential transparency.  Stringifiable should be renamed to ConcreteText or something.
     pub fn stringify(&self, x: &ValueGuts) -> String {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.stringify_fn_m.get(&x.type_id()) {
             Some(stringify_fn) => stringify_fn(x),
             None => {
@@ -1339,6 +1246,7 @@ impl Runtime {
     // Note that this does not use referential transparency.
     // TODO: Should rename to nondereferencing_serialize
     pub fn serialize(&self, x: &ValueGuts, writer: &mut dyn std::io::Write) -> Result<usize> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.serialize_fn_m.get(&x.type_id()) {
             Some(serialize_fn) => Ok(serialize_fn(x, writer)?),
             None => {
@@ -1347,6 +1255,8 @@ impl Runtime {
         }
     }
     pub fn cmp(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> std::cmp::Ordering {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
@@ -1382,6 +1292,8 @@ impl Runtime {
     }
     // This method does only the cmp operation, not handling referential transparency.
     fn cmp_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> std::cmp::Ordering {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
         let is_transposed = lhs_type_id > rhs_type_id;
@@ -1419,6 +1331,8 @@ impl Runtime {
         }
     }
     pub fn eq(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
@@ -1453,6 +1367,8 @@ impl Runtime {
     }
     // This method does only the eq operation, not handling referential transparency.
     fn eq_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> bool {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
         let is_transposed = lhs_type_id > rhs_type_id;
@@ -1484,6 +1400,8 @@ impl Runtime {
         !self.eq(lhs, rhs)
     }
     pub fn partial_cmp(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> Option<std::cmp::Ordering> {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let lhs_dereferenced = self.dereferenced(lhs).expect("dereferenced failed");
         let rhs_dereferenced = self.dereferenced(rhs).expect("dereferenced failed");
@@ -1518,6 +1436,8 @@ impl Runtime {
     }
     // This method does only the partial_cmp operation, not handling referential transparency.
     fn partial_cmp_impl(&self, lhs: &ValueGuts, rhs: &ValueGuts) -> Option<std::cmp::Ordering> {
+        assert!(lhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(rhs.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let lhs_type_id = lhs.type_id();
         let rhs_type_id = rhs.type_id();
         let is_transposed = lhs_type_id > rhs_type_id;
@@ -1549,6 +1469,8 @@ impl Runtime {
         }
     }
     pub fn inhabits(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(t.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         let t_maybe_dereferenced = self.dereferenced(t).expect("dereferenced failed");
@@ -1582,6 +1504,8 @@ impl Runtime {
         }
     }
     fn inhabits_impl(&self, x: &ValueGuts, t: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(t.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let type_id_pair = (x.type_id(), t.type_id());
         match self.inhabits_fn_m.get(&type_id_pair) {
             Some(inhabits_fn) => inhabits_fn(x, t),
@@ -1597,6 +1521,7 @@ impl Runtime {
         }
     }
     pub fn abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
@@ -1610,6 +1535,7 @@ impl Runtime {
         }
     }
     pub(crate) fn nondereferencing_abstract_type_of(&self, x: &ValueGuts) -> Box<ValueGuts> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let type_id = x.type_id();
         match self.abstract_type_fn_m.get(&type_id) {
             Some(abstract_type_fn) => abstract_type_fn(x),
@@ -1625,6 +1551,7 @@ impl Runtime {
     }
     // Note that clone doesn't use referential transparency.  TODO: Figure out if this is correct.
     pub fn clone(&self, x: &ValueGuts) -> Box<ValueGuts> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         let type_id = x.type_id();
         match self.clone_fn_m.get(&type_id) {
             Some(clone_fn) => clone_fn(x),
@@ -1638,6 +1565,7 @@ impl Runtime {
     }
     // TODO: Consider renaming this to is_parametric_term
     pub fn is_parametric(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
@@ -1652,6 +1580,7 @@ impl Runtime {
     }
     // TODO: Consider renaming this to is_parametric_term_impl
     pub(crate) fn nondereferencing_is_parametric(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.is_parametric_fn_m.get(&x.type_id()) {
             Some(is_parametric_fn) => is_parametric_fn(x),
             None => {
@@ -1666,6 +1595,7 @@ impl Runtime {
         }
     }
     pub fn is_type(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         // Handle referential transparency.
         let x_maybe_dereferenced = self.dereferenced(x).expect("dereferenced failed");
         match x_maybe_dereferenced {
@@ -1677,6 +1607,7 @@ impl Runtime {
         }
     }
     fn is_type_impl(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.is_type_fn_m.get(&x.type_id()) {
             Some(is_type_fn) => is_type_fn(x),
             None => {
@@ -1688,10 +1619,12 @@ impl Runtime {
         }
     }
     pub fn is_non_parametric_term(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         self.non_parametric_term_code_m.contains_key(&x.type_id())
     }
     /// Returns the NonParametricTermCode value for x if it's a NonParametricTerm, otherwise error.
     pub fn non_parametric_term_code(&self, x: &ValueGuts) -> Result<st::NonParametricTermCode> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         Ok(self
             .non_parametric_term_code_m
             .get(&x.type_id())
@@ -1699,9 +1632,11 @@ impl Runtime {
             .ok_or_else(|| anyhow::anyhow!("this type is not registered as a NonParametricTerm"))?)
     }
     pub fn is_transparent_ref_term(&self, x: &ValueGuts) -> bool {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         self.dereferenced_once_fn_m.contains_key(&x.type_id())
     }
     pub fn dereferenced_once(&self, x: &ValueGuts) -> Result<Arc<RwLock<dy::Value>>> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
             Some(dereferenced_once_fn) => Ok(dereferenced_once_fn(x)?),
             None => {
@@ -1717,11 +1652,12 @@ impl Runtime {
     /// otherwise it iterates dereferenced_once until it's not a transparent reference.
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
     pub fn dereferenced<'a>(&self, x: &'a ValueGuts) -> Result<MaybeDereferencedValue<'a>> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.dereferenced_once_fn_m.get(&x.type_id()) {
-            Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::ValueLA(
+            Some(dereferenced_once_fn) => Ok(MaybeDereferencedValue::make_value_la(
                 self.dereferenced_inner(dereferenced_once_fn(x)?)?,
             )),
-            None => Ok(MaybeDereferencedValue::Ref(x)),
+            None => Ok(MaybeDereferencedValue::make_ref(x)),
         }
     }
     // TODO: Implement some limit to reference nesting.  Or not, and just let the stack overflow and the process crash.
@@ -1742,6 +1678,7 @@ impl Runtime {
         constructor: &ValueGuts,
         parameter_t: dy::TupleTerm,
     ) -> Result<dy::Value> {
+        assert!(constructor.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.construct_fn_m.get(&constructor.type_id()) {
             Some(construct_fn) => Ok(construct_fn(constructor, parameter_t)?),
             None => {
@@ -1758,6 +1695,7 @@ impl Runtime {
         constructor: &ValueGuts,
         reader: &mut dyn std::io::Read,
     ) -> Result<dy::Value> {
+        assert!(constructor.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self
             .deserialize_parameters_and_construct_fn_m
             .get(&constructor.type_id())
@@ -1775,6 +1713,7 @@ impl Runtime {
         }
     }
     pub fn deconstructed(&self, x: &ValueGuts) -> dy::Deconstruction {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.deconstruct_fn_m.get(&x.type_id()) {
             Some(deconstruct_fn) => deconstruct_fn(x),
             None => {
@@ -1818,102 +1757,57 @@ impl Runtime {
     }
     pub fn query<'a>(
         &self,
-        queryable: &'a ValueGuts,
-        address_v: &[dy::Value],
-    ) -> Result<&'a dy::ValueGuts> {
-        match self.query_fn_m.get(&queryable.type_id()) {
-            Some(query_fn) => query_fn(queryable, address_v),
-            None => Err(anyhow::anyhow!(
-                "no query fn found for `{}`",
-                self.label_of_value_guts(queryable)
-            )),
-        }
-    }
-    pub fn diff_apply_in_place(&self, diff: &ValueGuts, target: &mut ValueGuts) -> Result<()> {
-        let type_id_pair = (target.type_id(), diff.type_id());
-        match self.diff_apply_in_place_fn_m.get(&type_id_pair) {
-            Some(diff_apply_in_place_fn) => Ok(diff_apply_in_place_fn(diff, target)?),
-            None => {
-                panic!(
-                    "no diff_apply_in_place fn found for (Target: {}, Diff: {})",
-                    self.label_of_value_guts(target),
-                    self.label_of_value_guts(diff)
-                );
-            }
-        }
-    }
-    pub fn diff_into_inverse(&self, diff: dy::Value) -> Result<dy::Value> {
-        match self.diff_into_inverse_fn_m.get(&diff.type_id()) {
-            Some(diff_into_inverse_fn) => Ok(diff_into_inverse_fn(diff)?),
-            None => {
-                panic!(
-                    "no diff_into_inverse fn found for {}",
-                    self.label_of_value_guts(diff.as_ref())
-                );
-            }
-        }
-    }
-    pub fn query2<'a>(
-        &self,
         query_subject: &'a ValueGuts,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryViewTrait + 'a>> {
-        match self.query2_fn_m.get(&query_subject.type_id()) {
-            Some(query2_fn_b) => query2_fn_b.make_and_run_query(query_subject, address_i),
+        address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+    ) -> Result<Box<dyn qv::EvalTrait + 'a>> {
+        assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        match self.query_fn_m.get(&query_subject.type_id()) {
+            Some(query2_fn_b) => query2_fn_b.make_and_run_query(query_subject, address_token_i),
             None => Err(anyhow::anyhow!(
                 "no query2 fn found for `{}`",
                 self.label_of_value_guts(query_subject)
             )),
         }
     }
-    pub fn query2_mut<'a>(
+    pub fn query_mut_and_apply_edit<'s, 'a>(
         &self,
-        query_subject: &'a mut ValueGuts,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn dy::QueryMutViewTrait + 'a>> {
-        match self.query2_mut_fn_m.get(&query_subject.type_id()) {
-            Some(query2_mut_fn_b) => {
-                query2_mut_fn_b.make_and_run_query_mut(query_subject, address_i)
-            }
+        query_subject: &'s mut ValueGuts,
+        address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
+        edit: dy::Value,
+    ) -> Result<()>
+    where
+        's: 'a,
+    {
+        assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        match self
+            .query_mut_and_apply_edit_fn_m
+            .get(&query_subject.type_id())
+        {
+            Some(query_mut_and_apply_edit_fn_b) => query_mut_and_apply_edit_fn_b
+                .query_mut_and_apply_edit(query_subject, address_token_i, edit),
             None => Err(anyhow::anyhow!(
-                "no query2_mut fn found for `{}`",
+                "no query_mut_and_apply_edit fn found for `{}`",
                 self.label_of_value_guts(query_subject)
             )),
         }
     }
-    // pub fn query2<'a>(
-    //     &self,
-    //     query_subject: &ValueGuts,
-    //     address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    // ) -> Result<Box<dyn dy::QueryViewTrait + 'a>> {
-    //     match self.query2_fn_m.get(&query_subject.type_id()) {
-    //         Some(query2_fn_b) => query2_fn_b.call(query_subject, address_i),
-    //         None => Err(anyhow::anyhow!(
-    //             "no query2 fn found for `{}`",
-    //             self.label_of_value_guts(query_subject)
-    //         )),
-    //     }
-    // }
-    // pub fn as_query_trait<'a>(&self, x: &'a ValueGuts) -> Result<&'a dyn dy::QueryTrait<'a>> {
-    //     match self.as_query_trait_fn_m.get(&x.type_id()) {
-    //         Some(as_query_trait_fn) => Ok(as_query_trait_fn(x)),
-    //         None => Err(anyhow::anyhow!(
-    //             "no as_query_trait fn found for `{}`",
-    //             self.label_of_value_guts(x)
-    //         )),
-    //     }
-    // }
-    // pub fn apply_edit(&self, x: &mut ValueGuts, edit: dy::Value) -> Result<()> {
-    //     match self.apply_edit_fn_m.get(&x.type_id()) {
-    //         Some(apply_edit_fn) => apply_edit_fn(x, edit),
-    //         None => Err(anyhow::anyhow!(
-    //             "no apply_edit fn found for `{}`",
-    //             self.label_of_value_guts(x)
-    //         )),
-    //     }
-    // }
+    pub fn apply_edit(&self, x: &mut ValueGuts, edit: dy::Value) -> Result<()> {
+        assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        match self.apply_edit_fn_m.get(&x.type_id()) {
+            Some(apply_edit_fn) => apply_edit_fn(x, edit),
+            None => Err(anyhow::anyhow!(
+                "no apply_edit fn found for `{}`",
+                self.label_of_value_guts(x)
+            )),
+        }
+    }
 }
 
+/// Don't construct the variants of this enum directly, use the constructors `make_ref` and `make_value_la` instead.
+/// The reason for this is due to `ValueGuts` being `dyn Any`, one can create a `&ValueGuts` to basically anything,
+/// but it's important to never make a `&ValueGuts` whose `Any` `TypeId` is `Value` or `Box<ValueGuts>`, and these
+/// constructors enforce that.
+// TODO: Figure out how to prohibit direct construction of the variants.
 // This sucks, and so does Runtime::dereferenced and dereferenced_inner, and all the call sites in this file.
 // TODO: Use MaybeDereferencedValue::read at call sites that suck.
 // TODO: Could this use Cow<'a, ValueGuts> instead? ValueGuts would need to impl ToOwned.  In this
@@ -1937,13 +1831,36 @@ pub enum MaybeDereferencedValue<'a> {
 // }
 
 impl<'a> MaybeDereferencedValue<'a> {
+    pub fn make_ref(value_guts: &'a dy::ValueGuts) -> Self {
+        assert!(value_guts.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        assert!(value_guts.type_id() != std::any::TypeId::of::<Box<dy::ValueGuts>>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
+        Self::Ref(value_guts)
+    }
+    pub fn make_value_la(value_la: Arc<RwLock<dy::Value>>) -> Self {
+        Self::ValueLA(value_la)
+    }
     pub fn read(&'a self) -> MaybeDereferencedValueReadGuard<'a> {
         match self {
             MaybeDereferencedValue::Ref(value_guts) => {
+                assert!(value_guts.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
                 MaybeDereferencedValueReadGuard::<'a>::Ref(*value_guts)
             }
             MaybeDereferencedValue::ValueLA(value_la) => {
                 MaybeDereferencedValueReadGuard::<'a>::ValueG(value_la.read().unwrap())
+            }
+        }
+    }
+    pub fn to_owned(self) -> dy::Value {
+        match self {
+            MaybeDereferencedValue::Ref(value_guts) => {
+                dy::Value::from(dy::RUNTIME_LA.read().unwrap().clone(value_guts))
+            }
+            MaybeDereferencedValue::ValueLA(value_la) => {
+                // Note: This is similar to Arc::unwrap_or_clone (which is unstable at the moment).
+                match Arc::try_unwrap(value_la) {
+                    Ok(value_g) => value_g.into_inner().unwrap(),
+                    Err(value_la) => value_la.read().unwrap().clone(),
+                }
             }
         }
     }

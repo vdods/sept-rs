@@ -1,7 +1,7 @@
 use crate::{
-    dy,
+    dy, qv,
     st::{self, Inhabits, Stringifiable, TermTrait},
-    Result,
+    Error, Result,
 };
 
 pub type Utf8StringTerm = String;
@@ -18,7 +18,6 @@ impl dy::Deconstruct for String {
 }
 
 // TODO: Maybe move this elsewhere so as not to clog up this file
-#[allow(unused)]
 pub fn replace_single_char_in_string(
     s: &mut String,
     char_index: usize,
@@ -81,88 +80,27 @@ pub fn replace_substr_in_string(
     Ok(())
 }
 
-// // TODO: Maybe move this elsewhere so as not to clog up this file
-// impl st::DiffTrait<String> for st::ElementInsertionTerm<String, u32, char> {
-//     type Inverse = st::ElementDeletionTerm<String, u32, char>;
-//     // type Error = std::convert::Infallible;
-//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
-//         // NOTE: This allows inserting at the end of the String using any char index at the end or after.
-//         // 'x' is just a dummy char.
-//         let (char_byte_index, _) = target
-//             .char_indices()
-//             .nth(self.element_index as usize)
-//             .unwrap_or_else(|| (target.len(), 'x'));
-//         target.insert(char_byte_index, self.insertion_data);
-//         Ok(())
-//     }
-//     fn into_inverse(self) -> Self::Inverse {
-//         st::ElementDeletionTerm::new(self.element_index, self.insertion_data)
-//     }
-// }
-
-// // TODO: Maybe move this elsewhere so as not to clog up this file
-// impl st::DiffTrait<String> for st::ElementDeletionTerm<String, u32, char> {
-//     // type Target = st::Utf8StringTerm;
-//     type Inverse = st::ElementInsertionTerm<String, u32, char>;
-//     // type Error = anyhow::Error;
-//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
-//         let (char_byte_index, char_to_delete) = target
-//             .char_indices()
-//             .nth(self.element_index as usize)
-//             .ok_or_else(|| anyhow::anyhow!("char_index out of range"))?;
-//         anyhow::ensure!(
-//             char_to_delete == self.deletion_data,
-//             "char to delete was {:?} but expected to delete char {:?}",
-//             char_to_delete,
-//             self.deletion_data
-//         );
-//         target.remove(char_byte_index);
-//         Ok(())
-//     }
-//     fn into_inverse(self) -> Self::Inverse {
-//         st::ElementInsertionTerm::new(self.element_index, self.deletion_data)
-//     }
-// }
-
-// // TODO: Maybe move this elsewhere so as not to clog up this file
-// impl st::DiffTrait<String> for st::ElementReplacementTerm<String, u32, char> {
-//     // type Target = st::Utf8StringTerm;
-//     type Inverse = st::ElementReplacementTerm<String, u32, char>;
-//     // type Error = anyhow::Error;
-//     fn apply_in_place(&self, target: &mut String) -> Result<()> {
-//         // TODO: This format could be made into one that uses a local buffer so as not to allocate.
-//         // TODO: Have this check the index
-//         replace_single_char_in_string(
-//             target,
-//             self.element_index as usize,
-//             Some(self.old_data),
-//             format!("{}", self.new_data).as_str(),
-//         )?;
-//         Ok(())
-//     }
-//     fn into_inverse(self) -> Self::Inverse {
-//         st::ElementReplacementTerm::new(self.element_index, self.new_data, self.old_data)
-//     }
-// }
-
-impl dy::Editable for String {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        // TEMP HACK -- this is rather silly, but is a quick way to get the right behavior for now.
-        use dy::QueryMutTrait;
-        // Re-borrow the address iterator items with a shorter lifetime.
-        // let mut address_i = address_i.map(|x| &*x);
-        // Note that this can't be Self, because this introduces a new, shorter lifetime.
-        dy::Utf8StringTermMutView::new(self)
-            // .run_query_mut(&mut address_i)?
-            .run_query_mut(address_i)?
-            .apply_edit(edit)
+impl qv::ApplyEditTrait for String {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        // TODO: "clear" edit
+        if edit.is::<qv::ReplacementTerm>() {
+            let edit = edit.downcast_into::<qv::ReplacementTerm>();
+            anyhow::ensure!(
+                edit.old_data.is::<String>(),
+                "Utf8StringTerm ReplacementTerm edit expected old_data to be String"
+            );
+            anyhow::ensure!(
+                edit.new_data.is::<String>(),
+                "Utf8StringTerm ReplacementTerm edit expected new_data to be String"
+            );
+            let old_string = edit.old_data.downcast_into::<String>();
+            let new_string = edit.new_data.downcast_into::<String>();
+            anyhow::ensure!(*self == old_string, "Utf8StringTerm ReplacementTerm edit expected current value ({:?}) to match old_data ({:?})", self, old_string);
+            *self = new_string;
+        } else {
+            anyhow::bail!("Utf8StringTerm does not support edit: {}", edit);
+        }
+        Ok(())
     }
 }
 
@@ -188,30 +126,9 @@ impl st::Deserializable for String {
     }
 }
 
-impl dy::Queryable for String {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: Handle `char`, `line`, `byte` views.");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for String {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::Utf8StringTermView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for String {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::Utf8StringTermMutView::new(self)
+impl qv::QueryableDynTrait for String {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::Utf8StringTermView::new(self))
     }
 }
 
@@ -230,6 +147,62 @@ impl st::Serializable for String {
         writer.write_all(self.as_bytes())?;
         bytes_written += self.len();
         Ok(bytes_written)
+    }
+}
+
+impl qv::SingleQuery<dy::Value> for String {
+    type ReturnType<'a> = qv::Utf8StringTermQuery<'a>;
+    type Error = Error;
+    fn run_single_query<'a>(
+        &'a self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(address_string) = address_token.downcast_ref::<String>() {
+            match address_string.as_str() {
+                "char" => Ok(qv::Utf8StringTermCharView::new(self).into()),
+                "line" => Ok(qv::Utf8StringTermLineView::new(self).into()),
+                // TODO: "len" perhaps
+                _ => {
+                    anyhow::bail!(
+                        "Utf8StringTerm::run_single_query; unrecognized address_token {:?}",
+                        address_string.as_str()
+                    );
+                }
+            }
+        } else {
+            anyhow::bail!(
+                "Utf8StringTerm::run_single_query; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for String {
+    type ReturnType<'a> = qv::Utf8StringTermQueryMut<'a>;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(address_string) = address_token.downcast_ref::<String>() {
+            match address_string.as_str() {
+                "char" => Ok(qv::Utf8StringTermCharMutView::new(self).into()),
+                "line" => Ok(qv::Utf8StringTermLineMutView::new(self).into()),
+                // TODO: "len" perhaps
+                _ => {
+                    anyhow::bail!(
+                        "Utf8StringTerm::run_single_query_mut; unrecognized address_token {:?}",
+                        address_string.as_str()
+                    );
+                }
+            }
+        } else {
+            anyhow::bail!(
+                "Utf8StringTerm::run_single_query_mut; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
     }
 }
 
@@ -305,30 +278,17 @@ impl st::TestValues for String {
     }
 }
 
-// TODO: Move these into sept_tests
-#[cfg(test)]
-mod tests {
-    fn test_serialize_deserialize_case(string: String, expected_bytes_written: usize) {
-        let mut buffer = Vec::new();
-        use crate::st::Serializable;
-        let bytes_written = string.serialize(&mut buffer).expect("pass");
-        assert_eq!(bytes_written, expected_bytes_written);
-        use crate::st::Deserializable;
-        // `buffer.as_slice()` is the content, and you have to take a mut ref to it to get a reader.
-        // The content the slice is pointing to doesn't change, but the slice start does change.
-        let reader: &mut dyn std::io::Read = &mut buffer.as_slice();
-        let deserialized_string = String::deserialize(reader).expect("pass");
-        assert_eq!(deserialized_string, string);
-    }
-
-    #[test]
-    fn test_serialize_deserialize() {
-        const SIZE_OF_U64: usize = 8;
-        test_serialize_deserialize_case("".to_string(), SIZE_OF_U64 + 0);
-        test_serialize_deserialize_case("a".to_string(), SIZE_OF_U64 + 1);
-        test_serialize_deserialize_case("\n".to_string(), SIZE_OF_U64 + 1);
-        test_serialize_deserialize_case(" ".to_string(), SIZE_OF_U64 + 1);
-        test_serialize_deserialize_case("ø".to_string(), SIZE_OF_U64 + 2);
-        test_serialize_deserialize_case("blah blah blah".to_string(), SIZE_OF_U64 + 14);
+/// The use of the Either enum is a kludge to get around the bug https://github.com/rust-lang/rust/issues/111457
+pub fn split_inclusive_allow_trailing_empty<'a>(
+    s: &'a str,
+    sep: char,
+) -> either::Either<
+    std::iter::Chain<std::str::SplitInclusive<'a, char>, std::iter::Once<&'a str>>,
+    std::str::SplitInclusive<'a, char>,
+> {
+    if s.is_empty() || s.ends_with(sep) {
+        either::Either::Left(s.split_inclusive(sep).chain(std::iter::once("")))
+    } else {
+        either::Either::Right(s.split_inclusive(sep))
     }
 }

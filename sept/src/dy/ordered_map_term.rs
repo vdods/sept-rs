@@ -1,7 +1,7 @@
 use crate::{
-    dy,
-    st::{self, Inhabits, OrderedMap, Stringifiable},
-    Result,
+    dy, qv,
+    st::{self, Inhabits, OrderedMap},
+    Error, Result,
 };
 use std::collections::BTreeMap;
 
@@ -24,10 +24,16 @@ use std::collections::BTreeMap;
 )]
 pub struct OrderedMapTerm(BTreeMap<dy::Value, dy::Value>);
 
+impl qv::ApplyEditTrait for OrderedMapTerm {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
+
 impl dy::Deconstruct for OrderedMapTerm {
     fn deconstruct(self) -> dy::Deconstruction {
-        // Turn the BTreeMap elements (i.e. key-value pairs) into TupleTerms, and then collect that into a TupleTerm.
-        // Could create MappingTerm, Mapping, and MappingType terms for better semantics.
+        // Turn the BTreeMap elements (i.e. key-value pairs) into TupleTerms, and then collect that into
+        // a TupleTerm.  Could create MappingTerm, Mapping, and MappingType terms for better semantics.
         dy::ParametricDeconstruction::new_recursive(
             OrderedMap.into(),
             self.0
@@ -55,23 +61,8 @@ impl st::Deserializable for OrderedMapTerm {
 
 impl std::fmt::Display for OrderedMapTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        use st::Stringifiable;
         write!(f, "{}", &self.stringify())
-    }
-}
-
-impl dy::Editable for OrderedMapTerm {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        use dy::QueryMutTrait;
-        dy::OrderedMapTermMutView::new(self)
-            .run_query_mut(address_i)?
-            .apply_edit(edit)
     }
 }
 
@@ -81,40 +72,9 @@ impl Inhabits<OrderedMap> for OrderedMapTerm {
     }
 }
 
-impl dy::Queryable for OrderedMapTerm {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            // Eat the first address token, interpreting it as the key.
-            // TODO: Support other queries here, such as `Len` (though this would require returning
-            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
-            // a value without a memory address))
-            let key = &address_v[0];
-            let value = self
-                .get(key)
-                .ok_or_else(|| anyhow::anyhow!("OrderedMapTerm::query key not found"))?
-                .as_ref();
-            // Recurse with the remainder of the address.
-            dy::RUNTIME_LA.read().unwrap().query(value, &address_v[1..])
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for OrderedMapTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::OrderedMapTermView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for OrderedMapTerm {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::OrderedMapTermMutView::new(self)
+impl qv::QueryableDynTrait for OrderedMapTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::OrderedMapTermView::new(self))
     }
 }
 
@@ -131,7 +91,42 @@ impl st::Serializable for OrderedMapTerm {
     }
 }
 
-impl Stringifiable for OrderedMapTerm {
+impl qv::SingleQueryMut<dy::Value> for OrderedMapTerm {
+    type ReturnType<'a> = qv::OrderedMapTermQueryMut<'a>;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(address_char) = address_token.downcast_ref::<char>().map(|c| *c) {
+            match address_char {
+                // keys
+                'k' => Ok(qv::OrderedMapTermKeyMutView::new(self).into()),
+                // values
+                'v' => Ok(qv::OrderedMapTermValMutView::new(self).into()),
+                // key/value pairs
+                'p' => {
+                    unimplemented!("not yet");
+                }
+                _ => {
+                    use st::Stringifiable;
+                    anyhow::bail!(
+                        "OrderedMapTerm query doesn't support address: {}",
+                        address_char.stringify()
+                    )
+                }
+            }
+        } else {
+            use st::Stringifiable;
+            anyhow::bail!(
+                "OrderedMapTerm query doesn't support address: {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl st::Stringifiable for OrderedMapTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("OrderedMap(");

@@ -1,11 +1,23 @@
 use crate::{
-    dy,
+    dy, qv,
     st::{self, Float32, Float64, Inhabits, Stringifiable, TermTrait},
-    Result,
+    Error, Result,
 };
 
 pub type Float32Term = f32;
 pub type Float64Term = f64;
+
+impl qv::ApplyEditTrait for f32 {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
+
+impl qv::ApplyEditTrait for f64 {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
 
 impl dy::Deconstruct for f32 {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -60,62 +72,19 @@ impl st::Deserializable for f64 {
     }
 }
 
-impl dy::Queryable for f32 {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: implement views, e.g. different number bases");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::Queryable for f64 {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: implement views, e.g. different number bases");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
+// TODO: Replace this with the full set of queries
+impl qv::QueryableDynTrait for f32 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl dy::QueryableDynTrait for f32 {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::GenericView::new(self)
+impl qv::QueryableDynTrait for f64 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::GenericView::new(self))
     }
 }
-
-// TODO: Replace this with the full set of queries
-impl dy::QueryableDynTrait for f64 {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::GenericView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for f32 {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::GenericMutView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for f64 {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::GenericMutView::new(self)
-    }
-}
-
 
 impl st::Serializable for f32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
@@ -140,6 +109,28 @@ impl st::Serializable for f64 {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         writer.write_all(&self.to_le_bytes())?;
         Ok(std::mem::size_of::<Self>())
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for f32 {
+    type ReturnType<'a> = qv::EmptyQuery;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        _address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        anyhow::bail!("f32 does not support queries at this time");
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for f64 {
+    type ReturnType<'a> = qv::EmptyQuery;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        _address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        anyhow::bail!("f64 does not support queries at this time");
     }
 }
 

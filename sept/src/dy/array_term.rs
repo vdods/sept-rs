@@ -1,7 +1,7 @@
 use crate::{
-    dy,
+    dy, qv,
     st::{self, Array, Inhabits, Stringifiable},
-    Result,
+    Error, Result,
 };
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
@@ -19,6 +19,12 @@ use crate::{
 )]
 #[st_term_trait(AbstractTypeType = "Array", is_parametric = "true", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
+
+impl qv::ApplyEditTrait for ArrayTerm {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
 
 impl dy::Deconstruct for ArrayTerm {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -43,70 +49,15 @@ impl std::fmt::Display for ArrayTerm {
     }
 }
 
-impl dy::Editable for ArrayTerm {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        use dy::QueryMutTrait;
-        dy::ArrayTermMutView::new(self)
-            .run_query_mut(address_i)?
-            .apply_edit(edit)
-    }
-}
-
 impl Inhabits<Array> for ArrayTerm {
     fn inhabits(&self, _: &Array) -> bool {
         true
     }
 }
 
-impl dy::Queryable for dy::ArrayTerm {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            // Eat the first address token, interpreting it as the array index.
-            // TODO: Support other queries here, such as `Len` (though this would require returning
-            // something like MaybeDereferencedValue since it wouldn't be an l-value (in the C++ sense, i.e.
-            // a value without a memory address))
-            // TEMP HACK: Assume u32 index for now, but should support other int types too
-            let index = *address_v[0]
-                .downcast_ref::<u32>()
-                .ok_or_else(|| anyhow::anyhow!("ArrayTerm::query expected u32 index"))?;
-            let element = self
-                .get(index as usize)
-                .ok_or_else(|| anyhow::anyhow!("ArrayTerm::query index out of bounds"))?
-                .as_ref();
-            // Recurse with the remainder of the address.
-            dy::RUNTIME_LA
-                .read()
-                .unwrap()
-                .query(element, &address_v[1..])
-
-            // TODO: Other views, like `type` and `len`.
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for ArrayTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::ArrayTermView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for ArrayTerm {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::ArrayTermMutView::new(self)
+impl qv::QueryableDynTrait for ArrayTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::ArrayTermView::new(self))
     }
 }
 
@@ -125,6 +76,42 @@ impl st::Serializable for ArrayTerm {
             bytes_written += element.serialize(writer)?;
         }
         Ok(bytes_written)
+    }
+}
+
+impl qv::SingleQuery<dy::Value> for ArrayTerm {
+    type ReturnType<'a> = qv::ArrayTermQuery<'a>;
+    type Error = Error;
+    fn run_single_query<'a>(
+        &'a self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(elem_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::ArrayTermElemView::new(self, *elem_index as usize)?.into())
+        } else {
+            anyhow::bail!(
+                "ArrayTerm::run_single_query; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for ArrayTerm {
+    type ReturnType<'a> = qv::ArrayTermQueryMut<'a>;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(elem_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::ArrayTermElemMutView::new(self, *elem_index as usize)?.into())
+        } else {
+            anyhow::bail!(
+                "ArrayTerm::run_single_query_mut; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
     }
 }
 

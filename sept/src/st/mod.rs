@@ -4,9 +4,7 @@ mod r#bool;
 mod bool_term;
 mod bool_type;
 mod deserializable;
-mod diff_trait;
-mod diffable;
-mod editable;
+mod edit_trait;
 mod empty_type;
 mod r#false;
 mod false_type;
@@ -53,12 +51,7 @@ pub use crate::st::{
     bool_term::BoolTerm,
     bool_type::BoolType,
     deserializable::{read_len, Deserializable},
-    diff_trait::{
-        Deletion, DiffTrait, ElementDeletion, ElementInsertion, ElementReplacement, Insertion,
-        NoOp, Replacement,
-    },
-    diffable::Diffable,
-    editable::{NonterminalEditable, TerminalEditable},
+    edit_trait::{Deletion, EditTrait, Insertion, NoOp, Replacement},
     empty_type::EmptyType,
     false_type::FalseType,
     float::{Float32, Float64},
@@ -101,7 +94,10 @@ pub use crate::st::{
     unicode_char_term::UnicodeCharTerm,
     unicode_char_type::UnicodeCharType,
     utf8_string::Utf8String,
-    utf8_string_term::{replace_single_char_in_string, replace_substr_in_string, Utf8StringTerm},
+    utf8_string_term::{
+        replace_single_char_in_string, replace_substr_in_string,
+        split_inclusive_allow_trailing_empty, Utf8StringTerm,
+    },
     utf8_string_type::Utf8StringType,
     void::Void,
     void_type::VoidType,

@@ -312,3 +312,4 @@
 
         [2023-05-05T22:52:37.796819980 WARN sept/src/dy/runtime.rs:1229] Runtime is using TypeId to be able to `cmp` different types (u32, u32); this ordering is not stable between builds because TypeId is not stable between builds.
 -   Change the "line" and "char" queries of Utf8StringTerm to use 'l' and 'c'.  This saves screen space and memory (no heap allocation beyond the dy::Value's Box).
+-   Done: Consider putting all the view and query stuff into a new submodule of `sept` crate, e.g. `query` or maybe just `q`.

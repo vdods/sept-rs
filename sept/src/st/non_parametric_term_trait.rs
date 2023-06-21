@@ -1,4 +1,4 @@
-use crate::{dy, st, Result};
+use crate::{dy, qv, st, Error, Result};
 
 /// A NonParametricTermTrait (NonParametricTermTrait) is one that has no "state", i.e. each
 /// NonParametricTermTrait is a singleton.  It's recommended to derive this trait using
@@ -16,6 +16,13 @@ pub trait NonParametricTermTrait:
     fn instantiate() -> Self;
 }
 
+impl<N: NonParametricTermTrait> qv::ApplyEditTrait for N {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        // This is valid only so long as the edits are NoOp and ReplacementTerm (which is itself a no-op).
+        qv::generic_apply_edit(self, edit)
+    }
+}
+
 impl<N: NonParametricTermTrait> dy::Deconstruct for N {
     fn deconstruct(self) -> dy::Deconstruction {
         // TODO: Consider making this take self.as_non_parametric_term_code instead.
@@ -30,30 +37,9 @@ impl<N: NonParametricTermTrait> st::Deserializable for N {
     }
 }
 
-impl<N: NonParametricTermTrait> dy::Queryable for N {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: implement views, if any");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl<N: NonParametricTermTrait> dy::QueryableDynTrait for N {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::GenericView::new(self)
-    }
-}
-
-impl<N: NonParametricTermTrait> dy::QueryableMutDynTrait for N {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::GenericMutView::new(self)
+impl<N: NonParametricTermTrait> qv::QueryableDynTrait for N {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::GenericView::new(self))
     }
 }
 
@@ -68,6 +54,17 @@ impl<N: NonParametricTermTrait> st::Serializable for N {
         // A NonParametricTerm has no parameters by definition.  If its type is known, then its
         // value is known, so nothing has to be serialized.
         Ok(0)
+    }
+}
+
+impl<N: NonParametricTermTrait> qv::SingleQueryMut<dy::Value> for N {
+    type ReturnType<'a> = qv::EmptyQuery;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        _address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        anyhow::bail!("{} does not support queries at this time", Self::IDENTIFIER);
     }
 }
 

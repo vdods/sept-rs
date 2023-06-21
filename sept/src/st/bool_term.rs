@@ -1,10 +1,16 @@
 use crate::{
-    dy,
+    dy, qv,
     st::{self, Bool, False, FalseType, Inhabits, Stringifiable, TermTrait, True, TrueType},
-    Result,
+    Error, Result,
 };
 
 pub type BoolTerm = bool;
+
+impl qv::ApplyEditTrait for bool {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
 
 impl dy::Deconstruct for bool {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -67,30 +73,9 @@ impl st::Deserializable for bool {
     }
 }
 
-impl dy::Queryable for bool {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: implement views if any.. perhaps 'as int'");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for bool {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::GenericView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for bool {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::GenericMutView::new(self)
+impl qv::QueryableDynTrait for bool {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::GenericView::new(self))
     }
 }
 
@@ -105,6 +90,17 @@ impl st::Serializable for bool {
         // Represent as u8.
         let n = if *self { 1u8 } else { 0u8 };
         Ok(n.serialize(writer)?)
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for bool {
+    type ReturnType<'a> = qv::EmptyQuery;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        _address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        anyhow::bail!("bool does not support queries at this time");
     }
 }
 

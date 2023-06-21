@@ -1,10 +1,16 @@
 use crate::{
-    dy,
+    dy, qv,
     st::{self, Inhabits, Stringifiable, TermTrait, UnicodeChar},
-    Result,
+    Error, Result,
 };
 
 pub type UnicodeCharTerm = char;
+
+impl qv::ApplyEditTrait for char {
+    fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
+        qv::generic_apply_edit(self, edit)
+    }
+}
 
 impl dy::Deconstruct for UnicodeCharTerm {
     fn deconstruct(self) -> dy::Deconstruction {
@@ -39,30 +45,9 @@ impl st::Deserializable for UnicodeCharTerm {
     }
 }
 
-impl dy::Queryable for char {
-    fn query<'a>(&'a self, address_v: &[dy::Value]) -> Result<&'a dy::ValueGuts> {
-        if address_v.is_empty() {
-            Ok(self)
-        } else {
-            unimplemented!("TODO: implement views if any.. perhaps 'as int repr'");
-        }
-    }
-    fn query_mut<'a>(&'a mut self, _address_v: &[dy::Value]) -> Result<&'a mut dy::ValueGuts> {
-        unimplemented!("blah");
-        // TODO: This should basically be the same as query, though maybe non-l-values (e.g. querying
-        // `Len`) wouldn't support this.
-    }
-}
-
-impl dy::QueryableDynTrait for char {
-    fn make_query<'a>(&'a self) -> Box<dyn dy::QueryTrait + 'a> {
-        dy::GenericView::new(self)
-    }
-}
-
-impl dy::QueryableMutDynTrait for char {
-    fn make_query_mut<'a>(&'a mut self) -> Box<dyn dy::QueryMutTrait + 'a> {
-        dy::GenericMutView::new(self)
+impl qv::QueryableDynTrait for char {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::GenericView::new(self))
     }
 }
 
@@ -87,6 +72,17 @@ impl st::Serializable for UnicodeCharTerm {
         // Write the 3 least-significant bytes in little-endian order.
         writer.write_all(&le_bytes[0..3])?;
         Ok(3)
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for char {
+    type ReturnType<'a> = qv::EmptyQuery;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        _address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        anyhow::bail!("char does not support queries at this time");
     }
 }
 

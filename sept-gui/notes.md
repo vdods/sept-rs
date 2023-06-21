@@ -513,3 +513,87 @@ Design notes for better event-handling
 -   The current handling of events is rather monolithic, where events meant for a "child" view are handled by a parent view, and this is hard to manage.  It would be better if each view handled its own events directly.
 -   There should be cursor movement methods in view_ctx to make it easier for views to modify the cursor, since the cursor needs to be modified while handling editing events (e.g. interleaving updating the cursor with the handling of keypress events (which each cause a char insertion)).
 -   The view objects in sept should be used, but traits in sept-gui should be used to implement event handling and rendering, since they use egui-specific types.  It's possible that later sept will provide an abstraction of this which can easily plug into other UI frameworks, including TUI frameworks.
+
+## 2023.05.09
+
+Design notes for event handling in UI
+-   Event handling should happen before rendering, since rendering should reflect the current state of the program, and the events for a given frame have been captured before that moment, so they determine the current state of the program.  Although this sort of contradicts the immediate mode pattern, since rendering and events are handled at the same time there.  To be more specific, the view objects should run all their event handling before the UI is run, potentially leaving some events unhandled which would be handled during the UI run.
+-   The view objects should handle events.  Use a query to retrieve the cursor-addressed view object, and have it handle events.  Unhandled events should fall through to its parent, and then its parent, etc.  Thus the handle_event method must either
+    -   traverse to the appropriate sub-view for each address token, or
+    -   use a generic query to perform one address token's worth of querying at a time, but still be able to call handle_event on the unwind
+-   Another general approach to query would be to build a stack of view objects, instead of consuming the view object to progress the query.  This would allow the handle_event fallthrough described above.
+-   Because handling an event can alter the cursor address, each event must be handled one at a time.  I.e. which view is handling the event must be re-determined with a fresh query each time (it should be possible to use a "dirty" flag to indicate if the cursor address has changed and therefore needs to trigger a new query).
+-   Having a generic "do one address token's worth of query" is probably not going to work since it would need to return a `Box<dyn SomeTrait>` but that trait can't necessarily capture the functionality of everything a view object is meant to do (e.g. not just value query/edit, but also handle_event and run_ui).  Could maybe use the downcast-rs crate to have it return a particular base.
+-   If each view object contained its parent view, then each view would effectively have the view stack available to call.  Or each view contains what it contains now (minimum necessary to perform queries) and then the view object stack is explicitly tracked, and each element of the stack has type `Arc<RwLock<dyn T>>` for an appropriate trait `T`.
+
+## 2023.05.19
+
+Notes on ongoing work on query and edit
+-   After a lot of experimentation, whittled things down to two traits for mutable query and edit:
+    -   `ApplyEditTrait` -- applies an edit to self.
+    -   `SingleQueryMut` -- performs one address token's worth of mutable query.
+-   `QueryMutAndApplyEditTrait` is automatically implemented for any type that implements both of those traits (with some other minor trait bounds).
+-   As for immutable query, a similar effort to decompose it into simpler components is underway.  So far, there is the trait:
+    -   `SingleQuery` -- performs one address token's worth of immutable query.
+-   An immutable analog to `QueryMutAndApplyEditTrait` could be created which runs a full query on an iterator of address tokens, then returns the queried value.  This could be automatically implemented for types that implement
+    -   `EvalTrait` -- has a `eval` function which returns what the view evaluates to.
+    -   `SingleQuery` -- performs one address token's worth of immutable query.
+-   It might still be useful to have `QueryTrait` and `QueryMutTrait` to produce `Box<dyn qv::EvalTrait>` and `Box<dyn qv::ApplyEditTrait>`, on which `eval()` or `apply_edit()` can be called.  This is in contrast with having the query be bound to a particular terminal operation (calling `eval()` or `apply_edit()` respectively).  But probably best to disable this stuff and keep things as simple as possible.  It really depends on if more terminal operations are eventually needed.
+
+## 2023.05.21
+
+Idea regarding how to move a "standard cursor" around the screen in a way that wouldn't surprise the layman:
+-   When the up/down key is pressed, instead of doing a logical cursor change to the corresponding element of the next line (e.g. the down key changing cursor address `("line", 3, "char", 5)` to `("line", 4, "char", 5)`), calculate the position of the current cursor, then create a mouse click event for the position one line height's down from it, and push that event onto the front of the remaining_event_v queue, so it can be handled in the UI pass.
+-   Come to think of it, this only works if there aren't other events in the event queue after the up/down arrow key press.
+
+## 2023.05.22
+
+Notes on fleshing out views and event handling for remainder of types
+-   Showing cursor at the end of a string, array, etc.
+-   Highly visible cursor
+    -   Insert mode: Make an I-beam-shaped cursor that's vertical or horizontal that visually
+        divides elements before and after the cursor.
+    -   Replace mode: Draw the I-beam cursor and highlight the element that will be replaced.
+-   Undo/redo
+    -   Need top-level event handler which can intercept top-level commands.
+-   Utf8StringTerm line char view
+    -   To-do
+    -   Done
+        -   Insertion mode typing
+        -   Typing '\n'
+        -   Typing '\t'
+        -   Backspace
+        -   Delete
+        -   Escape / Alt-Enter
+-   Utf8StringTerm char view
+    -   To-do
+    -   Done
+        -   Insertion mode typing
+        -   Typing '\n'
+        -   Typing '\t'
+        -   Backspace
+        -   Delete
+        -   Escape / Alt-Enter
+        -   Paste
+-   ArrayTerm
+    -   To-do
+    -   Done
+-   TupleTerm
+    -   To-do
+    -   Done
+-   OrderedMapTerm
+    -   To-do
+    -   Done
+-   StructTerm
+    -   To-do
+    -   Done
+-   StructTermTerm
+    -   To-do
+    -   Done
+-   GlobalSymRefTerm
+    -   To-do
+    -   Done
+-   LocalSymRefTerm
+    -   To-do
+    -   Done
+
