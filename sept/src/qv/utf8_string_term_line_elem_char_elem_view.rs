@@ -230,6 +230,9 @@ impl<'a> Utf8StringTermLineElemCharElemView<'a> {
             self.line_char_count - 1
         }
     }
+    // TODO: Make methods which only return (line_index, char_index) pairs representing the
+    // results of certain cursor movements that may correspond to string edits and therefore
+    // the constraints checking can't be done until after the edit is made.
 }
 
 impl<'b> qv::QueryTrait for Utf8StringTermLineElemCharElemView<'b> {

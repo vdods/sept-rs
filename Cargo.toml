@@ -9,5 +9,6 @@
 resolver = "2"
 members = ["sept", "sept-cat", "sept-gui", "sept_derive", "sept_derive_tests"]
 
-[profile.release]
-debug = true
+# Use this in order to get debug symbols for use in performance testing.
+# [profile.release]
+# debug = true

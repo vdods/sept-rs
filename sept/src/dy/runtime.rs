@@ -7,10 +7,11 @@ use crate::{
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
         Float64, Float64Type, GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef,
-        LocalSymRefType, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32, Sint32Type,
-        Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType, Term, True, TrueType, Tuple,
-        TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8,
-        Uint8Type, UnicodeChar, UnicodeCharType, Utf8String, Utf8StringType, Void, VoidType,
+        LocalSymRefType, OrderedMap, OrderedMapType, Placeholder, PlaceholderType, Sint16,
+        Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType,
+        Term, True, TrueType, Tuple, TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type,
+        Uint64, Uint64Type, Uint8, Uint8Type, UnicodeChar, UnicodeCharType, Utf8String,
+        Utf8StringType, Void, VoidType,
     },
     Result,
 };
@@ -198,6 +199,7 @@ impl Runtime {
         runtime.register_term::<char>().unwrap();
         runtime.register_term::<String>().unwrap();
         runtime.register_term::<Void>().unwrap();
+        runtime.register_term::<Placeholder>().unwrap();
         runtime.register_term::<ArrayTerm>().unwrap();
         runtime.register_term::<OrderedMapTerm>().unwrap();
         runtime.register_term::<StructTermTerm>().unwrap();
@@ -314,6 +316,7 @@ impl Runtime {
         runtime.register_type::<Utf8String>().unwrap();
         runtime.register_type::<Utf8StringType>().unwrap();
         runtime.register_type::<VoidType>().unwrap();
+        runtime.register_type::<PlaceholderType>().unwrap();
         runtime.register_type::<Array>().unwrap();
         runtime.register_type::<ArrayType>().unwrap();
         runtime.register_type::<OrderedMap>().unwrap();

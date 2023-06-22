@@ -6,6 +6,7 @@ mod app;
 mod array_term_event_handler;
 mod array_term_value_ui;
 mod command;
+mod cursor_edit;
 mod event_handler;
 mod event_handler_ctx;
 mod event_handler_ctx_nesting_guard;
@@ -15,6 +16,9 @@ mod layout_mode;
 mod local_sym_ref_term_value_ui;
 mod model;
 mod ordered_map_term_value_ui;
+mod placeholder_event_handler;
+mod placeholder_value_ui;
+mod root_value_edit;
 mod struct_term_term_value_ui;
 mod struct_term_value_ui;
 mod tuple_term_value_ui;
@@ -33,14 +37,18 @@ pub use addressed_edit::AddressedEdit;
 pub use ansi_color::ANSIColor;
 pub use app::App;
 pub use command::Command;
+pub use cursor_edit::CursorEdit;
 pub use event_handler::EventHandler;
 pub use event_handler_ctx::EventHandlerCtx;
 pub use event_handler_ctx_nesting_guard::EventHandlerCtxNestingGuard;
 pub use layout_discriminant::LayoutDiscriminant;
 pub use layout_mode::LayoutMode;
 pub use model::Model;
+pub use placeholder_event_handler::{placeholder_event_handler_impl, PlaceholderEventKind};
+pub use root_value_edit::RootValueEdit;
 pub use value_ui::{
-    extract_text_prefix_from_front_text, ValueUI, END_OF_TRANSMISSION_CHAR, END_OF_TRANSMISSION_STR,
+    extract_text_prefix_from_front_text, first_char_stripped_string, ValueUI,
+    END_OF_TRANSMISSION_CHAR, END_OF_TRANSMISSION_STR,
 };
 pub use view_ctx::ViewCtx;
 pub use view_ctx_nesting_guard::ViewCtxNestingGuard;

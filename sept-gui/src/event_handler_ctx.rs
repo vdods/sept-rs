@@ -1,6 +1,6 @@
 use crate::{
-    AddressedEdit, Command, EventHandlerCtxNestingGuard, LayoutDiscriminant, LayoutMode,
-    ViewOptions,
+    AddressedEdit, Command, CursorEdit, EventHandlerCtxNestingGuard, LayoutDiscriminant,
+    LayoutMode, ViewOptions,
 };
 use sept::dy::IntoValue;
 use std::collections::VecDeque;
@@ -55,8 +55,8 @@ impl<'a> EventHandlerCtx<'a> {
             Ordering::Greater => LayoutDiscriminant::InteriorLevelInline,
         }
     }
-    pub fn enqueue_command(&mut self, command: Command) {
-        self.enqueued_command_v.push_back(command);
+    pub fn enqueue_command(&mut self, command: impl Into<Command>) {
+        self.enqueued_command_v.push_back(command.into());
     }
     /// Note that this can't be used twice in the same handle_event pass, since it has to know the
     /// cursor_address len in order to generate the CursorEdit commands.
@@ -66,7 +66,7 @@ impl<'a> EventHandlerCtx<'a> {
     ) {
         let mut cursor_len = self.cursor_address.len() as u32;
         for address_token in address_token_i {
-            self.enqueue_command(Command::CursorEdit(AddressedEdit {
+            self.enqueue_command(CursorEdit::from(AddressedEdit {
                 address: vec![(cursor_len as u32).into_value()].into(),
                 edit: sept::qv::InsertionTerm {
                     new_data: address_token,
@@ -84,7 +84,7 @@ impl<'a> EventHandlerCtx<'a> {
         }
         let mut cursor_len = self.cursor_address.len() as u32;
         for address_token in self.cursor_address.iter().rev().take(pop_count) {
-            self.enqueue_command(Command::CursorEdit(AddressedEdit {
+            self.enqueue_command(CursorEdit::from(AddressedEdit {
                 // TODO: This could use `-1` as the address once negative indexing is supported.
                 address: vec![(cursor_len - 1).into_value()].into(),
                 edit: sept::qv::DeletionTerm {

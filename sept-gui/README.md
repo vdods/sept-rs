@@ -42,6 +42,12 @@ We use [Trunk](https://trunkrs.dev/) to build for web target.
 
 ### Web Deploy
 
+The specific command to build sept-gui is, assuming that it will be served at `website.com/sept-gui`:
+
+    trunk build --release --public-url sept-gui --all-features
+
+Generic instructions:
+
 1. Just run `trunk build --release`.  In order to make a build that is installable at a URL that isn't the root directory, you'll need to specify `--dist <dirname> --public-url <dirname>` and then copy `<dirname>` to your website.
 2. It will generate a `dist` (or `<dirname>`) directory as a "static html" website
 3. Upload the `dist` (or `<dirname>`) directory to any of the numerous free hosting websites including [GitHub Pages](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).

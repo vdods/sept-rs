@@ -1,5 +1,5 @@
 use crate::{
-    ANSIColor, AddressedEdit, Command, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
+    ANSIColor, Command, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
     ViewCtxRenderAddressGuard, ViewCtxTAGuard, ViewOptions,
 };
 use std::{cmp::Ordering, collections::VecDeque};
@@ -74,29 +74,8 @@ impl<'b> ViewCtx<'b> {
         self.override_show_type_annotations_o
             .unwrap_or(self.view_options.show_type_annotations)
     }
-    pub fn enqueue_command(&mut self, command: Command) {
-        self.enqueued_command_v.push_back(command);
-    }
-    /// This puts the given edit together with the current cursor_address in an AddressedEdit
-    /// which will be applied to the root value.
-    pub fn enqueue_root_value_edit(&mut self, edit: sept::dy::Value) {
-        let addressed_edit = AddressedEdit {
-            address: self
-                .cursor_address_o
-                .as_ref()
-                .map(|x| (*x).clone())
-                .unwrap(),
-            edit,
-        };
-        tracing::trace!("ViewCtx::enqueue_root_value_edit; {:?}", addressed_edit);
-        self.enqueued_command_v
-            .push_back(Command::RootValueEdit(addressed_edit));
-    }
-    /// The given AddressedEdit will be applied to the cursor_address.
-    pub fn enqueue_cursor_edit(&mut self, addressed_edit: AddressedEdit) {
-        tracing::trace!("ViewCtx::enqueue_cursor_edit; {:?}", addressed_edit);
-        self.enqueued_command_v
-            .push_back(Command::CursorEdit(addressed_edit));
+    pub fn enqueue_command(&mut self, command: impl Into<Command>) {
+        self.enqueued_command_v.push_back(command.into());
     }
     /// This returns (foreground_color, background_color) based on the given foreground_color and the
     /// current state of highlightedness based on the render_address compared to the cursor_address.

@@ -15,4 +15,7 @@ pub trait EventHandler {
         event_handler_ctx: &mut EventHandlerCtx<'_>,
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>>;
+
+    // TODO: Create handle_nonterminal_event method and then a bunch of different methods for the
+    // various event types.
 }

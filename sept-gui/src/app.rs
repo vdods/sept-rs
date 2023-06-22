@@ -442,19 +442,19 @@ impl eframe::App for App {
                             tracing::trace!("App::update; executing command {:?}", command);
                             use sept::qv::QueryMutAndApplyEditTrait;
                             match &command {
-                                Command::CursorEdit(addressed_edit) => {
+                                Command::CursorEdit(cursor_edit) => {
                                     self.cursor_address
                                         .query_mut_and_apply_edit(
-                                            &mut addressed_edit.address.iter(),
-                                            addressed_edit.edit.clone(),
+                                            &mut cursor_edit.address.iter(),
+                                            cursor_edit.edit.clone(),
                                         )
                                         .expect("TODO: handle error");
                                 }
-                                Command::RootValueEdit(addressed_edit) => {
+                                Command::RootValueEdit(root_value_edit) => {
                                     root_value_g
                                         .query_mut_and_apply_edit(
-                                            &mut addressed_edit.address.iter(),
-                                            addressed_edit.edit.clone(),
+                                            &mut root_value_edit.address.iter(),
+                                            root_value_edit.edit.clone(),
                                         )
                                         .expect("TODO: handle error");
                                 }

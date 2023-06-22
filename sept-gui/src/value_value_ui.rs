@@ -64,6 +64,10 @@ impl ValueUI for sept::dy::Value {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::VoidType>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::Placeholder>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::PlaceholderType>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Bool>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::BoolType>() {
@@ -196,6 +200,10 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::Void>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::VoidType>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::Placeholder>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::PlaceholderType>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Bool>() {
             term.run_ui_inline(ui, layout_job, view_ctx);

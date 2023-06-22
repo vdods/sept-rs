@@ -23,6 +23,8 @@ mod non_parametric_term_code;
 mod non_parametric_term_trait;
 mod ordered_map;
 mod ordered_map_type;
+mod placeholder;
+mod placeholder_type;
 mod serializable;
 mod stringifiable;
 mod r#struct;
@@ -75,6 +77,8 @@ pub use crate::st::{
     non_parametric_term_trait::NonParametricTermTrait,
     ordered_map::OrderedMap,
     ordered_map_type::OrderedMapType,
+    placeholder::Placeholder,
+    placeholder_type::PlaceholderType,
     r#bool::Bool,
     r#false::False,
     r#struct::Struct,
@@ -335,8 +339,14 @@ macro_rules! for_each_non_parametric_term {
                 type T = $crate::st::LocalSymRef;
                 $e
             },
-            //             { type T = $crate::st::PlaceholderType;                  $e },
-            //             { type T = $crate::st::Placeholder;                  $e },
+            {
+                type T = $crate::st::PlaceholderType;
+                $e
+            },
+            {
+                type T = $crate::st::Placeholder;
+                $e
+            },
             //             { type T = $crate::st::FreevarType;                  $e },
             //             { type T = $crate::st::Freevar;                  $e },
             //             { type T = $crate::st::OutputType;                  $e },

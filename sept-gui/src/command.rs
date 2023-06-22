@@ -1,7 +1,7 @@
-use crate::AddressedEdit;
+use crate::{CursorEdit, RootValueEdit};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, derive_more::From)]
 pub enum Command {
-    CursorEdit(AddressedEdit),
-    RootValueEdit(AddressedEdit),
+    CursorEdit(CursorEdit),
+    RootValueEdit(RootValueEdit),
 }

@@ -14,6 +14,8 @@ impl EventHandler for sept::dy::Value {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
+        } else if let Some(x) = self.downcast_ref::<sept::st::Placeholder>() {
+            x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else {
             anyhow::bail!("Unsupported Value variant for handle_event");
         }

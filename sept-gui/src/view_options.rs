@@ -111,6 +111,8 @@ impl ViewOptions {
             ANSIColor::BRIGHT_MAGENTA
         } else if type_id == TypeId::of::<sept::st::Void>()
             || type_id == TypeId::of::<sept::st::VoidType>()
+            || type_id == TypeId::of::<sept::st::Placeholder>()
+            || type_id == TypeId::of::<sept::st::PlaceholderType>()
             || type_id == TypeId::of::<sept::st::True>()
             || type_id == TypeId::of::<sept::st::TrueType>()
             || type_id == TypeId::of::<sept::st::False>()

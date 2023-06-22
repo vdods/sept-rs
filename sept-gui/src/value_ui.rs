@@ -128,7 +128,7 @@ pub(crate) fn render_postfix_annotation(
 }
 
 // This is probably a TEMP HACK
-macro_rules! impl_view_using_to_string {
+macro_rules! impl_value_ui_using_to_string {
     ($ty:ty) => {
         impl ValueUI for $ty {
             fn run_ui_expanded(
@@ -167,60 +167,61 @@ macro_rules! impl_view_using_to_string {
     };
 }
 
-impl_view_using_to_string!(sept::st::Void);
-impl_view_using_to_string!(sept::st::True);
-impl_view_using_to_string!(sept::st::False);
-impl_view_using_to_string!(sept::st::BoolTerm);
-impl_view_using_to_string!(sept::st::Sint8Term);
-impl_view_using_to_string!(sept::st::Sint16Term);
-impl_view_using_to_string!(sept::st::Sint32Term);
-impl_view_using_to_string!(sept::st::Sint64Term);
-impl_view_using_to_string!(sept::st::Uint8Term);
-impl_view_using_to_string!(sept::st::Uint16Term);
-impl_view_using_to_string!(sept::st::Uint32Term);
-impl_view_using_to_string!(sept::st::Uint64Term);
-impl_view_using_to_string!(sept::st::Float32Term);
-impl_view_using_to_string!(sept::st::Float64Term);
-impl_view_using_to_string!(sept::st::VoidType);
-impl_view_using_to_string!(sept::st::EmptyType);
-impl_view_using_to_string!(sept::st::TrueType);
-impl_view_using_to_string!(sept::st::FalseType);
-impl_view_using_to_string!(sept::st::Bool);
-impl_view_using_to_string!(sept::st::Sint8);
-impl_view_using_to_string!(sept::st::Sint16);
-impl_view_using_to_string!(sept::st::Sint32);
-impl_view_using_to_string!(sept::st::Sint64);
-impl_view_using_to_string!(sept::st::Uint8);
-impl_view_using_to_string!(sept::st::Uint16);
-impl_view_using_to_string!(sept::st::Uint32);
-impl_view_using_to_string!(sept::st::Uint64);
-impl_view_using_to_string!(sept::st::Float32);
-impl_view_using_to_string!(sept::st::Float64);
-impl_view_using_to_string!(sept::st::Utf8String);
-impl_view_using_to_string!(sept::st::Array);
-impl_view_using_to_string!(sept::st::OrderedMap);
-impl_view_using_to_string!(sept::st::Struct);
-impl_view_using_to_string!(sept::st::Tuple);
-impl_view_using_to_string!(sept::st::GlobalSymRef);
-impl_view_using_to_string!(sept::st::LocalSymRef);
-impl_view_using_to_string!(sept::st::BoolType);
-impl_view_using_to_string!(sept::st::Sint8Type);
-impl_view_using_to_string!(sept::st::Sint16Type);
-impl_view_using_to_string!(sept::st::Sint32Type);
-impl_view_using_to_string!(sept::st::Sint64Type);
-impl_view_using_to_string!(sept::st::Uint8Type);
-impl_view_using_to_string!(sept::st::Uint16Type);
-impl_view_using_to_string!(sept::st::Uint32Type);
-impl_view_using_to_string!(sept::st::Uint64Type);
-impl_view_using_to_string!(sept::st::Float32Type);
-impl_view_using_to_string!(sept::st::Float64Type);
-impl_view_using_to_string!(sept::st::Utf8StringType);
-impl_view_using_to_string!(sept::st::ArrayType);
-impl_view_using_to_string!(sept::st::OrderedMapType);
-impl_view_using_to_string!(sept::st::StructType);
-impl_view_using_to_string!(sept::st::TupleType);
-impl_view_using_to_string!(sept::st::GlobalSymRefType);
-impl_view_using_to_string!(sept::st::LocalSymRefType);
+impl_value_ui_using_to_string!(sept::st::Void);
+impl_value_ui_using_to_string!(sept::st::True);
+impl_value_ui_using_to_string!(sept::st::False);
+impl_value_ui_using_to_string!(sept::st::BoolTerm);
+impl_value_ui_using_to_string!(sept::st::Sint8Term);
+impl_value_ui_using_to_string!(sept::st::Sint16Term);
+impl_value_ui_using_to_string!(sept::st::Sint32Term);
+impl_value_ui_using_to_string!(sept::st::Sint64Term);
+impl_value_ui_using_to_string!(sept::st::Uint8Term);
+impl_value_ui_using_to_string!(sept::st::Uint16Term);
+impl_value_ui_using_to_string!(sept::st::Uint32Term);
+impl_value_ui_using_to_string!(sept::st::Uint64Term);
+impl_value_ui_using_to_string!(sept::st::Float32Term);
+impl_value_ui_using_to_string!(sept::st::Float64Term);
+impl_value_ui_using_to_string!(sept::st::VoidType);
+impl_value_ui_using_to_string!(sept::st::PlaceholderType);
+impl_value_ui_using_to_string!(sept::st::EmptyType);
+impl_value_ui_using_to_string!(sept::st::TrueType);
+impl_value_ui_using_to_string!(sept::st::FalseType);
+impl_value_ui_using_to_string!(sept::st::Bool);
+impl_value_ui_using_to_string!(sept::st::Sint8);
+impl_value_ui_using_to_string!(sept::st::Sint16);
+impl_value_ui_using_to_string!(sept::st::Sint32);
+impl_value_ui_using_to_string!(sept::st::Sint64);
+impl_value_ui_using_to_string!(sept::st::Uint8);
+impl_value_ui_using_to_string!(sept::st::Uint16);
+impl_value_ui_using_to_string!(sept::st::Uint32);
+impl_value_ui_using_to_string!(sept::st::Uint64);
+impl_value_ui_using_to_string!(sept::st::Float32);
+impl_value_ui_using_to_string!(sept::st::Float64);
+impl_value_ui_using_to_string!(sept::st::Utf8String);
+impl_value_ui_using_to_string!(sept::st::Array);
+impl_value_ui_using_to_string!(sept::st::OrderedMap);
+impl_value_ui_using_to_string!(sept::st::Struct);
+impl_value_ui_using_to_string!(sept::st::Tuple);
+impl_value_ui_using_to_string!(sept::st::GlobalSymRef);
+impl_value_ui_using_to_string!(sept::st::LocalSymRef);
+impl_value_ui_using_to_string!(sept::st::BoolType);
+impl_value_ui_using_to_string!(sept::st::Sint8Type);
+impl_value_ui_using_to_string!(sept::st::Sint16Type);
+impl_value_ui_using_to_string!(sept::st::Sint32Type);
+impl_value_ui_using_to_string!(sept::st::Sint64Type);
+impl_value_ui_using_to_string!(sept::st::Uint8Type);
+impl_value_ui_using_to_string!(sept::st::Uint16Type);
+impl_value_ui_using_to_string!(sept::st::Uint32Type);
+impl_value_ui_using_to_string!(sept::st::Uint64Type);
+impl_value_ui_using_to_string!(sept::st::Float32Type);
+impl_value_ui_using_to_string!(sept::st::Float64Type);
+impl_value_ui_using_to_string!(sept::st::Utf8StringType);
+impl_value_ui_using_to_string!(sept::st::ArrayType);
+impl_value_ui_using_to_string!(sept::st::OrderedMapType);
+impl_value_ui_using_to_string!(sept::st::StructType);
+impl_value_ui_using_to_string!(sept::st::TupleType);
+impl_value_ui_using_to_string!(sept::st::GlobalSymRefType);
+impl_value_ui_using_to_string!(sept::st::LocalSymRefType);
 
 pub const END_OF_TRANSMISSION_CHAR: char = '¶';
 pub const END_OF_TRANSMISSION_STR: &str = "¶";
@@ -259,6 +260,17 @@ pub(crate) fn render_str_as_literal_without_quotes(
                 &mut view_ctx_g,
             );
         }
+    }
+}
+
+/// Strip the first char from the String, and if it's not empty, return the remainder.
+/// Otherwise return None.
+pub fn first_char_stripped_string(mut string: String) -> Option<String> {
+    if string.chars().nth(1).is_none() {
+        None
+    } else {
+        string.remove(0);
+        Some(string)
     }
 }
 
