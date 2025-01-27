@@ -16,111 +16,112 @@ impl ValueUI for sept::dy::StructTermTerm {
             .expect("StructTermTerm's r#type field did not dereference into StructTerm");
         assert_eq!(direct_type.len(), self.field_tuple().len());
 
-        let mut input_g = ui.input_mut();
-        if view_ctx.render_address_is_cursor_address() {
-            if input_g.consume_key(Modifiers::NONE, Key::Enter) {
-                // Enter this StructTermTerm at the first field name, but only if there is one.
-                if let Some(first_field_decl) = direct_type.first() {
-                    view_ctx.cursor_address_push(first_field_decl.0.clone().into());
-                } else {
-                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
-                }
-                // TODO: Use ui.scroll_to_me
-            } else if input_g.consume_key(Modifiers::NONE, Key::T) {
-                // Enter this StructTermTerm at the "type".
-                // TEMP HACK -- use the string "type" for now, but later probably use a non-parametric term.
-                // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
-                view_ctx.cursor_address_push("type".to_string().into());
-            }
-        } else if view_ctx.render_address_is_parent_of_cursor_address() {
-            if input_g.consume_key(Modifiers::ALT, Key::Enter)
-                || input_g.consume_key(Modifiers::NONE, Key::Escape)
-            {
-                // Escape back to this StructTermTerm.
-                view_ctx.cursor_address_pop();
-            } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
-                view_ctx.cursor_address_pop();
-                if let Some(first_field_decl) = direct_type.first() {
-                    view_ctx.cursor_address_push(first_field_decl.0.clone().into());
-                } else {
-                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
-                }
-                // TODO: use ui.scroll_to_me
-            } else if input_g.consume_key(Modifiers::NONE, Key::End) {
-                view_ctx.cursor_address_pop();
-                if let Some(last_field_decl) = direct_type.last() {
-                    view_ctx.cursor_address_push(last_field_decl.0.clone().into());
-                } else {
-                    // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
-                }
-                // TODO: use ui.scroll_to_me
-            } else {
-                // Handle arrow keys for element navigation.
-                // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
-                // TODO: Factor this out into a function
-                let mut element_index_delta = 0i32;
-                match view_ctx.layout_mode() {
-                    LayoutMode::Expanded => {
-                        // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
-                        if input_g.consume_key(Modifiers::NONE, Key::ArrowUp) {
-                            element_index_delta -= 1;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::ArrowDown) {
-                            element_index_delta += 1;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
-                            element_index_delta -= view_ctx.page_up_down_delta as i32;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
-                            element_index_delta += view_ctx.page_up_down_delta as i32
-                        }
+        ui.input_mut(|input_state| {
+            if view_ctx.render_address_is_cursor_address() {
+                if input_state.consume_key(Modifiers::NONE, Key::Enter) {
+                    // Enter this StructTermTerm at the first field name, but only if there is one.
+                    if let Some(first_field_decl) = direct_type.first() {
+                        view_ctx.cursor_address_push(first_field_decl.0.clone().into());
+                    } else {
+                        // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
                     }
-                    LayoutMode::Inline => {
-                        // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
-                        if input_g.consume_key(Modifiers::NONE, Key::ArrowLeft) {
-                            // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
-                            element_index_delta -= 1;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::ArrowRight) {
-                            element_index_delta += 1;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::PageUp) {
-                            element_index_delta -= view_ctx.page_up_down_delta as i32;
-                        }
-                        if input_g.consume_key(Modifiers::NONE, Key::PageDown) {
-                            element_index_delta += view_ctx.page_up_down_delta as i32;
-                        }
-                        // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
-                        // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
+                    // TODO: Use ui.scroll_to_me
+                } else if input_state.consume_key(Modifiers::NONE, Key::T) {
+                    // Enter this StructTermTerm at the "type".
+                    // TEMP HACK -- use the string "type" for now, but later probably use a non-parametric term.
+                    // NOTE: This doesn't work if there's a field called "type" in the StructTerm!
+                    view_ctx.cursor_address_push("type".to_string().into());
+                }
+            } else if view_ctx.render_address_is_parent_of_cursor_address() {
+                if input_state.consume_key(Modifiers::ALT, Key::Enter)
+                    || input_state.consume_key(Modifiers::NONE, Key::Escape)
+                {
+                    // Escape back to this StructTermTerm.
+                    view_ctx.cursor_address_pop();
+                } else if input_state.consume_key(Modifiers::NONE, Key::Home) {
+                    view_ctx.cursor_address_pop();
+                    if let Some(first_field_decl) = direct_type.first() {
+                        view_ctx.cursor_address_push(first_field_decl.0.clone().into());
+                    } else {
+                        // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
                     }
-                };
-                if element_index_delta != 0 {
-                    let field_name_value = view_ctx.cursor_address_pop();
-                    let field_name = field_name_value
-                        .downcast_ref::<String>()
-                        .map(|s| s.as_str())
-                        .unwrap_or("");
-                    match direct_type.index_of_named_field(field_name) {
-                        Ok(field_index) => {
-                            let new_field_index = (field_index as u32)
-                                .saturating_add_signed(element_index_delta)
-                                .min(self_len - 1);
-                            let new_field_name = direct_type[new_field_index as usize].0.clone();
-                            view_ctx.cursor_address_push(new_field_name.into());
+                    // TODO: use ui.scroll_to_me
+                } else if input_state.consume_key(Modifiers::NONE, Key::End) {
+                    view_ctx.cursor_address_pop();
+                    if let Some(last_field_decl) = direct_type.last() {
+                        view_ctx.cursor_address_push(last_field_decl.0.clone().into());
+                    } else {
+                        // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
+                    }
+                    // TODO: use ui.scroll_to_me
+                } else {
+                    // Handle arrow keys for element navigation.
+                    // Depending on if this View is Expanded vs Inline, the arrow keys mean different things.
+                    // TODO: Factor this out into a function
+                    let mut element_index_delta = 0i32;
+                    match view_ctx.layout_mode() {
+                        LayoutMode::Expanded => {
+                            // In this case, elements are vertically, so arrow up/down should increase/decrease the element index.
+                            if input_state.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                                element_index_delta -= 1;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                                element_index_delta += 1;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::PageUp) {
+                                element_index_delta -= view_ctx.page_up_down_delta as i32;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::PageDown) {
+                                element_index_delta += view_ctx.page_up_down_delta as i32
+                            }
                         }
-                        Err(_) => {
-                            tracing::warn!(
-                                "Invalid address token (field name) {:?} under StructTermTerm with address {}",
-                                field_name,
-                                view_ctx.render_address
-                            );
-                            // Just push the thing back on so we don't change state.
-                            view_ctx.cursor_address_push(field_name_value);
+                        LayoutMode::Inline => {
+                            // In this case, elements are horizontally, so arrow left/right should increase/decrease the element index.
+                            if input_state.consume_key(Modifiers::NONE, Key::ArrowLeft) {
+                                // adding `self_len - 1` is equivalent to subtracting 1 in modular arithmetic.
+                                element_index_delta -= 1;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::ArrowRight) {
+                                element_index_delta += 1;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::PageUp) {
+                                element_index_delta -= view_ctx.page_up_down_delta as i32;
+                            }
+                            if input_state.consume_key(Modifiers::NONE, Key::PageDown) {
+                                element_index_delta += view_ctx.page_up_down_delta as i32;
+                            }
+                            // TODO: Vertical movement; a logical version would simply increment/decrement the parent address index (or key)
+                            // and keep the child address index, so that the cursor moves to the analogous element of the "uncle" value.
                         }
                     };
+                    if element_index_delta != 0 {
+                        let field_name_value = view_ctx.cursor_address_pop();
+                        let field_name = field_name_value
+                            .downcast_ref::<String>()
+                            .map(|s| s.as_str())
+                            .unwrap_or("");
+                        match direct_type.index_of_named_field(field_name) {
+                            Ok(field_index) => {
+                                let new_field_index = (field_index as u32)
+                                    .saturating_add_signed(element_index_delta)
+                                    .min(self_len - 1);
+                                let new_field_name = direct_type[new_field_index as usize].0.clone();
+                                view_ctx.cursor_address_push(new_field_name.into());
+                            }
+                            Err(_) => {
+                                tracing::warn!(
+                                    "Invalid address token (field name) {:?} under StructTermTerm with address {}",
+                                    field_name,
+                                    view_ctx.render_address
+                                );
+                                // Just push the thing back on so we don't change state.
+                                view_ctx.cursor_address_push(field_name_value);
+                            }
+                        };
+                    }
                 }
             }
-        }
+        });
     }
     fn run_ui_expanded(
         &self,

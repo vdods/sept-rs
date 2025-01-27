@@ -69,6 +69,8 @@ pub fn placeholder_event_handler_impl(
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    physical_key: Some(egui::Key::Enter),
+                    repeat: false,
                 });
             // We consumed the event.
             Ok(None)

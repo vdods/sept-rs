@@ -3,7 +3,7 @@
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-fn main() {
+fn main() -> eframe::Result {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
 
@@ -37,8 +37,8 @@ fn main() {
     eframe::run_native(
         "SEPT",
         native_options,
-        Box::new(|cc| Box::new(sept_gui::App::new(cc))),
-    );
+        Box::new(|cc| Ok(Box::new(sept_gui::App::new(cc)))),
+    )
 }
 
 // when compiling to web using trunk.

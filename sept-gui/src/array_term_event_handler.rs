@@ -35,6 +35,7 @@ impl EventHandler for sept::dy::ArrayTerm {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Enter the elem view by adding a cursor token.
                     let cursor_len = event_handler_ctx.cursor_address.len() as u32;
@@ -89,11 +90,13 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Escape this view by taking off the last cursor token.
                     {
@@ -111,6 +114,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the elem_index
                     {
@@ -137,6 +141,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the elem_index
                     {
@@ -164,6 +169,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::ArrowUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
@@ -192,6 +198,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::ArrowDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
@@ -220,6 +227,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
                     if event_handler_ctx.layout_discriminant()
@@ -248,6 +256,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
                     if event_handler_ctx.layout_discriminant()
@@ -276,6 +285,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::Delete,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only delete if we're not at the end of the array.
                     if self.elem_index < self.array_term.len() {
@@ -302,6 +312,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::Backspace,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only backspace if we're not at the beginning of the array.
                     if self.elem_index > 0 {
@@ -348,6 +359,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     key: egui::Key::Insert,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Insert a Placeholder at the current cursor position, but don't update the cursor.
                     event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {

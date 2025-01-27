@@ -35,6 +35,7 @@ impl EventHandler for sept::dy::StructTerm {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Enter the field elem elem view at the name component of the last field
                     // by adding two cursor tokens.
@@ -89,6 +90,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Enter this StructTerm field at element 0.
                     event_handler_ctx
@@ -100,11 +102,13 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Escape this view by taking off the last cursor token.
                     event_handler_ctx.enqueue_command_cursor_address_pop(1);
@@ -115,6 +119,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::Delete,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only delete if we're not at the end of the StructTerm.
                     if self.field_index < self.struct_term.len() {
@@ -141,6 +146,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::Backspace,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only backspace if we're not at the beginning of the array.
                     if self.field_index > 0 {
@@ -188,6 +194,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the elem_index
                     {
@@ -210,6 +217,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the field_index
                     {
@@ -233,6 +241,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::ArrowUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
@@ -260,6 +269,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::ArrowDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
@@ -287,6 +297,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
                     if event_handler_ctx.layout_discriminant()
@@ -314,6 +325,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
                     if event_handler_ctx.layout_discriminant()
@@ -381,11 +393,13 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Escape this view by taking off the last cursor token.
                     event_handler_ctx.enqueue_command_cursor_address_pop(1);
@@ -396,6 +410,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the sub_index
                     {
@@ -418,6 +433,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the sub_index
                     {
@@ -441,6 +457,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::ArrowUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_field_index_by(-1);
@@ -460,6 +477,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::ArrowDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     // let old_field_index = v.field_index as u32;
@@ -480,6 +498,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_sub_index_by(-1, true);
@@ -508,6 +527,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_sub_index_by(1, true);

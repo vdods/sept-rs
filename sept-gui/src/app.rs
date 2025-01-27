@@ -287,7 +287,7 @@ impl eframe::App for App {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
                         if ui.button("Quit").clicked() {
-                            frame.close();
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     }
                     #[cfg(target_arch = "wasm32")]
@@ -361,12 +361,12 @@ impl eframe::App for App {
                 ui.label("Font:");
                 ui.add(
                     egui::DragValue::new(&mut self.view_options.font_id.size)
-                        .clamp_range(6.0..=30.0)
+                        .range(6.0..=30.0)
                         .max_decimals(0)
                         .suffix("pt")
                         .speed(0.0625),
                 );
-                egui::ComboBox::from_id_source("font family combobox")
+                egui::ComboBox::from_id_salt("font family combobox")
                     .selected_text(format!("{:?}", &mut self.view_options.font_id.family))
                     .show_ui(ui, |ui| {
                         // ui.style_mut().wrap = Some(false);
@@ -399,9 +399,8 @@ impl eframe::App for App {
             // Technically mouse events can also change the cursor, but I'm not sure how that can
             // possibly be decoupled using an immediate mode GUI, unless maybe you can guarantee that no
             // more than one cursor-changing mouse event is received at a time.
-            {
-                let mut input_g = ui.input_mut();
-                let mut event_v = std::mem::take(&mut input_g.events)
+            ui.input_mut(|input_state| {
+                let mut event_v = std::mem::take(&mut input_state.events)
                     .into_iter()
                     .collect::<VecDeque<_>>();
                 if !event_v.is_empty() {
@@ -532,11 +531,11 @@ impl eframe::App for App {
                 }
                 // Pass all unhandled events through to the UI's InputState, so that they can be
                 // handled on the UI pass.
-                input_g.events = unhandled_event_v;
-            }
+                input_state.events = unhandled_event_v;
+            });
 
             egui::ScrollArea::vertical()
-                .always_show_scroll(true)
+                // .always_show_scroll(true)
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     let old_item_spacing = ui.spacing().item_spacing;
@@ -573,11 +572,19 @@ impl App {
         event: egui::Event,
         remaining_event_v: &mut VecDeque<egui::Event>,
     ) -> Option<egui::Event> {
+        // tracing::trace!("App::handle_top_level_event; event: {:?}", event);
         match event {
             egui::Event::Key {
-                key: egui::Key::PlusEquals,
+                key: egui::Key::Equals,
                 pressed: true,
                 modifiers: egui::Modifiers::ALT,
+                ..
+            }
+            | egui::Event::Key {
+                key: egui::Key::Plus,
+                pressed: true,
+                modifiers: egui::Modifiers::ALT,
+                ..
             } => {
                 self.view_options.inline_at_nesting_depth = self
                     .view_options
@@ -592,6 +599,7 @@ impl App {
                 key: egui::Key::Minus,
                 pressed: true,
                 modifiers: egui::Modifiers::ALT,
+                ..
             } => {
                 self.view_options.inline_at_nesting_depth = self
                     .view_options

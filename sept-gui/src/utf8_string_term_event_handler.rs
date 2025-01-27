@@ -39,6 +39,7 @@ impl EventHandler for sept::st::Utf8StringTerm {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Unconditionally go into "line-char" mode at the end of the string.
                     enter_line_char_mode(self, event_handler_ctx, EnterLineCharModeAt::End);
@@ -112,11 +113,13 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Escape this view by taking off the last two cursor tokens.
                     event_handler_ctx.enqueue_command_cursor_address_pop(2);
@@ -149,6 +152,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the char_index
                     {
@@ -171,6 +175,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the char_index
                     {
@@ -193,6 +198,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the char_index
                     {
@@ -215,6 +221,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the char_index
                     {
@@ -237,6 +244,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                 //     key: egui::Key::PageUp,
                 //     pressed: true,
                 //     modifiers: egui::Modifiers::NONE,
+                //     ..
                 // } => {
                 //     view_ctx.cursor_address_last_token_u32_increment_by(-view_ctx.page_up_down_delta, self.char_count as u32);
                 // // We consumed the event.
@@ -246,6 +254,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                 //     key: egui::Key::PageDown,
                 //     pressed: true,
                 //     modifiers: egui::Modifiers::NONE,
+                //     ..
                 // } => {
                 //     view_ctx.cursor_address_last_token_u32_increment_by(view_ctx.page_up_down_delta, self.char_count as u32);
                 // // We consumed the event.
@@ -255,6 +264,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::Delete,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let cursor_char_o = {
                         use sept::qv::QueryableDynTrait;
@@ -284,6 +294,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key: egui::Key::Backspace,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only Backspace if we're not at the beginning of the line.
                     // TODO: Implement line wrap
@@ -338,6 +349,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     key,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } if key == egui::Key::Enter || key == egui::Key::Tab => {
                     let c = if key == egui::Key::Enter { '\n' } else { '\t' };
 
@@ -419,6 +431,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Enter this Utf8StringTerm in "char" view at element 0.
                     event_handler_ctx.enqueue_command_cursor_address_push(
@@ -431,11 +444,13 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Escape this view by taking off the last two cursor tokens.
                     event_handler_ctx.enqueue_command_cursor_address_pop(2);
@@ -459,6 +474,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::ArrowUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // TODO: This should depend on LayoutMode
                     // Cursor edit - Update the line_index
@@ -482,6 +498,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::ArrowDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // TODO: This should depend on LayoutMode
                     // Cursor edit - Update the line_index
@@ -505,6 +522,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // TODO: This should depend on LayoutMode
                     // Cursor edit - Update the line_index
@@ -528,6 +546,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // TODO: This should depend on LayoutMode
                     // Cursor edit - Update the line_index
@@ -551,6 +570,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the line_index
                     {
@@ -573,6 +593,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Cursor edit - Update the line_index
                     {
@@ -595,6 +616,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                 //     key: egui::Key::PageUp,
                 //     pressed: true,
                 //     modifiers: egui::Modifiers::NONE,
+                //     ..
                 // } => {
                 // // We consumed the event.
                 // Ok(None)
@@ -603,6 +625,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
                 //     key: egui::Key::PageDown,
                 //     pressed: true,
                 //     modifiers: egui::Modifiers::NONE,
+                //     ..
                 // } => {
                 // // We consumed the event.
                 // Ok(None)
@@ -664,11 +687,13 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::ALT,
+                    ..
                 }
                 | egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Fully escape line-char mode by taking off the last four cursor tokens.
                     event_handler_ctx.enqueue_command_cursor_address_pop(4);
@@ -679,6 +704,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Enter,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Root value edit
                     event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
@@ -730,6 +756,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Tab,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Root value edit
                     event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
@@ -760,6 +787,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Delete,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let cursor_char_o = {
                         use sept::qv::EvalTrait;
@@ -785,6 +813,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Backspace,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     // Only backspace if we're not at the beginning of the string.
                     if self.line_index > 0 || self.char_index > 0 {
@@ -874,6 +903,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::ArrowUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_line_index_by(-1);
@@ -889,6 +919,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::ArrowDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_line_index_by(1);
@@ -904,6 +935,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::ArrowLeft,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_char_index_by(-1, true);
@@ -919,6 +951,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::ArrowRight,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_char_index_by(1, true);
@@ -934,6 +967,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.go_home();
@@ -949,6 +983,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::End,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.go_end();
@@ -964,6 +999,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::PageUp,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_line_index_by(-(event_handler_ctx.page_up_down_delta() as isize));
@@ -979,6 +1015,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     key: egui::Key::PageDown,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
+                    ..
                 } => {
                     let mut v = self.clone();
                     v.increment_line_index_by(event_handler_ctx.page_up_down_delta() as isize);

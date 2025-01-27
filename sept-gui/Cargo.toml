@@ -9,11 +9,8 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.44", features = ["backtrace"] }
 derive_more = "0.99.17"
-# TODO: upgrade
-# eframe = { version = "0.21", features = ["persistence"] }
-eframe = { version = "0.20", features = ["persistence"] }
-# egui = "0.21"
-egui = "0.20"
+eframe = { version = "0.30", features = ["persistence"] }
+egui = "0.30"
 either = "1.8.1"
 # This is only used in the test code to construct OrderedMapTerm
 maplit = "1.0.2"
