@@ -2490,6 +2490,54 @@ fn test_query_trait_utf8_string_term() {
 
 #[test]
 #[serial_test::serial]
+fn test_query_trait_struct_term() {
+    let s = dy::StructTerm::new(vec![
+        ("name".to_string(), st::Utf8String.into_value()),
+        ("age".to_string(), st::Uint8.into_value()),
+        ("is_rad".to_string(), st::Bool.into_value()),
+    ])
+    .expect("pass");
+    test_query_trait_case(qv::StructTermView::new(&s), &[], s.clone().into_value());
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['k'.into_value(), "name".to_string().into_value()],
+    //     "name".to_string().into_value(),
+    // );
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['v'.into_value(), "name".to_string().into_value()],
+    //     st::Utf8String.into_value(),
+    // );
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['k'.into_value(), "age".to_string().into_value()],
+    //     "age".to_string().into_value(),
+    // );
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['v'.into_value(), "age".to_string().into_value()],
+    //     st::Uint8.into_value(),
+    // );
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['k'.into_value(), "is_rad".to_string().into_value()],
+    //     "is_rad".to_string().into_value(),
+    // );
+    // TEMPORARILY DISABLED until key lookup is supported
+    // test_query_trait_case(
+    //     qv::StructTermView::new(&s),
+    //     &['v'.into_value(), "is_rad".to_string().into_value()],
+    //     st::Bool.into_value(),
+    // );
+}
+
+#[test]
+#[serial_test::serial]
 fn test_query_trait_ordered_map_term() {
     let ordered_map_term = dy::OrderedMapTerm::from(maplit::btreemap! {
         st::Void.into() => dy::OrderedMapTerm::from(maplit::btreemap! { 4u32.into() => "blah".to_string().into() }).into(),
@@ -2542,6 +2590,7 @@ fn test_query_trait_ordered_map_term() {
 }
 
 fn test_query_mut_trait_case<'a, T: qv::QueryMutAndApplyEditTrait + PartialEq + st::TermTrait>(
+    test_case_index: usize,
     mut x: T,
     address_v: &[dy::Value],
     edit: dy::Value,
@@ -2549,7 +2598,11 @@ fn test_query_mut_trait_case<'a, T: qv::QueryMutAndApplyEditTrait + PartialEq + 
 ) {
     x.query_mut_and_apply_edit(&mut address_v.iter(), edit)
         .expect("pass");
-    assert_eq!(x, expected_x);
+    assert_eq!(
+        x, expected_x,
+        "failure on test_case_index {}",
+        test_case_index
+    );
 }
 
 #[test]
@@ -2627,13 +2680,105 @@ fn test_query_mut_trait_utf8_string_term() {
             "ab 日本語 hippo\nOSTRI語H",
         ),
     ];
-    for (initial_value, address_v, edit, expected_value) in test_case_data_v.into_iter() {
+    for (test_case_index, (initial_value, address_v, edit, expected_value)) in
+        test_case_data_v.into_iter().enumerate()
+    {
         test_query_mut_trait_case(
+            test_case_index,
             initial_value.to_string(),
             address_v.as_slice(),
             edit,
             expected_value.to_string(),
         );
+    }
+}
+
+#[test]
+#[serial_test::serial]
+fn test_query_mut_trait_struct_term() {
+    let s0 = dy::StructTerm::new(vec![
+        ("name".to_string(), st::Utf8String.into_value()),
+        ("age".to_string(), st::Uint8.into_value()),
+        ("is_rad".to_string(), st::Bool.into_value()),
+    ])
+    .expect("pass");
+    let s1 = dy::StructTerm::new(vec![
+        ("x".to_string(), st::Float32.into_value()),
+        ("y".to_string(), st::Float64.into_value()),
+    ])
+    .expect("pass");
+    let test_case_data_v = vec![
+        (
+            s0.clone(),
+            vec![],
+            qv::ReplacementTerm {
+                old_data: s0.clone().into(),
+                new_data: s1.clone().into(),
+            }
+            .into_value(),
+            s1.clone(),
+        ),
+        // TEMPORARILY DISABLED until key lookup is supported
+
+        // (
+        //     s0.clone(),
+        //     vec!['k'.into_value(), "name".to_string().into_value()],
+        //     qv::ReplacementTerm {
+        //         old_data: "name".to_string().into(),
+        //         new_data: "handle".to_string().into(),
+        //     }
+        //     .into_value(),
+        //     dy::StructTerm::new(vec![
+        //         ("handle".to_string(), st::Utf8String.into_value()),
+        //         ("age".to_string(), st::Uint8.into_value()),
+        //         ("is_rad".to_string(), st::Bool.into_value()),
+        //     ])
+        //     .expect("pass"),
+        // ),
+
+        // TEMPORARILY DISABLED until key lookup is supported
+
+        // (
+        //     s0.clone(),
+        //     vec!['v'.into_value(), "name".to_string().into_value()],
+        //     qv::ReplacementTerm {
+        //         old_data: st::Utf8String.into(),
+        //         new_data: st::UnicodeChar.into(),
+        //     }
+        //     .into_value(),
+        //     dy::StructTerm::new(vec![
+        //         ("name".to_string(), st::UnicodeChar.into_value()),
+        //         ("age".to_string(), st::Uint8.into_value()),
+        //         ("is_rad".to_string(), st::Bool.into_value()),
+        //     ])
+        //     .expect("pass"),
+        // ),
+    ];
+    for (test_case_index, (initial_value, address_v, edit, expected_value)) in
+        test_case_data_v.into_iter().enumerate()
+    {
+        test_query_mut_trait_case(
+            test_case_index,
+            initial_value,
+            address_v.as_slice(),
+            edit,
+            expected_value,
+        );
+    }
+
+    {
+        // Negative test -- field_name (key) collision.
+        use qv::QueryMutAndApplyEditTrait;
+        s0.clone()
+            .query_mut_and_apply_edit(
+                &mut ['k'.into(), "name".to_string().into()].iter(),
+                qv::ReplacementTerm {
+                    old_data: "name".to_string().into(),
+                    new_data: "age".to_string().into(),
+                }
+                .into(),
+            )
+            .expect_err("pass");
     }
 }
 
@@ -2658,8 +2803,16 @@ fn test_query_mut_trait_value() {
             st::Bool.into_value(),
         ),
     ];
-    for (initial_value, address_v, edit, expected_value) in test_case_data_v.into_iter() {
-        test_query_mut_trait_case(initial_value, address_v.as_slice(), edit, expected_value);
+    for (test_case_index, (initial_value, address_v, edit, expected_value)) in
+        test_case_data_v.into_iter().enumerate()
+    {
+        test_query_mut_trait_case(
+            test_case_index,
+            initial_value,
+            address_v.as_slice(),
+            edit,
+            expected_value,
+        );
     }
 }
 
@@ -2709,11 +2862,17 @@ fn test_query_mut_trait_array_term() {
             ]),
         ),
     ];
-    for (case_index, (initial_value, address_v, edit, expected_value)) in
+    for (test_case_index, (initial_value, address_v, edit, expected_value)) in
         test_case_data_v.into_iter().enumerate()
     {
-        log::debug!("case {}", case_index);
-        test_query_mut_trait_case(initial_value, address_v.as_slice(), edit, expected_value);
+        log::debug!("case {}", test_case_index);
+        test_query_mut_trait_case(
+            test_case_index,
+            initial_value,
+            address_v.as_slice(),
+            edit,
+            expected_value,
+        );
     }
 }
 
@@ -2763,11 +2922,17 @@ fn test_query_mut_trait_tuple_term() {
             ]),
         ),
     ];
-    for (case_index, (initial_value, address_v, edit, expected_value)) in
+    for (test_case_index, (initial_value, address_v, edit, expected_value)) in
         test_case_data_v.into_iter().enumerate()
     {
-        log::debug!("case {}", case_index);
-        test_query_mut_trait_case(initial_value, address_v.as_slice(), edit, expected_value);
+        log::debug!("case {}", test_case_index);
+        test_query_mut_trait_case(
+            test_case_index,
+            initial_value,
+            address_v.as_slice(),
+            edit,
+            expected_value,
+        );
     }
 }
 
@@ -2775,6 +2940,7 @@ fn test_query_mut_trait_tuple_term() {
 #[serial_test::serial]
 fn test_query_mut_trait_ordered_map_term_val() {
     test_query_mut_trait_case(
+        0,
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => 123u32.into(),
         }),
@@ -2790,6 +2956,7 @@ fn test_query_mut_trait_ordered_map_term_val() {
     );
 
     test_query_mut_trait_case(
+        1,
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => dy::OrderedMapTerm::from(maplit::btreemap! {
                 4u32.into() => "blah".to_string().into()
@@ -2813,6 +2980,7 @@ fn test_query_mut_trait_ordered_map_term_val() {
 #[serial_test::serial]
 fn test_query_mut_trait_ordered_map_term_key() {
     test_query_mut_trait_case(
+        0,
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => 123u32.into(),
         }),
@@ -2828,6 +2996,7 @@ fn test_query_mut_trait_ordered_map_term_key() {
     );
 
     test_query_mut_trait_case(
+        1,
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => 123u32.into(),
             st::EmptyType.into() => 123u32.into(),
@@ -2939,6 +3108,7 @@ impl st::Inhabits<Type> for UnOp {
     }
 }
 
+#[allow(dead_code)]
 trait BinOpTermTrait {
     // TODO: A BinOp whose character is defined at runtime (analogous to NonParametricTermCode) would need
     // a &self parameter.  Could distingish this by having st::BinOpTermTrait and dy::BinOpTermTrait
@@ -2946,6 +3116,7 @@ trait BinOpTermTrait {
     fn is_commutative() -> bool;
 }
 
+#[allow(dead_code)]
 trait UnOpTermTrait {}
 
 #[derive(

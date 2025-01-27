@@ -167,10 +167,51 @@ macro_rules! impl_value_ui_using_to_string {
     };
 }
 
+// This is probably a TEMP HACK
+macro_rules! impl_value_ui_using_debug_format {
+    ($ty:ty) => {
+        impl ValueUI for $ty {
+            fn run_ui_expanded(
+                &self,
+                _ui: &mut egui::Ui,
+                view_ctx: &mut ViewCtx<'_>,
+                continuation_layout_job_o: Option<LayoutJob>,
+            ) -> egui::text::LayoutJob {
+                let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
+                layout_job_append(
+                    &mut layout_job,
+                    format!("{:?}", self).as_str(),
+                    view_ctx.color_for::<$ty>(),
+                    view_ctx,
+                );
+                render_type_annotation_for(self, &mut layout_job, view_ctx, None);
+                layout_job
+            }
+            fn run_ui_inline(
+                &self,
+                _ui: &mut Ui,
+                layout_job: &mut egui::text::LayoutJob,
+                view_ctx: &mut ViewCtx<'_>,
+            ) {
+                layout_job_append(
+                    layout_job,
+                    format!("{:?}", self).as_str(),
+                    view_ctx.color_for::<$ty>(),
+                    view_ctx,
+                );
+                render_type_annotation_for(self, layout_job, view_ctx, None);
+            }
+        }
+    };
+}
+
+impl_value_ui_using_to_string!(sept::st::Term);
+impl_value_ui_using_to_string!(sept::st::Type);
 impl_value_ui_using_to_string!(sept::st::Void);
 impl_value_ui_using_to_string!(sept::st::True);
 impl_value_ui_using_to_string!(sept::st::False);
 impl_value_ui_using_to_string!(sept::st::BoolTerm);
+impl_value_ui_using_debug_format!(sept::st::UnicodeCharTerm);
 impl_value_ui_using_to_string!(sept::st::Sint8Term);
 impl_value_ui_using_to_string!(sept::st::Sint16Term);
 impl_value_ui_using_to_string!(sept::st::Sint32Term);
@@ -187,6 +228,7 @@ impl_value_ui_using_to_string!(sept::st::EmptyType);
 impl_value_ui_using_to_string!(sept::st::TrueType);
 impl_value_ui_using_to_string!(sept::st::FalseType);
 impl_value_ui_using_to_string!(sept::st::Bool);
+impl_value_ui_using_to_string!(sept::st::UnicodeChar);
 impl_value_ui_using_to_string!(sept::st::Sint8);
 impl_value_ui_using_to_string!(sept::st::Sint16);
 impl_value_ui_using_to_string!(sept::st::Sint32);
@@ -205,6 +247,7 @@ impl_value_ui_using_to_string!(sept::st::Tuple);
 impl_value_ui_using_to_string!(sept::st::GlobalSymRef);
 impl_value_ui_using_to_string!(sept::st::LocalSymRef);
 impl_value_ui_using_to_string!(sept::st::BoolType);
+impl_value_ui_using_to_string!(sept::st::UnicodeCharType);
 impl_value_ui_using_to_string!(sept::st::Sint8Type);
 impl_value_ui_using_to_string!(sept::st::Sint16Type);
 impl_value_ui_using_to_string!(sept::st::Sint32Type);

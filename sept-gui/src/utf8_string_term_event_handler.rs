@@ -303,7 +303,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                             // Only if there was a char to Backspace through should we enqueue commands
                             // to edit the root value and update the cursor.
 
-                            // Compute the updated cursor_address and make the Root edit
+                            // Compute the updated cursor_address and make the Root value edit
                             {
                                 let mut updated_cursor_address =
                                     event_handler_ctx.cursor_address.clone();
@@ -802,7 +802,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                             // Only if there was a char to Backspace through should we enqueue commands
                             // to edit the root value and update the cursor.
 
-                            // Compute the updated cursor_address and make the Root edit.
+                            // Compute the updated cursor_address and make the Root value edit.
                             {
                                 let mut updated_cursor_address =
                                     event_handler_ctx.cursor_address.clone();
@@ -813,7 +813,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                                 updated_cursor_address[cursor_len - 1] =
                                     (v.char_index as u32).into_value();
 
-                                // Root edit
+                                // Root value edit
                                 event_handler_ctx.enqueue_command(RootValueEdit::from(
                                     AddressedEdit {
                                         address: updated_cursor_address.clone(),

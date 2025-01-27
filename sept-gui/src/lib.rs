@@ -19,6 +19,7 @@ mod ordered_map_term_value_ui;
 mod placeholder_event_handler;
 mod placeholder_value_ui;
 mod root_value_edit;
+mod struct_term_event_handler;
 mod struct_term_term_value_ui;
 mod struct_term_value_ui;
 mod tuple_term_value_ui;
@@ -44,7 +45,7 @@ pub use event_handler_ctx_nesting_guard::EventHandlerCtxNestingGuard;
 pub use layout_discriminant::LayoutDiscriminant;
 pub use layout_mode::LayoutMode;
 pub use model::Model;
-pub use placeholder_event_handler::{placeholder_event_handler_impl, PlaceholderEventKind};
+pub use placeholder_event_handler::placeholder_event_handler_impl;
 pub use root_value_edit::RootValueEdit;
 pub use value_ui::{
     extract_text_prefix_from_front_text, first_char_stripped_string, ValueUI,

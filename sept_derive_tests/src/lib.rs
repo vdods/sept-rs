@@ -1,4 +1,7 @@
-use sept::{dy::{self, Value}, st::{self, Sint32, VoidType}};
+use sept::{
+    dy::{self, Value},
+    st::{self, Sint32, VoidType},
+};
 
 /// This will run once at load time (i.e. presumably before main function is called).
 #[ctor::ctor]
@@ -6,10 +9,16 @@ fn overall_init() {
     env_logger::try_init().unwrap();
 }
 
+// TODO: Change AbstractTypeType to something that actually makes sense, or comment as to why this type is used.
 #[derive(Clone, Debug, dy::IntoValue, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "VoidType", is_parametric = "false", is_type = "false")]
+#[st_term_trait(
+    AbstractTypeType = "VoidType",
+    is_parametric = "false",
+    is_type = "false"
+)]
 pub struct FancyTerm;
 
+// TODO: Change abstract_type_expr to something that actually makes sense, or comment as to why this value is used.
 #[derive(Clone, Debug, st::TermTrait, st::TypeTrait)]
 #[st_term_trait(AbstractTypeType = "Value")]
 #[st_term_trait(abstract_type_expr = "Value::from(Sint32)")]
@@ -17,7 +26,13 @@ pub struct FancyTerm;
 #[st_term_trait(is_type = "true")]
 pub struct DumbType;
 
-#[derive(Clone, Debug, dy::IntoValue, st::NonParametricTermTrait)]
+#[derive(
+    Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::NonParametricTermTrait, st::TermTrait,
+)]
+#[st_term_trait(AbstractTypeType = "Value")]
+#[st_term_trait(abstract_type_expr = "Value::from(Sint32)")]
+#[st_term_trait(is_parametric = "false")]
+#[st_term_trait(is_type = "false")]
 pub struct Undefined;
 
 #[test]

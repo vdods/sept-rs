@@ -1,6 +1,7 @@
 use crate::{dy, st};
 
-pub trait EditTrait: st::TermTrait {
+// pub trait EditTrait: st::TermTrait {
+pub trait EditTrait: Clone {
     /// This is the type of the inverse of this DiffTrait.
     type Inverse: EditTrait;
     /// Convert into the inverse of this DiffTrait.

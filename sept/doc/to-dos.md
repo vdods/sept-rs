@@ -1,5 +1,6 @@
 # To-dos
 
+-   Rename `*Trait` to `*T` and use `T` as a short semantic tag on trait names.
 -   Create a runtime for the term/type system.
     -   Store a poset of types for efficient type computations (inhabitation, subtype, supertype, common subtype, common supertype, etc).
     -   Will eventually need to handle schemes of types, meaning that there are parameterized families (potentially infinite in size) of terms/types that need to be handled without needing to actually instantiate them.

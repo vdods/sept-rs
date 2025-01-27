@@ -14,13 +14,13 @@ impl ValueUI for sept::dy::StructTermTerm {
         let direct_type = dereferenced_g
             .downcast_ref::<sept::dy::StructTerm>()
             .expect("StructTermTerm's r#type field did not dereference into StructTerm");
-        assert_eq!(direct_type.field_decl_v.len(), self.field_tuple().len());
+        assert_eq!(direct_type.len(), self.field_tuple().len());
 
         let mut input_g = ui.input_mut();
         if view_ctx.render_address_is_cursor_address() {
             if input_g.consume_key(Modifiers::NONE, Key::Enter) {
                 // Enter this StructTermTerm at the first field name, but only if there is one.
-                if let Some(first_field_decl) = direct_type.field_decl_v.first() {
+                if let Some(first_field_decl) = direct_type.first() {
                     view_ctx.cursor_address_push(first_field_decl.0.clone().into());
                 } else {
                     // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
@@ -40,7 +40,7 @@ impl ValueUI for sept::dy::StructTermTerm {
                 view_ctx.cursor_address_pop();
             } else if input_g.consume_key(Modifiers::NONE, Key::Home) {
                 view_ctx.cursor_address_pop();
-                if let Some(first_field_decl) = direct_type.field_decl_v.first() {
+                if let Some(first_field_decl) = direct_type.first() {
                     view_ctx.cursor_address_push(first_field_decl.0.clone().into());
                 } else {
                     // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
@@ -48,7 +48,7 @@ impl ValueUI for sept::dy::StructTermTerm {
                 // TODO: use ui.scroll_to_me
             } else if input_g.consume_key(Modifiers::NONE, Key::End) {
                 view_ctx.cursor_address_pop();
-                if let Some(last_field_decl) = direct_type.field_decl_v.last() {
+                if let Some(last_field_decl) = direct_type.last() {
                     view_ctx.cursor_address_push(last_field_decl.0.clone().into());
                 } else {
                     // TODO: Figure out how to enter it with a placeholder cursor to prep for editing
@@ -105,8 +105,7 @@ impl ValueUI for sept::dy::StructTermTerm {
                             let new_field_index = (field_index as u32)
                                 .saturating_add_signed(element_index_delta)
                                 .min(self_len - 1);
-                            let new_field_name =
-                                direct_type.field_decl_v[new_field_index as usize].0.clone();
+                            let new_field_name = direct_type[new_field_index as usize].0.clone();
                             view_ctx.cursor_address_push(new_field_name.into());
                         }
                         Err(_) => {
@@ -172,7 +171,7 @@ impl ValueUI for sept::dy::StructTermTerm {
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
             for ((field_name, _field_type), field_value) in
-                std::iter::zip(direct_type.field_decl_v.iter(), self.field_tuple().iter())
+                std::iter::zip(direct_type.iter(), self.field_tuple().iter())
             {
                 ui.horizontal(|ui| {
                     ui.label(indentation_for::<Self>(&mut view_ctx_g));
@@ -246,7 +245,7 @@ impl ValueUI for sept::dy::StructTermTerm {
         {
             let mut view_ctx_g = view_ctx.push_nesting_depth();
             for ((field_name, _field_type), field_value) in
-                std::iter::zip(direct_type.field_decl_v.iter(), self.field_tuple().iter())
+                std::iter::zip(direct_type.iter(), self.field_tuple().iter())
             {
                 {
                     // TODO: Is it possible to push a reference to the address token here?

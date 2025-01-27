@@ -2,8 +2,8 @@
 #![allow(unused)]
 
 use crate::{
-    extract_text_prefix_from_front_text, Command, EventHandlerCtx, Model, ValueUI, ViewCtx,
-    ViewOptions,
+    extract_text_prefix_from_front_text, AddressedEdit, Command, CursorEdit, EventHandlerCtx,
+    Model, ValueUI, ViewCtx, ViewOptions,
 };
 use std::{
     collections::VecDeque,
@@ -213,6 +213,16 @@ impl Default for App {
         use sept::dy::IntoValue;
         // let root_value = s1.into_value();
         let root_value = sept::dy::ArrayTerm::from(vec![
+            sept::dy::StructTerm::new(vec![
+                ("name".to_string(), sept::st::Utf8String.into()),
+                ("age".to_string(), sept::st::Uint8.into()),
+            ])
+            .unwrap()
+            .into(),
+            sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+                .unwrap()
+                .into(),
+            sept::dy::StructTerm::new(vec![]).unwrap().into(),
             "".to_string().into(),
             "a".to_string().into(),
             "\n".to_string().into(),
@@ -403,7 +413,7 @@ impl eframe::App for App {
                 let mut unhandled_event_v = Vec::new();
                 while !event_v.is_empty() {
                     let event = event_v.pop_front().unwrap();
-                    let (unhandled_event_o, enqueued_command_v) = {
+                    let (unhandled_event_o, mut enqueued_command_v) = {
                         let mut enqueued_command_v = VecDeque::new();
 
                         // Give the app a chance to handle top-level events.
@@ -435,32 +445,83 @@ impl eframe::App for App {
                         (unhandled_event_o, enqueued_command_v)
                     };
 
-                    // Apply each enqueued command
+                    // Apply the sequence of enqueued commands as a transaction.  If any of them fail,
+                    // then the whole thing should be rolled back.
                     {
                         let mut root_value_g = self.model.root_value_la.write().unwrap();
-                        for command in enqueued_command_v.into_iter() {
+                        let mut successful_command_count = 0usize;
+                        for command in enqueued_command_v.iter() {
                             tracing::trace!("App::update; executing command {:?}", command);
                             use sept::qv::QueryMutAndApplyEditTrait;
-                            match &command {
+                            match command {
                                 Command::CursorEdit(cursor_edit) => {
                                     self.cursor_address
                                         .query_mut_and_apply_edit(
                                             &mut cursor_edit.address.iter(),
                                             cursor_edit.edit.clone(),
                                         )
-                                        .expect("TODO: handle error");
+                                        .expect("programmer error: error in CursorEdit");
                                 }
                                 Command::RootValueEdit(root_value_edit) => {
-                                    root_value_g
-                                        .query_mut_and_apply_edit(
-                                            &mut root_value_edit.address.iter(),
-                                            root_value_edit.edit.clone(),
-                                        )
-                                        .expect("TODO: handle error");
+                                    match root_value_g.query_mut_and_apply_edit(
+                                        &mut root_value_edit.address.iter(),
+                                        root_value_edit.edit.clone(),
+                                    ) {
+                                        Ok(()) => {
+                                            // It worked.
+                                        }
+                                        Err(e) => {
+                                            // TODO: Show the error in some status bar or other visual indicator
+                                            // that's out of the way, or cause an error bell to sound.
+                                            tracing::error!("Edit error: {}", e);
+                                            break;
+                                        }
+                                    }
                                 }
                             }
-                            // Store each edit in the undo queue.
-                            self.model.executed_command_v.push_back(command);
+                            successful_command_count += 1;
+                        }
+                        // Handle transaction commit/rollback.
+                        // TODO: Encapsulate this into a method.
+                        if successful_command_count < enqueued_command_v.len() {
+                            // We fell short of executing all commands, meaning there was an error,
+                            // so roll them back, applying their inverses in reverse order.
+
+                            // NOTE: There has to be more articulation in the notion of command, for when
+                            // undo/redo are implemented.  Cursor edits and root value edits should be
+                            // considered edits and therefore are part of this transaction, but things
+                            // like view option changes or undo/redo commands should not be considered
+                            // edits and are therefore not part of the transaction.  For example, "undo"
+                            // should obviously not make it into the undo queue.
+
+                            for command in enqueued_command_v.drain(0..successful_command_count).rev() {
+                                use sept::st::EditTrait;
+                                use sept::qv::QueryMutAndApplyEditTrait;
+                                match command {
+                                    Command::CursorEdit(cursor_edit) => {
+                                        let AddressedEdit { address, edit: edit_inv } = cursor_edit.into_inverse().into();
+                                        self.cursor_address
+                                        .query_mut_and_apply_edit(
+                                            &mut address.iter(),
+                                            edit_inv,
+                                        )
+                                        .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
+                                    }
+                                    Command::RootValueEdit(root_value_edit) => {
+                                        let AddressedEdit { address, edit: edit_inv } = root_value_edit.into_inverse().into();
+                                        root_value_g.query_mut_and_apply_edit(
+                                            &mut address.iter(),
+                                            edit_inv,
+                                        )
+                                        .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
+                                    }
+                                }
+                            }
+                        } else {
+                            // The whole transaction succeeded, so store all edits in the undo queue.
+                            for command in enqueued_command_v.into_iter() {
+                                self.model.executed_command_v.push_back(command);
+                            }
                         }
                     }
 

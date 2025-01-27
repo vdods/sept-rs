@@ -17,25 +17,30 @@ impl EventHandler for sept::st::Placeholder {
             placeholder_event_handler_impl(
                 event,
                 event_handler_ctx,
-                PlaceholderEventKind::ReplacementTerm,
+                |address: sept::dy::TupleTerm, new_data: sept::dy::Value| -> Command {
+                    RootValueEdit::from(AddressedEdit {
+                        address,
+                        edit: sept::qv::ReplacementTerm {
+                            old_data: sept::st::Placeholder.into(),
+                            new_data,
+                        }
+                        .into(),
+                    })
+                    .into()
+                },
             )
         }
     }
 }
 
-pub enum PlaceholderEventKind {
-    /// This indicates that the newly created term is going to be inserted, not replacing anything.
-    InsertionTerm,
-    /// This indicates that a Placeholder term is going to be replaced by the newly created term.
-    ReplacementTerm,
-}
-
 /// Slightly more generalized version of Placeholder::event_handler which can handle inserting
-/// items at the non-element at the end of an array or other container.
+/// items at the non-element at the end of an array or other container.  command_factory takes
+/// the address and new_data and should return the command to be executed if the Placeholder
+/// is being replaced by the new_data.
 pub fn placeholder_event_handler_impl(
     event: egui::Event,
     event_handler_ctx: &mut EventHandlerCtx<'_>,
-    placeholder_event_kind: PlaceholderEventKind,
+    command_factory: impl Fn(sept::dy::TupleTerm, sept::dy::Value) -> Command,
 ) -> Result<Option<egui::Event>> {
     match event {
         egui::Event::Text(string) if string.starts_with("\"") || string.starts_with("[") => {
@@ -47,22 +52,7 @@ pub fn placeholder_event_handler_impl(
             } else {
                 unreachable!("programmer error: you missed a case!")
             };
-            let command: Command = match placeholder_event_kind {
-                PlaceholderEventKind::InsertionTerm => RootValueEdit::from(AddressedEdit {
-                    address,
-                    edit: sept::qv::InsertionTerm { new_data }.into(),
-                })
-                .into(),
-                PlaceholderEventKind::ReplacementTerm => RootValueEdit::from(AddressedEdit {
-                    address,
-                    edit: sept::qv::ReplacementTerm {
-                        old_data: sept::st::Placeholder.into(),
-                        new_data,
-                    }
-                    .into(),
-                })
-                .into(),
-            };
+            let command = command_factory(address, new_data);
             event_handler_ctx.enqueue_command(command);
             // Take the used char off the front of the string and push the rest back onto the remaining events,
             // if there's anything left of the string after the first char.

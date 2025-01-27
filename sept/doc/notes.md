@@ -159,3 +159,23 @@ Design challenge:
     In order to achieve this nested kind of edit, as the edit "passes" the `key` address token, it needs to remove the key-value pair addressed by that key from the OrderedMapTerm, apply the edit to the removed key portion of the key-value pair, and then attempt to re-add the key-value pair to the OrderedMapTerm.  This re-addition process can fail.  If so, to not violate the principle of least surprise, it should revert the OrderedMapTerm to its previous state before returning the error.  Ideally it could check for constraint violation before modifying anything, but that's probably very hard to do in general.
 
     For now, don't remove the key-value pair, but rather clone the whole thing, recurse the edit call to the key portion of the key-value pair, and if that completes successfully, add the new key-value pair and remove the old one.  This will get expensive the more complex the nesting of OrderedMapTerm-s within keys is.
+
+## 2023.06.28
+
+Notes on constraints and editing
+-   In order to visualize and edit data that has potentially complicated constraints, there could be two components to that piece of data:
+    -   The structural definition of the data type, consisting only of compositions of PODs and direct-product types (meaning that their shape and element types are well-defined but there are no higher-order constraints)
+    -   A list of all higher-order constraints
+
+    The data would be visualized based on its structural definition, but then there could be a side bar which shows the list of constraints, each highlighted in green or red to show satisfaction or violation of that constraint (or some other visual affordance).  Thus, if the data is invalid, it's clear which constraints are not currently satisfied.
+
+    The challenge here is that the constraint definitions naturally invite use of a functional language to express the various queries, comparisons, equivalences, and other computations needed to determine constraint satisfaction.
+
+    These constraint definitions could get as complex as you want, for example:
+    -   An array of (t, x) values could have a constraint relating adjacent (t, x) pairs, in which a valid array satisfies a difference equation (discrete analog of differential equation).  A more complex version of this would be on higher-dimensional arrays with relationships between various slices.
+    -   There could be a constraint that requires that one value is equal to the SHA256 hash of another.
+    -   There could be a constraint that value A is a valid digital signature by value B over the SHA256 hash of value C.
+
+    These functions could be provided in a portable way as wasm modules, whose function signatures are formally specified, and whose specific hash values are specified in order to have content authenticability.
+
+    In terms of an interactive editing process, some common constraints might not best be implemented by running a function over the whole data value, such as the uniqueness of a given field, as in a map's key values or a StructTerm's field names, since the constraint check might be expensive.

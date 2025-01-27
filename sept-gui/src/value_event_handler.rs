@@ -14,10 +14,19 @@ impl EventHandler for sept::dy::Value {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
+        } else if let Some(x) = self.downcast_ref::<sept::dy::StructTerm>() {
+            x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::st::Placeholder>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else {
-            anyhow::bail!("Unsupported Value variant for handle_event");
+            // This is just a temporary warning, until we support all Value variants.
+            use sept::st::Stringifiable;
+            tracing::warn!(
+                "Unsupported Value variant encountered in handle_event: self: {}",
+                self.stringify()
+            );
+            // We didn't handle the event, so return it.
+            Ok(Some(event))
         }
     }
 }

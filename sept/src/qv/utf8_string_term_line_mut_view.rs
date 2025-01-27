@@ -18,30 +18,6 @@ impl<'a> Utf8StringTermLineMutView<'a> {
     }
 }
 
-// impl<'b> qv::QueryMutAndApplyEditTrait for Utf8StringTermLineMutView<'b> {
-//     fn query_mut_and_apply_edit<'s, 'a>(
-//         &'s mut self,
-//         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-//         edit: dy::Value,
-//     ) -> Result<()>
-//     where
-//         's: 'a,
-//     {
-//         if let Some(address_token) = address_token_i.next() {
-//             // Re-borrow address_token with a shorter lifetime.
-//             let address_token = &*address_token;
-//             // Re-borrow the iterator items with a shorter lifetime.
-//             let mut address_token_i = address_token_i.map(|x| &*x);
-//             use qv::SingleQueryMut;
-//             self.run_single_query_mut(address_token)?
-//                 .query_mut_and_apply_edit(&mut address_token_i, edit)
-//         } else {
-//             use qv::ApplyEditTrait;
-//             self.apply_edit(edit)
-//         }
-//     }
-// }
-
 impl<'a> qv::ApplyEditTrait for Utf8StringTermLineMutView<'a> {
     fn apply_edit(&mut self, _edit: dy::Value) -> anyhow::Result<()> {
         unimplemented!("blah");

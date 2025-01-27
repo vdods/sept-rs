@@ -8,6 +8,7 @@ GUI editor for sept data.
 
 ## To-dos
 
+-   Maybe ScrollArea::show_rows could be a way to make large data efficient.
 
 ## To-don'ts (i.e. Done)
 

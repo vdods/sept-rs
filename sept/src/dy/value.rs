@@ -291,6 +291,17 @@ impl std::fmt::Display for Value {
     }
 }
 
+impl st::EditTrait for Value {
+    type Inverse = Self;
+    fn into_inverse(self) -> Self::Inverse {
+        dy::RUNTIME_LA
+            .read()
+            .unwrap()
+            .into_inverse(self)
+            .expect("into_inverse not registered for this type in the Runtime.")
+    }
+}
+
 impl Eq for Value {}
 
 /// This prevents directly nested Value-s, e.g. Value(Value(123u32)), since that's never what we want.

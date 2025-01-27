@@ -21,6 +21,9 @@ pub struct ViewOptions {
     // TODO: This is not a view option, but some sort of config option.
     pub page_up_down_delta: u32,
     // TODO: Add color config
+
+    // TODO: Add an option for hiding the end-of-container placeholders (END_OF_TRANSMISSION_STR)
+    // except for when the cursor is on them.
 }
 
 impl ViewOptions {
@@ -109,7 +112,9 @@ impl ViewOptions {
             ANSIColor::DARK_MAGENTA
         } else if type_id == TypeId::of::<sept::st::Float64Term>() {
             ANSIColor::BRIGHT_MAGENTA
-        } else if type_id == TypeId::of::<sept::st::Void>()
+        } else if type_id == TypeId::of::<sept::st::Term>()
+            || type_id == TypeId::of::<sept::st::Type>()
+            || type_id == TypeId::of::<sept::st::Void>()
             || type_id == TypeId::of::<sept::st::VoidType>()
             || type_id == TypeId::of::<sept::st::Placeholder>()
             || type_id == TypeId::of::<sept::st::PlaceholderType>()

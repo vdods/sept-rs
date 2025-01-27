@@ -31,6 +31,21 @@ impl<'b> std::ops::Deref for Utf8StringTermLineView<'b> {
     }
 }
 
+impl<'b> qv::EvalTrait for Utf8StringTermLineView<'b> {
+    /// This will produce an ArrayTerm populated with (clones of) the lines of the string,
+    /// where each line includes the newline.
+    fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
+        let line_v = st::split_inclusive_allow_trailing_empty(self.string, '\n')
+            .map(|line| line.to_string().into_value())
+            .collect::<Vec<dy::Value>>();
+        let lines = dy::ArrayTerm::from(line_v);
+        use dy::IntoValue;
+        Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
+            RwLock::new(lines.into_value()),
+        )))
+    }
+}
+
 impl<'b> qv::QueryTrait for Utf8StringTermLineView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
@@ -62,26 +77,6 @@ impl<'b> qv::QueryTrait for Utf8StringTermLineView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermLineView<'b> {
-    /// This will produce an ArrayTerm populated with (clones of) the lines of the string,
-    /// where each line includes the newline.
-    fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-        let line_v = st::split_inclusive_allow_trailing_empty(self.string, '\n')
-            .map(|line| line.to_string().into_value())
-            .collect::<Vec<dy::Value>>();
-        let lines = dy::ArrayTerm::from(line_v);
-        use dy::IntoValue;
-        Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
-            RwLock::new(lines.into_value()),
-        )))
-    }
-}
-
-#[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermLineViewQuery<'a> {
-    Utf8StringTermLineElemView(qv::Utf8StringTermLineElemView<'a>),
-}
-
 impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineView<'b> {
     type ReturnType<'a> = Utf8StringTermLineViewQuery<'a> where 'b: 'a;
     type Error = Error;
@@ -99,4 +94,9 @@ impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineView<'b> {
             );
         }
     }
+}
+
+#[derive(Clone, Debug, derive_more::From)]
+pub enum Utf8StringTermLineViewQuery<'a> {
+    Utf8StringTermLineElemView(qv::Utf8StringTermLineElemView<'a>),
 }

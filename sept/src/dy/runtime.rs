@@ -41,6 +41,7 @@ pub type DeserializeParametersAndConstructFn =
 pub type DeconstructFn = fn(x: &ValueGuts) -> dy::Deconstruction;
 pub type NonParametricTermInstantiateFn = fn() -> dy::Value;
 pub type ApplyEditFn = fn(x: &mut ValueGuts, edit: dy::Value) -> Result<()>;
+pub type IntoInverseFn = fn(x: dy::Value) -> dy::Value;
 
 struct RegisteredCmpFn {
     cmp_fn: CmpFn,
@@ -167,6 +168,7 @@ pub struct Runtime {
     query_fn_m: HashMap<TypeId, Box<dyn QueryAdapterTrait>>,
     query_mut_and_apply_edit_fn_m: HashMap<TypeId, Box<dyn QueryMutAndApplyEditAdapterTrait>>,
     apply_edit_fn_m: HashMap<TypeId, ApplyEditFn>,
+    into_inverse_fn_m: HashMap<TypeId, IntoInverseFn>,
 }
 
 impl Runtime {
@@ -230,6 +232,7 @@ impl Runtime {
         runtime.register_query::<String>().unwrap();
         runtime.register_query::<Void>().unwrap();
         runtime.register_query::<ArrayTerm>().unwrap();
+        runtime.register_query::<StructTerm>().unwrap();
         runtime.register_query::<TupleTerm>().unwrap();
         runtime.register_query::<OrderedMapTerm>().unwrap();
 
@@ -257,6 +260,9 @@ impl Runtime {
             .register_query_mut_and_apply_edit::<ArrayTerm>()
             .unwrap();
         runtime
+            .register_query_mut_and_apply_edit::<StructTerm>()
+            .unwrap();
+        runtime
             .register_query_mut_and_apply_edit::<TupleTerm>()
             .unwrap();
         runtime
@@ -280,6 +286,7 @@ impl Runtime {
         runtime.register_apply_edit::<String>().unwrap();
         runtime.register_apply_edit::<Void>().unwrap();
         runtime.register_apply_edit::<ArrayTerm>().unwrap();
+        runtime.register_apply_edit::<StructTerm>().unwrap();
         runtime.register_apply_edit::<TupleTerm>().unwrap();
         runtime.register_apply_edit::<OrderedMapTerm>().unwrap();
 
@@ -344,9 +351,15 @@ impl Runtime {
         //         runtime.register_non_parametric_term::<NonParametricType>().unwrap();
         //         runtime.register_non_parametric_term::<ParametricType>().unwrap();
         runtime.register_non_parametric_term::<Void>().unwrap();
+        runtime
+            .register_non_parametric_term::<Placeholder>()
+            .unwrap();
         runtime.register_non_parametric_term::<True>().unwrap();
         runtime.register_non_parametric_term::<False>().unwrap();
         runtime.register_non_parametric_term::<VoidType>().unwrap();
+        runtime
+            .register_non_parametric_term::<PlaceholderType>()
+            .unwrap();
         runtime.register_non_parametric_term::<TrueType>().unwrap();
         runtime.register_non_parametric_term::<FalseType>().unwrap();
         runtime.register_non_parametric_term::<EmptyType>().unwrap();
@@ -1120,10 +1133,10 @@ impl Runtime {
     pub fn register_query<T: qv::QueryableDynTrait + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         // This is what carries the type information.
-        let query2_fn = QueryAdapter::<T>(std::marker::PhantomData);
+        let query_fn = QueryAdapter::<T>(std::marker::PhantomData);
         // Store the adapter in a box as a trait object
-        let query2_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query2_fn);
-        match self.query_fn_m.insert(type_id, query2_fn_b) {
+        let query_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query_fn);
+        match self.query_fn_m.insert(type_id, query_fn_b) {
             Some(_) => {
                 anyhow::bail!(
                     "collision with already-registered query fn for {}; term type that produced the collision was {}",
@@ -1167,6 +1180,26 @@ impl Runtime {
             Some(_) => {
                 anyhow::bail!(
                     "collision with already-registered apply_edit fn for {}; term type that produced the collision was {}",
+                    self.label_of_type_id(type_id),
+                    std::any::type_name::<T>()
+                );
+            }
+            None => Ok(()),
+        }
+    }
+    pub fn register_into_inverse<T>(&mut self) -> Result<()>
+    where
+        T: st::EditTrait + 'static,
+        <T as st::EditTrait>::Inverse: dy::IntoValue,
+    {
+        let type_id = TypeId::of::<T>();
+        let into_inverse_fn = |edit: dy::Value| -> dy::Value {
+            dy::Value::from(edit.downcast_into::<T>().into_inverse())
+        };
+        match self.into_inverse_fn_m.insert(type_id, into_inverse_fn) {
+            Some(_) => {
+                anyhow::bail!(
+                    "collision with already-registered into_inverse fn for {}; term type that produced the collision was {}",
                     self.label_of_type_id(type_id),
                     std::any::type_name::<T>()
                 );
@@ -1765,9 +1798,9 @@ impl Runtime {
     ) -> Result<Box<dyn qv::EvalTrait + 'a>> {
         assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.query_fn_m.get(&query_subject.type_id()) {
-            Some(query2_fn_b) => query2_fn_b.make_and_run_query(query_subject, address_token_i),
+            Some(query_fn_b) => query_fn_b.make_and_run_query(query_subject, address_token_i),
             None => Err(anyhow::anyhow!(
-                "no query2 fn found for `{}`",
+                "no query fn found for `{}`",
                 self.label_of_value_guts(query_subject)
             )),
         }
@@ -1801,6 +1834,16 @@ impl Runtime {
             None => Err(anyhow::anyhow!(
                 "no apply_edit fn found for `{}`",
                 self.label_of_value_guts(x)
+            )),
+        }
+    }
+    pub fn into_inverse(&self, edit: dy::Value) -> Result<dy::Value> {
+        assert!(edit.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a Value whose interior refers to a Value, which is not what is wanted");
+        match self.into_inverse_fn_m.get(&edit.type_id()) {
+            Some(into_inverse_fn) => Ok(into_inverse_fn(edit)),
+            None => Err(anyhow::anyhow!(
+                "no into_inner fn found for `{}`",
+                self.label_of_value_guts(edit.as_ref())
             )),
         }
     }

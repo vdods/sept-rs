@@ -10,7 +10,13 @@ impl ValueUI for sept::dy::Value {
     ) -> LayoutJob {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
-        if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
+        if let Some(term) = self.downcast_ref::<sept::st::Term>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::Type>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeCharTerm>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Term>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -31,6 +37,8 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::Float32Term>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Term>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeChar>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -81,6 +89,8 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::FalseType>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::EmptyType>() {
+            term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeCharType>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Type>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -147,7 +157,13 @@ impl ValueUI for sept::dy::Value {
     fn run_ui_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         // TODO: figure out best way to efficiently get the View trait out of here,
         // ideally without having to add it to the sept runtime.
-        if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
+        if let Some(term) = self.downcast_ref::<sept::st::Term>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::Type>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::BoolTerm>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeCharTerm>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Term>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
@@ -168,6 +184,8 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::Float32Term>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Term>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeChar>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
@@ -218,6 +236,8 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::FalseType>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::EmptyType>() {
+            term.run_ui_inline(ui, layout_job, view_ctx);
+        } else if let Some(term) = self.downcast_ref::<sept::st::UnicodeCharType>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Sint8Type>() {
             term.run_ui_inline(ui, layout_job, view_ctx);

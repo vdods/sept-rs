@@ -1,9 +1,9 @@
 use crate::{
-    placeholder_event_handler_impl, AddressedEdit, CursorEdit, EventHandler, EventHandlerCtx,
-    LayoutDiscriminant, PlaceholderEventKind, RootValueEdit,
+    placeholder_event_handler_impl, AddressedEdit, Command, CursorEdit, EventHandler,
+    EventHandlerCtx, LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
-use sept::dy::{self, IntoValue};
+use sept::dy::IntoValue;
 
 impl EventHandler for sept::dy::ArrayTerm {
     fn handle_event(
@@ -285,29 +285,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                                 .root_value
                                 .make_and_run_query(&mut event_handler_ctx.cursor_address.iter())
                                 .unwrap();
-                            let cursor_value_la = query_b.eval().unwrap();
-                            match cursor_value_la {
-                                dy::MaybeDereferencedValue::Ref(r) => {
-                                    assert!(r.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
-                                    assert!(r.type_id() != std::any::TypeId::of::<Box<dy::ValueGuts>>(), "something constructed a &ValueGuts which refers to a Box<&ValueGuts>, which is not what is wanted");
-                                }
-                                _ => {}
-                            }
-                            let cursor_value_g = cursor_value_la.read();
-                            // TODO: Figure out how better to get an owned Value out of the guard.  Maybe that
-                            // involves using a write guard, though the fact that it might contain Arc implies
-                            // that it might share ownership, so that has to be handled.  It would be better
-                            // if MaybeDereferencedValue was a kind of Cow.
-                            match cursor_value_g {
-                                sept::dy::MaybeDereferencedValueReadGuard::Ref(r) => {
-                                    assert!(r.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
-                                    assert!(r.type_id() != std::any::TypeId::of::<Box<dy::ValueGuts>>(), "something constructed a &ValueGuts which refers to a Box<&ValueGuts>, which is not what is wanted");
-                                    sept::dy::Value::from(
-                                        sept::dy::RUNTIME_LA.read().unwrap().clone(r),
-                                    )
-                                }
-                                sept::dy::MaybeDereferencedValueReadGuard::ValueG(g) => g.clone(),
-                            }
+                            query_b.eval().unwrap().to_owned()
                         };
                         event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
@@ -340,7 +318,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         assert!(cursor_len >= 1);
                         updated_cursor_address[cursor_len - 1] = (v.elem_index as u32).into_value();
 
-                        // Root edit
+                        // Root value edit
                         event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
                             address: updated_cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
@@ -391,7 +369,13 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         None => placeholder_event_handler_impl(
                             event,
                             event_handler_ctx,
-                            PlaceholderEventKind::InsertionTerm,
+                            |address: sept::dy::TupleTerm, new_data: sept::dy::Value| -> Command {
+                                RootValueEdit::from(AddressedEdit {
+                                    address,
+                                    edit: sept::qv::InsertionTerm { new_data }.into(),
+                                })
+                                .into()
+                            },
                         ),
                     }
                 }

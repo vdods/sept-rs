@@ -546,7 +546,7 @@ Idea regarding how to move a "standard cursor" around the screen in a way that w
 -   When the up/down key is pressed, instead of doing a logical cursor change to the corresponding element of the next line (e.g. the down key changing cursor address `("line", 3, "char", 5)` to `("line", 4, "char", 5)`), calculate the position of the current cursor, then create a mouse click event for the position one line height's down from it, and push that event onto the front of the remaining_event_v queue, so it can be handled in the UI pass.
 -   Come to think of it, this only works if there aren't other events in the event queue after the up/down arrow key press.
 
-## 2023.05.22
+## 2023.05.22, 2023.06.21
 
 Notes on fleshing out views and event handling for remainder of types
 -   Showing cursor at the end of a string, array, etc.
@@ -558,42 +558,81 @@ Notes on fleshing out views and event handling for remainder of types
     -   Need top-level event handler which can intercept top-level commands.
 -   Utf8StringTerm line char view
     -   To-do
+        -   Hit `"` to exit the string and go to the next element in whatever contains the string (this may not be well-defined depending on what that container is, e.g. a hash set).  Should this go to the comma following the string, if it's in an ArrayTerm, so that one could type `,` to pass the comma and set the cursor to the next place?  This would make it match what you're typing.
+        -   Typing a literal `"` in the string by typing `\"`, and typing a literal `\` by typing `\\`
     -   Done
         -   Insertion mode typing
-        -   Typing '\n'
-        -   Typing '\t'
+        -   Typing `\n`
+        -   Typing `\t`
         -   Backspace
         -   Delete
         -   Escape / Alt-Enter
--   Utf8StringTerm char view
+-   Utf8StringTerm char view (semi-deprecated)
     -   To-do
     -   Done
         -   Insertion mode typing
-        -   Typing '\n'
-        -   Typing '\t'
+        -   Typing `\n`
+        -   Typing `\t`
         -   Backspace
         -   Delete
         -   Escape / Alt-Enter
         -   Paste
 -   ArrayTerm
     -   To-do
+        -   Typing `]` should exit the array and go to the next element in whatever contains the array (this may not be well-defined depending on what that container is, e.g. a hash set).  Or maybe it goes to the comma following that element.
     -   Done
+        -   Insert key inserts a `Placeholder`
+        -   Events issued when the cursor is at the end-of-array element act like a `Placeholder` (e.g. being able to insert strings or arrays at the end of an array).
+        -   Backspace
+        -   Delete
+        -   Escape / Alt-Enter
+-   Placeholder
+    -   To-do
+    -   Done
+        -   Typing `"` replaces the `Placeholder` with an empty string and enters the string.
+    -   To-do
+    -   Done
+        -   Typing `[` replaces the `Placeholder` with an empty string and enters the string.
 -   TupleTerm
     -   To-do
+        -   Everything analogous to ArrayTerm
     -   Done
 -   OrderedMapTerm
     -   To-do
+        -   Insert should insert a key/value pair of `Placeholder` => `Placeholder`
+        -   Delete
+        -   Backspace
     -   Done
 -   StructTerm
     -   To-do
+        -   Should be somewhat analogous to OrderedMapTerm, except that the field decls are a tuple.
     -   Done
 -   StructTermTerm
     -   To-do
+        -   Creation of a StructTermTerm should probably cause it to appear with `Placeholder` for each field value.
     -   Done
 -   GlobalSymRefTerm
     -   To-do
+        -   Should behave like a Utf8StringTerm, maybe add some constraints later (e.g. no `\n` or other control chars).
     -   Done
 -   LocalSymRefTerm
     -   To-do
     -   Done
 
+## 2023.06.28
+
+Notes on char editing
+-   There should be the direct char view and the escaped char view
+    -   The direct char view operates with direct key presses
+    -   The escaped char view shows escape codes, such as `\n` and `\\`.
+-   When editing a string, if you type `\`, it should enter the escaped char view for that char, so that the next keypress(es) determine the specific escape code.  Some escape codes:
+    -   `\` - backslash
+    -   `n` - newline
+    -   `t` - tab
+    -   `x5E` - `^`
+    -   `u2764` - `❤` (reference `char::escape_unicode`)
+
+Notes on string editing
+-   There should be "programmer mode" and "standard mode"
+    -   Programmer mode shows all escape codes and control chars explicitly, and will go into escaped char view when `\` is typed.
+    -   Standard mode doesn't show any escape codes and won't go into escaped char view when `\` is typed.

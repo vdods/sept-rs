@@ -1,7 +1,7 @@
 use crate::{
     dy, qv,
     st::{self, Inhabits, Stringifiable, Struct, TermTrait},
-    Result,
+    Error, Result,
 };
 use std::collections::HashMap;
 
@@ -16,7 +16,8 @@ pub struct StructTerm {
     // which would simplify various checks and projections into TupleTerm.
     // TODO: Probably eventually allow arbitrary terms as the field names.
     // TODO: Define and use SymbolDecl as a formal type.
-    pub field_decl_v: Vec<(String, dy::Value)>,
+    // TODO: Rename this to field_v.
+    field_decl_v: Vec<(String, dy::Value)>,
     /// This is a cache for the quick lookup of the element index based on a field name.
     name_index_m: HashMap<String, usize>,
 }
@@ -65,6 +66,93 @@ impl StructTerm {
             .name_index_m
             .get(field_name)
             .ok_or_else(|| anyhow::anyhow!("StructTerm had no field with name {:?}", field_name))?)
+    }
+    pub fn type_of_named_field(&self, field_name: &str) -> Result<&dy::Value> {
+        Ok(&self.field_decl_v[self.index_of_named_field(field_name)?].1)
+    }
+    pub fn type_of_named_field_mut(&mut self, field_name: &str) -> Result<&mut dy::Value> {
+        let field_index = self.index_of_named_field(field_name)?;
+        Ok(&mut self.field_decl_v.get_mut(field_index).unwrap().1)
+    }
+    pub fn get_field_name(&self, field_index: usize) -> Result<&String> {
+        Ok(&self
+            .field_decl_v
+            .get(field_index)
+            .ok_or_else(|| anyhow::anyhow!("StructTerm field_index out of bounds"))?
+            .0)
+    }
+    /// Change the name of the field at field_index to field_name.  Will return error if the field
+    /// name is already in use under a different field_index, but will not modify self.
+    pub fn set_field_name(&mut self, field_index: usize, mut field_name: String) -> Result<()> {
+        anyhow::ensure!(
+            field_index < self.field_decl_v.len(),
+            "StructTerm had no field with index {:?}",
+            field_index
+        );
+        // If the field name is already in use under a different field_index, then this is a collision.
+        if let Some(existing_field_index) = self.name_index_m.get(&field_name) {
+            anyhow::ensure!(*existing_field_index == field_index, "StructTerm field name collision during set_field_name(field_index = {}, field_name = {:?}); existing_field_index was {:?}", field_index, field_name, existing_field_index);
+        }
+        // If the new field name is the same as the old one, then no action is needed.
+        if self.field_decl_v[field_index].0 == field_name {
+            return Ok(());
+        }
+        std::mem::swap(
+            &mut self.field_decl_v.get_mut(field_index).unwrap().0,
+            &mut field_name,
+        );
+        // field_name now contains the old field name, so update the name_index_m.
+        self.name_index_m.remove(&field_name);
+        self.name_index_m.insert(
+            self.field_decl_v.get(field_index).unwrap().0.clone(),
+            field_index,
+        );
+        Ok(())
+    }
+    pub fn insert_field(
+        &mut self,
+        field_index: usize,
+        field_name: String,
+        field_type: dy::Value,
+    ) -> Result<()> {
+        // First check that there is no collision in the field name.
+        anyhow::ensure!(
+            !self.name_index_m.contains_key(&field_name),
+            "StructTerm field name collision during insert_field(field_index = {}, field_name = {:?}, field_type = {:?})",
+            field_index,
+            field_name,
+            field_type
+        );
+        self.name_index_m.insert(field_name.clone(), field_index);
+        self.field_decl_v
+            .insert(field_index, (field_name, field_type));
+        Ok(())
+    }
+    pub fn remove_field(&mut self, field_index: usize) -> Result<()> {
+        anyhow::ensure!(
+            field_index < self.field_decl_v.len(),
+            "StructTerm had no field with index {:?}",
+            field_index
+        );
+        let field_name = self.field_decl_v.remove(field_index).0;
+        self.name_index_m.remove(&field_name);
+        Ok(())
+    }
+    pub fn get_field_type(&self, field_index: usize) -> Result<&dy::Value> {
+        anyhow::ensure!(
+            field_index < self.field_decl_v.len(),
+            "StructTerm had no field with index {:?}",
+            field_index
+        );
+        Ok(&self.field_decl_v[field_index].1)
+    }
+    pub fn get_field_type_mut(&mut self, field_index: usize) -> Result<&mut dy::Value> {
+        anyhow::ensure!(
+            field_index < self.field_decl_v.len(),
+            "StructTerm had no field with index {:?}",
+            field_index
+        );
+        Ok(&mut self.field_decl_v[field_index].1)
     }
 }
 
@@ -121,6 +209,13 @@ impl dy::Deconstruct for StructTerm {
     }
 }
 
+impl std::ops::Deref for StructTerm {
+    type Target = Vec<(String, dy::Value)>;
+    fn deref(&self) -> &Self::Target {
+        &self.field_decl_v
+    }
+}
+
 impl std::fmt::Display for StructTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", &self.stringify())
@@ -152,6 +247,12 @@ impl st::Deserializable for StructTerm {
     }
 }
 
+impl qv::QueryableDynTrait for StructTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+        Box::new(qv::StructTermView::new(self))
+    }
+}
+
 impl st::Serializable for StructTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
@@ -170,6 +271,73 @@ impl st::Serializable for StructTerm {
             bytes_written += field_type.serialize(writer)?;
         }
         Ok(bytes_written)
+    }
+}
+
+impl qv::SingleQuery<dy::Value> for StructTerm {
+    type ReturnType<'a> = qv::StructTermQuery<'a>;
+    type Error = Error;
+    fn run_single_query<'a>(
+        &'a self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(field_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::StructTermFieldElemView::new(self, *field_index as usize)?.into())
+        // } else if let Some(address_char) = address_token.downcast_ref::<char>() {
+        //     match address_char {
+        //         'k' => Ok(qv::StructTermFieldNameView::new(self).into()),
+        //         'v' => Ok(qv::StructTermFieldTypeView::new(self).into()),
+        //         'p' => {
+        //             // NOTE: This is actually done via StructTermFieldView, which is indexed by u32
+        //             unimplemented!("todo");
+        //         }
+        //         // TODO: "len" perhaps
+        //         _ => {
+        //             anyhow::bail!(
+        //                 "StructTerm::run_single_query; unrecognized address_token {:?}",
+        //                 address_char
+        //             );
+        //         }
+        //     }
+        } else {
+            anyhow::bail!(
+                "StructTerm::run_single_query; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl qv::SingleQueryMut<dy::Value> for StructTerm {
+    type ReturnType<'a> = qv::StructTermQueryMut<'a>;
+    type Error = Error;
+    fn run_single_query_mut<'a>(
+        &'a mut self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(field_index) = address_token.downcast_ref::<u32>() {
+            Ok(qv::StructTermFieldElemMutView::new(self, *field_index as usize)?.into())
+        // } else if let Some(address_char) = address_token.downcast_ref::<char>() {
+        //     match address_char {
+        //         'k' => Ok(qv::StructTermFieldNameMutView::new(self).into()),
+        //         'v' => Ok(qv::StructTermFieldTypeMutView::new(self).into()),
+        //         'p' => {
+        //             unimplemented!("todo");
+        //         }
+        //         // TODO: "len" perhaps
+        //         _ => {
+        //             anyhow::bail!(
+        //                 "StructTerm::run_single_query_mut; unrecognized address_token {:?}",
+        //                 address_char
+        //             );
+        //         }
+        //     }
+        } else {
+            anyhow::bail!(
+                "StructTerm::run_single_query_mut; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
     }
 }
 

@@ -24,39 +24,31 @@ impl<'b> qv::QueryTrait for StructTermView<'b> {
         }
         use st::Stringifiable;
         let first_address = address_token_i.next().unwrap();
-        if let Some(address_char) = first_address.downcast_ref::<char>().map(|c| *c) {
-            match address_char {
-                // field names (i.e. keys)
-                'k' => {
-                    anyhow::ensure!(address_token_i.peek().is_some(), "StructTerm query address 'k' requires a second address (the field name being addressed) but none was provided");
-                    let second_address = address_token_i.next().unwrap();
-                    anyhow::ensure!(second_address.is::<String>(), "StructTerm query address 'k' requires a second address (field name) of type String but got: {}", second_address.stringify());
-                    let field_name = second_address.downcast_ref::<String>().unwrap();
-                    // Pass on the rest of the address to the key view's impl of query.
-                    Box::new(qv::StructTermKeyView::new(self.0, field_name)?)
-                        .run_query(&mut address_token_i)
-                }
-                // field values
-                'v' => {
-                    anyhow::ensure!(address_token_i.peek().is_some(), "StructTerm query address 'v' requires a second address (the field name of the value being addressed) but none was provided");
-                    let second_address = address_token_i.next().unwrap();
-                    anyhow::ensure!(second_address.is::<String>(), "StructTerm query address 'k' requires a second address (field name) of type String but got: {}", second_address.stringify());
-                    let field_name = second_address.downcast_ref::<String>().unwrap();
-                    // Pass on the rest of the address to the val view's impl of query.
-                    Box::new(qv::StructTermValView::new(self.0, field_name)?)
-                        .run_query(&mut address_token_i)
-                }
-                // field name/value pairs (i.e. key/value pairs)
-                'p' => {
-                    unimplemented!("not yet");
-                }
-                _ => {
-                    anyhow::bail!(
-                        "StructTerm query doesn't support address: {}",
-                        first_address.stringify()
-                    )
-                }
-            }
+        if let Some(field_index) = first_address.downcast_ref::<u32>() {
+            Box::new(qv::StructTermFieldElemView::new(
+                self.0,
+                *field_index as usize,
+            )?)
+            .run_query(&mut address_token_i)
+        // } else if let Some(address_char) = first_address.downcast_ref::<char>().map(|c| *c) {
+        //     match address_char {
+        //         // field names (i.e. keys)
+        //         'k' => Box::new(qv::StructTermFieldNameView::new(self.0))
+        //             .run_query(&mut address_token_i),
+        //         // field types
+        //         'v' => Box::new(qv::StructTermFieldTypeView::new(self.0))
+        //             .run_query(&mut address_token_i),
+        //         // field name/value pairs (i.e. key/value pairs)
+        //         'p' => {
+        //             unimplemented!("not yet");
+        //         }
+        //         _ => {
+        //             anyhow::bail!(
+        //                 "StructTerm query doesn't support address: {}",
+        //                 first_address.stringify()
+        //             )
+        //         }
+        //     }
         } else {
             anyhow::bail!(
                 "StructTerm query doesn't support address: {}",
