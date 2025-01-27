@@ -636,3 +636,32 @@ Notes on string editing
 -   There should be "programmer mode" and "standard mode"
     -   Programmer mode shows all escape codes and control chars explicitly, and will go into escaped char view when `\` is typed.
     -   Standard mode doesn't show any escape codes and won't go into escaped char view when `\` is typed.
+
+## 2025.01.26
+
+Big-picture priorities for sept-gui
+-   Should able to open/save sept data to/from disk.
+    -   Desktop support should be straightforward
+    -   Web support should involve some sort of import/export local file capability.
+-   Should be a minimally complete editor capable of producing/editing/browsing basic sept data.
+-   Don't include symbolic refs for now.  They complicate the semantics of copy/paste and serialization.  However, they are an important feature of the data model that needs to be proven out eventually.
+-   Features
+    -   Open
+        -   X Using file dialog
+        -   X Pass file path from commandline
+        -   X Keyboard shortcut Ctrl+O
+    -   Save
+        -   X File dialog to pick a path if none already set
+        -   X Keyboard shortcut Ctrl+S
+    -   Save As
+        -   X Using file dialog
+        -   X Keyboard shortcut Ctrl+Shift+S
+    -   Unsaved changes tracker
+    -   Select
+    -   Copy (from within sept-gui)
+        -   Probably this should produce a string that simulates the keyboard input to produce the copied data.
+    -   Copy (from outside sept-gui)
+    -   Paste (into sept-gui)
+        -   Pasting within a string should do the obvious thing
+        -   Pasting within a placeholder should simulate each char of the paste as input.  This may not play nice with strings unless the escaped char input is handled differently during the paste.
+    -   Undo/redo

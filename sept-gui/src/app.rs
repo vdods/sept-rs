@@ -1,6 +1,9 @@
 // TEMP HACK
 #![allow(unused)]
 
+use egui::Modifiers;
+use sept::st::{Deserializable, Serializable};
+
 use crate::{
     extract_text_prefix_from_front_text, AddressedEdit, Command, CursorEdit, EventHandlerCtx,
     Model, ValueUI, ViewCtx, ViewOptions,
@@ -23,219 +26,245 @@ pub struct App {
     view_options: ViewOptions,
     #[serde(skip)]
     local_symbol_table_la: Arc<RwLock<sept::dy::SymbolTable>>,
+    #[serde(skip)]
+    open_file_path_o: Option<std::path::PathBuf>,
 }
+
+// impl Default for App {
+//     fn default() -> Self {
+//         let a1 = sept::dy::ArrayTerm::from(vec![
+//             true.into(),
+//             false.into(),
+//             sept::dy::ArrayTerm::from(vec![]).into(),
+//             123i8.into(),
+//             200u8.into(),
+//             12345i16.into(),
+//             45678u16.into(),
+//             1234567i32.into(),
+//             4567890u32.into(),
+//             1000000000000i64.into(),
+//             9223372036854775808u64.into(),
+//             10101.202f32.into(),
+//             1.01020304050607f64.into(),
+//             sept::st::Void.into(),
+//             sept::st::True.into(),
+//             sept::st::False.into(),
+//             sept::st::EmptyType.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//             sept::st::Void.into(),
+//         ]);
+//         let a2 =
+//             sept::dy::ArrayTerm::from(vec![true.into(), 606i32.into(), a1.into(), false.into()]);
+
+//         let m0 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {});
+//         let m1 = sept::dy::OrderedMapTerm::from(
+//             maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
+//         );
+//         let m2 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {
+//             sept::dy::OrderedMapTerm::from(maplit::btreemap! { false.into() => 123u32.into() }).into() => 505.606f64.into(),
+//             true.into() => sept::st::Void.into(),
+//             sept::st::Bool.into() => sept::dy::OrderedMapTerm::from(
+//                 maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
+//             ).into()
+//         });
+
+//         let t1 = sept::dy::TupleTerm::from(vec![
+//             true.into(),
+//             false.into(),
+//             123i8.into(),
+//             sept::dy::TupleTerm::from(vec![
+//                 200u8.into(),
+//                 sept::dy::TupleTerm::from(vec![
+//                     12345i16.into(),
+//                     45678u16.into(),
+//                     1234567i32.into(),
+//                 ])
+//                 .into(),
+//                 4567890u32.into(),
+//                 1000000000000i64.into(),
+//             ])
+//             .into(),
+//             9223372036854775808u64.into(),
+//             10101.202f32.into(),
+//             1.01020304050607f64.into(),
+//         ]);
+
+//         let t2 = sept::dy::TupleTerm::from(vec![
+//             sept::st::Void.into(),
+//             sept::st::VoidType.into(),
+//             sept::st::Bool.into(),
+//             sept::st::BoolType.into(),
+//             "blah\nthing\tWAAAA\tXyz\n\n!!!\rx".to_string().into(),
+//         ]);
+//         let t3 = sept::dy::TupleTerm::from(vec![
+//             sept::st::Sint32.into(),
+//             sept::st::Utf8String.into(),
+//             sept::st::Array.into(),
+//         ]);
+
+//         let st1 = sept::dy::StructTerm::new(
+//             vec![
+//                 ("age".into(), sept::st::Uint8.into()),
+//                 ("gravity".into(), sept::st::Float64.into()),
+//                 ("thingy".into(), t3.into()),
+//             ]
+//             .into(),
+//         )
+//         .unwrap();
+
+//         let st0 = sept::dy::StructTerm::new(vec![].into()).unwrap();
+
+//         use sept::dy::Constructor;
+
+//         // Make an empty StructTermTerm
+//         let stt0 = st0.construct(sept::dy::TupleTerm::from(vec![])).unwrap();
+
+//         let stt1 = st1
+//             .construct(sept::dy::TupleTerm::from(vec![
+//                 28u8.into(),
+//                 4035.56f64.into(),
+//                 sept::dy::TupleTerm::from(vec![
+//                     445566i32.into(),
+//                     "OSTRICH".to_string().into(),
+//                     sept::dy::ArrayTerm::from(vec![]).into(),
+//                 ])
+//                 .into(),
+//             ]))
+//             .unwrap();
+
+//         let s0 = String::new();
+//         let s1 = "+++ one day, a big hippo came along and wrecked\teverything.\nyes, i mean absolutely everything!\nthere was nothing left.\n\n\tnothing left but hippos.".to_string();
+//         // Very long string.
+//         let s2 = "blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh".to_string();
+
+//         let gsr0 = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".to_string());
+//         // NOTE: This uses the dereferenced StructTerm as the type and not the GlobalSymRefTerm as intended.
+//         // TODO: Figure out how to get it to construct correctly.
+//         let stt2 = gsr0
+//             .construct(sept::dy::TupleTerm::from(vec![
+//                 28u8.into(),
+//                 4035.56f64.into(),
+//             ]))
+//             .unwrap();
+//         // Manually construct the StructTermTerm so that the GlobalSymRefTerm is used as its type.
+//         let stt3 = sept::dy::StructTermTerm::new_checked(
+//             gsr0.clone().into(),
+//             sept::dy::TupleTerm::from(vec![28u8.into(), 4035.56f64.into()]),
+//         )
+//         .unwrap();
+
+//         let local_symbol_table_la = Arc::new(RwLock::new(
+//             sept::dy::SymbolTable::new_without_parent("fancy".to_string()).expect("test"),
+//         ));
+//         local_symbol_table_la
+//             .write()
+//             .unwrap()
+//             .define_symbol("blah", sept::dy::Value::from(1230321i32))
+//             .expect("test");
+//         tracing::debug!(
+//             "local_symbol_table_la: {:#?}",
+//             local_symbol_table_la.read().unwrap()
+//         );
+
+//         let lsr0 =
+//             sept::dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())
+//                 .expect("test");
+
+//         let gsr1 =
+//             sept::dy::GlobalSymRefTerm::new_unchecked("this one doesn't resolve".to_string());
+//         let lsr1 = sept::dy::LocalSymRefTerm::new_unchecked(
+//             local_symbol_table_la.clone(),
+//             "also doesn't resolve".into(),
+//         );
+
+//         // TEMP HACK
+//         // let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![s1.into()]).into();
+//         // let value: sept::dy::Value = s1.into();
+
+//         // let root_value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
+//         //     a2.into(),
+//         //     sept::dy::ArrayTerm::from(vec![]).into(),
+//         //     m0.into(),
+//         //     m1.into(),
+//         //     m2.into(),
+//         //     t1.into(),
+//         //     t2.into(),
+//         //     sept::dy::TupleTerm::from(vec![]).into(),
+//         //     st0.into(),
+//         //     st1.into(),
+//         //     stt0.into(),
+//         //     stt1.into(),
+//         //     s0.into(),
+//         //     s1.into(),
+//         //     s2.into(),
+//         //     gsr0.into(),
+//         //     stt2.into(),
+//         //     stt3.into(),
+//         //     lsr0.into(),
+//         //     gsr1.into(),
+//         //     lsr1.into(),
+//         // ])
+//         // .into();
+//         use sept::dy::IntoValue;
+//         // let root_value = s1.into_value();
+//         let root_value = sept::dy::ArrayTerm::from(vec![
+//             sept::dy::StructTerm::new(vec![
+//                 ("name".to_string(), sept::st::Utf8String.into()),
+//                 ("age".to_string(), sept::st::Uint8.into()),
+//             ])
+//             .unwrap()
+//             .into(),
+//             sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+//                 .unwrap()
+//                 .into(),
+//             sept::dy::StructTerm::new(vec![]).unwrap().into(),
+//             "".to_string().into(),
+//             "a".to_string().into(),
+//             "\n".to_string().into(),
+//             "xy\npq\n".to_string().into(),
+//             "hippos\nare\tabsolutely\nthe\nbest".to_string().into(),
+//             sept::dy::ArrayTerm::from(vec![
+//                 sept::dy::ArrayTerm::from(vec![]).into(),
+//                 "thingy".to_string().into(),
+//                 "other\nthingy".to_string().into(),
+//             ])
+//             .into(),
+//         ])
+//         .into_value();
+//         let root_value_la = Arc::new(RwLock::new(root_value));
+//         let model = Model {
+//             root_value_la,
+//             executed_command_v: VecDeque::new(),
+//         };
+//         // Start with the cursor on the root value.
+//         let cursor_address = sept::dy::TupleTerm::from(vec![]);
+//         let view_options = ViewOptions::default();
+
+//         Self {
+//             model,
+//             cursor_address,
+//             view_options,
+//             local_symbol_table_la,
+//             open_file_path_o: None,
+//         }
+//     }
+// }
 
 impl Default for App {
     fn default() -> Self {
-        let a1 = sept::dy::ArrayTerm::from(vec![
-            true.into(),
-            false.into(),
-            sept::dy::ArrayTerm::from(vec![]).into(),
-            123i8.into(),
-            200u8.into(),
-            12345i16.into(),
-            45678u16.into(),
-            1234567i32.into(),
-            4567890u32.into(),
-            1000000000000i64.into(),
-            9223372036854775808u64.into(),
-            10101.202f32.into(),
-            1.01020304050607f64.into(),
-            sept::st::Void.into(),
-            sept::st::True.into(),
-            sept::st::False.into(),
-            sept::st::EmptyType.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-            sept::st::Void.into(),
-        ]);
-        let a2 =
-            sept::dy::ArrayTerm::from(vec![true.into(), 606i32.into(), a1.into(), false.into()]);
-
-        let m0 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {});
-        let m1 = sept::dy::OrderedMapTerm::from(
-            maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
-        );
-        let m2 = sept::dy::OrderedMapTerm::from(maplit::btreemap! {
-            sept::dy::OrderedMapTerm::from(maplit::btreemap! { false.into() => 123u32.into() }).into() => 505.606f64.into(),
-            true.into() => sept::st::Void.into(),
-            sept::st::Bool.into() => sept::dy::OrderedMapTerm::from(
-                maplit::btreemap! { 3i32.into() => "blah".to_string().into(), 5.5f32.into() => sept::st::Void.into() },
-            ).into()
-        });
-
-        let t1 = sept::dy::TupleTerm::from(vec![
-            true.into(),
-            false.into(),
-            123i8.into(),
-            sept::dy::TupleTerm::from(vec![
-                200u8.into(),
-                sept::dy::TupleTerm::from(vec![
-                    12345i16.into(),
-                    45678u16.into(),
-                    1234567i32.into(),
-                ])
-                .into(),
-                4567890u32.into(),
-                1000000000000i64.into(),
-            ])
-            .into(),
-            9223372036854775808u64.into(),
-            10101.202f32.into(),
-            1.01020304050607f64.into(),
-        ]);
-
-        let t2 = sept::dy::TupleTerm::from(vec![
-            sept::st::Void.into(),
-            sept::st::VoidType.into(),
-            sept::st::Bool.into(),
-            sept::st::BoolType.into(),
-            "blah\nthing\tWAAAA\tXyz\n\n!!!\rx".to_string().into(),
-        ]);
-        let t3 = sept::dy::TupleTerm::from(vec![
-            sept::st::Sint32.into(),
-            sept::st::Utf8String.into(),
-            sept::st::Array.into(),
-        ]);
-
-        let st1 = sept::dy::StructTerm::new(
-            vec![
-                ("age".into(), sept::st::Uint8.into()),
-                ("gravity".into(), sept::st::Float64.into()),
-                ("thingy".into(), t3.into()),
-            ]
-            .into(),
-        )
-        .unwrap();
-
-        let st0 = sept::dy::StructTerm::new(vec![].into()).unwrap();
-
-        use sept::dy::Constructor;
-
-        // Make an empty StructTermTerm
-        let stt0 = st0.construct(sept::dy::TupleTerm::from(vec![])).unwrap();
-
-        let stt1 = st1
-            .construct(sept::dy::TupleTerm::from(vec![
-                28u8.into(),
-                4035.56f64.into(),
-                sept::dy::TupleTerm::from(vec![
-                    445566i32.into(),
-                    "OSTRICH".to_string().into(),
-                    sept::dy::ArrayTerm::from(vec![]).into(),
-                ])
-                .into(),
-            ]))
-            .unwrap();
-
-        let s0 = String::new();
-        let s1 = "+++ one day, a big hippo came along and wrecked\teverything.\nyes, i mean absolutely everything!\nthere was nothing left.\n\n\tnothing left but hippos.".to_string();
-        // Very long string.
-        let s2 = "blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh blah blah blahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh".to_string();
-
-        let gsr0 = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".to_string());
-        // NOTE: This uses the dereferenced StructTerm as the type and not the GlobalSymRefTerm as intended.
-        // TODO: Figure out how to get it to construct correctly.
-        let stt2 = gsr0
-            .construct(sept::dy::TupleTerm::from(vec![
-                28u8.into(),
-                4035.56f64.into(),
-            ]))
-            .unwrap();
-        // Manually construct the StructTermTerm so that the GlobalSymRefTerm is used as its type.
-        let stt3 = sept::dy::StructTermTerm::new_checked(
-            gsr0.clone().into(),
-            sept::dy::TupleTerm::from(vec![28u8.into(), 4035.56f64.into()]),
-        )
-        .unwrap();
-
-        let local_symbol_table_la = Arc::new(RwLock::new(
-            sept::dy::SymbolTable::new_without_parent("fancy".to_string()).expect("test"),
-        ));
-        local_symbol_table_la
-            .write()
-            .unwrap()
-            .define_symbol("blah", sept::dy::Value::from(1230321i32))
-            .expect("test");
-        tracing::debug!(
-            "local_symbol_table_la: {:#?}",
-            local_symbol_table_la.read().unwrap()
-        );
-
-        let lsr0 =
-            sept::dy::LocalSymRefTerm::new_checked(local_symbol_table_la.clone(), "blah".into())
-                .expect("test");
-
-        let gsr1 =
-            sept::dy::GlobalSymRefTerm::new_unchecked("this one doesn't resolve".to_string());
-        let lsr1 = sept::dy::LocalSymRefTerm::new_unchecked(
-            local_symbol_table_la.clone(),
-            "also doesn't resolve".into(),
-        );
-
-        // TEMP HACK
-        // let value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![s1.into()]).into();
-        // let value: sept::dy::Value = s1.into();
-
-        // let root_value: sept::dy::Value = sept::dy::ArrayTerm::from(vec![
-        //     a2.into(),
-        //     sept::dy::ArrayTerm::from(vec![]).into(),
-        //     m0.into(),
-        //     m1.into(),
-        //     m2.into(),
-        //     t1.into(),
-        //     t2.into(),
-        //     sept::dy::TupleTerm::from(vec![]).into(),
-        //     st0.into(),
-        //     st1.into(),
-        //     stt0.into(),
-        //     stt1.into(),
-        //     s0.into(),
-        //     s1.into(),
-        //     s2.into(),
-        //     gsr0.into(),
-        //     stt2.into(),
-        //     stt3.into(),
-        //     lsr0.into(),
-        //     gsr1.into(),
-        //     lsr1.into(),
-        // ])
-        // .into();
         use sept::dy::IntoValue;
-        // let root_value = s1.into_value();
-        let root_value = sept::dy::ArrayTerm::from(vec![
-            sept::dy::StructTerm::new(vec![
-                ("name".to_string(), sept::st::Utf8String.into()),
-                ("age".to_string(), sept::st::Uint8.into()),
-            ])
-            .unwrap()
-            .into(),
-            sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
-                .unwrap()
-                .into(),
-            sept::dy::StructTerm::new(vec![]).unwrap().into(),
-            "".to_string().into(),
-            "a".to_string().into(),
-            "\n".to_string().into(),
-            "xy\npq\n".to_string().into(),
-            "hippos\nare\tabsolutely\nthe\nbest".to_string().into(),
-            sept::dy::ArrayTerm::from(vec![
-                sept::dy::ArrayTerm::from(vec![]).into(),
-                "thingy".to_string().into(),
-                "other\nthingy".to_string().into(),
-            ])
-            .into(),
-        ])
-        .into_value();
+        // Default is an empty array.
+        let root_value = sept::dy::ArrayTerm::from(vec![]).into_value();
         let root_value_la = Arc::new(RwLock::new(root_value));
         let model = Model {
             root_value_la,
@@ -245,44 +274,216 @@ impl Default for App {
         let cursor_address = sept::dy::TupleTerm::from(vec![]);
         let view_options = ViewOptions::default();
 
+        let local_symbol_table_la = Arc::new(RwLock::new(
+            sept::dy::SymbolTable::new_without_parent("boring".to_string()).expect("test"),
+        ));
+
         Self {
             model,
             cursor_address,
             view_options,
             local_symbol_table_la,
+            open_file_path_o: None,
         }
     }
 }
 
 impl App {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        open_file_path_o: Option<std::path::PathBuf>,
+    ) -> Self {
         // This is also where you can customized the look at feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
+        // // Load previous app state (if any).
+        // // Note that you must enable the `persistence` feature for this to work.
+        // if let Some(storage) = cc.storage {
+        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        // }
 
-        Default::default()
+        // use sept::dy::IntoValue;
+        // // let root_value = s1.into_value();
+        // let root_value = sept::dy::ArrayTerm::from(vec![
+        //     sept::dy::StructTerm::new(vec![
+        //         ("name".to_string(), sept::st::Utf8String.into()),
+        //         ("age".to_string(), sept::st::Uint8.into()),
+        //     ])
+        //     .unwrap()
+        //     .into(),
+        //     sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+        //         .unwrap()
+        //         .into(),
+        //     sept::dy::StructTerm::new(vec![]).unwrap().into(),
+        //     "".to_string().into(),
+        //     "a".to_string().into(),
+        //     "\n".to_string().into(),
+        //     "xy\npq\n".to_string().into(),
+        //     "hippos\nare\tabsolutely\nthe\nbest".to_string().into(),
+        //     sept::dy::ArrayTerm::from(vec![
+        //         sept::dy::ArrayTerm::from(vec![]).into(),
+        //         "thingy".to_string().into(),
+        //         "other\nthingy".to_string().into(),
+        //     ])
+        //     .into(),
+        // ])
+        // .into_value();
+
+        // use sept::dy::IntoValue;
+        // let root_value = if let Some(open_file_path) = open_file_path_o.as_deref() {
+        //     let mut file = std::fs::OpenOptions::new()
+        //         .read(true)
+        //         .open(open_file_path)
+        //         .expect("TODO: handle this");
+        //     use sept::st::Deserializable;
+        //     let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
+        //     cc.egui_ctx
+        //         .send_viewport_cmd(egui::ViewportCommand::Title(format!(
+        //             "SEPT - {}",
+        //             open_file_path.display()
+        //         )));
+        //     root_value
+        // } else {
+        //     // Default is an empty array.
+        //     sept::dy::ArrayTerm::from(vec![]).into_value()
+        // };
+        // let root_value_la = Arc::new(RwLock::new(root_value));
+        // let model = Model {
+        //     root_value_la,
+        //     executed_command_v: VecDeque::new(),
+        // };
+        // // Start with the cursor on the root value.
+        // let cursor_address = sept::dy::TupleTerm::from(vec![]);
+        // let view_options = ViewOptions::default();
+
+        // let local_symbol_table_la = Arc::new(RwLock::new(
+        //     sept::dy::SymbolTable::new_without_parent("boring".to_string()).expect("test"),
+        // ));
+
+        // Self {
+        //     model,
+        //     cursor_address,
+        //     view_options,
+        //     local_symbol_table_la,
+        //     open_file_path_o,
+        // }
+
+        let mut app = Self::default();
+        if let Some(open_file_path) = open_file_path_o {
+            app.open(open_file_path, &cc.egui_ctx);
+        }
+        app
+    }
+    pub fn set_title(&self, title: String, ctx: &egui::Context) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
+    }
+    pub fn open(&mut self, path: std::path::PathBuf, ctx: &egui::Context) {
+        tracing::info!("Open: {}", path.display());
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .open(&path)
+            .expect("TODO: handle this");
+        use sept::st::Deserializable;
+        let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
+        self.model.root_value_la = Arc::new(RwLock::new(root_value));
+        self.set_title(format!("SEPT - {}", path.display()), ctx);
+        self.open_file_path_o = Some(path);
+    }
+    pub fn save(&mut self, ctx: &egui::Context) {
+        if self.open_file_path_o.is_none() {
+            panic!("programmer error: app.open_file_path_o is expected to be non-None for save operation");
+        }
+        let open_file_path = self.open_file_path_o.as_deref().unwrap();
+        tracing::info!("Save As: {}", open_file_path.display());
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(open_file_path)
+            .expect("TODO: handle this");
+        let root_value_g = self.model.root_value_la.read().unwrap();
+        use sept::st::Serializable;
+        root_value_g
+            .serialize(&mut file)
+            .expect("TODO: handle this");
+        self.set_title(format!("SEPT - {}", open_file_path.display()), ctx);
+    }
+    pub fn save_as(&mut self, path: std::path::PathBuf, ctx: &egui::Context) {
+        tracing::info!("Save As: {}", path.display());
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)
+            .expect("TODO: handle this");
+        let root_value_g = self.model.root_value_la.read().unwrap();
+        use sept::st::Serializable;
+        root_value_g
+            .serialize(&mut file)
+            .expect("TODO: handle this");
+        self.set_title(format!("SEPT - {}", path.display()), ctx);
+        self.open_file_path_o = Some(path);
     }
 }
 
 impl eframe::App for App {
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
+        // eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            let mut open = false;
+            let mut save = false;
+            let mut save_as = false;
+
+            // Check keyboard shortcuts.
+            ui.input_mut(|input_state| {
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::O) {
+                    open = true;
+                }
+                // NOTE: This has to be done before the check for Ctrl+S due to some caveat in consume_key (see its docs).
+                if input_state.consume_key(Modifiers::CTRL | Modifiers::SHIFT, egui::Key::S) {
+                    save_as = true;
+                }
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::S) {
+                    save = true;
+                }
+            });
+
+            tracing::debug!(
+                "App::update; open: {}, save: {}, save_as: {}",
+                open,
+                save,
+                save_as
+            );
+
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    // TODO: Impl open/save for wasm.
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        if ui.button("Open").clicked() {
+                            open = true;
+                            ui.close_menu();
+                        }
+
+                        if ui.button("Save").clicked() {
+                            save = true;
+                            ui.close_menu();
+                        }
+
+                        if ui.button("Save As").clicked() {
+                            save_as = true;
+                            ui.close_menu();
+                        }
+                    }
+
                     // No File > Quit on web pages.
                     #[cfg(not(target_arch = "wasm32"))]
                     {
@@ -297,6 +498,43 @@ impl eframe::App for App {
                     }
                 });
             });
+
+            if open {
+                // TODO: Check if unsaved, and if so, prompt to save before opening the next file.
+
+                #[cfg(not(target_arch = "wasm32"))]
+                if let Some(path) = rfd::FileDialog::new()
+                    .add_filter("Sept Files (*.sept)", &["sept"])
+                    .pick_file()
+                {
+                    self.open(path, ctx);
+                }
+            }
+            if save {
+                #[cfg(not(target_arch = "wasm32"))]
+                if self.open_file_path_o.is_none() {
+                    if let Some(path) = rfd::FileDialog::new()
+                        .add_filter("Sept Files (*.sept)", &["sept"])
+                        .save_file()
+                    {
+                        tracing::info!("Save: {}", path.display());
+                        self.open_file_path_o = Some(path);
+                    }
+                }
+
+                if let Some(open_file_path) = self.open_file_path_o.as_ref() {
+                    self.save(ctx);
+                }
+            }
+            if save_as {
+                #[cfg(not(target_arch = "wasm32"))]
+                if let Some(path) = rfd::FileDialog::new()
+                    .add_filter("Sept Files (*.sept)", &["sept"])
+                    .save_file()
+                {
+                    self.save_as(path, ctx);
+                }
+            }
         });
 
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
