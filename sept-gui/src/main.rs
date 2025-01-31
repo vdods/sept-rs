@@ -38,7 +38,7 @@ fn main() -> eframe::Result {
         let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         tracing::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
         let hippo = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".into());
-        use sept::st::Stringifiable;
+        use sept::st::StringifiableT;
         tracing::debug!("hippo: {}", hippo.stringify());
     }
 
@@ -80,7 +80,7 @@ fn main() {
         let global_symbol_table_g = sept::dy::GLOBAL_SYMBOL_TABLE_LA.read().unwrap();
         tracing::debug!("global_symbol_table_g: {:#?}", global_symbol_table_g);
         let hippo = sept::dy::GlobalSymRefTerm::new_unchecked("Hippo".into());
-        use sept::st::Stringifiable;
+        use sept::st::StringifiableT;
         tracing::debug!("hippo: {}", hippo.stringify());
     }
 

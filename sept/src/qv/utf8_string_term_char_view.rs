@@ -31,11 +31,11 @@ impl<'b> std::ops::Deref for Utf8StringTermCharView<'b> {
     }
 }
 
-impl<'b> qv::QueryTrait for Utf8StringTermCharView<'b> {
+impl<'b> qv::QueryT for Utf8StringTermCharView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -53,7 +53,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermCharView<'b> {
             .run_query(&mut address_token_i)
         } else {
             // TODO: Support "len" query.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermCharView query doesn't support address: {}",
                 first_address.stringify()
@@ -62,7 +62,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermCharView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermCharView<'b> {
+impl<'b> qv::EvalT for Utf8StringTermCharView<'b> {
     /// This will produce an ArrayTerm populated with the chars of the string.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         let char_v = self
@@ -71,7 +71,7 @@ impl<'b> qv::EvalTrait for Utf8StringTermCharView<'b> {
             .map(|c| c.into_value())
             .collect::<Vec<dy::Value>>();
         let chars = dy::ArrayTerm::from(char_v);
-        use dy::IntoValue;
+        use dy::IntoValueT;
         Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
             RwLock::new(chars.into_value()),
         )))
@@ -83,7 +83,7 @@ pub enum Utf8StringTermCharViewQuery<'a> {
     Utf8StringTermCharElemView(qv::Utf8StringTermCharElemView<'a>),
 }
 
-impl<'a> From<Utf8StringTermCharViewQuery<'a>> for Box<dyn qv::EvalTrait + 'a> {
+impl<'a> From<Utf8StringTermCharViewQuery<'a>> for Box<dyn qv::EvalT + 'a> {
     fn from(value: Utf8StringTermCharViewQuery<'a>) -> Self {
         match value {
             Utf8StringTermCharViewQuery::Utf8StringTermCharElemView(x) => Box::new(x),
@@ -91,7 +91,7 @@ impl<'a> From<Utf8StringTermCharViewQuery<'a>> for Box<dyn qv::EvalTrait + 'a> {
     }
 }
 
-impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermCharView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermCharView<'b> {
     type ReturnType<'a> = Utf8StringTermCharViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -101,7 +101,7 @@ impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermCharView<'b> {
         if let Some(char_index) = address_token.downcast_ref::<u32>() {
             Ok(qv::Utf8StringTermCharElemView::new(self.string, *char_index as usize)?.into())
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermCharView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()

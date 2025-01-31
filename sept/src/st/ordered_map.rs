@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    st::{self, Inhabits, OrderedMapType},
+    st::{self, InhabitsT, OrderedMapType},
     Result,
 };
 use std::{collections::BTreeMap, fmt::Debug};
@@ -10,20 +10,20 @@ use std::{collections::BTreeMap, fmt::Debug};
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "OrderedMapType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct OrderedMap;
 
-impl dy::Constructor for OrderedMap {
+impl dy::ConstructorT for OrderedMap {
     type ConstructedType = dy::OrderedMapTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         // Each parameter is expected to be a 2-element TupleTerm, which represents a key-value pair.
@@ -43,18 +43,18 @@ impl dy::Constructor for OrderedMap {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<OrderedMapType> for OrderedMap {
+impl InhabitsT<OrderedMapType> for OrderedMap {
     fn inhabits(&self, _: &OrderedMapType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for OrderedMap {
+impl st::InhabitsT<st::Type> for OrderedMap {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

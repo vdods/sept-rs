@@ -1,23 +1,15 @@
 use crate::{
     dy,
-    st::{self, Inhabits, Stringifiable},
+    st::{self, InhabitsT, StringifiableT},
     Result,
 };
 use std::fmt::Debug;
 
 /// This represents the Float32 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Float32Type",
     is_parametric = "false",
     is_type = "true"
@@ -26,24 +18,16 @@ pub struct Float32;
 
 /// This represents the Float64 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Float64Type",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Float64;
 
-impl dy::Constructor for Float32 {
+impl dy::ConstructorT for Float32 {
     type ConstructedType = f32;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -67,12 +51,12 @@ impl dy::Constructor for Float32 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Float64 {
+impl dy::ConstructorT for Float64 {
     type ConstructedType = f64;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -96,30 +80,30 @@ impl dy::Constructor for Float64 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<st::Float32Type> for Float32 {
+impl InhabitsT<st::Float32Type> for Float32 {
     fn inhabits(&self, _: &st::Float32Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Float64Type> for Float64 {
+impl InhabitsT<st::Float64Type> for Float64 {
     fn inhabits(&self, _: &st::Float64Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Float32 {
+impl st::InhabitsT<st::Type> for Float32 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Float64 {
+impl st::InhabitsT<st::Type> for Float64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

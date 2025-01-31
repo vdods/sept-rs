@@ -6,7 +6,7 @@ pub enum ArrayTermQuery<'a> {
 }
 
 // TODO: Derive
-impl<'b> qv::EvalTrait for ArrayTermQuery<'b> {
+impl<'b> qv::EvalT for ArrayTermQuery<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         match self {
             Self::ArrayTermElemView(v) => v.eval(),

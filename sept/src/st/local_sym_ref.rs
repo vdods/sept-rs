@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    st::{self, Inhabits, LocalSymRefType},
+    st::{self, InhabitsT, LocalSymRefType},
 };
 use std::fmt::Debug;
 
@@ -9,26 +9,26 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "LocalSymRefType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct LocalSymRef;
 
-impl Inhabits<LocalSymRefType> for LocalSymRef {
+impl InhabitsT<LocalSymRefType> for LocalSymRef {
     fn inhabits(&self, _: &LocalSymRefType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for LocalSymRef {
+impl st::InhabitsT<st::Type> for LocalSymRef {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

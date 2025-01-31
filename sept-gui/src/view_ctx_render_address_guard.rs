@@ -7,7 +7,7 @@ pub struct ViewCtxRenderAddressGuard<'a, 'b> {
 impl<'a, 'b: 'a> ViewCtxRenderAddressGuard<'a, 'b> {
     pub(crate) fn new(view_ctx: &'a mut ViewCtx<'b>, address_token: sept::dy::Value) -> Self {
         view_ctx.render_address.push(address_token);
-        // use sept::st::Stringifiable;
+        // use sept::st::StringifiableT;
         // tracing::debug!(
         //     "push; render_address: {}",
         //     view_ctx.render_address.stringify()
@@ -35,7 +35,7 @@ impl<'a, 'b: 'a> std::ops::Drop for ViewCtxRenderAddressGuard<'a, 'b> {
             .render_address
             .pop()
             .expect("programmer error: pop didn't match push");
-        // use sept::st::Stringifiable;
+        // use sept::st::StringifiableT;
         // tracing::debug!(
         //     "pop;  render_address: {}",
         //     self.view_ctx.render_address.stringify()

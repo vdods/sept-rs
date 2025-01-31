@@ -19,7 +19,7 @@ impl<'a> StructTermFieldElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutView<'a> {
+impl<'a> qv::ApplyEditT for StructTermFieldElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         // TODO: Figure out how to extend.
         // TODO: Figure out how to dispatch more efficiently (look up table as in Runtime?)
@@ -42,7 +42,7 @@ impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutView<'a> {
                 "StructTermFieldElemMutView InsertionTerm edit had non-String field_name_value"
             );
             let field_name = field_name_value.downcast_into::<String>();
-            // use st::Inhabits;
+            // use st::InhabitsT;
             // anyhow::ensure!(
             //     field_type.inhabits(&st::Type),
             //     "StructTermFieldElemMutView InsertionTerm edit had non-Type field_type"
@@ -68,7 +68,7 @@ impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutView<'a> {
                 "StructTermFieldElemMutView DeletionTerm edit had non-String field_name_value"
             );
             let field_name = field_name_value.downcast_into::<String>();
-            // use st::Inhabits;
+            // use st::InhabitsT;
             // anyhow::ensure!(
             //     field_type.inhabits(&st::Type),
             //     "StructTermFieldElemMutView DeletionTerm edit had non-Type field_type"
@@ -97,7 +97,7 @@ impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutView<'a> {
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for StructTermFieldElemMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for StructTermFieldElemMutView<'b> {
     type ReturnType<'a> = StructTermFieldElemMutViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -129,7 +129,7 @@ impl<'b> qv::SingleQueryMut<dy::Value> for StructTermFieldElemMutView<'b> {
             }
         } else {
             // TODO: Support field names as addresses.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "StructTermFieldElemMutView::run_single_query_mut; unrecognized address_token {}",
                 address_token.stringify()
@@ -147,7 +147,7 @@ pub enum StructTermFieldElemMutViewQuery<'a> {
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutViewQuery<'a> {
+impl<'a> qv::ApplyEditT for StructTermFieldElemMutViewQuery<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
             Self::StructTermFieldElemNameMutView(v) => v.apply_edit(edit),
@@ -156,7 +156,7 @@ impl<'a> qv::ApplyEditTrait for StructTermFieldElemMutViewQuery<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for StructTermFieldElemMutViewQuery<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for StructTermFieldElemMutViewQuery<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,

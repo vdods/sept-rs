@@ -1,7 +1,7 @@
-use crate::{EventHandler, EventHandlerCtx};
+use crate::{EventHandlerT, EventHandlerCtx};
 use anyhow::Result;
 
-impl EventHandler for sept::dy::Value {
+impl EventHandlerT for sept::dy::Value {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -20,7 +20,7 @@ impl EventHandler for sept::dy::Value {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else {
             // This is just a temporary warning, until we support all Value variants.
-            use sept::st::Stringifiable;
+            use sept::st::StringifiableT;
             tracing::warn!(
                 "Unsupported Value variant encountered in handle_event: self: {}",
                 self.stringify()

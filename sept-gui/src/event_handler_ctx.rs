@@ -2,7 +2,7 @@ use crate::{
     AddressedEdit, CursorEdit, Edit, EventHandlerCtxNestingGuard, LayoutDiscriminant, LayoutMode,
     ViewOptions,
 };
-use sept::dy::IntoValue;
+use sept::dy::IntoValueT;
 use std::collections::VecDeque;
 
 pub struct EventHandlerCtx<'a> {

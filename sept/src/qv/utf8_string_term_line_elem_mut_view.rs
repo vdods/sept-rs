@@ -3,8 +3,8 @@ use crate::{dy, qv, st, Error, Result};
 #[derive(Debug)]
 pub struct Utf8StringTermLineElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub string: &'a mut String,
     pub line_index: usize,
 
@@ -71,7 +71,7 @@ impl<'a> Utf8StringTermLineElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for Utf8StringTermLineElemMutView<'a> {
+impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         let (line_count, line_char_index_v) = self.string_stats();
 
@@ -136,14 +136,14 @@ impl<'a> qv::ApplyEditTrait for Utf8StringTermLineElemMutView<'a> {
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for Utf8StringTermLineElemMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemMutView<'b> {
     type ReturnType<'a> = qv::Utf8StringTermLineElemCharMutView<'a> where Self: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
         address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
-        use st::Stringifiable;
+        use st::StringifiableT;
         match address_token.downcast_ref::<String>().map(String::as_str) {
             Some("char") => qv::Utf8StringTermLineElemCharMutView::new_with_cached_values(
                 self.string,

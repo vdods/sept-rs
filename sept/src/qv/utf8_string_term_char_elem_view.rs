@@ -4,8 +4,8 @@ use std::sync::{Arc, RwLock};
 #[derive(Clone, Debug)]
 pub struct Utf8StringTermCharElemView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub string: &'a str,
     pub char_index: usize,
 
@@ -47,11 +47,11 @@ impl<'a> Utf8StringTermCharElemView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for Utf8StringTermCharElemView<'b> {
+impl<'b> qv::QueryT for Utf8StringTermCharElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -62,7 +62,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermCharElemView<'b> {
         }
         let first_address = address_token_i.next().unwrap();
         // TODO: If char ever gets further queries (e.g. numeric unicode value), then pass them on here.
-        use st::Stringifiable;
+        use st::StringifiableT;
         anyhow::bail!(
             "Utf8StringTermCharView query doesn't support address: {}",
             first_address.stringify()
@@ -70,9 +70,9 @@ impl<'b> qv::QueryTrait for Utf8StringTermCharElemView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermCharElemView<'b> {
+impl<'b> qv::EvalT for Utf8StringTermCharElemView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-        use dy::IntoValue;
+        use dy::IntoValueT;
         // We already retrieved the char during construction, so just return the value.
         Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
             RwLock::new(if let Some(c) = self.char_o {
@@ -88,7 +88,7 @@ impl<'b> qv::EvalTrait for Utf8StringTermCharElemView<'b> {
 #[derive(Clone, Debug, derive_more::From)]
 pub enum Utf8StringTermCharElemViewQuery {}
 
-impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermCharElemView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermCharElemView<'b> {
     type ReturnType<'a> = Utf8StringTermCharElemViewQuery where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(

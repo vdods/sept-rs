@@ -1,29 +1,21 @@
 use crate::{
     dy,
-    st::{self, Inhabits, Stringifiable, Utf8StringType},
+    st::{self, InhabitsT, StringifiableT, Utf8StringType},
     Result,
 };
 
 /// This represents the Utf8String type itself, not a boolean value such as true or false.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "Utf8StringType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Utf8String;
 
-impl dy::Constructor for Utf8String {
+impl dy::ConstructorT for Utf8String {
     type ConstructedType = String;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -47,18 +39,18 @@ impl dy::Constructor for Utf8String {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl st::Inhabits<st::Type> for Utf8String {
+impl st::InhabitsT<st::Type> for Utf8String {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl Inhabits<Utf8StringType> for Utf8String {
+impl InhabitsT<Utf8StringType> for Utf8String {
     fn inhabits(&self, _: &Utf8StringType) -> bool {
         true
     }

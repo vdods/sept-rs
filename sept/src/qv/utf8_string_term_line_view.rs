@@ -31,7 +31,7 @@ impl<'b> std::ops::Deref for Utf8StringTermLineView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermLineView<'b> {
+impl<'b> qv::EvalT for Utf8StringTermLineView<'b> {
     /// This will produce an ArrayTerm populated with (clones of) the lines of the string,
     /// where each line includes the newline.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
@@ -39,18 +39,18 @@ impl<'b> qv::EvalTrait for Utf8StringTermLineView<'b> {
             .map(|line| line.to_string().into_value())
             .collect::<Vec<dy::Value>>();
         let lines = dy::ArrayTerm::from(line_v);
-        use dy::IntoValue;
+        use dy::IntoValueT;
         Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
             RwLock::new(lines.into_value()),
         )))
     }
 }
 
-impl<'b> qv::QueryTrait for Utf8StringTermLineView<'b> {
+impl<'b> qv::QueryT for Utf8StringTermLineView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -68,7 +68,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermLineView<'b> {
             .run_query(&mut address_token_i)
         } else {
             // TODO: Support "len" query.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermLineView query doesn't support address: {}",
                 first_address.stringify()
@@ -77,7 +77,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermLineView<'b> {
     }
 }
 
-impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineView<'b> {
     type ReturnType<'a> = Utf8StringTermLineViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -87,7 +87,7 @@ impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineView<'b> {
         if let Some(line_index) = address_token.downcast_ref::<u32>() {
             Ok(qv::Utf8StringTermLineElemView::new(self.string, *line_index as usize)?.into())
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermLineView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()

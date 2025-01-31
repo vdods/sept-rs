@@ -20,11 +20,11 @@ impl<'a> OrderedMapTermKeyView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for OrderedMapTermKeyView<'b> {
+impl<'b> qv::QueryT for OrderedMapTermKeyView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -34,13 +34,13 @@ impl<'b> qv::QueryTrait for OrderedMapTermKeyView<'b> {
             return Ok(self);
         } else {
             // Otherwise, pass it on to the key.
-            use qv::QueryableDynTrait;
+            use qv::QueryableDynT;
             self.key.make_and_run_query(&mut address_token_i)
         }
     }
 }
 
-impl<'b> qv::EvalTrait for OrderedMapTermKeyView<'b> {
+impl<'b> qv::EvalT for OrderedMapTermKeyView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.key.as_ref()))
     }

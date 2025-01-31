@@ -1,10 +1,10 @@
 use crate::{
-    indentation_for, layout_job_append, render_type_annotation_for, LayoutMode, ValueUI, ViewCtx,
+    indentation_for, layout_job_append, render_type_annotation_for, LayoutMode, ValueUIT, ViewCtx,
 };
 use egui::{text::LayoutJob, Ui};
 
 /// This one is for OrderedMapTerm key-value pairs.
-impl ValueUI for (&sept::dy::Value, &sept::dy::Value) {
+impl ValueUIT for (&sept::dy::Value, &sept::dy::Value) {
     fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // Because self is a pair, its len is 2.
@@ -146,7 +146,7 @@ impl ValueUI for (&sept::dy::Value, &sept::dy::Value) {
     }
 }
 
-impl ValueUI for sept::dy::OrderedMapTerm {
+impl ValueUIT for sept::dy::OrderedMapTerm {
     fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         // let self_len = self.len() as u32;

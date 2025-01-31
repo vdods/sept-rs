@@ -17,7 +17,7 @@ These are organized based on date, because these notes are often "thinking out l
 
     want to have compile-time and runtime analogs
 
-    Compile time would be something like Inhabits<Vec<T>,ArrayETerm>::inhabits(x: &Vec<T>, t: &ArrayETerm) whereas
+    Compile time would be something like InhabitsT<Vec<T>,ArrayETerm>::inhabits(x: &Vec<T>, t: &ArrayETerm) whereas
     runtime would be something like
 
         inhabits(x, t) := concrete_inhabits(x, ArrayTerm) &&

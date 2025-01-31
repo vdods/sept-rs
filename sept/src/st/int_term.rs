@@ -1,6 +1,6 @@
 use crate::{
     dy, qv,
-    st::{self, Inhabits, Stringifiable, TermTrait},
+    st::{self, InhabitsT, StringifiableT, TermT},
     Error, Result,
 };
 
@@ -13,112 +13,112 @@ pub type Uint16Term = u16;
 pub type Uint32Term = u32;
 pub type Uint64Term = u64;
 
-impl dy::IntoValue for i8 {}
-impl dy::IntoValue for i16 {}
-impl dy::IntoValue for i32 {}
-impl dy::IntoValue for i64 {}
-impl dy::IntoValue for u8 {}
-impl dy::IntoValue for u16 {}
-impl dy::IntoValue for u32 {}
-impl dy::IntoValue for u64 {}
+impl dy::IntoValueT for i8 {}
+impl dy::IntoValueT for i16 {}
+impl dy::IntoValueT for i32 {}
+impl dy::IntoValueT for i64 {}
+impl dy::IntoValueT for u8 {}
+impl dy::IntoValueT for u16 {}
+impl dy::IntoValueT for u32 {}
+impl dy::IntoValueT for u64 {}
 
-impl qv::ApplyEditTrait for i8 {
+impl qv::ApplyEditT for i8 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for i16 {
+impl qv::ApplyEditT for i16 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for i32 {
+impl qv::ApplyEditT for i32 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for i64 {
+impl qv::ApplyEditT for i64 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for u8 {
+impl qv::ApplyEditT for u8 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for u16 {
+impl qv::ApplyEditT for u16 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for u32 {
+impl qv::ApplyEditT for u32 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for u64 {
+impl qv::ApplyEditT for u64 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl Inhabits<st::Sint8> for i8 {
+impl InhabitsT<st::Sint8> for i8 {
     fn inhabits(&self, _: &st::Sint8) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint16> for i16 {
+impl InhabitsT<st::Sint16> for i16 {
     fn inhabits(&self, _: &st::Sint16) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint32> for i32 {
+impl InhabitsT<st::Sint32> for i32 {
     fn inhabits(&self, _: &st::Sint32) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint64> for i64 {
+impl InhabitsT<st::Sint64> for i64 {
     fn inhabits(&self, _: &st::Sint64) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint8> for u8 {
+impl InhabitsT<st::Uint8> for u8 {
     fn inhabits(&self, _: &st::Uint8) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint16> for u16 {
+impl InhabitsT<st::Uint16> for u16 {
     fn inhabits(&self, _: &st::Uint16) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint32> for u32 {
+impl InhabitsT<st::Uint32> for u32 {
     fn inhabits(&self, _: &st::Uint32) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint64> for u64 {
+impl InhabitsT<st::Uint64> for u64 {
     fn inhabits(&self, _: &st::Uint64) -> bool {
         true
     }
 }
 
-impl dy::Deconstruct for i8 {
+impl dy::DeconstructT for i8 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -129,7 +129,7 @@ impl dy::Deconstruct for i8 {
     }
 }
 
-impl dy::Deconstruct for i16 {
+impl dy::DeconstructT for i16 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -140,7 +140,7 @@ impl dy::Deconstruct for i16 {
     }
 }
 
-impl dy::Deconstruct for i32 {
+impl dy::DeconstructT for i32 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -151,7 +151,7 @@ impl dy::Deconstruct for i32 {
     }
 }
 
-impl dy::Deconstruct for i64 {
+impl dy::DeconstructT for i64 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -162,7 +162,7 @@ impl dy::Deconstruct for i64 {
     }
 }
 
-impl dy::Deconstruct for u8 {
+impl dy::DeconstructT for u8 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -173,7 +173,7 @@ impl dy::Deconstruct for u8 {
     }
 }
 
-impl dy::Deconstruct for u16 {
+impl dy::DeconstructT for u16 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -184,7 +184,7 @@ impl dy::Deconstruct for u16 {
     }
 }
 
-impl dy::Deconstruct for u32 {
+impl dy::DeconstructT for u32 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -195,7 +195,7 @@ impl dy::Deconstruct for u32 {
     }
 }
 
-impl dy::Deconstruct for u64 {
+impl dy::DeconstructT for u64 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -206,7 +206,7 @@ impl dy::Deconstruct for u64 {
     }
 }
 
-impl st::Deserializable for i8 {
+impl st::DeserializableT for i8 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -214,7 +214,7 @@ impl st::Deserializable for i8 {
     }
 }
 
-impl st::Deserializable for i16 {
+impl st::DeserializableT for i16 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -222,7 +222,7 @@ impl st::Deserializable for i16 {
     }
 }
 
-impl st::Deserializable for i32 {
+impl st::DeserializableT for i32 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -230,7 +230,7 @@ impl st::Deserializable for i32 {
     }
 }
 
-impl st::Deserializable for i64 {
+impl st::DeserializableT for i64 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -238,7 +238,7 @@ impl st::Deserializable for i64 {
     }
 }
 
-impl st::Deserializable for u8 {
+impl st::DeserializableT for u8 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -246,7 +246,7 @@ impl st::Deserializable for u8 {
     }
 }
 
-impl st::Deserializable for u16 {
+impl st::DeserializableT for u16 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -254,7 +254,7 @@ impl st::Deserializable for u16 {
     }
 }
 
-impl st::Deserializable for u32 {
+impl st::DeserializableT for u32 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -262,7 +262,7 @@ impl st::Deserializable for u32 {
     }
 }
 
-impl st::Deserializable for u64 {
+impl st::DeserializableT for u64 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -271,62 +271,62 @@ impl st::Deserializable for u64 {
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for i8 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for i8 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for i16 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for i16 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for i32 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for i32 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for i64 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for i64 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for u8 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for u8 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for u16 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for u16 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for u32 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for u32 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for u64 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for u64 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
-impl st::Serializable for i8 {
+impl st::SerializableT for i8 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -339,7 +339,7 @@ impl st::Serializable for i8 {
     }
 }
 
-impl st::Serializable for i16 {
+impl st::SerializableT for i16 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -352,7 +352,7 @@ impl st::Serializable for i16 {
     }
 }
 
-impl st::Serializable for i32 {
+impl st::SerializableT for i32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -365,7 +365,7 @@ impl st::Serializable for i32 {
     }
 }
 
-impl st::Serializable for i64 {
+impl st::SerializableT for i64 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -378,7 +378,7 @@ impl st::Serializable for i64 {
     }
 }
 
-impl st::Serializable for u8 {
+impl st::SerializableT for u8 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -391,7 +391,7 @@ impl st::Serializable for u8 {
     }
 }
 
-impl st::Serializable for u16 {
+impl st::SerializableT for u16 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -404,7 +404,7 @@ impl st::Serializable for u16 {
     }
 }
 
-impl st::Serializable for u32 {
+impl st::SerializableT for u32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -417,7 +417,7 @@ impl st::Serializable for u32 {
     }
 }
 
-impl st::Serializable for u64 {
+impl st::SerializableT for u64 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -430,7 +430,7 @@ impl st::Serializable for u64 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for i8 {
+impl qv::SingleQueryMutT<dy::Value> for i8 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -441,7 +441,7 @@ impl qv::SingleQueryMut<dy::Value> for i8 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for i16 {
+impl qv::SingleQueryMutT<dy::Value> for i16 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -452,7 +452,7 @@ impl qv::SingleQueryMut<dy::Value> for i16 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for i32 {
+impl qv::SingleQueryMutT<dy::Value> for i32 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -463,7 +463,7 @@ impl qv::SingleQueryMut<dy::Value> for i32 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for i64 {
+impl qv::SingleQueryMutT<dy::Value> for i64 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -474,7 +474,7 @@ impl qv::SingleQueryMut<dy::Value> for i64 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for u8 {
+impl qv::SingleQueryMutT<dy::Value> for u8 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -485,7 +485,7 @@ impl qv::SingleQueryMut<dy::Value> for u8 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for u16 {
+impl qv::SingleQueryMutT<dy::Value> for u16 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -496,7 +496,7 @@ impl qv::SingleQueryMut<dy::Value> for u16 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for u32 {
+impl qv::SingleQueryMutT<dy::Value> for u32 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -507,7 +507,7 @@ impl qv::SingleQueryMut<dy::Value> for u32 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for u64 {
+impl qv::SingleQueryMutT<dy::Value> for u64 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -518,55 +518,55 @@ impl qv::SingleQueryMut<dy::Value> for u64 {
     }
 }
 
-impl Stringifiable for i8 {
+impl StringifiableT for i8 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for i16 {
+impl StringifiableT for i16 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for i32 {
+impl StringifiableT for i32 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for i64 {
+impl StringifiableT for i64 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for u8 {
+impl StringifiableT for u8 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for u16 {
+impl StringifiableT for u16 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for u32 {
+impl StringifiableT for u32 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl Stringifiable for u64 {
+impl StringifiableT for u64 {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl TermTrait for i8 {
+impl TermT for i8 {
     type AbstractTypeType = st::Sint8;
 
     fn is_parametric(&self) -> bool {
@@ -580,7 +580,7 @@ impl TermTrait for i8 {
     }
 }
 
-impl TermTrait for i16 {
+impl TermT for i16 {
     type AbstractTypeType = st::Sint16;
 
     fn is_parametric(&self) -> bool {
@@ -594,7 +594,7 @@ impl TermTrait for i16 {
     }
 }
 
-impl TermTrait for i32 {
+impl TermT for i32 {
     type AbstractTypeType = st::Sint32;
 
     fn is_parametric(&self) -> bool {
@@ -608,7 +608,7 @@ impl TermTrait for i32 {
     }
 }
 
-impl TermTrait for i64 {
+impl TermT for i64 {
     type AbstractTypeType = st::Sint64;
 
     fn is_parametric(&self) -> bool {
@@ -622,7 +622,7 @@ impl TermTrait for i64 {
     }
 }
 
-impl TermTrait for u8 {
+impl TermT for u8 {
     type AbstractTypeType = st::Uint8;
 
     fn is_parametric(&self) -> bool {
@@ -636,7 +636,7 @@ impl TermTrait for u8 {
     }
 }
 
-impl TermTrait for u16 {
+impl TermT for u16 {
     type AbstractTypeType = st::Uint16;
 
     fn is_parametric(&self) -> bool {
@@ -650,7 +650,7 @@ impl TermTrait for u16 {
     }
 }
 
-impl TermTrait for u32 {
+impl TermT for u32 {
     type AbstractTypeType = st::Uint32;
 
     fn is_parametric(&self) -> bool {
@@ -664,7 +664,7 @@ impl TermTrait for u32 {
     }
 }
 
-impl TermTrait for u64 {
+impl TermT for u64 {
     type AbstractTypeType = st::Uint64;
 
     fn is_parametric(&self) -> bool {
@@ -678,56 +678,56 @@ impl TermTrait for u64 {
     }
 }
 
-impl st::TestValues for i8 {
+impl st::TestValuesT for i8 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for i16 {
+impl st::TestValuesT for i16 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for i32 {
+impl st::TestValuesT for i32 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for i64 {
+impl st::TestValuesT for i64 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, -1, 2, -2, 3, -3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for u8 {
+impl st::TestValuesT for u8 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, 2, 3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for u16 {
+impl st::TestValuesT for u16 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, 2, 3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for u32 {
+impl st::TestValuesT for u32 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, 2, 3, Self::MIN, Self::MAX]
     }
 }
 
-impl st::TestValues for u64 {
+impl st::TestValuesT for u64 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as MAX and MIN.
         vec![0, 1, 2, 3, Self::MIN, Self::MAX]

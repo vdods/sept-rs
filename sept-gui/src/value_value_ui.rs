@@ -1,7 +1,7 @@
-use crate::{ValueUI, ViewCtx};
+use crate::{ValueUIT, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::dy::Value {
+impl ValueUIT for sept::dy::Value {
     fn run_ui_expanded(
         &self,
         ui: &mut Ui,
@@ -149,7 +149,7 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRefType>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else {
-            use sept::st::Stringifiable;
+            use sept::st::StringifiableT;
             tracing::error!("View not implemented for {}", self.stringify());
             unimplemented!("not yet");
         }
@@ -296,7 +296,7 @@ impl ValueUI for sept::dy::Value {
         } else if let Some(term) = self.downcast_ref::<sept::st::LocalSymRefType>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else {
-            use sept::st::Stringifiable;
+            use sept::st::StringifiableT;
             tracing::error!("View not implemented for {}", self.stringify());
             unimplemented!("not yet");
         }

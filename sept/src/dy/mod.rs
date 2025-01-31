@@ -1,10 +1,10 @@
 mod array_term;
-mod constructor;
-mod deconstruct;
+mod constructor_t;
+mod deconstruct_t;
 mod deconstruction;
 mod global_sym_ref_term;
 mod global_symbol_table;
-mod into_value;
+mod into_value_t;
 mod local_sym_ref_term;
 mod non_parametric_deconstruction;
 mod ordered_map_term;
@@ -14,34 +14,35 @@ mod struct_term;
 mod struct_term_term;
 mod symbol_table;
 mod terminal_deconstruction;
-mod transparent_ref_trait;
+mod transparent_ref_t;
 mod tuple_term;
 mod value;
 
 pub use crate::dy::{
     array_term::ArrayTerm,
-    constructor::Constructor,
-    deconstruct::{Deconstruct, Textifier},
+    constructor_t::ConstructorT,
+    deconstruct_t::{DeconstructT, Textifier},
     deconstruction::{Deconstruction, DeconstructionKind},
     global_sym_ref_term::GlobalSymRefTerm,
     global_symbol_table::GLOBAL_SYMBOL_TABLE_LA,
-    into_value::IntoValue,
+    into_value_t::IntoValueT,
     local_sym_ref_term::LocalSymRefTerm,
     non_parametric_deconstruction::NonParametricDeconstruction,
     ordered_map_term::OrderedMapTerm,
     parametric_deconstruction::ParametricDeconstruction,
     runtime::{
-        BinaryPredicate, MaybeDereferencedValue, Runtime, StringifyFn, UnaryPredicate, RUNTIME_LA, MaybeDereferencedValueReadGuard,
+        BinaryPredicate, MaybeDereferencedValue, MaybeDereferencedValueReadGuard, Runtime,
+        StringifyFn, UnaryPredicate, RUNTIME_LA,
     },
     struct_term::StructTerm,
     struct_term_term::StructTermTerm,
     symbol_table::SymbolTable,
     terminal_deconstruction::TerminalDeconstruction,
-    transparent_ref_trait::TransparentRefTrait,
+    transparent_ref_t::TransparentRefT,
     tuple_term::{prefix_partial_cmp, TupleTerm},
-    value::{FancyAny, Value, ValueGuts, ValueGuts2},
+    value::{FancyAnyT, Value, ValueGuts, ValueGuts2},
 };
 pub use anyhow::{Error, Result};
 
 // Trait derivation proc macros
-pub use sept_derive::DyIntoValue as IntoValue;
+pub use sept_derive::DyIntoValueT as IntoValueT;

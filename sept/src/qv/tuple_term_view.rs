@@ -9,11 +9,11 @@ impl<'a> TupleTermView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for TupleTermView<'b> {
+impl<'b> qv::QueryT for TupleTermView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -31,11 +31,11 @@ impl<'b> qv::QueryTrait for TupleTermView<'b> {
                 element_index
             );
             let element = &self.0[*element_index as usize];
-            use qv::QueryableDynTrait;
+            use qv::QueryableDynT;
             element.make_and_run_query(&mut address_token_i)
         } else {
             // TODO: Handle tuple length, etc.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "TupleTerm query doesn't support address: {}",
                 first_address.stringify()
@@ -44,7 +44,7 @@ impl<'b> qv::QueryTrait for TupleTermView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for TupleTermView<'b> {
+impl<'b> qv::EvalT for TupleTermView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

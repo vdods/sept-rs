@@ -47,7 +47,7 @@ A semantic class might not even imply an abstract type, e.g. Uninitialized or Un
 A pure semantic class does not imply an abstract type.
 Is a non-pure semantic class the same as an abstract type?  E.g. EmailAddress would imply some sort of ascii string?
 
-TODO: Idea: create a TermTrait method that turns a term into its runtime equivalent
+TODO: Idea: create a TermT method that turns a term into its runtime equivalent
 
 Given that Array is an abstract type, meaning that it's open to inhabitation by possibly many concrete types, this effectively defines an interface.  This is analogous to a mathematical structure in the sense that it's a collection of certain typed things.  For example, type `T` has an `Array` structure (i.e. implements the `Array` interface) given
 

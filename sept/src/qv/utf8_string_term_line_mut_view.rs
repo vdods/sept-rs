@@ -3,8 +3,8 @@ use crate::{dy, qv, st, Error, Result};
 #[derive(Debug)]
 pub struct Utf8StringTermLineMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub string: &'a mut String,
 
     // Cached values
@@ -18,13 +18,13 @@ impl<'a> Utf8StringTermLineMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for Utf8StringTermLineMutView<'a> {
+impl<'a> qv::ApplyEditT for Utf8StringTermLineMutView<'a> {
     fn apply_edit(&mut self, _edit: dy::Value) -> anyhow::Result<()> {
         unimplemented!("blah");
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for Utf8StringTermLineMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineMutView<'b> {
     type ReturnType<'a> = Utf8StringTermLineMutViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -39,7 +39,7 @@ impl<'b> qv::SingleQueryMut<dy::Value> for Utf8StringTermLineMutView<'b> {
             )?
             .into())
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermLineMutView::run_single_query_mut; unrecognized address_token {}",
                 address_token.stringify()
@@ -54,7 +54,7 @@ pub enum Utf8StringTermLineMutViewQuery<'a> {
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditTrait for Utf8StringTermLineMutViewQuery<'a> {
+impl<'a> qv::ApplyEditT for Utf8StringTermLineMutViewQuery<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
             Self::Utf8StringTermLineElemMutView(v) => v.apply_edit(edit),
@@ -62,7 +62,7 @@ impl<'a> qv::ApplyEditTrait for Utf8StringTermLineMutViewQuery<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for Utf8StringTermLineMutViewQuery<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermLineMutViewQuery<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,

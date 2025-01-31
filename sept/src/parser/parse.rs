@@ -326,7 +326,7 @@ fn parse_value_from_expr_sequence<'a>(expr_sequence: &ExprSequence<'a>) -> Resul
     let mut value = head_value;
     for i in 1..expr_sequence.len() {
         let parameter_t = parse_tuple_term_from_expr(&expr_sequence[i])?;
-        use dy::Constructor;
+        use dy::ConstructorT;
         log::debug!(
             "constructing using value: {:?} and parameter_t: {:?}",
             value,
@@ -383,7 +383,7 @@ fn parse_deconstruction_impl<'a>(expr_v: &[Expr<'a>]) -> Result<dy::Deconstructi
             // Base case
             match expr_v.first().unwrap() {
                 Expr::Terminal(terminal) => {
-                    use dy::Deconstruct;
+                    use dy::DeconstructT;
                     // We deconstruct the value so that it ends up as NonParametricTermDeconstruction
                     // or TerminalDeconstruction as appropriate.
                     Ok(parse_value_from_terminal(terminal)?.deconstruct())

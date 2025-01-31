@@ -6,7 +6,7 @@ use crate::{
     qv,
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
-        Float64, Float64Type, GlobalSymRef, GlobalSymRefType, Inhabits, LocalSymRef,
+        Float64, Float64Type, GlobalSymRef, GlobalSymRefType, InhabitsT, LocalSymRef,
         LocalSymRefType, OrderedMap, OrderedMapType, Placeholder, PlaceholderType, Sint16,
         Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType,
         Term, True, TrueType, Tuple, TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type,
@@ -58,27 +58,27 @@ struct RegisteredPartialCmpFn {
     is_transposed: bool,
 }
 
-pub trait QueryAdapterTrait: Send + Sync {
+pub trait QueryAdapterT: Send + Sync {
     fn make_and_run_query<'a>(
         &self,
         query_subject: &'a ValueGuts,
         address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a;
 }
 
-pub struct QueryAdapter<T: qv::QueryableDynTrait>(std::marker::PhantomData<T>);
+pub struct QueryAdapter<T: qv::QueryableDynT>(std::marker::PhantomData<T>);
 
-unsafe impl<T: qv::QueryableDynTrait> Send for QueryAdapter<T> {}
-unsafe impl<T: qv::QueryableDynTrait> Sync for QueryAdapter<T> {}
+unsafe impl<T: qv::QueryableDynT> Send for QueryAdapter<T> {}
+unsafe impl<T: qv::QueryableDynT> Sync for QueryAdapter<T> {}
 
-impl<T: qv::QueryableDynTrait + 'static> QueryAdapterTrait for QueryAdapter<T> {
+impl<T: qv::QueryableDynT + 'static> QueryAdapterT for QueryAdapter<T> {
     fn make_and_run_query<'a>(
         &self,
         query_subject: &'a ValueGuts,
         address_token_i: &mut dyn Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -90,7 +90,7 @@ impl<T: qv::QueryableDynTrait + 'static> QueryAdapterTrait for QueryAdapter<T> {
     }
 }
 
-pub trait QueryMutAndApplyEditAdapterTrait: Send + Sync {
+pub trait QueryMutAndApplyEditAdapterT: Send + Sync {
     fn query_mut_and_apply_edit<'a>(
         &self,
         query_subject: &'a mut ValueGuts,
@@ -101,14 +101,12 @@ pub trait QueryMutAndApplyEditAdapterTrait: Send + Sync {
         Self: 'a;
 }
 
-pub struct QueryMutAndApplyEditAdapter<T: qv::QueryMutAndApplyEditTrait>(
-    std::marker::PhantomData<T>,
-);
+pub struct QueryMutAndApplyEditAdapter<T: qv::QueryMutAndApplyEditT>(std::marker::PhantomData<T>);
 
-unsafe impl<T: qv::QueryMutAndApplyEditTrait> Send for QueryMutAndApplyEditAdapter<T> {}
-unsafe impl<T: qv::QueryMutAndApplyEditTrait> Sync for QueryMutAndApplyEditAdapter<T> {}
+unsafe impl<T: qv::QueryMutAndApplyEditT> Send for QueryMutAndApplyEditAdapter<T> {}
+unsafe impl<T: qv::QueryMutAndApplyEditT> Sync for QueryMutAndApplyEditAdapter<T> {}
 
-impl<T: qv::QueryMutAndApplyEditTrait + 'static> QueryMutAndApplyEditAdapterTrait
+impl<T: qv::QueryMutAndApplyEditT + 'static> QueryMutAndApplyEditAdapterT
     for QueryMutAndApplyEditAdapter<T>
 {
     fn query_mut_and_apply_edit<'a>(
@@ -165,8 +163,8 @@ pub struct Runtime {
         HashMap<&'static str, NonParametricTermInstantiateFn>,
     non_parametric_term_instantiate_from_code_fn_m:
         HashMap<st::NonParametricTermCode, NonParametricTermInstantiateFn>,
-    query_fn_m: HashMap<TypeId, Box<dyn QueryAdapterTrait>>,
-    query_mut_and_apply_edit_fn_m: HashMap<TypeId, Box<dyn QueryMutAndApplyEditAdapterTrait>>,
+    query_fn_m: HashMap<TypeId, Box<dyn QueryAdapterT>>,
+    query_mut_and_apply_edit_fn_m: HashMap<TypeId, Box<dyn QueryMutAndApplyEditAdapterT>>,
     apply_edit_fn_m: HashMap<TypeId, ApplyEditFn>,
     into_inverse_fn_m: HashMap<TypeId, IntoInverseFn>,
 }
@@ -449,7 +447,7 @@ impl Runtime {
             .register_non_parametric_term::<LocalSymRef>()
             .unwrap();
 
-        // Have to go through and explicitly register the Constructor types, until ParametricType
+        // Have to go through and explicitly register the ConstructorT types, until ParametricType
         // is a thing.
         runtime.register_constructor::<Bool>().unwrap();
         runtime.register_constructor::<Sint8>().unwrap();
@@ -611,15 +609,15 @@ impl Runtime {
     // to call the methods that require those traits.
     pub fn register_term<T>(&mut self) -> Result<()>
     where
-        T: st::TermTrait
-            + dy::Deconstruct
+        T: st::TermT
+            + dy::DeconstructT
             + std::fmt::Debug
-            + st::Serializable
-            + st::Stringifiable
+            + st::SerializableT
+            + st::StringifiableT
             + std::cmp::PartialEq
-            + Inhabits<<T as st::TermTrait>::AbstractTypeType>
+            + InhabitsT<<T as st::TermT>::AbstractTypeType>
             + 'static,
-        <T as st::TermTrait>::AbstractTypeType: st::TypeTrait,
+        <T as st::TermT>::AbstractTypeType: st::TypeT,
     {
         let type_id = TypeId::of::<T>();
         anyhow::ensure!(
@@ -634,7 +632,7 @@ impl Runtime {
         self.register_serialize::<T>()?;
         self.register_stringify::<T>()?;
         self.register_partial_eq::<T, T>()?;
-        self.register_inhabits::<T, <T as st::TermTrait>::AbstractTypeType>()?;
+        self.register_inhabits::<T, <T as st::TermT>::AbstractTypeType>()?;
         self.register_abstract_type::<T>()?;
         self.register_clone::<T>()?;
         self.register_is_parametric::<T>()?;
@@ -644,16 +642,16 @@ impl Runtime {
     }
     pub fn register_type<T>(&mut self) -> Result<()>
     where
-        T: st::TypeTrait
-            + dy::Deconstruct
+        T: st::TypeT
+            + dy::DeconstructT
             + std::fmt::Debug
-            + st::Serializable
-            + st::Stringifiable
+            + st::SerializableT
+            + st::StringifiableT
             + std::cmp::PartialEq
-            + Inhabits<<T as st::TermTrait>::AbstractTypeType>
-            + Inhabits<st::Type>
+            + InhabitsT<<T as st::TermT>::AbstractTypeType>
+            + InhabitsT<st::Type>
             + 'static,
-        <T as st::TermTrait>::AbstractTypeType: st::TypeTrait,
+        <T as st::TermT>::AbstractTypeType: st::TypeT,
     {
         self.register_term::<T>()?;
         if self.inhabits_fn::<T, st::Type>().is_none() {
@@ -670,7 +668,7 @@ impl Runtime {
     }
 
     // TODO: Rename to register_term_name?
-    pub(crate) fn register_label<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_label<T: st::TermT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let label_fn = || -> &'static str { std::any::type_name::<T>() };
         match self.label_fn_m.insert(type_id, label_fn) {
@@ -698,7 +696,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub(crate) fn register_stringify<T: st::Stringifiable + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_stringify<T: st::StringifiableT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let stringify_fn =
             |x: &ValueGuts| -> String { T::stringify(x.downcast_ref::<T>().unwrap()) };
@@ -731,7 +729,7 @@ impl Runtime {
     //             None => Ok(())
     //         }
     //     }
-    pub(crate) fn register_serialize<T: st::Serializable + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_serialize<T: st::SerializableT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         //         let serialize_top_level_code_fn = |x: &ValueGuts, writer: &mut dyn std::io::Write| -> Result<usize> {
         //             Ok(x.downcast_ref::<S>().unwrap().serialize_top_level_code(writer)?)
@@ -757,7 +755,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_abstract_type<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_abstract_type<T: st::TermT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let abstract_type_fn = |x: &ValueGuts| -> Box<ValueGuts> {
             let abstract_type = x.downcast_ref::<T>().unwrap().abstract_type();
@@ -808,7 +806,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_clone<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_clone<T: st::TermT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let clone_fn = |x: &ValueGuts| -> Box<ValueGuts> {
             // TODO: if the return type is Box<ValueGuts>, then just return that,
@@ -822,7 +820,7 @@ impl Runtime {
             //             }
             // TEMP HACK: If clone is already a Box<ValueGuts>, then this will make a double
             // box, which is not what is wanted.  But for now, whateva.
-            // NOTE: I think because of the fixed Value::from situation (using dy::IntoValue to bound
+            // NOTE: I think because of the fixed Value::from situation (using dy::IntoValueT to bound
             // `impl From<T> for Value`), this is not a problem anymore, meaning that Box<Box<ValueGuts>>
             // should not be possible, and all this can be cleaned up.
             if {
@@ -846,7 +844,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_parametric<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_parametric<T: st::TermT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_parametric_fn =
             |x: &ValueGuts| -> bool { x.downcast_ref::<T>().unwrap().is_parametric() };
@@ -863,7 +861,7 @@ impl Runtime {
     }
     // TODO: Rename this something different (this was copied and pasted from register_stringify
     // and the semantics don't match).
-    pub(crate) fn register_is_type<T: st::TermTrait + 'static>(&mut self) -> Result<()> {
+    pub(crate) fn register_is_type<T: st::TermT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let is_type_fn = |x: &ValueGuts| -> bool { x.downcast_ref::<T>().unwrap().is_type() };
         match self.is_type_fn_m.insert(type_id, is_type_fn) {
@@ -1009,7 +1007,7 @@ impl Runtime {
     //         None => Ok(()),
     //     }
     // }
-    pub fn register_inhabits<Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(
+    pub fn register_inhabits<Lhs: InhabitsT<Rhs> + 'static, Rhs: st::TypeT + 'static>(
         &mut self,
     ) -> Result<()> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
@@ -1031,9 +1029,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_dereferenced_once<T: dy::TransparentRefTrait + 'static>(
-        &mut self,
-    ) -> Result<()> {
+    pub fn register_dereferenced_once<T: dy::TransparentRefT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let dereferenced_once_fn = |x: &ValueGuts| -> Result<Arc<RwLock<dy::Value>>> {
             x.downcast_ref::<T>().unwrap().dereferenced_once()
@@ -1052,7 +1048,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_deconstruct<T: dy::Deconstruct + 'static>(&mut self) -> Result<()> {
+    pub fn register_deconstruct<T: dy::DeconstructT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let deconstruct_fn = |x: &ValueGuts| -> dy::Deconstruction {
             x.downcast_ref::<T>().unwrap().deconstructed()
@@ -1068,7 +1064,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_constructor<T: dy::Constructor + 'static>(&mut self) -> Result<()> {
+    pub fn register_constructor<T: dy::ConstructorT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let construct_fn =
             |constructor: &ValueGuts, parameter_t: dy::TupleTerm| -> Result<dy::Value> {
@@ -1111,7 +1107,7 @@ impl Runtime {
         }
         Ok(())
     }
-    pub fn register_non_parametric_term<T: st::NonParametricTermTrait + 'static>(
+    pub fn register_non_parametric_term<T: st::NonParametricTermT + 'static>(
         &mut self,
     ) -> Result<()> {
         self.non_parametric_term_code_m
@@ -1138,12 +1134,12 @@ impl Runtime {
         }
         Ok(())
     }
-    pub fn register_query<T: qv::QueryableDynTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_query<T: qv::QueryableDynT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         // This is what carries the type information.
         let query_fn = QueryAdapter::<T>(std::marker::PhantomData);
         // Store the adapter in a box as a trait object
-        let query_fn_b: Box<dyn QueryAdapterTrait> = Box::new(query_fn);
+        let query_fn_b: Box<dyn QueryAdapterT> = Box::new(query_fn);
         match self.query_fn_m.insert(type_id, query_fn_b) {
             Some(_) => {
                 anyhow::bail!(
@@ -1155,7 +1151,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_query_mut_and_apply_edit<T: qv::QueryMutAndApplyEditTrait + 'static>(
+    pub fn register_query_mut_and_apply_edit<T: qv::QueryMutAndApplyEditT + 'static>(
         &mut self,
     ) -> Result<()> {
         let type_id = TypeId::of::<T>();
@@ -1163,7 +1159,7 @@ impl Runtime {
         let query_mut_and_apply_edit_fn =
             QueryMutAndApplyEditAdapter::<T>(std::marker::PhantomData);
         // Store the adapter in a box as a trait object
-        let query_mut_and_apply_edit_fn_b: Box<dyn QueryMutAndApplyEditAdapterTrait> =
+        let query_mut_and_apply_edit_fn_b: Box<dyn QueryMutAndApplyEditAdapterT> =
             Box::new(query_mut_and_apply_edit_fn);
         match self
             .query_mut_and_apply_edit_fn_m
@@ -1179,7 +1175,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub fn register_apply_edit<T: qv::ApplyEditTrait + 'static>(&mut self) -> Result<()> {
+    pub fn register_apply_edit<T: qv::ApplyEditT + 'static>(&mut self) -> Result<()> {
         let type_id = TypeId::of::<T>();
         let apply_edit_fn = |x: &mut dy::ValueGuts, edit: dy::Value| -> Result<()> {
             x.downcast_mut::<T>().unwrap().apply_edit(edit)
@@ -1197,8 +1193,8 @@ impl Runtime {
     }
     pub fn register_into_inverse<T>(&mut self) -> Result<()>
     where
-        T: st::EditTrait + 'static,
-        <T as st::EditTrait>::Inverse: dy::IntoValue,
+        T: st::EditT + 'static,
+        <T as st::EditT>::Inverse: dy::IntoValueT,
     {
         let type_id = TypeId::of::<T>();
         let into_inverse_fn = |edit: dy::Value| -> dy::Value {
@@ -1215,7 +1211,7 @@ impl Runtime {
             None => Ok(()),
         }
     }
-    pub(crate) fn inhabits_fn<'a, Lhs: Inhabits<Rhs> + 'static, Rhs: st::TypeTrait + 'static>(
+    pub(crate) fn inhabits_fn<'a, Lhs: InhabitsT<Rhs> + 'static, Rhs: st::TypeT + 'static>(
         &'a self,
     ) -> Option<&'a BinaryPredicate> {
         let type_id_pair = (TypeId::of::<Lhs>(), TypeId::of::<Rhs>());
@@ -1257,7 +1253,7 @@ impl Runtime {
             }
         }
     }
-    // Note that this does not use referential transparency.  Stringifiable should be renamed to ConcreteText or something.
+    // Note that this does not use referential transparency.  StringifiableT should be renamed to ConcreteText or something.
     pub fn stringify(&self, x: &ValueGuts) -> String {
         assert!(x.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.stringify_fn_m.get(&x.type_id()) {
@@ -1796,14 +1792,14 @@ impl Runtime {
         }
     }
     /// Returns true iff T is a term that's been registered in this Runtime.
-    pub fn is_registered_term<T: st::TermTrait>(&self) -> bool {
+    pub fn is_registered_term<T: st::TermT>(&self) -> bool {
         self.term_s.contains(&TypeId::of::<T>())
     }
     pub fn query<'a>(
         &self,
         query_subject: &'a ValueGuts,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>> {
+    ) -> Result<Box<dyn qv::EvalT + 'a>> {
         assert!(query_subject.type_id() != std::any::TypeId::of::<dy::Value>(), "something constructed a &ValueGuts which refers to a Value, which is not what is wanted");
         match self.query_fn_m.get(&query_subject.type_id()) {
             Some(query_fn_b) => query_fn_b.make_and_run_query(query_subject, address_token_i),

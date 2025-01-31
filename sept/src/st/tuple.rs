@@ -1,29 +1,21 @@
 use crate::{
     dy,
-    st::{self, Inhabits, TupleType},
+    st::{self, InhabitsT, TupleType},
     Result,
 };
 use std::fmt::Debug;
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "TupleType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Tuple;
 
-impl dy::Constructor for Tuple {
+impl dy::ConstructorT for Tuple {
     type ConstructedType = dy::TupleTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         // There's really nothing to do.  The parameters are already in the correct form,
@@ -35,18 +27,18 @@ impl dy::Constructor for Tuple {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<TupleType> for Tuple {
+impl InhabitsT<TupleType> for Tuple {
     fn inhabits(&self, _: &TupleType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Tuple {
+impl st::InhabitsT<st::Type> for Tuple {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

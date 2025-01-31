@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    st::{self, Inhabits, UnicodeCharType},
+    st::{self, InhabitsT, UnicodeCharType},
     Result,
 };
 
@@ -10,20 +10,20 @@ use crate::{
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "UnicodeCharType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct UnicodeChar;
 
-impl dy::Constructor for UnicodeChar {
+impl dy::ConstructorT for UnicodeChar {
     type ConstructedType = UnicodeChar;
     fn construct(&self, _parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         unimplemented!("TODO");
@@ -48,18 +48,18 @@ impl dy::Constructor for UnicodeChar {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<UnicodeCharType> for UnicodeChar {
+impl InhabitsT<UnicodeCharType> for UnicodeChar {
     fn inhabits(&self, _: &UnicodeCharType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for UnicodeChar {
+impl st::InhabitsT<st::Type> for UnicodeChar {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

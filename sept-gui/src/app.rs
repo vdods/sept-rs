@@ -2,11 +2,11 @@
 #![allow(unused)]
 
 use egui::Modifiers;
-use sept::st::{Deserializable, Serializable};
+use sept::st::{DeserializableT, SerializableT};
 
 use crate::{
     edit, extract_text_prefix_from_front_text, AddressedEdit, CursorEdit, Edit, EventHandlerCtx,
-    Model, SaveBehavior, ValueUI, ViewCtx, ViewOptions,
+    Model, SaveBehavior, ValueUIT, ViewCtx, ViewOptions,
 };
 use std::{
     collections::VecDeque,
@@ -52,7 +52,7 @@ impl App {
         //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         // }
 
-        // use sept::dy::IntoValue;
+        // use sept::dy::IntoValueT;
         // // let root_value = s1.into_value();
         // let root_value = sept::dy::ArrayTerm::from(vec![
         //     sept::dy::StructTerm::new(vec![
@@ -79,13 +79,13 @@ impl App {
         // ])
         // .into_value();
 
-        // use sept::dy::IntoValue;
+        // use sept::dy::IntoValueT;
         // let root_value = if let Some(open_file_path) = open_file_path_o.as_deref() {
         //     let mut file = std::fs::OpenOptions::new()
         //         .read(true)
         //         .open(open_file_path)
         //         .expect("TODO: handle this");
-        //     use sept::st::Deserializable;
+        //     use sept::st::DeserializableT;
         //     let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
         //     cc.egui_ctx
         //         .send_viewport_cmd(egui::ViewportCommand::Title(format!(
@@ -742,7 +742,7 @@ impl Default for App {
 
 //         let st0 = sept::dy::StructTerm::new(vec![].into()).unwrap();
 
-//         use sept::dy::Constructor;
+//         use sept::dy::ConstructorT;
 
 //         // Make an empty StructTermTerm
 //         let stt0 = st0.construct(sept::dy::TupleTerm::from(vec![])).unwrap();
@@ -833,7 +833,7 @@ impl Default for App {
 //         //     lsr1.into(),
 //         // ])
 //         // .into();
-//         use sept::dy::IntoValue;
+//         use sept::dy::IntoValueT;
 //         // let root_value = s1.into_value();
 //         let root_value = sept::dy::ArrayTerm::from(vec![
 //             sept::dy::StructTerm::new(vec![

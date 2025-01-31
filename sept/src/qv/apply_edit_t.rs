@@ -1,10 +1,10 @@
 use crate::{dy, qv, st, Result};
 
-// TODO: Figure out if EvalTrait supertrait is really needed.  Probably not, unless there's some definitional
-// reason why it's needed for QueryMutViewTrait.  Actually, a given mutation might alter a EvalTrait
-// such that it's no longer valid, so maybe EvalTrait is not even well-defined here.
-// pub trait QueryMutViewTrait: qv::EvalTrait {
-pub trait ApplyEditTrait {
+// TODO: Figure out if EvalT supertrait is really needed.  Probably not, unless there's some definitional
+// reason why it's needed for QueryMutViewT.  Actually, a given mutation might alter a EvalT
+// such that it's no longer valid, so maybe EvalT is not even well-defined here.
+// pub trait QueryMutViewT: qv::EvalT {
+pub trait ApplyEditT {
     /// This operation must be atomic -- if an error is to be returned, it must not alter the queried data,
     /// and if the queried data is altered, then this method call must succeed.
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()>;

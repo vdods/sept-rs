@@ -10,11 +10,11 @@ impl<'a> ArrayTermView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for ArrayTermView<'b> {
+impl<'b> qv::QueryT for ArrayTermView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -32,11 +32,11 @@ impl<'b> qv::QueryTrait for ArrayTermView<'b> {
                 element_index
             );
             let element = &self.0[*element_index as usize];
-            use qv::QueryableDynTrait;
+            use qv::QueryableDynT;
             element.make_and_run_query(&mut address_token_i)
         } else {
             // TODO: Handle array length, etc.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "ArrayTerm query doesn't support address: {}",
                 first_address.stringify()
@@ -45,7 +45,7 @@ impl<'b> qv::QueryTrait for ArrayTermView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for ArrayTermView<'b> {
+impl<'b> qv::EvalT for ArrayTermView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

@@ -3,8 +3,8 @@ use crate::{dy, qv, st, Error, Result};
 #[derive(Debug)]
 pub struct Utf8StringTermCharElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub string: &'a mut String,
     pub char_index: usize,
 
@@ -47,7 +47,7 @@ impl<'a> Utf8StringTermCharElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for Utf8StringTermCharElemMutView<'a> {
+impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: Figure out how to extend.
         // TODO: Figure out how to dispatch more efficiently (look up table as in Runtime?)
@@ -108,7 +108,7 @@ impl<'a> qv::ApplyEditTrait for Utf8StringTermCharElemMutView<'a> {
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for Utf8StringTermCharElemMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermCharElemMutView<'b> {
     type ReturnType<'a> = qv::EmptyQuery where Self: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(

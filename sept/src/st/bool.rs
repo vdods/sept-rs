@@ -1,29 +1,21 @@
 use crate::{
     dy,
-    st::{self, BoolType, Inhabits, Stringifiable},
+    st::{self, BoolType, InhabitsT, StringifiableT},
     Result,
 };
 
 /// This represents the Bool type itself, not a boolean value such as true or false.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "BoolType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Bool;
 
-impl dy::Constructor for Bool {
+impl dy::ConstructorT for Bool {
     type ConstructedType = bool;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -47,18 +39,18 @@ impl dy::Constructor for Bool {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<BoolType> for Bool {
+impl InhabitsT<BoolType> for Bool {
     fn inhabits(&self, _: &BoolType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Bool {
+impl st::InhabitsT<st::Type> for Bool {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

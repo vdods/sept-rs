@@ -53,13 +53,13 @@ impl NonParametricDeconstruction {
     }
 }
 
-// impl st::Deserializable for NonParametricDeconstruction {
+// impl st::DeserializableT for NonParametricDeconstruction {
 //     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
 //
 //     }
 // }
 //
-// impl st::Serializable for NonParametricDeconstruction {
+// impl st::SerializableT for NonParametricDeconstruction {
 //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 //         Ok(dy::RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
 //     }

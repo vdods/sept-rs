@@ -8,7 +8,7 @@ pub enum StructTermQueryMut<'a> {
 }
 
 // TODO: Derive this
-impl<'b> qv::QueryMutAndApplyEditTrait for StructTermQueryMut<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for StructTermQueryMut<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -31,7 +31,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for StructTermQueryMut<'b> {
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditTrait for StructTermQueryMut<'a> {
+impl<'a> qv::ApplyEditT for StructTermQueryMut<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
             Self::StructTermFieldElemMutView(v) => v.apply_edit(edit),

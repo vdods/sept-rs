@@ -19,7 +19,7 @@ impl<'a> StructTermFieldElemNameMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for StructTermFieldElemNameMutView<'a> {
+impl<'a> qv::ApplyEditT for StructTermFieldElemNameMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         // Apply the edit to a clone of the field name, then check if it was a valid edit.
         let original_field_name = self.struct_term.get_field_name(self.field_index)?;
@@ -37,7 +37,7 @@ impl<'a> qv::ApplyEditTrait for StructTermFieldElemNameMutView<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for StructTermFieldElemNameMutView<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for StructTermFieldElemNameMutView<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -69,9 +69,9 @@ impl<'b> qv::QueryMutAndApplyEditTrait for StructTermFieldElemNameMutView<'b> {
     }
 }
 
-// SingleQueryMut would be possible if there was an inner and outer query, and the outer query
+// SingleQueryMutT would be possible if there was an inner and outer query, and the outer query
 // runs constraint checks after the inner query has apply_edit run on it.
-// impl<'b> qv::SingleQueryMut<dy::Value> for StructTermFieldElemNameMutView<'b> {
+// impl<'b> qv::SingleQueryMutT<dy::Value> for StructTermFieldElemNameMutView<'b> {
 //     type ReturnType<'a> = StructTermFieldElemNameMutViewQuery<'a> where 'b: 'a;
 //     type Error = Error;
 //     fn run_single_query_mut<'a>(
@@ -103,7 +103,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for StructTermFieldElemNameMutView<'b> {
 //             }
 //         } else {
 //             // TODO: Support field names as addresses.
-//             use st::Stringifiable;
+//             use st::StringifiableT;
 //             anyhow::bail!(
 //                 "StructTermFieldElemNameMutView::run_single_query_mut; unrecognized address_token {}",
 //                 address_token.stringify()

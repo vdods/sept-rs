@@ -1,13 +1,13 @@
 use crate::{
-    dy::{self, TransparentRefTrait},
-    st::{self, Stringifiable, TermTrait},
+    dy::{self, TransparentRefT},
+    st::{self, StringifiableT, TermT},
     Result,
 };
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
-#[derive(Clone, Debug, dy::IntoValue)]
+#[derive(Clone, Debug, dy::IntoValueT)]
 pub struct LocalSymRefTerm {
     /// This is the symbol table to which this sym ref refers.
     local_symbol_table_la: Arc<RwLock<dy::SymbolTable>>,
@@ -15,11 +15,11 @@ pub struct LocalSymRefTerm {
     pub symbol_id: String,
 }
 
-// TODO: Implement Constructor
+// TODO: Implement ConstructorT
 
-/// LocalSymRefTerm's impl for dy::Deconstruct does not use referential transparency, because
+/// LocalSymRefTerm's impl for dy::DeconstructT does not use referential transparency, because
 /// the goal is to represent the thing exactly as it is.
-impl dy::Deconstruct for LocalSymRefTerm {
+impl dy::DeconstructT for LocalSymRefTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         unimplemented!("not sure how to represent the local symbol table unless it's somehow named and has a deconstruction");
         // dy::ParametricDeconstruction::new(st::LocalSymRef.deconstructed(), vec![/* local symbol table deconstruction would go here*/ self.symbol_id.deconstructed()]).into()
@@ -36,7 +36,7 @@ impl std::fmt::Display for LocalSymRefTerm {
     }
 }
 
-impl st::Inhabits<st::Type> for LocalSymRefTerm {
+impl st::InhabitsT<st::Type> for LocalSymRefTerm {
     fn inhabits(&self, _: &st::Type) -> bool {
         self.resolved()
             .expect("LocalSymRefTerm failed to resolve")
@@ -46,7 +46,7 @@ impl st::Inhabits<st::Type> for LocalSymRefTerm {
     }
 }
 
-impl st::Inhabits<dy::Value> for LocalSymRefTerm {
+impl st::InhabitsT<dy::Value> for LocalSymRefTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         self.resolved()
             .expect("LocalSymRefTerm failed to resolve")
@@ -66,7 +66,7 @@ impl PartialEq<LocalSymRefTerm> for LocalSymRefTerm {
     }
 }
 
-impl Stringifiable for LocalSymRefTerm {
+impl StringifiableT for LocalSymRefTerm {
     fn stringify(&self) -> String {
         format!(
             "LocalSymRefTerm({:?}, {:?})",
@@ -76,7 +76,7 @@ impl Stringifiable for LocalSymRefTerm {
     }
 }
 
-impl TermTrait for LocalSymRefTerm {
+impl TermT for LocalSymRefTerm {
     type AbstractTypeType = dy::Value;
 
     /// Forwards via referential transparency.
@@ -108,9 +108,9 @@ impl TermTrait for LocalSymRefTerm {
     }
 }
 
-impl st::TypeTrait for LocalSymRefTerm {}
+impl st::TypeT for LocalSymRefTerm {}
 
-impl dy::TransparentRefTrait for LocalSymRefTerm {
+impl dy::TransparentRefT for LocalSymRefTerm {
     fn dereferenced_once(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(self
             .local_symbol_table_la

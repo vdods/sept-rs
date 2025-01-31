@@ -1,7 +1,7 @@
 use crate::{
     dy::{self, Value},
     qv,
-    st::{self, Inhabits, Stringifiable, TermTrait, Tuple},
+    st::{self, InhabitsT, StringifiableT, TermT, Tuple},
     Error, Result,
 };
 
@@ -14,13 +14,13 @@ use crate::{
     derive_more::DerefMut,
     derive_more::From,
     derive_more::Into,
-    dy::IntoValue,
+    dy::IntoValueT,
     PartialEq,
-    st::TypeTrait,
+    st::TypeT,
 )]
 pub struct TupleTerm(Vec<Value>);
 
-impl dy::Constructor for TupleTerm {
+impl dy::ConstructorT for TupleTerm {
     type ConstructedType = TupleTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -56,7 +56,7 @@ impl dy::Constructor for TupleTerm {
     }
 }
 
-impl dy::Deconstruct for TupleTerm {
+impl dy::DeconstructT for TupleTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         // This looks like it might incur infinite recursion, but it won't.
         dy::ParametricDeconstruction::new_recursive(st::Tuple.into(), self).into()
@@ -87,7 +87,7 @@ impl From<()> for TupleTerm {
 
 impl<T0> From<(T0,)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
 {
     fn from(t: (T0,)) -> Self {
         vec![t.0.into()].into()
@@ -96,8 +96,8 @@ where
 
 impl<T0, T1> From<(T0, T1)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
-    T1: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
+    T1: TermT + Into<Value>,
 {
     fn from(t: (T0, T1)) -> Self {
         vec![t.0.into(), t.1.into()].into()
@@ -106,9 +106,9 @@ where
 
 impl<T0, T1, T2> From<(T0, T1, T2)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
-    T1: TermTrait + Into<Value>,
-    T2: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
+    T1: TermT + Into<Value>,
+    T2: TermT + Into<Value>,
 {
     fn from(t: (T0, T1, T2)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into()].into()
@@ -117,10 +117,10 @@ where
 
 impl<T0, T1, T2, T3> From<(T0, T1, T2, T3)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
-    T1: TermTrait + Into<Value>,
-    T2: TermTrait + Into<Value>,
-    T3: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
+    T1: TermT + Into<Value>,
+    T2: TermT + Into<Value>,
+    T3: TermT + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into()].into()
@@ -129,11 +129,11 @@ where
 
 impl<T0, T1, T2, T3, T4> From<(T0, T1, T2, T3, T4)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
-    T1: TermTrait + Into<Value>,
-    T2: TermTrait + Into<Value>,
-    T3: TermTrait + Into<Value>,
-    T4: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
+    T1: TermT + Into<Value>,
+    T2: TermT + Into<Value>,
+    T3: TermT + Into<Value>,
+    T4: TermT + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3, T4)) -> Self {
         vec![t.0.into(), t.1.into(), t.2.into(), t.3.into(), t.4.into()].into()
@@ -142,12 +142,12 @@ where
 
 impl<T0, T1, T2, T3, T4, T5> From<(T0, T1, T2, T3, T4, T5)> for TupleTerm
 where
-    T0: TermTrait + Into<Value>,
-    T1: TermTrait + Into<Value>,
-    T2: TermTrait + Into<Value>,
-    T3: TermTrait + Into<Value>,
-    T4: TermTrait + Into<Value>,
-    T5: TermTrait + Into<Value>,
+    T0: TermT + Into<Value>,
+    T1: TermT + Into<Value>,
+    T2: TermT + Into<Value>,
+    T3: TermT + Into<Value>,
+    T4: TermT + Into<Value>,
+    T5: TermT + Into<Value>,
 {
     fn from(t: (T0, T1, T2, T3, T4, T5)) -> Self {
         vec![
@@ -162,13 +162,13 @@ where
     }
 }
 
-impl Inhabits<Tuple> for TupleTerm {
+impl InhabitsT<Tuple> for TupleTerm {
     fn inhabits(&self, _: &Tuple) -> bool {
         true
     }
 }
 
-impl Inhabits<TupleTerm> for TupleTerm {
+impl InhabitsT<TupleTerm> for TupleTerm {
     fn inhabits(&self, rhs: &TupleTerm) -> bool {
         if rhs.0.len() != self.len() {
             return false;
@@ -183,7 +183,7 @@ impl Inhabits<TupleTerm> for TupleTerm {
     }
 }
 
-impl st::Inhabits<st::Type> for TupleTerm {
+impl st::InhabitsT<st::Type> for TupleTerm {
     /// A TupleTerm is a type only if each of its elements are types.
     fn inhabits(&self, t: &st::Type) -> bool {
         for tuple_term_element in self.iter() {
@@ -196,7 +196,7 @@ impl st::Inhabits<st::Type> for TupleTerm {
 }
 
 // Because a StructTerm is effectively an (ordered) tuple of types, TupleTerm can naturally inhabit StructTerm.
-impl Inhabits<dy::StructTerm> for TupleTerm {
+impl InhabitsT<dy::StructTerm> for TupleTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
         if self.len() != rhs.len() {
             return false;
@@ -210,7 +210,7 @@ impl Inhabits<dy::StructTerm> for TupleTerm {
     }
 }
 
-impl st::Deserializable for TupleTerm {
+impl st::DeserializableT for TupleTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let len = st::read_len(reader)?;
         let mut element_v = Vec::with_capacity(len);
@@ -221,19 +221,19 @@ impl st::Deserializable for TupleTerm {
     }
 }
 
-impl qv::QueryableDynTrait for TupleTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for TupleTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::TupleTermView::new(self))
     }
 }
 
-impl qv::EvalTrait for TupleTerm {
+impl qv::EvalT for TupleTerm {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self))
     }
 }
 
-impl qv::ApplyEditTrait for TupleTerm {
+impl qv::ApplyEditT for TupleTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: "clear" edit
         if edit.is::<qv::ReplacementTerm>() {
@@ -257,7 +257,7 @@ impl qv::ApplyEditTrait for TupleTerm {
     }
 }
 
-impl st::Serializable for TupleTerm {
+impl st::SerializableT for TupleTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -265,13 +265,13 @@ impl st::Serializable for TupleTerm {
     //         Ok(st::Tuple.serialize(writer)?)
     //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-        use dy::Deconstruct;
+        use dy::DeconstructT;
         log::debug!("TupleTerm::serialize(); self: {}", self.textified());
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where a tuple smaller than 8 bytes is encoded in exactly 8 bytes.
         let mut bytes_written = st::write_len(self.len(), writer)?;
         for element in self.iter() {
-            //             use dy::Deconstruct;
+            //             use dy::DeconstructT;
             log::debug!(
                 "TupleTerm::serialize(); element.type_id(): {:?}; element: {}",
                 element.type_id(),
@@ -283,7 +283,7 @@ impl st::Serializable for TupleTerm {
     }
 }
 
-impl qv::SingleQuery<dy::Value> for TupleTerm {
+impl qv::SingleQueryT<dy::Value> for TupleTerm {
     type ReturnType<'a> = TupleTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
@@ -301,7 +301,7 @@ impl qv::SingleQuery<dy::Value> for TupleTerm {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for TupleTerm {
+impl qv::SingleQueryMutT<dy::Value> for TupleTerm {
     type ReturnType<'a> = TupleTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -319,7 +319,7 @@ impl qv::SingleQueryMut<dy::Value> for TupleTerm {
     }
 }
 
-impl Stringifiable for TupleTerm {
+impl StringifiableT for TupleTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Tuple(");
@@ -334,7 +334,7 @@ impl Stringifiable for TupleTerm {
     }
 }
 
-impl TermTrait for TupleTerm {
+impl TermT for TupleTerm {
     type AbstractTypeType = TupleTerm;
 
     /// Because of the dynamic nature of TupleTerm (along with other implementation choices
@@ -400,7 +400,7 @@ pub enum TupleTermQuery<'a> {
 }
 
 // TODO: Derive
-impl<'b> qv::EvalTrait for TupleTermQuery<'b> {
+impl<'b> qv::EvalT for TupleTermQuery<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         match self {
             Self::TupleTermElemView(v) => v.eval(),
@@ -414,7 +414,7 @@ pub enum TupleTermQueryMut<'a> {
 }
 
 // TODO: Derive this
-impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermQueryMut<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for TupleTermQueryMut<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -430,7 +430,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermQueryMut<'b> {
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditTrait for TupleTermQueryMut<'a> {
+impl<'a> qv::ApplyEditT for TupleTermQueryMut<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
             Self::TupleTermElemMutView(v) => v.apply_edit(edit),

@@ -1,10 +1,10 @@
 use crate::{
     layout_job_append, render_str_as_literal_without_quotes, render_type_annotation_for, ANSIColor,
-    ValueUI, ViewCtx,
+    ValueUIT, ViewCtx,
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::dy::LocalSymRefTerm {
+impl ValueUIT for sept::dy::LocalSymRefTerm {
     fn run_ui_expanded(
         &self,
         ui: &mut Ui,

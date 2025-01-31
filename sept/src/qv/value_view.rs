@@ -9,11 +9,11 @@ impl<'a> ValueView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for ValueView<'b> {
+impl<'b> qv::QueryT for ValueView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -36,7 +36,7 @@ impl<'b> qv::QueryTrait for ValueView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for ValueView<'b> {
+impl<'b> qv::EvalT for ValueView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0.as_ref()))
     }

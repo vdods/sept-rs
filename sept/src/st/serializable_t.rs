@@ -59,7 +59,7 @@ impl SerializedTopLevelCode {
 }
 
 // TODO: Consider refactoring this to operate with deconstruction (and construction on the deserialize side).
-pub trait Serializable {
+pub trait SerializableT {
     //     /// This serializes the top level code, the constructor, and the parameters, which is a
     //     /// construction expression, and is basically equivalent to a Deconstruction.
     //     // TODO: This really means to serialize a Value holding an instance of Self.

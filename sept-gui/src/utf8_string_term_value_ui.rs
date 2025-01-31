@@ -1,11 +1,11 @@
 use crate::{
     indentation_for, layout_job_append, render_postfix_annotation,
     render_str_as_literal_without_quotes, render_type_annotation_for_str,
-    value_ui::END_OF_TRANSMISSION_CHAR, ValueUI, ViewCtx, END_OF_TRANSMISSION_STR,
+    value_ui_t::END_OF_TRANSMISSION_CHAR, ValueUIT, ViewCtx, END_OF_TRANSMISSION_STR,
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::st::Utf8StringTerm {
+impl ValueUIT for sept::st::Utf8StringTerm {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -40,7 +40,7 @@ impl ValueUI for sept::st::Utf8StringTerm {
                     tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
                 }
                 None => {
-                    use sept::st::Stringifiable;
+                    use sept::st::StringifiableT;
                     tracing::warn!(
                         "Invalid view mode {} for Utf8StringTerm",
                         guide_token.stringify()
@@ -79,7 +79,7 @@ impl ValueUI for sept::st::Utf8StringTerm {
                     tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
                 }
                 None => {
-                    use sept::st::Stringifiable;
+                    use sept::st::StringifiableT;
                     tracing::warn!(
                         "Invalid view mode {} for Utf8StringTerm",
                         guide_token.stringify()
@@ -99,7 +99,7 @@ impl ValueUI for sept::st::Utf8StringTerm {
     }
 }
 
-impl<'a> ValueUI for sept::qv::Utf8StringTermCharView<'a> {
+impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -235,7 +235,7 @@ impl<'a> ValueUI for sept::qv::Utf8StringTermCharView<'a> {
     }
 }
 
-impl<'a> ValueUI for sept::qv::Utf8StringTermLineView<'a> {
+impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }
@@ -389,7 +389,7 @@ impl<'a> ValueUI for sept::qv::Utf8StringTermLineView<'a> {
     }
 }
 
-impl<'a> ValueUI for sept::qv::Utf8StringTermLineElemView<'a> {
+impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }
@@ -428,7 +428,7 @@ impl<'a> ValueUI for sept::qv::Utf8StringTermLineElemView<'a> {
     }
 }
 
-impl<'a> ValueUI for sept::qv::Utf8StringTermLineElemCharView<'a> {
+impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -504,7 +504,7 @@ impl<'a> ValueUI for sept::qv::Utf8StringTermLineElemCharView<'a> {
     }
 }
 
-impl<'a> ValueUI for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
+impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }

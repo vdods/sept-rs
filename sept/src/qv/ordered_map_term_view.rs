@@ -9,11 +9,11 @@ impl<'a> OrderedMapTermView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for OrderedMapTermView<'b> {
+impl<'b> qv::QueryT for OrderedMapTermView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         'b: 'a,
     {
@@ -46,7 +46,7 @@ impl<'b> qv::QueryTrait for OrderedMapTermView<'b> {
                     unimplemented!("not yet");
                 }
                 _ => {
-                    use st::Stringifiable;
+                    use st::StringifiableT;
                     anyhow::bail!(
                         "OrderedMapTerm query doesn't support address: {}",
                         first_address.stringify()
@@ -54,7 +54,7 @@ impl<'b> qv::QueryTrait for OrderedMapTermView<'b> {
                 }
             }
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "OrderedMapTerm query doesn't support address: {}",
                 first_address.stringify()
@@ -63,7 +63,7 @@ impl<'b> qv::QueryTrait for OrderedMapTermView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for OrderedMapTermView<'b> {
+impl<'b> qv::EvalT for OrderedMapTermView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

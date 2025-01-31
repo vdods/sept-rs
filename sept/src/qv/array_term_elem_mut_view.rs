@@ -19,7 +19,7 @@ impl<'a> ArrayTermElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for ArrayTermElemMutView<'a> {
+impl<'a> qv::ApplyEditT for ArrayTermElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: Figure out how to extend.
         // TODO: Figure out how to dispatch more efficiently (look up table as in Runtime?)
@@ -54,7 +54,7 @@ impl<'a> qv::ApplyEditTrait for ArrayTermElemMutView<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for ArrayTermElemMutView<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for ArrayTermElemMutView<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -65,7 +65,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for ArrayTermElemMutView<'b> {
     {
         let mut address_token_i = address_token_i.peekable();
         if address_token_i.peek().is_none() {
-            use qv::ApplyEditTrait;
+            use qv::ApplyEditT;
             self.apply_edit(edit)
         } else {
             anyhow::ensure!(

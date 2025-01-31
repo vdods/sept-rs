@@ -1,7 +1,7 @@
-use crate::{layout_job_append, ValueUI, ViewCtx};
+use crate::{layout_job_append, ValueUIT, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::st::Placeholder {
+impl ValueUIT for sept::st::Placeholder {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }

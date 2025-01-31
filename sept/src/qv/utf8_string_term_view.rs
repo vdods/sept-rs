@@ -9,11 +9,11 @@ impl<'a> Utf8StringTermView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for Utf8StringTermView<'b> {
+impl<'b> qv::QueryT for Utf8StringTermView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -23,7 +23,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermView<'b> {
             return Ok(self);
         }
         let first_address = address_token_i.next().unwrap();
-        use st::Stringifiable;
+        use st::StringifiableT;
         if let Some(address_string) = first_address.downcast_ref::<String>() {
             match address_string.as_str() {
                 "char" => Box::new(qv::Utf8StringTermCharView::new(self.0))
@@ -44,7 +44,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermView<'b> {
+impl<'b> qv::EvalT for Utf8StringTermView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

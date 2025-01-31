@@ -2,15 +2,15 @@
 
 use sept::{
     dy::{
-        self, ArrayTerm, Constructor, Deconstruct, GlobalSymRefTerm, IntoValue, OrderedMapTerm,
+        self, ArrayTerm, ConstructorT, DeconstructT, GlobalSymRefTerm, IntoValueT, OrderedMapTerm,
         StructTerm, StructTermTerm, SymbolTable, Textifier, TupleTerm, Value, RUNTIME_LA,
     },
     parser, qv, scanner,
     st::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
-        Float64, Float64Type, Inhabits, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32,
-        Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Stringifiable, Struct, StructType,
-        TermTrait, True, TrueType, Type, TypeTrait, Uint16, Uint16Type, Uint32, Uint32Type, Uint64,
+        Float64, Float64Type, InhabitsT, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32,
+        Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, StringifiableT, Struct, StructType,
+        TermT, True, TrueType, Type, TypeT, Uint16, Uint16Type, Uint32, Uint32Type, Uint64,
         Uint64Type, Uint8, Uint8Type, Utf8String, Void, VoidType,
     },
 };
@@ -256,7 +256,7 @@ fn test_term_and_type() {
     log::debug!("TrueType: {:#?}", TrueType);
 
     // NOTE: The commented out ones asserting non-inhabitation, if uncommented, would produce
-    // compile errors to the effect of "Void doesn't implement Inhabits<FalseType>", which
+    // compile errors to the effect of "Void doesn't implement InhabitsT<FalseType>", which
     // is correct and desired, since these types are known at compile time.
 
     assert!(Void.inhabits(&VoidType));
@@ -1293,9 +1293,9 @@ fn test_deconstruct() {
 
 fn test_deconstruct_reconstruct_roundtrip<T, C>(x: T)
 where
-    T: Deconstruct + Stringifiable + PartialEq,
-    C: Constructor + Stringifiable,
-    <C as Constructor>::ConstructedType: std::fmt::Display + PartialEq<T>,
+    T: DeconstructT + StringifiableT + PartialEq,
+    C: ConstructorT + StringifiableT,
+    <C as ConstructorT>::ConstructedType: std::fmt::Display + PartialEq<T>,
 {
     log::debug!("x: {}", x.stringify());
     log::debug!("x (as Debug): {:#?}", x);
@@ -1341,7 +1341,7 @@ fn test_constructor() {
     )));
 }
 
-fn test_textify_case<T: std::fmt::Debug + dy::Deconstruct>(value: T, expected_text: &str) {
+fn test_textify_case<T: std::fmt::Debug + dy::DeconstructT>(value: T, expected_text: &str) {
     let text = value.textified();
     log::debug!("value `{:?}` textified: {}", value, text);
     assert_eq!(text, expected_text);
@@ -1955,7 +1955,7 @@ fn test_parse_deconstruction() {
     );
 }
 
-fn test_runtime_registration_case<T: st::TermTrait>() {
+fn test_runtime_registration_case<T: st::TermT>() {
     assert!(
         dy::RUNTIME_LA.read().unwrap().is_registered_term::<T>(),
         "type {} is not a registered term",
@@ -1972,10 +1972,10 @@ fn test_runtime_registrations() {
 
 fn test_utf8_string_term_serialize_deserialize_case(string: String, expected_bytes_written: usize) {
     let mut buffer = Vec::new();
-    use crate::st::Serializable;
+    use crate::st::SerializableT;
     let bytes_written = string.serialize(&mut buffer).expect("pass");
     assert_eq!(bytes_written, expected_bytes_written);
-    use crate::st::Deserializable;
+    use crate::st::DeserializableT;
     // `buffer.as_slice()` is the content, and you have to take a mut ref to it to get a reader.
     // The content the slice is pointing to doesn't change, but the slice start does change.
     let reader: &mut dyn std::io::Read = &mut buffer.as_slice();
@@ -2005,7 +2005,7 @@ fn test_utf8_string_term_serialize_deserialize() {
 }
 
 fn test_serialize_deserialize_case<
-    T: PartialEq + st::Deserializable + st::Serializable + st::TermTrait,
+    T: PartialEq + st::DeserializableT + st::SerializableT + st::TermT,
 >(
     x: &T,
 ) {
@@ -2018,7 +2018,7 @@ fn test_serialize_deserialize_case<
 }
 
 fn test_serialize_deserialize_case_as_value<
-    T: PartialEq + st::Deserializable + dy::IntoValue + st::Serializable + st::TermTrait,
+    T: PartialEq + st::DeserializableT + dy::IntoValueT + st::SerializableT + st::TermT,
 >(
     x: &T,
 ) {
@@ -2026,9 +2026,9 @@ fn test_serialize_deserialize_case_as_value<
     let x_as_value = dy::Value::from(x.clone());
     log::debug!("x_as_value.type_id(): {:?}", x_as_value.type_id());
     let mut serialized_byte_v = Vec::new();
-    use st::Serializable;
+    use st::SerializableT;
     x_as_value.serialize(&mut serialized_byte_v).expect("pass");
-    use st::Deserializable;
+    use st::DeserializableT;
     let x_deserialized = dy::Value::deserialize(&mut serialized_byte_v.as_slice()).expect("pass");
     assert_eq!(x_deserialized, x_as_value);
     log::debug!(
@@ -2039,14 +2039,14 @@ fn test_serialize_deserialize_case_as_value<
 
 fn test_serialize_deserialize_test_values<
     T: PartialEq
-        + st::Deserializable
-        + dy::IntoValue
-        + st::Serializable
-        + st::TermTrait
-        + st::TestValues,
+        + st::DeserializableT
+        + dy::IntoValueT
+        + st::SerializableT
+        + st::TermT
+        + st::TestValuesT,
 >() {
     // TODO: Also generate random test values
-    use st::TestValues;
+    use st::TestValuesT;
     for x in T::fixed_test_values() {
         test_serialize_deserialize_case(&x);
         test_serialize_deserialize_case_as_value(&x);
@@ -2093,7 +2093,7 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<StructTermTerm>();
 }
 
-// fn test_diff_case<'a, T: PartialEq + st::TermTrait, Address, D: st::DiffTrait>(
+// fn test_diff_case<'a, T: PartialEq + st::TermT, Address, D: st::DiffT>(
 //     target: &T,
 //     address_token_i: Address,
 //     diff: &D,
@@ -2103,7 +2103,7 @@ fn test_serialize_deserialize() {
 //     T: st::Diffable<D::Inverse>,
 //     Address: Iterator<Item = &'a dy::Value> + Clone,
 // {
-//     use st::DiffTrait;
+//     use st::DiffT;
 
 //     let mut t = target.clone();
 //     log::trace!("test_diff_case; -- start ----------------------------------------");
@@ -2123,9 +2123,9 @@ fn test_serialize_deserialize() {
 
 // fn test_nonterminal_editable_case<
 //     'a,
-//     T: PartialEq + st::TermTrait,
-//     A: st::TermTrait,
-//     E: st::DiffTrait,
+//     T: PartialEq + st::TermT,
+//     A: st::TermT,
+//     E: st::DiffT,
 // >(
 //     target: &T,
 //     address_head: &A,
@@ -2135,7 +2135,7 @@ fn test_serialize_deserialize() {
 //     T: st::NonterminalEditable<A, E>,
 //     T: st::NonterminalEditable<A, E::Inverse>,
 // {
-//     use st::DiffTrait;
+//     use st::DiffT;
 
 //     let mut t = target.clone();
 //     log::trace!(
@@ -2311,14 +2311,14 @@ fn test_serialize_deserialize() {
 // }
 
 // fn test_diff_case_as_value<
-//     T: dy::IntoValue + PartialEq + st::TermTrait,
-//     D: st::DiffTrait<T> + dy::IntoValue,
+//     T: dy::IntoValueT + PartialEq + st::TermT,
+//     D: st::DiffT<T> + dy::IntoValueT,
 // >(
 //     target: &T,
 //     diff: &D,
 //     expected_intermediate: &T,
 // ) {
-//     use st::DiffTrait;
+//     use st::DiffT;
 
 //     let diff_value = dy::Value::from(diff.clone());
 //     let mut target_value = dy::Value::from(target.clone());
@@ -2420,11 +2420,7 @@ fn test_serialize_deserialize() {
 //     // test_diff_case_as_value(&s, &Ins::new(9u32, '字'), &"ab 日本語 ab字".to_string());
 // }
 
-fn test_query_trait_case<Q: qv::QueryTrait>(
-    q: Q,
-    address_v: &[dy::Value],
-    expected_result: dy::Value,
-) {
+fn test_query_trait_case<Q: qv::QueryT>(q: Q, address_v: &[dy::Value], expected_result: dy::Value) {
     let query_view = Box::new(q).run_query(&mut address_v.iter()).expect("pass");
     match query_view.eval().expect("pass") {
         dy::MaybeDereferencedValue::Ref(x) => {
@@ -2589,7 +2585,7 @@ fn test_query_trait_ordered_map_term() {
     );
 }
 
-fn test_query_mut_trait_case<'a, T: qv::QueryMutAndApplyEditTrait + PartialEq + st::TermTrait>(
+fn test_query_mut_trait_case<'a, T: qv::QueryMutAndApplyEditT + PartialEq + st::TermT>(
     test_case_index: usize,
     mut x: T,
     address_v: &[dy::Value],
@@ -2768,7 +2764,7 @@ fn test_query_mut_trait_struct_term() {
 
     {
         // Negative test -- field_name (key) collision.
-        use qv::QueryMutAndApplyEditTrait;
+        use qv::QueryMutAndApplyEditT;
         s0.clone()
             .query_mut_and_apply_edit(
                 &mut ['k'.into(), "name".to_string().into()].iter(),
@@ -3015,7 +3011,7 @@ fn test_query_mut_trait_ordered_map_term_key() {
 
     {
         // Negative test -- key collision.
-        use qv::QueryMutAndApplyEditTrait;
+        use qv::QueryMutAndApplyEditT;
         dy::OrderedMapTerm::from(maplit::btreemap! {
             st::Void.into() => 123u32.into(),
             st::EmptyType.into() => 123u32.into(),
@@ -3067,163 +3063,135 @@ fn test_query_mut_trait_ordered_map_term_key() {
 //
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct BinOp;
 
-impl st::Inhabits<Type> for BinOp {
+impl st::InhabitsT<Type> for BinOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnOp;
 
-impl st::Inhabits<Type> for UnOp {
+impl st::InhabitsT<Type> for UnOp {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
 #[allow(dead_code)]
-trait BinOpTermTrait {
+trait BinOpTermT {
     // TODO: A BinOp whose character is defined at runtime (analogous to NonParametricTermCode) would need
-    // a &self parameter.  Could distingish this by having st::BinOpTermTrait and dy::BinOpTermTrait
+    // a &self parameter.  Could distingish this by having st::BinOpTermT and dy::BinOpTermT
     // or actually, maybe static vs dynamic isn't exactly right.. nonparametric vs parametric?
     fn is_commutative() -> bool;
 }
 
 #[allow(dead_code)]
-trait UnOpTermTrait {}
+trait UnOpTermT {}
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Add;
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Sub;
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Mul;
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Div;
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "BinOp", is_parametric = "false", is_type = "false")]
 pub struct Pow;
 
-#[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, st::NonParametricTermTrait, PartialEq, st::TermTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
+#[derive(Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "UnOp", is_parametric = "false", is_type = "false")]
 pub struct Neg;
 
-impl BinOpTermTrait for Add {
+impl BinOpTermT for Add {
     fn is_commutative() -> bool {
         true
     }
 }
 
-impl BinOpTermTrait for Sub {
-    fn is_commutative() -> bool {
-        false
-    }
-}
-
-impl BinOpTermTrait for Mul {
-    fn is_commutative() -> bool {
-        true
-    }
-}
-
-impl BinOpTermTrait for Div {
+impl BinOpTermT for Sub {
     fn is_commutative() -> bool {
         false
     }
 }
 
-impl BinOpTermTrait for Pow {
+impl BinOpTermT for Mul {
+    fn is_commutative() -> bool {
+        true
+    }
+}
+
+impl BinOpTermT for Div {
     fn is_commutative() -> bool {
         false
     }
 }
 
-impl UnOpTermTrait for Neg {}
+impl BinOpTermT for Pow {
+    fn is_commutative() -> bool {
+        false
+    }
+}
 
-impl Inhabits<BinOp> for Add {
+impl UnOpTermT for Neg {}
+
+impl InhabitsT<BinOp> for Add {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
     }
 }
 
-impl Inhabits<BinOp> for Sub {
+impl InhabitsT<BinOp> for Sub {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
     }
 }
 
-impl Inhabits<BinOp> for Mul {
+impl InhabitsT<BinOp> for Mul {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
     }
 }
 
-impl Inhabits<BinOp> for Div {
+impl InhabitsT<BinOp> for Div {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
     }
 }
 
-impl Inhabits<BinOp> for Pow {
+impl InhabitsT<BinOp> for Pow {
     fn inhabits(&self, _rhs: &BinOp) -> bool {
         true
     }
 }
 
-impl Inhabits<UnOp> for Neg {
+impl InhabitsT<UnOp> for Neg {
     fn inhabits(&self, _rhs: &UnOp) -> bool {
         true
     }
@@ -3239,28 +3207,26 @@ impl Inhabits<UnOp> for Neg {
 //     pub static BIN_OP_EXPR: TupleTerm = TupleTerm::from(vec![Sint32.into(), BinOp.into(), Sint32.into()]);
 // }
 
-#[derive(
-    Clone, Copy, Debug, Eq, st::NonParametricTermTrait, PartialEq, st::TermTrait, st::TypeTrait,
-)]
-#[st_non_parametric_term_trait(code = "Undefined")]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[derive(Clone, Copy, Debug, Eq, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT)]
+#[st_non_parametric_term_t(code = "Undefined")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Expr;
 
-impl st::Inhabits<Type> for Expr {
+impl st::InhabitsT<Type> for Expr {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl dy::IntoValue for Expr {}
+impl dy::IntoValueT for Expr {}
 
-impl Inhabits<Expr> for f64 {
+impl InhabitsT<Expr> for f64 {
     fn inhabits(&self, _rhs: &Expr) -> bool {
         true
     }
 }
 
-impl Inhabits<Expr> for TupleTerm {
+impl InhabitsT<Expr> for TupleTerm {
     fn inhabits(&self, _rhs: &Expr) -> bool {
         // TODO: Expr should really be Union(BinOpExpr, LiteralExpr, UnOpExpr)
         // TODO: Either register this with the runtime or make a const

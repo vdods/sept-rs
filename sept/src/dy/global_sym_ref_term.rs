@@ -1,18 +1,18 @@
 use crate::{
-    dy::{self, TransparentRefTrait},
-    st::{self, Stringifiable, TermTrait},
+    dy::{self, TransparentRefT},
+    st::{self, StringifiableT, TermT},
     Result,
 };
 use std::sync::{Arc, RwLock};
 
 // TODO: Figure out the naming scheme, squaring against the conventions of the c++ sept implementation
 // TODO: Make a `mod st` version of this that also specifies the type of the resolved value.
-#[derive(Clone, Debug, dy::IntoValue)]
+#[derive(Clone, Debug, dy::IntoValueT)]
 pub struct GlobalSymRefTerm {
     pub symbol_id: String,
 }
 
-impl dy::Constructor for GlobalSymRefTerm {
+impl dy::ConstructorT for GlobalSymRefTerm {
     type ConstructedType = dy::Value;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         Ok(self
@@ -40,9 +40,9 @@ impl dy::Constructor for GlobalSymRefTerm {
     }
 }
 
-/// GlobalSymRefTerm's impl for dy::Deconstruct does not use referential transparency, because
+/// GlobalSymRefTerm's impl for dy::DeconstructT does not use referential transparency, because
 /// the goal is to represent the thing exactly as it is.
-impl dy::Deconstruct for GlobalSymRefTerm {
+impl dy::DeconstructT for GlobalSymRefTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         dy::ParametricDeconstruction::new(
             st::GlobalSymRef.deconstructed(),
@@ -65,7 +65,7 @@ impl std::fmt::Display for GlobalSymRefTerm {
     }
 }
 
-impl st::Inhabits<st::Type> for GlobalSymRefTerm {
+impl st::InhabitsT<st::Type> for GlobalSymRefTerm {
     fn inhabits(&self, _: &st::Type) -> bool {
         self.resolved()
             .expect("GlobalSymRefTerm failed to resolve")
@@ -75,7 +75,7 @@ impl st::Inhabits<st::Type> for GlobalSymRefTerm {
     }
 }
 
-impl st::Inhabits<dy::Value> for GlobalSymRefTerm {
+impl st::InhabitsT<dy::Value> for GlobalSymRefTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         self.resolved()
             .expect("GlobalSymRefTerm failed to resolve")
@@ -93,26 +93,26 @@ impl PartialEq<GlobalSymRefTerm> for GlobalSymRefTerm {
     }
 }
 
-impl st::Deserializable for GlobalSymRefTerm {
+impl st::DeserializableT for GlobalSymRefTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let symbol_id = String::deserialize(reader)?;
         Ok(Self::new_unchecked(symbol_id))
     }
 }
 
-impl st::Serializable for GlobalSymRefTerm {
+impl st::SerializableT for GlobalSymRefTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         Ok(self.symbol_id.serialize(writer)?)
     }
 }
 
-impl Stringifiable for GlobalSymRefTerm {
+impl StringifiableT for GlobalSymRefTerm {
     fn stringify(&self) -> String {
         format!("GlobalSymRefTerm({:?})", self.symbol_id)
     }
 }
 
-impl TermTrait for GlobalSymRefTerm {
+impl TermT for GlobalSymRefTerm {
     type AbstractTypeType = dy::Value;
 
     /// Forwards via referential transparency.
@@ -144,15 +144,15 @@ impl TermTrait for GlobalSymRefTerm {
     }
 }
 
-impl st::TestValues for GlobalSymRefTerm {
+impl st::TestValuesT for GlobalSymRefTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec![Self::new_unchecked("fixed_test_value".to_string())]
     }
 }
 
-impl st::TypeTrait for GlobalSymRefTerm {}
+impl st::TypeT for GlobalSymRefTerm {}
 
-impl TransparentRefTrait for GlobalSymRefTerm {
+impl TransparentRefT for GlobalSymRefTerm {
     fn dereferenced_once(&self) -> Result<Arc<RwLock<dy::Value>>> {
         Ok(dy::GLOBAL_SYMBOL_TABLE_LA
             .read()

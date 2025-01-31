@@ -8,11 +8,11 @@ impl<'a, T> GenericView<'a, T> {
     }
 }
 
-impl<'b, T: std::any::Any + Send + Sync> qv::QueryTrait for GenericView<'b, T> {
+impl<'b, T: std::any::Any + Send + Sync> qv::QueryT for GenericView<'b, T> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -25,7 +25,7 @@ impl<'b, T: std::any::Any + Send + Sync> qv::QueryTrait for GenericView<'b, T> {
     }
 }
 
-impl<'b, T: std::any::Any + Send + Sync> qv::EvalTrait for GenericView<'b, T> {
+impl<'b, T: std::any::Any + Send + Sync> qv::EvalT for GenericView<'b, T> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

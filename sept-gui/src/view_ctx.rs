@@ -5,7 +5,7 @@ use crate::{
 use std::{cmp::Ordering, collections::VecDeque};
 
 /// Provides control over how things are rendered.
-// TODO: Maybe this should be called UpdateCtx, and there could be a separate context for EventHandler.
+// TODO: Maybe this should be called UpdateCtx, and there could be a separate context for EventHandlerT.
 // Though that also would be a problem because both need to be able to output commands.
 pub struct ViewCtx<'a> {
     /// This is the sept::dy::Value that's being viewed.  It will be passed in from the thing
@@ -216,7 +216,7 @@ impl<'b> ViewCtx<'b> {
                 return None;
             }
             for i in 0..subaddress_token_v.len() {
-                use sept::st::Inhabits;
+                use sept::st::InhabitsT;
                 if !subaddress_token_v[i].inhabits(&subaddress_type_t[i]) {
                     return None;
                 }

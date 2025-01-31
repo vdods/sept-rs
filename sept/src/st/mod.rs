@@ -3,8 +3,8 @@ mod array_type;
 mod r#bool;
 mod bool_term;
 mod bool_type;
-mod deserializable;
-mod edit_trait;
+mod deserializable_t;
+mod edit_t;
 mod empty_type;
 mod r#false;
 mod false_type;
@@ -13,31 +13,31 @@ mod float_term;
 mod float_type;
 mod global_sym_ref;
 mod global_sym_ref_type;
-mod inhabits_trait;
+mod inhabits_t;
 mod int;
 mod int_term;
 mod int_type;
 mod local_sym_ref;
 mod local_sym_ref_type;
 mod non_parametric_term_code;
-mod non_parametric_term_trait;
+mod non_parametric_term_t;
 mod ordered_map;
 mod ordered_map_type;
 mod placeholder;
 mod placeholder_type;
-mod serializable;
-mod stringifiable;
+mod serializable_t;
+mod stringifiable_t;
 mod r#struct;
 mod struct_type;
 mod term;
-mod term_trait;
-mod test_values;
+mod term_t;
+mod test_values_t;
 mod r#true;
 mod true_type;
 mod tuple;
 mod tuple_type;
 mod r#type;
-mod type_trait;
+mod type_t;
 mod unicode_char;
 mod unicode_char_term;
 mod unicode_char_type;
@@ -52,8 +52,8 @@ pub use crate::st::{
     array_type::ArrayType,
     bool_term::BoolTerm,
     bool_type::BoolType,
-    deserializable::{read_len, Deserializable},
-    edit_trait::{Deletion, EditTrait, Insertion, NoOp, Replacement},
+    deserializable_t::{read_len, DeserializableT},
+    edit_t::{Deletion, EditT, Insertion, NoOp, Replacement},
     empty_type::EmptyType,
     false_type::FalseType,
     float::{Float32, Float64},
@@ -61,7 +61,7 @@ pub use crate::st::{
     float_type::{Float32Type, Float64Type},
     global_sym_ref::GlobalSymRef,
     global_sym_ref_type::GlobalSymRefType,
-    inhabits_trait::Inhabits,
+    inhabits_t::InhabitsT,
     int::{Sint16, Sint32, Sint64, Sint8, Uint16, Uint32, Uint64, Uint8},
     int_term::{
         Sint16Term, Sint32Term, Sint64Term, Sint8Term, Uint16Term, Uint32Term, Uint64Term,
@@ -74,7 +74,7 @@ pub use crate::st::{
     local_sym_ref::LocalSymRef,
     local_sym_ref_type::LocalSymRefType,
     non_parametric_term_code::NonParametricTermCode,
-    non_parametric_term_trait::NonParametricTermTrait,
+    non_parametric_term_t::NonParametricTermT,
     ordered_map::OrderedMap,
     ordered_map_type::OrderedMapType,
     placeholder::Placeholder,
@@ -84,16 +84,16 @@ pub use crate::st::{
     r#struct::Struct,
     r#true::True,
     r#type::Type,
-    serializable::{write_len, Serializable, SerializedTopLevelCode},
-    stringifiable::Stringifiable,
+    serializable_t::{write_len, SerializableT, SerializedTopLevelCode},
+    stringifiable_t::StringifiableT,
     struct_type::StructType,
     term::Term,
-    term_trait::TermTrait,
-    test_values::TestValues,
+    term_t::TermT,
+    test_values_t::TestValuesT,
     true_type::TrueType,
     tuple::Tuple,
     tuple_type::TupleType,
-    type_trait::TypeTrait,
+    type_t::TypeT,
     unicode_char::UnicodeChar,
     unicode_char_term::UnicodeCharTerm,
     unicode_char_type::UnicodeCharType,
@@ -108,9 +108,9 @@ pub use crate::st::{
 };
 
 // Trait derivation proc macros
-pub use sept_derive::StNonParametricTermTrait as NonParametricTermTrait;
-pub use sept_derive::StTermTrait as TermTrait;
-pub use sept_derive::StTypeTrait as TypeTrait;
+pub use sept_derive::StNonParametricTermT as NonParametricTermT;
+pub use sept_derive::StTermT as TermT;
+pub use sept_derive::StTypeT as TypeT;
 
 // // Tuple of NonParametricTerms.  This is different than any dy::Runtime-based list, since it
 // // doesn't involve dy::Value at all.

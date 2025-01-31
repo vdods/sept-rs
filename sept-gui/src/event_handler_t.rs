@@ -1,7 +1,7 @@
 use crate::EventHandlerCtx;
 use anyhow::Result;
 
-pub trait EventHandler {
+pub trait EventHandlerT {
     /// If the event wasn't handled, it should be returned; otherwise None.  The event handler may decide
     /// to alter `remaining_event_v`, e.g. if it only a part of an `egui::Event::Text` and wants to push the
     /// rest of it back onto the front of `remaining_event_v`, or if it wants to filter out some

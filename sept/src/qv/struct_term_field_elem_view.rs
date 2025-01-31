@@ -50,7 +50,7 @@ impl<'a> StructTermFieldElemView<'a> {
     }
 }
 
-impl<'b> qv::EvalTrait for StructTermFieldElemView<'b> {
+impl<'b> qv::EvalT for StructTermFieldElemView<'b> {
     /// This will produce a TupleTerm (field_name, field_type), where each value is a clone.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         let field_decl = self
@@ -69,11 +69,11 @@ impl<'b> qv::EvalTrait for StructTermFieldElemView<'b> {
     }
 }
 
-impl<'b> qv::QueryTrait for StructTermFieldElemView<'b> {
+impl<'b> qv::QueryT for StructTermFieldElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -111,7 +111,7 @@ impl<'b> qv::QueryTrait for StructTermFieldElemView<'b> {
                 )?)
                 .run_query(&mut address_token_i)
             } else {
-                use st::Stringifiable;
+                use st::StringifiableT;
                 anyhow::bail!(
                     "StructTermFieldElemView::run_query doesn't support address: {}",
                     first_address.stringify()
@@ -121,7 +121,7 @@ impl<'b> qv::QueryTrait for StructTermFieldElemView<'b> {
     }
 }
 
-impl<'b> qv::SingleQuery<dy::Value> for StructTermFieldElemView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for StructTermFieldElemView<'b> {
     type ReturnType<'a> = qv::StructTermFieldElemElemView<'a> where Self: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -147,7 +147,7 @@ impl<'b> qv::SingleQuery<dy::Value> for StructTermFieldElemView<'b> {
             )?)
         } else {
             // TODO: Support field names as addresses.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "StructTermFieldElemView::run_single_query doesn't support address: {}",
                 address_token.stringify()

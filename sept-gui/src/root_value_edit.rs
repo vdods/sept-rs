@@ -4,7 +4,7 @@ use crate::AddressedEdit;
 pub struct RootValueEdit(AddressedEdit);
 
 // TODO: Derive this somehow
-impl sept::st::EditTrait for RootValueEdit {
+impl sept::st::EditT for RootValueEdit {
     type Inverse = Self;
     fn into_inverse(self) -> Self::Inverse {
         Self(self.0.into_inverse())

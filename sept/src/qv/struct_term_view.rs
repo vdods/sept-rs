@@ -9,11 +9,11 @@ impl<'a> StructTermView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for StructTermView<'b> {
+impl<'b> qv::QueryT for StructTermView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         'b: 'a,
     {
@@ -22,7 +22,7 @@ impl<'b> qv::QueryTrait for StructTermView<'b> {
         if address_token_i.peek().is_none() {
             return Ok(self);
         }
-        use st::Stringifiable;
+        use st::StringifiableT;
         let first_address = address_token_i.next().unwrap();
         if let Some(field_index) = first_address.downcast_ref::<u32>() {
             Box::new(qv::StructTermFieldElemView::new(
@@ -58,7 +58,7 @@ impl<'b> qv::QueryTrait for StructTermView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for StructTermView<'b> {
+impl<'b> qv::EvalT for StructTermView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(self.0))
     }

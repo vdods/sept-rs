@@ -4,35 +4,35 @@ use darling::FromDeriveInput;
 use quote::quote;
 
 //
-// proc_macro for deriving sept::st::TermTrait (it's re-exported in that crate).
+// proc_macro for deriving sept::st::TermT (it's re-exported in that crate).
 //
 
 #[derive(FromDeriveInput, Default)]
-#[darling(default, attributes(st_term_trait))]
-struct StTermTraitArguments {
+#[darling(default, attributes(st_term_t))]
+struct StTermTArguments {
     AbstractTypeType: String,
     abstract_type_expr: Option<String>,
     is_parametric: String,
     is_type: String,
 }
 
-/// This will derive sept::st::TermTrait; trait implementation details should be given via
-/// `st_term_trait`, e.g.
+/// This will derive sept::st::TermT; trait implementation details should be given via
+/// `st_term_t`, e.g.
 /// ```ignore
-/// #[derive(sept::st::TermTrait)]
-/// #[st_term_trait(AbstractTypeType = "<type>")] // Defines return type of `fn abstract_type(&self)`
-/// #[st_term_trait(abstract_type_expr = "<expr>")] // Optional; default is "Self::AbstractTypeType{}"
-/// #[st_term_trait(is_parametric = "<expr>")]
-/// #[st_term_trait(is_type = "<expr>")]
+/// #[derive(sept::st::TermT)]
+/// #[st_term_t(AbstractTypeType = "<type>")] // Defines return type of `fn abstract_type(&self)`
+/// #[st_term_t(abstract_type_expr = "<expr>")] // Optional; default is "Self::AbstractTypeType{}"
+/// #[st_term_t(is_parametric = "<expr>")]
+/// #[st_term_t(is_type = "<expr>")]
 /// pub struct FancyTerm;
 /// ```
-#[proc_macro_derive(StTermTrait, attributes(st_term_trait))]
-pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(StTermT, attributes(st_term_t))]
+pub fn derive_st_term_t(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let term_trait_arguments =
-        StTermTraitArguments::from_derive_input(&input).expect("Wrong arguments");
+        StTermTArguments::from_derive_input(&input).expect("Wrong arguments");
     #[allow(unused_variables)]
-    let StTermTraitArguments {
+    let StTermTArguments {
         AbstractTypeType,
         is_parametric,
         is_type,
@@ -60,7 +60,7 @@ pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::Token
     };
 
     let output = quote! {
-        impl st::TermTrait for #ident {
+        impl st::TermT for #ident {
             type AbstractTypeType = #AbstractTypeType;
 
             fn is_parametric(&self) -> bool {
@@ -76,31 +76,29 @@ pub fn derive_st_term_trait(input: proc_macro::TokenStream) -> proc_macro::Token
 }
 
 //
-// proc_macro for deriving sept::st::NonParametricTermTrait (it's re-exported in that crate).
+// proc_macro for deriving sept::st::NonParametricTermT (it's re-exported in that crate).
 //
 
 #[derive(FromDeriveInput, Default)]
-#[darling(default, attributes(st_non_parametric_term_trait))]
-struct StNonParametricTermTraitArguments {
+#[darling(default, attributes(st_non_parametric_term_t))]
+struct StNonParametricTermTArguments {
     code: Option<String>,
 }
 
-/// This will derive sept::st::NonParametricTermTrait; trait implementation details should be
-/// given via `st_non_parametric_term_trait`, e.g.
+/// This will derive sept::st::NonParametricTermT; trait implementation details should be
+/// given via `st_non_parametric_term_t`, e.g.
 /// ```ignore
-/// #[derive(sept::st::NonParametricTermTrait)]
-/// #[st_non_parametric_term_trait(code = "<expr>")]
+/// #[derive(sept::st::NonParametricTermT)]
+/// #[st_non_parametric_term_t(code = "<expr>")]
 /// pub struct FancyTerm;
 /// ```
-#[proc_macro_derive(StNonParametricTermTrait, attributes(st_non_parametric_term_trait))]
-pub fn derive_st_non_parametric_term_trait(
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+#[proc_macro_derive(StNonParametricTermT, attributes(st_non_parametric_term_t))]
+pub fn derive_st_non_parametric_term_t(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let non_parametric_term_trait_arguments =
-        StNonParametricTermTraitArguments::from_derive_input(&input).expect("Wrong arguments");
+        StNonParametricTermTArguments::from_derive_input(&input).expect("Wrong arguments");
     #[allow(unused_variables)]
-    let StNonParametricTermTraitArguments { code } = non_parametric_term_trait_arguments;
+    let StNonParametricTermTArguments { code } = non_parametric_term_trait_arguments;
     let syn::DeriveInput { ident, .. } = input;
     let non_parametric_term_code = match code {
         Some(c) => {
@@ -113,7 +111,7 @@ pub fn derive_st_non_parametric_term_trait(
     };
 
     let output = quote! {
-        impl st::NonParametricTermTrait for #ident {
+        impl st::NonParametricTermT for #ident {
             const IDENTIFIER: &'static str = stringify!(#ident);
             const NON_PARAMETRIC_TERM_CODE: st::NonParametricTermCode = #non_parametric_term_code;
             fn instantiate() -> Self {
@@ -125,41 +123,41 @@ pub fn derive_st_non_parametric_term_trait(
 }
 
 //
-// proc_macro for deriving sept::st::TypeTrait (it's re-exported in that crate).
+// proc_macro for deriving sept::st::TypeT (it's re-exported in that crate).
 //
 
-/// This will derive sept::st::TypeTrait, which for now has no additional attributes, e.g.
+/// This will derive sept::st::TypeT, which for now has no additional attributes, e.g.
 /// ```ignore
-/// #[derive(sept::st::TypeTrait)]
+/// #[derive(sept::st::TypeT)]
 /// pub struct FancyType;
 /// ```
-#[proc_macro_derive(StTypeTrait)]
-pub fn derive_st_type_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(StTypeT)]
+pub fn derive_st_type_t(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let syn::DeriveInput { ident, .. } = input;
 
     let output = quote! {
-        impl st::TypeTrait for #ident {}
+        impl st::TypeT for #ident {}
     };
     output.into()
 }
 
 //
-// proc_macro for deriving sept::dy::IntoValue (it's re-exported in that crate).
+// proc_macro for deriving sept::dy::IntoValueT (it's re-exported in that crate).
 //
 
-/// This will derive sept::dy::IntoValue, which for now has no additional attributes, e.g.
+/// This will derive sept::dy::IntoValueT, which for now has no additional attributes, e.g.
 /// ```ignore
-/// #[derive(sept::dy::IntoValue)]
+/// #[derive(sept::dy::IntoValueT)]
 /// pub struct FancyType;
 /// ```
-#[proc_macro_derive(DyIntoValue)]
-pub fn derive_dy_into_value(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(DyIntoValueT)]
+pub fn derive_dy_into_value_t(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input);
     let syn::DeriveInput { ident, .. } = input;
 
     let output = quote! {
-        impl dy::IntoValue for #ident {}
+        impl dy::IntoValueT for #ident {}
     };
     output.into()
 }

@@ -1,29 +1,21 @@
 use crate::{
     dy,
-    st::{self, ArrayType, Inhabits},
+    st::{self, ArrayType, InhabitsT},
     Result,
 };
 use std::fmt::Debug;
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "ArrayType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Array;
 
-impl dy::Constructor for Array {
+impl dy::ConstructorT for Array {
     type ConstructedType = dy::ArrayTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         // Take the parameter elements directly.
@@ -34,18 +26,18 @@ impl dy::Constructor for Array {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<ArrayType> for Array {
+impl InhabitsT<ArrayType> for Array {
     fn inhabits(&self, _: &ArrayType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Array {
+impl st::InhabitsT<st::Type> for Array {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

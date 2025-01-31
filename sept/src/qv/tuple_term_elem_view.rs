@@ -3,8 +3,8 @@ use crate::{dy, qv, Error, Result};
 #[derive(Clone, Debug)]
 pub struct TupleTermElemView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub tuple_term: &'a dy::TupleTerm,
     pub elem_index: usize,
 }
@@ -22,11 +22,11 @@ impl<'a> TupleTermElemView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for TupleTermElemView<'b> {
+impl<'b> qv::QueryT for TupleTermElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -46,7 +46,7 @@ impl<'b> qv::QueryTrait for TupleTermElemView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for TupleTermElemView<'b> {
+impl<'b> qv::EvalT for TupleTermElemView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_ref(
             self.tuple_term.get(self.elem_index).unwrap(),
@@ -57,7 +57,7 @@ impl<'b> qv::EvalTrait for TupleTermElemView<'b> {
 #[derive(Clone, Debug, derive_more::From)]
 pub enum TupleTermElemViewQuery {}
 
-impl<'b> qv::SingleQuery<dy::Value> for TupleTermElemView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for TupleTermElemView<'b> {
     type ReturnType<'a> = TupleTermElemViewQuery where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -70,7 +70,7 @@ impl<'b> qv::SingleQuery<dy::Value> for TupleTermElemView<'b> {
     }
 }
 
-impl qv::EvalTrait for TupleTermElemViewQuery {
+impl qv::EvalT for TupleTermElemViewQuery {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         unimplemented!("this shouldn't exist");
     }

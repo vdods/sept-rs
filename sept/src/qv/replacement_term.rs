@@ -3,8 +3,8 @@ use crate::{dy, st, Result};
 /// This diff represents replacement of a value within a container or other structure, and depending
 /// on the container/structure, may require additional context to be fully meaningful (e.g. the
 /// address of the index to replace).
-#[derive(Clone, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(
+#[derive(Clone, Debug, Eq, dy::IntoValueT, PartialEq, st::TermT)]
+#[st_term_t(
     AbstractTypeType = "st::Replacement",
     is_parametric = "true",
     is_type = "false"
@@ -20,7 +20,7 @@ impl ReplacementTerm {
     }
 }
 
-impl dy::Deconstruct for ReplacementTerm {
+impl dy::DeconstructT for ReplacementTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         dy::ParametricDeconstruction::new_recursive(
             st::Insertion.into(),
@@ -30,7 +30,7 @@ impl dy::Deconstruct for ReplacementTerm {
     }
 }
 
-impl st::Deserializable for ReplacementTerm {
+impl st::DeserializableT for ReplacementTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let old_data = dy::Value::deserialize(reader)?;
         let new_data = dy::Value::deserialize(reader)?;
@@ -38,7 +38,7 @@ impl st::Deserializable for ReplacementTerm {
     }
 }
 
-impl st::EditTrait for ReplacementTerm {
+impl st::EditT for ReplacementTerm {
     type Inverse = ReplacementTerm;
     fn into_inverse(self) -> Self::Inverse {
         ReplacementTerm {
@@ -48,13 +48,13 @@ impl st::EditTrait for ReplacementTerm {
     }
 }
 
-impl st::Inhabits<st::Replacement> for ReplacementTerm {
+impl st::InhabitsT<st::Replacement> for ReplacementTerm {
     fn inhabits(&self, _rhs: &st::Replacement) -> bool {
         true
     }
 }
 
-impl st::Serializable for ReplacementTerm {
+impl st::SerializableT for ReplacementTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         let mut bytes_written = 0usize;
         bytes_written += self.old_data.serialize(writer)?;
@@ -63,7 +63,7 @@ impl st::Serializable for ReplacementTerm {
     }
 }
 
-impl st::Stringifiable for ReplacementTerm {
+impl st::StringifiableT for ReplacementTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("ReplacementTerm(");

@@ -2,8 +2,8 @@ use crate::{dy, st, Result};
 
 /// This trait defines deconstruction of a term.
 // TODO: Rename to Deconstructible
-pub trait Deconstruct: st::TermTrait + Clone {
-    // TODO: Later specify what the types are (this would actually be st::Deconstruct)
+pub trait DeconstructT: st::TermT + Clone {
+    // TODO: Later specify what the types are (this would actually be st::DeconstructT)
     // TODO: Potentially a term has multiple different constructors
 
     /// Produce a Deconstruction, which is either a NonParametricDeconstruction (i.e. a non-parametric
@@ -16,27 +16,27 @@ pub trait Deconstruct: st::TermTrait + Clone {
     fn deconstructed(&self) -> dy::Deconstruction {
         self.clone().deconstruct()
     }
-    /// Canonical textification of a Deconstruct-ible term.  This can be delegated to inside
+    /// Canonical textification of a DeconstructT term.  This can be delegated to inside
     /// of an impl of std::fmt::Display.
     // TODO: Should this actually take std::io::Write and then use `write!`?
-    // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    // TODO: Maybe this should just be a generic function accepting a DeconstructT
     fn textify(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         // Ideally this would use a kind of visitor pattern instead of actually creating a new data structure.
         Ok(textify_impl(&self.deconstructed(), f)?)
     }
     /// Convenience method for producing a String via textification.
-    // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    // TODO: Maybe this should just be a generic function accepting a DeconstructT
     fn textified(&self) -> String {
         Textifier(self).to_string()
     }
-    //     /// Canonical serialization of a Deconstruct-ible term, where all type information is encoded
+    //     /// Canonical serialization of a DeconstructT term, where all type information is encoded
     //     /// in the serialization -- i.e. it's a fully-typed, dynamic representation.
-    //     // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    //     // TODO: Maybe this should just be a generic function accepting a DeconstructT
     //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(serialize_impl(&self.deconstructed(), writer)?)
     //     }
     //     /// Convenience method for producing a Vec<u8> via serialization.
-    //     // TODO: Maybe this should just be a generic function accepting a Deconstruct
+    //     // TODO: Maybe this should just be a generic function accepting a DeconstructT
     //     fn serialized(&self, starting_capacity_o: Option<usize>) -> Result<Vec<u8>> {
     //         let mut buffer = if let Some(starting_capacity) = starting_capacity_o {
     //             Vec::with_capacity(starting_capacity)
@@ -51,9 +51,9 @@ pub trait Deconstruct: st::TermTrait + Clone {
 /// This is used as a semantic marker in order to print a value using "full textification", i.e.
 /// canonical text rendering of a sept term.  E.g. `format!("{}", Textifier::from(&term))`
 #[derive(derive_more::From)]
-pub struct Textifier<'a, T: Deconstruct>(&'a T);
+pub struct Textifier<'a, T: DeconstructT>(&'a T);
 
-impl<'a, T: Deconstruct> std::fmt::Display for Textifier<'a, T> {
+impl<'a, T: DeconstructT> std::fmt::Display for Textifier<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         Ok(self.0.textify(f)?)
     }
@@ -67,7 +67,7 @@ fn textify_impl(
         dy::Deconstruction::NonParametric(non_parametric_deconstruction) => {
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
-            use crate::st::Stringifiable;
+            use crate::st::StringifiableT;
             write!(
                 f,
                 "{}",
@@ -80,7 +80,7 @@ fn textify_impl(
         dy::Deconstruction::Terminal(terminal_deconstruction) => {
             // TODO: More-efficient implementation; the runtime should have a formatter-style Display
             // method for non-parametric terms.
-            use crate::st::Stringifiable;
+            use crate::st::StringifiableT;
             // TODO: Should this be a more-formal kind of stringification?
             write!(
                 f,

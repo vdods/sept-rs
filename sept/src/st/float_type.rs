@@ -9,13 +9,13 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Float32Type;
 
 #[derive(
@@ -23,22 +23,22 @@ pub struct Float32Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Float64Type;
 
-impl st::Inhabits<Type> for Float32Type {
+impl st::InhabitsT<Type> for Float32Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Float64Type {
+impl st::InhabitsT<Type> for Float64Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }

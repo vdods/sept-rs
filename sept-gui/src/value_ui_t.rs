@@ -2,7 +2,7 @@ use crate::{LayoutDiscriminant, ViewCtx};
 use egui::{text::LayoutJob, Ui};
 use std::collections::VecDeque;
 
-pub trait ValueUI {
+pub trait ValueUIT {
     fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         // Do nothing by default.
         let _ = ui;
@@ -73,16 +73,16 @@ pub(crate) fn indentation_for<T: 'static>(view_ctx: &ViewCtx<'_>) -> LayoutJob {
     LayoutJob::single_section(view_ctx.indent_str().to_string(), text_format)
 }
 
-pub(crate) fn render_type_annotation_for<T: sept::st::TermTrait>(
+pub(crate) fn render_type_annotation_for<T: sept::st::TermT>(
     term: &T,
     layout_job: &mut LayoutJob,
     view_ctx: &mut ViewCtx<'_>,
     extra_text_o: Option<&str>,
 ) where
-    <T as sept::st::TermTrait>::AbstractTypeType: sept::st::Stringifiable,
+    <T as sept::st::TermT>::AbstractTypeType: sept::st::StringifiableT,
 {
     if view_ctx.should_show_type_annotations() {
-        use sept::st::Stringifiable;
+        use sept::st::StringifiableT;
         let extra_text = extra_text_o.unwrap_or("");
         layout_job_append(
             layout_job,
@@ -93,14 +93,14 @@ pub(crate) fn render_type_annotation_for<T: sept::st::TermTrait>(
     }
 }
 
-// Bit of a hack because `str` can't impl `sept::st::TermTrait`.
+// Bit of a hack because `str` can't impl `sept::st::TermT`.
 pub(crate) fn render_type_annotation_for_str(
     layout_job: &mut LayoutJob,
     view_ctx: &mut ViewCtx<'_>,
     extra_text_o: Option<&str>,
 ) {
     if view_ctx.should_show_type_annotations() {
-        use sept::st::Stringifiable;
+        use sept::st::StringifiableT;
         let extra_text = extra_text_o.unwrap_or("");
         layout_job_append(
             layout_job,
@@ -130,7 +130,7 @@ pub(crate) fn render_postfix_annotation(
 // This is probably a TEMP HACK
 macro_rules! impl_value_ui_using_to_string {
     ($ty:ty) => {
-        impl ValueUI for $ty {
+        impl ValueUIT for $ty {
             fn run_ui_expanded(
                 &self,
                 _ui: &mut egui::Ui,
@@ -138,7 +138,7 @@ macro_rules! impl_value_ui_using_to_string {
                 continuation_layout_job_o: Option<LayoutJob>,
             ) -> egui::text::LayoutJob {
                 let mut layout_job = continuation_layout_job_o.unwrap_or(LayoutJob::default());
-                use sept::st::Stringifiable;
+                use sept::st::StringifiableT;
                 layout_job_append(
                     &mut layout_job,
                     self.stringify().as_str(),
@@ -154,7 +154,7 @@ macro_rules! impl_value_ui_using_to_string {
                 layout_job: &mut egui::text::LayoutJob,
                 view_ctx: &mut ViewCtx<'_>,
             ) {
-                use sept::st::Stringifiable;
+                use sept::st::StringifiableT;
                 layout_job_append(
                     layout_job,
                     self.stringify().as_str(),
@@ -170,7 +170,7 @@ macro_rules! impl_value_ui_using_to_string {
 // This is probably a TEMP HACK
 macro_rules! impl_value_ui_using_debug_format {
     ($ty:ty) => {
-        impl ValueUI for $ty {
+        impl ValueUIT for $ty {
             fn run_ui_expanded(
                 &self,
                 _ui: &mut egui::Ui,

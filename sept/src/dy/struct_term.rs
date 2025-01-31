@@ -1,14 +1,14 @@
 use crate::{
     dy, qv,
-    st::{self, Inhabits, Stringifiable, Struct, TermTrait},
+    st::{self, InhabitsT, StringifiableT, Struct, TermT},
     Error, Result,
 };
 use std::collections::HashMap;
 
 // TODO: Theoretically, the key (i.e. name) could be any type, thereby enabling the possibility of structured names.
 // But even if this isn't done, then first class sept-enabled strings should be used.
-#[derive(Clone, Debug, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(AbstractTypeType = "Struct", is_parametric = "true", is_type = "true")]
+#[derive(Clone, Debug, dy::IntoValueT, PartialEq, st::TermT)]
+#[st_term_t(AbstractTypeType = "Struct", is_parametric = "true", is_type = "true")]
 pub struct StructTerm {
     /// This stores the field declarations (i.e. `field: Type`) in a particular order.
     // TODO: Check that each is a type.
@@ -156,13 +156,13 @@ impl StructTerm {
     }
 }
 
-impl qv::ApplyEditTrait for StructTerm {
+impl qv::ApplyEditT for StructTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl dy::Constructor for StructTerm {
+impl dy::ConstructorT for StructTerm {
     type ConstructedType = dy::StructTermTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         self.verify_inhabitation_by(&parameter_t)?;
@@ -176,9 +176,9 @@ impl dy::Constructor for StructTerm {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         let struct_term_term = Self::ConstructedType::deserialize(reader)?;
-        use dy::Deconstruct;
+        use dy::DeconstructT;
         // NOTE: this inhabitation check could cause a sym ref dereference, which is not allowed.  any type checking
         // could be done as a separate pass, though that would present problems for static types.
         anyhow::ensure!(
@@ -191,7 +191,7 @@ impl dy::Constructor for StructTerm {
     }
 }
 
-impl dy::Deconstruct for StructTerm {
+impl dy::DeconstructT for StructTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         // TODO: how to incorporate symbol_id?
         dy::ParametricDeconstruction::new_recursive(
@@ -222,19 +222,19 @@ impl std::fmt::Display for StructTerm {
     }
 }
 
-impl Inhabits<Struct> for StructTerm {
+impl InhabitsT<Struct> for StructTerm {
     fn inhabits(&self, _: &Struct) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for StructTerm {
+impl st::InhabitsT<st::Type> for StructTerm {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Deserializable for StructTerm {
+impl st::DeserializableT for StructTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let len = st::read_len(reader)?;
         let mut field_decl_v = Vec::with_capacity(len);
@@ -247,13 +247,13 @@ impl st::Deserializable for StructTerm {
     }
 }
 
-impl qv::QueryableDynTrait for StructTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for StructTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::StructTermView::new(self))
     }
 }
 
-impl st::Serializable for StructTerm {
+impl st::SerializableT for StructTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -274,7 +274,7 @@ impl st::Serializable for StructTerm {
     }
 }
 
-impl qv::SingleQuery<dy::Value> for StructTerm {
+impl qv::SingleQueryT<dy::Value> for StructTerm {
     type ReturnType<'a> = qv::StructTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
@@ -308,7 +308,7 @@ impl qv::SingleQuery<dy::Value> for StructTerm {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for StructTerm {
+impl qv::SingleQueryMutT<dy::Value> for StructTerm {
     type ReturnType<'a> = qv::StructTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -341,7 +341,7 @@ impl qv::SingleQueryMut<dy::Value> for StructTerm {
     }
 }
 
-impl Stringifiable for StructTerm {
+impl StringifiableT for StructTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Struct(");
@@ -357,7 +357,7 @@ impl Stringifiable for StructTerm {
     }
 }
 
-impl st::TestValues for StructTerm {
+impl st::TestValuesT for StructTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec![
             // Empty struct
@@ -386,4 +386,4 @@ impl st::TestValues for StructTerm {
     }
 }
 
-impl st::TypeTrait for StructTerm {}
+impl st::TypeT for StructTerm {}

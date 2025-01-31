@@ -1,9 +1,9 @@
 use crate::{
-    indentation_for, layout_job_append, render_type_annotation_for, LayoutMode, ValueUI, ViewCtx,
+    indentation_for, layout_job_append, render_type_annotation_for, LayoutMode, ValueUIT, ViewCtx,
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::dy::StructTermTerm {
+impl ValueUIT for sept::dy::StructTermTerm {
     fn handle_events(&self, ui: &mut Ui, view_ctx: &mut ViewCtx<'_>) {
         use egui::{Key, Modifiers};
         let self_len = self.field_tuple().len() as u32;

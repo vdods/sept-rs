@@ -1,11 +1,11 @@
 use crate::{
-    first_char_stripped_string, AddressedEdit, CursorEdit, EventHandler, EventHandlerCtx,
+    first_char_stripped_string, AddressedEdit, CursorEdit, EventHandlerCtx, EventHandlerT,
     RootValueEdit,
 };
 use anyhow::Result;
-use sept::dy::IntoValue;
+use sept::dy::IntoValueT;
 
-impl EventHandler for sept::st::Utf8StringTerm {
+impl EventHandlerT for sept::st::Utf8StringTerm {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -15,8 +15,8 @@ impl EventHandler for sept::st::Utf8StringTerm {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
             let mut event_handler_ctx_g = event_handler_ctx.push_nesting_depth();
             let event_handler_ctx = &mut event_handler_ctx_g;
-            use sept::qv::SingleQuery;
-            // TODO: Just make sept::qv::Utf8StringTermQuery impl EventHandler
+            use sept::qv::SingleQueryT;
+            // TODO: Just make sept::qv::Utf8StringTermQuery impl EventHandlerT
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::Utf8StringTermQuery::Utf8StringTermCharView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -27,7 +27,7 @@ impl EventHandler for sept::st::Utf8StringTerm {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 // egui::Event::Paste(string) => {
                 // TODO: Create a replace or insert edit, depending on the mode.
@@ -68,7 +68,7 @@ impl EventHandler for sept::st::Utf8StringTerm {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermCharView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermCharView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -76,7 +76,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharView<'a> {
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::Utf8StringTermCharViewQuery::Utf8StringTermCharElemView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -84,7 +84,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
                     // We didn't consume the event, so return it.
@@ -95,7 +95,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermCharElemView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -103,11 +103,11 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {}
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 egui::Event::Key {
                     key: egui::Key::Enter,
@@ -267,7 +267,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     ..
                 } => {
                     let cursor_char_o = {
-                        use sept::qv::QueryableDynTrait;
+                        use sept::qv::QueryableDynT;
                         event_handler_ctx
                             .root_value
                             .make_and_run_query(&mut event_handler_ctx.cursor_address.iter())
@@ -303,7 +303,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                         // TODO: Impl wrap and put it in ViewOptions
                         v.increment_char_index_by(-1);
                         let cursor_char_o = {
-                            use sept::qv::EvalTrait;
+                            use sept::qv::EvalT;
                             let cursor_value_la = v.eval().unwrap();
                             // This view will produce a char if the cursor is in bounds.
                             let cursor_char_o =
@@ -380,7 +380,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermLineView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermLineView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -388,7 +388,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineView<'a> {
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::Utf8StringTermLineViewQuery::Utf8StringTermLineElemView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -396,7 +396,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
                     // We didn't consume the event, so return it.
@@ -407,7 +407,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermLineElemView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -417,7 +417,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
             let mut event_handler_ctx_g = event_handler_ctx.push_nesting_depth();
             let event_handler_ctx = &mut event_handler_ctx_g;
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::Utf8StringTermLineElemViewQuery::Utf8StringTermLineElemCharView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -425,7 +425,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 egui::Event::Key {
                     key: egui::Key::Enter,
@@ -640,7 +640,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermLineElemCharView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -648,7 +648,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharView<'a> {
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::Utf8StringTermLineElemCharViewQuery::Utf8StringTermLineElemCharElemView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -656,7 +656,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
                     // We didn't consume the event, so return it.
@@ -667,7 +667,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
+impl<'a> EventHandlerT for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -676,11 +676,11 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
     ) -> Result<Option<egui::Event>> {
         let cursor_len = event_handler_ctx.cursor_address.len() as u32;
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {}
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
 
             match event {
                 egui::Event::Key {
@@ -790,7 +790,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     ..
                 } => {
                     let cursor_char_o = {
-                        use sept::qv::EvalTrait;
+                        use sept::qv::EvalT;
                         let cursor_value_la = self.eval().unwrap();
                         // This view will produce a char if the cursor is in bounds.
                         let cursor_char_o =
@@ -820,7 +820,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                         let mut v = self.clone();
                         v.increment_char_index_by(-1, true);
                         let cursor_char_o = {
-                            use sept::qv::EvalTrait;
+                            use sept::qv::EvalT;
                             let cursor_value_la = v.eval().unwrap();
                             // This view will produce a char if the cursor is in bounds.
                             let cursor_char_o =

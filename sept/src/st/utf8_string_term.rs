@@ -1,12 +1,12 @@
 use crate::{
     dy, qv,
-    st::{self, Inhabits, Stringifiable, TermTrait},
+    st::{self, InhabitsT, StringifiableT, TermT},
     Error, Result,
 };
 
 pub type Utf8StringTerm = String;
 
-impl dy::Deconstruct for String {
+impl dy::DeconstructT for String {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -80,7 +80,7 @@ pub fn replace_substr_in_string(
     Ok(())
 }
 
-impl qv::ApplyEditTrait for String {
+impl qv::ApplyEditT for String {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: "clear" edit
         if edit.is::<qv::ReplacementTerm>() {
@@ -104,15 +104,15 @@ impl qv::ApplyEditTrait for String {
     }
 }
 
-impl Inhabits<st::Utf8String> for String {
+impl InhabitsT<st::Utf8String> for String {
     fn inhabits(&self, _rhs: &st::Utf8String) -> bool {
         true
     }
 }
 
-impl dy::IntoValue for String {}
+impl dy::IntoValueT for String {}
 
-impl st::Deserializable for String {
+impl st::DeserializableT for String {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let len = st::read_len(reader)?;
         let mut string = String::with_capacity(len);
@@ -126,13 +126,13 @@ impl st::Deserializable for String {
     }
 }
 
-impl qv::QueryableDynTrait for String {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for String {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::Utf8StringTermView::new(self))
     }
 }
 
-impl st::Serializable for String {
+impl st::SerializableT for String {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -150,7 +150,7 @@ impl st::Serializable for String {
     }
 }
 
-impl qv::SingleQuery<dy::Value> for String {
+impl qv::SingleQueryT<dy::Value> for String {
     type ReturnType<'a> = qv::Utf8StringTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
@@ -178,7 +178,7 @@ impl qv::SingleQuery<dy::Value> for String {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for String {
+impl qv::SingleQueryMutT<dy::Value> for String {
     type ReturnType<'a> = qv::Utf8StringTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -206,7 +206,7 @@ impl qv::SingleQueryMut<dy::Value> for String {
     }
 }
 
-// impl st::Deserializable for String {
+// impl st::DeserializableT for String {
 //     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
 //         let len = u64::deserialize(reader)?;
 //         anyhow::ensure!(
@@ -223,7 +223,7 @@ impl qv::SingleQueryMut<dy::Value> for String {
 //     }
 // }
 //
-// impl st::Serializable for String {
+// impl st::SerializableT for String {
 //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 //         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
 //         // like where a string smaller than 8 bytes is encoded in exactly 8 bytes.
@@ -234,14 +234,14 @@ impl qv::SingleQueryMut<dy::Value> for String {
 //     }
 // }
 //
-impl Stringifiable for String {
+impl StringifiableT for String {
     fn stringify(&self) -> String {
         // Create a quoted string literal.
         format!("{:?}", self)
     }
 }
 
-impl TermTrait for String {
+impl TermT for String {
     type AbstractTypeType = st::Utf8String;
 
     fn is_parametric(&self) -> bool {
@@ -255,7 +255,7 @@ impl TermTrait for String {
     }
 }
 
-impl TermTrait for &'static str {
+impl TermT for &'static str {
     type AbstractTypeType = st::Utf8String;
 
     fn is_parametric(&self) -> bool {
@@ -269,7 +269,7 @@ impl TermTrait for &'static str {
     }
 }
 
-impl st::TestValues for String {
+impl st::TestValuesT for String {
     fn fixed_test_values() -> Vec<Self> {
         vec!["", "a", "abc", "\n", "\t", "日本"]
             .into_iter()

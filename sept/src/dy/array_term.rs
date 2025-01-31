@@ -1,6 +1,6 @@
 use crate::{
     dy, qv,
-    st::{self, Array, Inhabits, Stringifiable},
+    st::{self, Array, InhabitsT, StringifiableT},
     Error, Result,
 };
 
@@ -13,26 +13,26 @@ use crate::{
     derive_more::DerefMut,
     derive_more::From,
     derive_more::Into,
-    dy::IntoValue,
+    dy::IntoValueT,
     PartialEq,
-    st::TermTrait,
+    st::TermT,
 )]
-#[st_term_trait(AbstractTypeType = "Array", is_parametric = "true", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Array", is_parametric = "true", is_type = "true")]
 pub struct ArrayTerm(Vec<dy::Value>);
 
-impl qv::ApplyEditTrait for ArrayTerm {
+impl qv::ApplyEditT for ArrayTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl dy::Deconstruct for ArrayTerm {
+impl dy::DeconstructT for ArrayTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         dy::ParametricDeconstruction::new_recursive(Array.into(), self.0.into()).into()
     }
 }
 
-impl st::Deserializable for ArrayTerm {
+impl st::DeserializableT for ArrayTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let len = st::read_len(reader)?;
         let mut element_v = Vec::with_capacity(len);
@@ -49,19 +49,19 @@ impl std::fmt::Display for ArrayTerm {
     }
 }
 
-impl Inhabits<Array> for ArrayTerm {
+impl InhabitsT<Array> for ArrayTerm {
     fn inhabits(&self, _: &Array) -> bool {
         true
     }
 }
 
-impl qv::QueryableDynTrait for ArrayTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for ArrayTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::ArrayTermView::new(self))
     }
 }
 
-impl st::Serializable for ArrayTerm {
+impl st::SerializableT for ArrayTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -79,7 +79,7 @@ impl st::Serializable for ArrayTerm {
     }
 }
 
-impl qv::SingleQuery<dy::Value> for ArrayTerm {
+impl qv::SingleQueryT<dy::Value> for ArrayTerm {
     type ReturnType<'a> = qv::ArrayTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
@@ -97,7 +97,7 @@ impl qv::SingleQuery<dy::Value> for ArrayTerm {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for ArrayTerm {
+impl qv::SingleQueryMutT<dy::Value> for ArrayTerm {
     type ReturnType<'a> = qv::ArrayTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -115,7 +115,7 @@ impl qv::SingleQueryMut<dy::Value> for ArrayTerm {
     }
 }
 
-impl Stringifiable for ArrayTerm {
+impl StringifiableT for ArrayTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("Array(");
@@ -130,7 +130,7 @@ impl Stringifiable for ArrayTerm {
     }
 }
 
-impl st::TestValues for ArrayTerm {
+impl st::TestValuesT for ArrayTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec![
             ArrayTerm::from(vec![]),

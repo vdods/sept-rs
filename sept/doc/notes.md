@@ -15,7 +15,7 @@ Currently working to complete the de/serialization feature, but running into pro
 
 In order to discuss de/serialization of GlobalSymRefTerm/LocalSymRefTerm, it's necessary to outline the current behavior of de/serialization for non-reference types.
 -   Serialization of a term `x` implemented by Rust type `T`
-    -   `T` must implement `Serializable`, which has a single method `fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize>`, returning the number of bytes written to the writer.  The specific content written is totally type-specific.
+    -   `T` must implement `SerializableT`, which has a single method `fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize>`, returning the number of bytes written to the writer.  The specific content written is totally type-specific.
     -   Examples of serialization
         -   `bool` simply writes a single byte `0` or `1` to represent `false` or `true`.
         -   `i32` simply writes the little-endian byte representation of the value.
@@ -69,7 +69,7 @@ Writing to different segments is trickier than serialization of conventional dat
 
 ### Diff Feature
 
-After initial implementation `st::DiffTrait` and a small set of impls that act as diffs on `String`, it's clear that using `st`-paradigm diff types is not feasible for a POC/MVP, as the number of impls is some product of diff operations and targets.  Also, there isn't yet a need to have perfectly, strongly typed results of diffs.  Instead, a more feasible approach to use for the POC/MVP is to use general diff types that simply store their parameters as `dy::Value` typed variables.  Then the number of impls is less, and is more tractably flexible for purposes of actually achieving a POC/MVP in a reasonable timeframe.
+After initial implementation `st::DiffT` and a small set of impls that act as diffs on `String`, it's clear that using `st`-paradigm diff types is not feasible for a POC/MVP, as the number of impls is some product of diff operations and targets.  Also, there isn't yet a need to have perfectly, strongly typed results of diffs.  Instead, a more feasible approach to use for the POC/MVP is to use general diff types that simply store their parameters as `dy::Value` typed variables.  Then the number of impls is less, and is more tractably flexible for purposes of actually achieving a POC/MVP in a reasonable timeframe.
 
 Is "diff" the right word here?  "Transformation" would be more correct, but the existing understanding of diffs would make for easier adoption, simply because it's not a scary word.  In a category theory context, this might be called a morphism in the category of typed data (this is assuming that that's a well-defined category; definitely worth attempting to establish that and give a solid mathematical basis to all this stuff), maybe "DataMorphism".
 

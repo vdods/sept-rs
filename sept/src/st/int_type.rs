@@ -9,13 +9,13 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Sint8Type;
 
 #[derive(
@@ -23,13 +23,13 @@ pub struct Sint8Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Sint16Type;
 
 #[derive(
@@ -37,13 +37,13 @@ pub struct Sint16Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Sint32Type;
 
 #[derive(
@@ -51,13 +51,13 @@ pub struct Sint32Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Sint64Type;
 
 #[derive(
@@ -65,13 +65,13 @@ pub struct Sint64Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Uint8Type;
 
 #[derive(
@@ -79,13 +79,13 @@ pub struct Uint8Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Uint16Type;
 
 #[derive(
@@ -93,13 +93,13 @@ pub struct Uint16Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Uint32Type;
 
 #[derive(
@@ -107,58 +107,58 @@ pub struct Uint32Type;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Uint64Type;
 
-impl st::Inhabits<Type> for Sint8Type {
+impl st::InhabitsT<Type> for Sint8Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Sint16Type {
+impl st::InhabitsT<Type> for Sint16Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Sint32Type {
+impl st::InhabitsT<Type> for Sint32Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Sint64Type {
+impl st::InhabitsT<Type> for Sint64Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Uint8Type {
+impl st::InhabitsT<Type> for Uint8Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Uint16Type {
+impl st::InhabitsT<Type> for Uint16Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Uint32Type {
+impl st::InhabitsT<Type> for Uint32Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<Type> for Uint64Type {
+impl st::InhabitsT<Type> for Uint64Type {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }

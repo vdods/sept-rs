@@ -5,7 +5,7 @@ use crate::{dy, st};
 /// possible to `impl<T> From<T> for Value where T != Value`, then this trait wouldn't be
 /// necessary.  But failing that, you just have to use this marker trait to assure the
 /// compiler that, yes, things will be ok.
-pub trait IntoValue: st::TermTrait {
+pub trait IntoValueT: st::TermT {
     fn into_value(self) -> dy::Value {
         dy::Value::from(self)
     }

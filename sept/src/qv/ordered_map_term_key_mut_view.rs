@@ -11,13 +11,13 @@ impl<'a> OrderedMapTermKeyMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for OrderedMapTermKeyMutView<'a> {
+impl<'a> qv::ApplyEditT for OrderedMapTermKeyMutView<'a> {
     fn apply_edit(&mut self, _edit: dy::Value) -> anyhow::Result<()> {
         unimplemented!("blah");
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for OrderedMapTermKeyMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for OrderedMapTermKeyMutView<'b> {
     type ReturnType<'a> = qv::OrderedMapTermKeyElemMutView<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(

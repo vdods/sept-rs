@@ -1,32 +1,32 @@
 use crate::{
     dy, parser, qv,
-    st::{self, Stringifiable, TermTrait},
+    st::{self, StringifiableT, TermT},
     Error, Result,
 };
 
-pub trait FancyAny: std::any::Any {
+pub trait FancyAnyT: std::any::Any {
     fn as_any<'a>(&'a self) -> &'a (dyn std::any::Any + Send + Sync);
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn std::any::Any + Send + Sync);
-    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAny + Send + Sync);
+    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAnyT + Send + Sync);
     // // TODO
     // // fn type_name(&self) -> &'static str;
 }
 
-impl<T: std::any::Any + Send + Sync> FancyAny for T {
+impl<T: std::any::Any + Send + Sync> FancyAnyT for T {
     fn as_any<'a>(&'a self) -> &'a (dyn std::any::Any + Send + Sync) {
         self
     }
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn std::any::Any + Send + Sync) {
         self
     }
-    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAny + Send + Sync) {
+    fn as_fancy_any<'a>(&'a self) -> &'a (dyn FancyAnyT + Send + Sync) {
         self
     }
 }
 
 pub type ValueGuts = dyn std::any::Any + Send + Sync;
-// pub type ValueGuts = dyn FancyAny + Send + Sync;
-pub type ValueGuts2 = dyn FancyAny + Send + Sync;
+// pub type ValueGuts = dyn FancyAnyT + Send + Sync;
+pub type ValueGuts2 = dyn FancyAnyT + Send + Sync;
 
 impl ValueGuts2 {
     pub fn is<T: std::any::Any>(&self) -> bool {
@@ -46,7 +46,7 @@ impl ValueGuts2 {
     }
 }
 
-// impl<A: Allocator> Box<dyn FancyAny + Send + Sync, A> {
+// impl<A: Allocator> Box<dyn FancyAnyT + Send + Sync, A> {
 //     pub fn downcast<T: std::any::Any>(self) -> Result<Box<T, A>, Self> {
 //         unimplemented!("blah");
 //     }
@@ -120,7 +120,7 @@ impl Ord for ValueGuts2 {
 // }
 
 // // TEMP EXPERIMENTAL
-// impl<T: dy::IntoValue> std::borrow::ToOwned for T {
+// impl<T: dy::IntoValueT> std::borrow::ToOwned for T {
 //     type Owned = Value;
 //     fn to_owned(&self) -> Self::Owned {
 //         Value(dy::RUNTIME_LA.read().unwrap().clone(self))
@@ -162,7 +162,7 @@ impl std::borrow::Borrow<ValueGuts2> for Value {
 #[derive(derive_more::Into)]
 pub struct Value(Box<ValueGuts>);
 
-impl qv::ApplyEditTrait for Value {
+impl qv::ApplyEditT for Value {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // Handle some of the canonical edits first, and then resort to the Runtime.
         if edit.is::<st::NoOp>() {
@@ -204,7 +204,7 @@ impl Clone for Value {
     }
 }
 
-impl dy::Constructor for Value {
+impl dy::ConstructorT for Value {
     type ConstructedType = Value;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         Ok(dy::RUNTIME_LA
@@ -232,7 +232,7 @@ impl std::fmt::Debug for Value {
     }
 }
 
-impl dy::Deconstruct for Value {
+impl dy::DeconstructT for Value {
     fn deconstruct(self) -> dy::Deconstruction {
         // TODO: Implement self-consuming deconstruct in Runtime.
         dy::RUNTIME_LA.read().unwrap().deconstructed(self.as_ref())
@@ -261,7 +261,7 @@ impl std::ops::DerefMut for Value {
 //     }
 // }
 
-impl st::Deserializable for Value {
+impl st::DeserializableT for Value {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         // First read the SerializedTopLevelCode to decide what to do.
         match st::SerializedTopLevelCode::read(reader)? {
@@ -269,7 +269,7 @@ impl st::Deserializable for Value {
                 // Deserialize the constructor.
                 let constructor = Value::deserialize(reader)?;
                 // Deserialize the parameters and construct the Value.
-                use dy::Constructor;
+                use dy::ConstructorT;
                 Ok(constructor.deserialize_parameters_and_construct(reader)?)
             }
             st::SerializedTopLevelCode::NonParametric => {
@@ -291,7 +291,7 @@ impl std::fmt::Display for Value {
     }
 }
 
-impl st::EditTrait for Value {
+impl st::EditT for Value {
     type Inverse = Self;
     fn into_inverse(self) -> Self::Inverse {
         dy::RUNTIME_LA
@@ -316,7 +316,7 @@ impl From<Box<ValueGuts>> for Value {
     }
 }
 
-impl<T: TermTrait + dy::IntoValue + 'static> From<T> for Value {
+impl<T: TermT + dy::IntoValueT + 'static> From<T> for Value {
     fn from(t: T) -> Self {
         Self(Box::new(t))
     }
@@ -329,7 +329,7 @@ impl std::str::FromStr for Value {
     }
 }
 
-impl st::Inhabits<Value> for Value {
+impl st::InhabitsT<Value> for Value {
     fn inhabits(&self, rhs: &Value) -> bool {
         dy::RUNTIME_LA
             .read()
@@ -338,7 +338,7 @@ impl st::Inhabits<Value> for Value {
     }
 }
 
-impl<T: st::TypeTrait + dy::IntoValue + 'static> st::Inhabits<T> for Value {
+impl<T: st::TypeT + dy::IntoValueT + 'static> st::InhabitsT<T> for Value {
     fn inhabits(&self, rhs: &T) -> bool {
         let rhs_: &ValueGuts = rhs;
         dy::RUNTIME_LA.read().unwrap().inhabits(self.as_ref(), rhs_)
@@ -372,19 +372,19 @@ impl PartialOrd for Value {
     }
 }
 
-// impl qv::EvalTrait for Value {
+// impl qv::EvalT for Value {
 //     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
 //         Ok(dy::MaybeDereferencedValue::make_ref(self.as_ref()))
 //     }
 // }
 
-impl qv::QueryableDynTrait for Value {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for Value {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::ValueView::new(self))
     }
 }
 
-impl qv::QueryMutAndApplyEditTrait for Value {
+impl qv::QueryMutAndApplyEditT for Value {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -398,7 +398,7 @@ impl qv::QueryMutAndApplyEditTrait for Value {
         if address_token_i.peek().is_none() {
             // We have to shunt it to Value::apply_edit because that does special
             // handling before forwarding it to the Runtime.
-            use qv::ApplyEditTrait;
+            use qv::ApplyEditT;
             self.apply_edit(edit)
         } else {
             dy::RUNTIME_LA.read().unwrap().query_mut_and_apply_edit(
@@ -410,7 +410,7 @@ impl qv::QueryMutAndApplyEditTrait for Value {
     }
 }
 
-impl st::Serializable for Value {
+impl st::SerializableT for Value {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         log::trace!("Value::serialize; self: {:?}", self);
         let mut bytes_written = 0usize;
@@ -461,13 +461,13 @@ impl st::Serializable for Value {
     //     }
 }
 
-impl Stringifiable for Value {
+impl StringifiableT for Value {
     fn stringify(&self) -> String {
         dy::RUNTIME_LA.read().unwrap().stringify(self.as_ref())
     }
 }
 
-impl TermTrait for Value {
+impl TermT for Value {
     type AbstractTypeType = Value;
 
     fn is_parametric(&self) -> bool {
@@ -492,15 +492,15 @@ impl TermTrait for Value {
     }
 }
 
-impl st::TypeTrait for Value {}
+impl st::TypeT for Value {}
 
-// TODO: These could become part of dy::TermTrait, since they reflect what's available via Runtime
+// TODO: These could become part of dy::TermT, since they reflect what's available via Runtime
 impl Value {
     pub fn into_inner(self) -> Box<ValueGuts> {
         self.0
     }
     /// This will return the downcasted value, consuming self, or panic if the cast fails.
-    // pub fn downcast_into<T: st::TermTrait>(self) -> T {
+    // pub fn downcast_into<T: st::TermT>(self) -> T {
     pub fn downcast_into<T: std::any::Any>(self) -> T {
         *self.0.downcast::<T>().unwrap()
     }
@@ -541,7 +541,7 @@ impl Value {
     }
 }
 
-// impl st::DiffTrait<Value> for Value {
+// impl st::DiffT<Value> for Value {
 //     type Inverse = Value;
 //     // type Error = Error;
 //     fn apply_in_place(&self, target: &mut Value) -> Result<()> {

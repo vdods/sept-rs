@@ -1,30 +1,22 @@
 use crate::{
     dy,
-    st::{self, GlobalSymRefType, Inhabits, Stringifiable},
+    st::{self, GlobalSymRefType, InhabitsT, StringifiableT},
     Result,
 };
 use anyhow::Context;
 use std::fmt::Debug;
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "GlobalSymRefType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct GlobalSymRef;
 
-impl dy::Constructor for GlobalSymRef {
+impl dy::ConstructorT for GlobalSymRef {
     type ConstructedType = dy::GlobalSymRefTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -48,7 +40,7 @@ impl dy::Constructor for GlobalSymRef {
 
         // Check that the symbol resolves here.
         Ok(dy::GlobalSymRefTerm::new_checked(symbol_id)
-            .context("GlobalSymRef didn't resolve; it may be that this check shouldn't be done in impl dy::Constructor")?
+            .context("GlobalSymRef didn't resolve; it may be that this check shouldn't be done in impl dy::ConstructorT")?
         )
         //         // NOTE: We don't check that the reference resolves here, but this could mean that
         //         // undefined-symbol errors leak through serialization and only get detected upon attempting
@@ -59,18 +51,18 @@ impl dy::Constructor for GlobalSymRef {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<GlobalSymRefType> for GlobalSymRef {
+impl InhabitsT<GlobalSymRefType> for GlobalSymRef {
     fn inhabits(&self, _: &GlobalSymRefType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for GlobalSymRef {
+impl st::InhabitsT<st::Type> for GlobalSymRef {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

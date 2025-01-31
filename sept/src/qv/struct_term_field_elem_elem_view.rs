@@ -115,7 +115,7 @@ impl<'a> StructTermFieldElemElemView<'a> {
     }
 }
 
-impl<'b> qv::EvalTrait for StructTermFieldElemElemView<'b> {
+impl<'b> qv::EvalT for StructTermFieldElemElemView<'b> {
     /// This will produce either the field name or field value.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         assert!(self.sub_index <= 1);
@@ -131,11 +131,11 @@ impl<'b> qv::EvalTrait for StructTermFieldElemElemView<'b> {
     }
 }
 
-impl<'b> qv::QueryTrait for StructTermFieldElemElemView<'b> {
+impl<'b> qv::QueryT for StructTermFieldElemElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -181,7 +181,7 @@ impl<'b> qv::QueryTrait for StructTermFieldElemElemView<'b> {
 //             }
 //         } else {
 //             // TODO: Support field names as addresses.
-//             use st::Stringifiable;
+//             use st::StringifiableT;
 //             anyhow::bail!(
 //                 "StructTermFieldElemElemView::run_single_query doesn't support address: {}",
 //                 address_token.stringify()

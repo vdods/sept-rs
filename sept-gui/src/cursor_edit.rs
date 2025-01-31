@@ -4,7 +4,7 @@ use crate::AddressedEdit;
 pub struct CursorEdit(AddressedEdit);
 
 // TODO: Derive this somehow
-impl sept::st::EditTrait for CursorEdit {
+impl sept::st::EditT for CursorEdit {
     type Inverse = Self;
     fn into_inverse(self) -> Self::Inverse {
         Self(self.0.into_inverse())

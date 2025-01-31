@@ -1,6 +1,6 @@
 use crate::{
     dy, qv,
-    st::{self, Inhabits, OrderedMap},
+    st::{self, InhabitsT, OrderedMap},
     Error, Result,
 };
 use std::collections::BTreeMap;
@@ -13,24 +13,24 @@ use std::collections::BTreeMap;
     derive_more::DerefMut,
     derive_more::From,
     derive_more::Into,
-    dy::IntoValue,
+    dy::IntoValueT,
     PartialEq,
-    st::TermTrait,
+    st::TermT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "OrderedMap",
     is_parametric = "true",
     is_type = "true"
 )]
 pub struct OrderedMapTerm(BTreeMap<dy::Value, dy::Value>);
 
-impl qv::ApplyEditTrait for OrderedMapTerm {
+impl qv::ApplyEditT for OrderedMapTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl dy::Deconstruct for OrderedMapTerm {
+impl dy::DeconstructT for OrderedMapTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         // Turn the BTreeMap elements (i.e. key-value pairs) into TupleTerms, and then collect that into
         // a TupleTerm.  Could create MappingTerm, Mapping, and MappingType terms for better semantics.
@@ -46,7 +46,7 @@ impl dy::Deconstruct for OrderedMapTerm {
     }
 }
 
-impl st::Deserializable for OrderedMapTerm {
+impl st::DeserializableT for OrderedMapTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let len = st::read_len(reader)?;
         let mut element_m = BTreeMap::new();
@@ -61,24 +61,24 @@ impl st::Deserializable for OrderedMapTerm {
 
 impl std::fmt::Display for OrderedMapTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        use st::Stringifiable;
+        use st::StringifiableT;
         write!(f, "{}", &self.stringify())
     }
 }
 
-impl Inhabits<OrderedMap> for OrderedMapTerm {
+impl InhabitsT<OrderedMap> for OrderedMapTerm {
     fn inhabits(&self, _: &OrderedMap) -> bool {
         true
     }
 }
 
-impl qv::QueryableDynTrait for OrderedMapTerm {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for OrderedMapTerm {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::OrderedMapTermView::new(self))
     }
 }
 
-impl st::Serializable for OrderedMapTerm {
+impl st::SerializableT for OrderedMapTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
         // like where an OrderedMapTerm smaller than 8 bytes is encoded in exactly 8 bytes.
@@ -91,7 +91,7 @@ impl st::Serializable for OrderedMapTerm {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for OrderedMapTerm {
+impl qv::SingleQueryMutT<dy::Value> for OrderedMapTerm {
     type ReturnType<'a> = qv::OrderedMapTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -109,7 +109,7 @@ impl qv::SingleQueryMut<dy::Value> for OrderedMapTerm {
                     unimplemented!("not yet");
                 }
                 _ => {
-                    use st::Stringifiable;
+                    use st::StringifiableT;
                     anyhow::bail!(
                         "OrderedMapTerm query doesn't support address: {}",
                         address_char.stringify()
@@ -117,7 +117,7 @@ impl qv::SingleQueryMut<dy::Value> for OrderedMapTerm {
                 }
             }
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "OrderedMapTerm query doesn't support address: {}",
                 address_token.stringify()
@@ -126,7 +126,7 @@ impl qv::SingleQueryMut<dy::Value> for OrderedMapTerm {
     }
 }
 
-impl st::Stringifiable for OrderedMapTerm {
+impl st::StringifiableT for OrderedMapTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("OrderedMap(");
@@ -143,7 +143,7 @@ impl st::Stringifiable for OrderedMapTerm {
     }
 }
 
-impl st::TestValues for OrderedMapTerm {
+impl st::TestValuesT for OrderedMapTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec![
             OrderedMapTerm::from(maplit::btreemap! {}),

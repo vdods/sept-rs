@@ -10,8 +10,8 @@ fn overall_init() {
 }
 
 // TODO: Change AbstractTypeType to something that actually makes sense, or comment as to why this type is used.
-#[derive(Clone, Debug, dy::IntoValue, st::TermTrait)]
-#[st_term_trait(
+#[derive(Clone, Debug, dy::IntoValueT, st::TermT)]
+#[st_term_t(
     AbstractTypeType = "VoidType",
     is_parametric = "false",
     is_type = "false"
@@ -19,33 +19,33 @@ fn overall_init() {
 pub struct FancyTerm;
 
 // TODO: Change abstract_type_expr to something that actually makes sense, or comment as to why this value is used.
-#[derive(Clone, Debug, st::TermTrait, st::TypeTrait)]
-#[st_term_trait(AbstractTypeType = "Value")]
-#[st_term_trait(abstract_type_expr = "Value::from(Sint32)")]
-#[st_term_trait(is_parametric = "false")]
-#[st_term_trait(is_type = "true")]
+#[derive(Clone, Debug, st::TermT, st::TypeT)]
+#[st_term_t(AbstractTypeType = "Value")]
+#[st_term_t(abstract_type_expr = "Value::from(Sint32)")]
+#[st_term_t(is_parametric = "false")]
+#[st_term_t(is_type = "true")]
 pub struct DumbType;
 
 #[derive(
-    Clone, Copy, Debug, Eq, dy::IntoValue, PartialEq, st::NonParametricTermTrait, st::TermTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, PartialEq, st::NonParametricTermT, st::TermT,
 )]
-#[st_term_trait(AbstractTypeType = "Value")]
-#[st_term_trait(abstract_type_expr = "Value::from(Sint32)")]
-#[st_term_trait(is_parametric = "false")]
-#[st_term_trait(is_type = "false")]
+#[st_term_t(AbstractTypeType = "Value")]
+#[st_term_t(abstract_type_expr = "Value::from(Sint32)")]
+#[st_term_t(is_parametric = "false")]
+#[st_term_t(is_type = "false")]
 pub struct Undefined;
 
 #[test]
 #[serial_test::serial] // TEMP HACK: Just so the debug spew doesn't collide
 fn blah() {
-    use sept::st::TermTrait;
+    use sept::st::TermT;
 
     let f = FancyTerm;
     let v = Value::from(f);
     log::debug!("v (as Debug): {:?}", v);
 
     let x = Sint32;
-    use sept::st::Stringifiable;
+    use sept::st::StringifiableT;
     log::debug!("x: {}", x.stringify());
     let d = DumbType;
     log::debug!("d.abstract_type(): {}", d.abstract_type().stringify());

@@ -1,31 +1,23 @@
 use crate::{
     dy,
-    st::{self, Inhabits, TermTrait, Type},
+    st::{self, InhabitsT, TermT, Type},
 };
 
-/// This represents the NonParametricTerm `Term` itself, not the trait TermTrait.
+/// This represents the NonParametricTerm `Term` itself, not the trait TermT.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct Term;
 
 /// Everything inhabits Term.
-impl<T: TermTrait + dy::IntoValue + 'static> Inhabits<Term> for T {
+impl<T: TermT + dy::IntoValueT + 'static> InhabitsT<Term> for T {
     fn inhabits(&self, _: &Term) -> bool {
         true
     }
 }
 
-impl Inhabits<Type> for Term {
+impl InhabitsT<Type> for Term {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }

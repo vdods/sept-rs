@@ -1,10 +1,10 @@
 use crate::{
-    indentation_for, layout_job_append, render_type_annotation_for, ValueUI, ViewCtx,
+    indentation_for, layout_job_append, render_type_annotation_for, ValueUIT, ViewCtx,
     END_OF_TRANSMISSION_STR,
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::dy::StructTerm {
+impl ValueUIT for sept::dy::StructTerm {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should be deprecated");
     }
@@ -119,7 +119,7 @@ impl ValueUI for sept::dy::StructTerm {
     }
 }
 
-impl<'a> ValueUI for sept::qv::StructTermFieldElemView<'a> {
+impl<'a> ValueUIT for sept::qv::StructTermFieldElemView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should be deprecated");
     }

@@ -4,20 +4,12 @@ use crate::{
 };
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct UnicodeCharType;
 
-impl st::Inhabits<st::Type> for UnicodeCharType {
+impl st::InhabitsT<st::Type> for UnicodeCharType {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

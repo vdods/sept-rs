@@ -9,17 +9,17 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
 // TODO: AbstractTypeType could/should actually be FormalTypeOf(GlobalSymRefType)
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct GlobalSymRefType {}
 
-impl st::Inhabits<st::Type> for GlobalSymRefType {
+impl st::InhabitsT<st::Type> for GlobalSymRefType {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

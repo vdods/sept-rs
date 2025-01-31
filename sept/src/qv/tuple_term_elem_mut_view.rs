@@ -19,7 +19,7 @@ impl<'a> TupleTermElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for TupleTermElemMutView<'a> {
+impl<'a> qv::ApplyEditT for TupleTermElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: Figure out how to extend.
         // TODO: Figure out how to dispatch more efficiently (look up table as in Runtime?)
@@ -54,11 +54,11 @@ impl<'a> qv::ApplyEditTrait for TupleTermElemMutView<'a> {
     }
 }
 
-// impl<'b> qv::QueryMutTrait for TupleTermElemMutView<'b> {
+// impl<'b> qv::QueryMutT for TupleTermElemMutView<'b> {
 //     fn run_query_mut<'a>(
 //         self: Box<Self>,
 //         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-//     ) -> Result<Box<dyn qv::ApplyEditTrait + 'a>>
+//     ) -> Result<Box<dyn qv::ApplyEditT + 'a>>
 //     where
 //         Self: 'a,
 //     {
@@ -75,7 +75,7 @@ impl<'a> qv::ApplyEditTrait for TupleTermElemMutView<'a> {
 //     }
 // }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermElemMutView<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for TupleTermElemMutView<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -86,7 +86,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermElemMutView<'b> {
     {
         let mut address_token_i = address_token_i.peekable();
         if address_token_i.peek().is_none() {
-            use qv::ApplyEditTrait;
+            use qv::ApplyEditT;
             self.apply_edit(edit)
         } else {
             anyhow::ensure!(
@@ -102,7 +102,7 @@ impl<'b> qv::QueryMutAndApplyEditTrait for TupleTermElemMutView<'b> {
     }
 }
 
-// impl<'b> qv::EvalTrait for TupleTermElemMutView<'b> {
+// impl<'b> qv::EvalT for TupleTermElemMutView<'b> {
 //     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
 //         if let Some(elem) = self.tuple_term.get(self.elem_index) {
 //             Ok(dy::MaybeDereferencedValue::make_ref(elem))

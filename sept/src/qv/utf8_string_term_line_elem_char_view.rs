@@ -6,8 +6,8 @@ use std::sync::{Arc, RwLock};
 #[derive(Clone, Debug)]
 pub struct Utf8StringTermLineElemCharView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
-    // Or actually it should be EvalTrait<'b> where 'a: 'b (i.e. 'b outlives 'a).
-    // Eventually there could be st-module EvalTrait that has a specific type.
+    // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
+    // Eventually there could be st-module EvalT that has a specific type.
     pub string: &'a str,
     pub line_index: usize,
 
@@ -66,11 +66,11 @@ impl<'a> Utf8StringTermLineElemCharView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for Utf8StringTermLineElemCharView<'b> {
+impl<'b> qv::QueryT for Utf8StringTermLineElemCharView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         'b: 'a,
     {
@@ -96,7 +96,7 @@ impl<'b> qv::QueryTrait for Utf8StringTermLineElemCharView<'b> {
             .run_query(&mut address_token_i)
         } else {
             // TODO: Support "len" query.
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermLineElemCharView query doesn't support address: {}",
                 first_address.stringify()
@@ -105,10 +105,10 @@ impl<'b> qv::QueryTrait for Utf8StringTermLineElemCharView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for Utf8StringTermLineElemCharView<'b> {
+impl<'b> qv::EvalT for Utf8StringTermLineElemCharView<'b> {
     /// This will produce an ArrayTerm populated with the chars of the line.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-        use dy::IntoValue;
+        use dy::IntoValueT;
         let char_v = self
             .line
             .chars()
@@ -126,7 +126,7 @@ pub enum Utf8StringTermLineElemCharViewQuery<'a> {
     Utf8StringTermLineElemCharElemView(qv::Utf8StringTermLineElemCharElemView<'a>),
 }
 
-impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineElemCharView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharView<'b> {
     type ReturnType<'a> = Utf8StringTermLineElemCharViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -148,7 +148,7 @@ impl<'b> qv::SingleQuery<dy::Value> for Utf8StringTermLineElemCharView<'b> {
                 .into(),
             )
         } else {
-            use st::Stringifiable;
+            use st::StringifiableT;
             anyhow::bail!(
                 "Utf8StringTermLineElemCharView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()

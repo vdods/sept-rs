@@ -4,7 +4,7 @@ use crate::{dy, qv, Result};
 pub struct OrderedMapTermKeyElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. an OrderedMapTerm mut view object.
     pub ordered_map_term: &'a mut dy::OrderedMapTerm,
-    // TODO: Attempt to make this a reference again (have to modify SingleQueryMut::run_single_query_mut
+    // TODO: Attempt to make this a reference again (have to modify SingleQueryMutT::run_single_query_mut
     // and that's likely to be a big can of worms)
     pub key: dy::Value,
 }
@@ -23,7 +23,7 @@ impl<'a> OrderedMapTermKeyElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for OrderedMapTermKeyElemMutView<'a> {
+impl<'a> qv::ApplyEditT for OrderedMapTermKeyElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // Edit a clone of the key, since there could be an error during the call to apply_edit, and
         // we want the operation to be atomic.
@@ -42,7 +42,7 @@ impl<'a> qv::ApplyEditTrait for OrderedMapTermKeyElemMutView<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for OrderedMapTermKeyElemMutView<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for OrderedMapTermKeyElemMutView<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,

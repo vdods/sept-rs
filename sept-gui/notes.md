@@ -530,15 +530,15 @@ Design notes for event handling in UI
 
 Notes on ongoing work on query and edit
 -   After a lot of experimentation, whittled things down to two traits for mutable query and edit:
-    -   `ApplyEditTrait` -- applies an edit to self.
-    -   `SingleQueryMut` -- performs one address token's worth of mutable query.
--   `QueryMutAndApplyEditTrait` is automatically implemented for any type that implements both of those traits (with some other minor trait bounds).
+    -   `ApplyEditT` -- applies an edit to self.
+    -   `SingleQueryMutT` -- performs one address token's worth of mutable query.
+-   `QueryMutAndApplyEditT` is automatically implemented for any type that implements both of those traits (with some other minor trait bounds).
 -   As for immutable query, a similar effort to decompose it into simpler components is underway.  So far, there is the trait:
-    -   `SingleQuery` -- performs one address token's worth of immutable query.
--   An immutable analog to `QueryMutAndApplyEditTrait` could be created which runs a full query on an iterator of address tokens, then returns the queried value.  This could be automatically implemented for types that implement
-    -   `EvalTrait` -- has a `eval` function which returns what the view evaluates to.
-    -   `SingleQuery` -- performs one address token's worth of immutable query.
--   It might still be useful to have `QueryTrait` and `QueryMutTrait` to produce `Box<dyn qv::EvalTrait>` and `Box<dyn qv::ApplyEditTrait>`, on which `eval()` or `apply_edit()` can be called.  This is in contrast with having the query be bound to a particular terminal operation (calling `eval()` or `apply_edit()` respectively).  But probably best to disable this stuff and keep things as simple as possible.  It really depends on if more terminal operations are eventually needed.
+    -   `SingleQueryT` -- performs one address token's worth of immutable query.
+-   An immutable analog to `QueryMutAndApplyEditT` could be created which runs a full query on an iterator of address tokens, then returns the queried value.  This could be automatically implemented for types that implement
+    -   `EvalT` -- has a `eval` function which returns what the view evaluates to.
+    -   `SingleQueryT` -- performs one address token's worth of immutable query.
+-   It might still be useful to have `QueryT` and `QueryMutT` to produce `Box<dyn qv::EvalT>` and `Box<dyn qv::ApplyEditT>`, on which `eval()` or `apply_edit()` can be called.  This is in contrast with having the query be bound to a particular terminal operation (calling `eval()` or `apply_edit()` respectively).  But probably best to disable this stuff and keep things as simple as possible.  It really depends on if more terminal operations are eventually needed.
 
 ## 2023.05.21
 

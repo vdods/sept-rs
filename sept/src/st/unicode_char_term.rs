@@ -1,18 +1,18 @@
 use crate::{
     dy, qv,
-    st::{self, Inhabits, Stringifiable, TermTrait, UnicodeChar},
+    st::{self, InhabitsT, StringifiableT, TermT, UnicodeChar},
     Error, Result,
 };
 
 pub type UnicodeCharTerm = char;
 
-impl qv::ApplyEditTrait for char {
+impl qv::ApplyEditT for char {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl dy::Deconstruct for UnicodeCharTerm {
+impl dy::DeconstructT for UnicodeCharTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -23,15 +23,15 @@ impl dy::Deconstruct for UnicodeCharTerm {
     }
 }
 
-impl Inhabits<UnicodeChar> for UnicodeCharTerm {
+impl InhabitsT<UnicodeChar> for UnicodeCharTerm {
     fn inhabits(&self, _rhs: &UnicodeChar) -> bool {
         true
     }
 }
 
-impl dy::IntoValue for UnicodeCharTerm {}
+impl dy::IntoValueT for UnicodeCharTerm {}
 
-impl st::Deserializable for UnicodeCharTerm {
+impl st::DeserializableT for UnicodeCharTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<u32>()];
         reader.read_exact(&mut buffer[0..3])?;
@@ -45,13 +45,13 @@ impl st::Deserializable for UnicodeCharTerm {
     }
 }
 
-impl qv::QueryableDynTrait for char {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for char {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
-impl st::Serializable for UnicodeCharTerm {
+impl st::SerializableT for UnicodeCharTerm {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -75,7 +75,7 @@ impl st::Serializable for UnicodeCharTerm {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for char {
+impl qv::SingleQueryMutT<dy::Value> for char {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -86,13 +86,13 @@ impl qv::SingleQueryMut<dy::Value> for char {
     }
 }
 
-impl Stringifiable for UnicodeCharTerm {
+impl StringifiableT for UnicodeCharTerm {
     fn stringify(&self) -> String {
         self.to_string()
     }
 }
 
-impl TermTrait for UnicodeCharTerm {
+impl TermT for UnicodeCharTerm {
     type AbstractTypeType = UnicodeChar;
 
     fn is_parametric(&self) -> bool {
@@ -106,7 +106,7 @@ impl TermTrait for UnicodeCharTerm {
     }
 }
 
-impl st::TestValues for UnicodeCharTerm {
+impl st::TestValuesT for UnicodeCharTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec!['a', ' ', '\n', '日']
     }

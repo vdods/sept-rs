@@ -1,23 +1,15 @@
 use crate::{
     dy,
-    st::{self, Inhabits, Stringifiable},
+    st::{self, InhabitsT, StringifiableT},
     Result,
 };
 use std::fmt::Debug;
 
 /// This represents the Sint8 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Sint8Type",
     is_parametric = "false",
     is_type = "true"
@@ -26,17 +18,9 @@ pub struct Sint8;
 
 /// This represents the Sint16 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Sint16Type",
     is_parametric = "false",
     is_type = "true"
@@ -45,17 +29,9 @@ pub struct Sint16;
 
 /// This represents the Sint32 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Sint32Type",
     is_parametric = "false",
     is_type = "true"
@@ -64,17 +40,9 @@ pub struct Sint32;
 
 /// This represents the Sint64 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Sint64Type",
     is_parametric = "false",
     is_type = "true"
@@ -83,17 +51,9 @@ pub struct Sint64;
 
 /// This represents the Uint8 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Uint8Type",
     is_parametric = "false",
     is_type = "true"
@@ -102,17 +62,9 @@ pub struct Uint8;
 
 /// This represents the Uint16 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Uint16Type",
     is_parametric = "false",
     is_type = "true"
@@ -121,17 +73,9 @@ pub struct Uint16;
 
 /// This represents the Uint32 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Uint32Type",
     is_parametric = "false",
     is_type = "true"
@@ -140,24 +84,16 @@ pub struct Uint32;
 
 /// This represents the Uint64 type itself.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
-    PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "st::Uint64Type",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Uint64;
 
-impl dy::Constructor for Sint8 {
+impl dy::ConstructorT for Sint8 {
     type ConstructedType = i8;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -181,12 +117,12 @@ impl dy::Constructor for Sint8 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Sint16 {
+impl dy::ConstructorT for Sint16 {
     type ConstructedType = i16;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -210,12 +146,12 @@ impl dy::Constructor for Sint16 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Sint32 {
+impl dy::ConstructorT for Sint32 {
     type ConstructedType = i32;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -239,12 +175,12 @@ impl dy::Constructor for Sint32 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Sint64 {
+impl dy::ConstructorT for Sint64 {
     type ConstructedType = i64;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -268,12 +204,12 @@ impl dy::Constructor for Sint64 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Uint8 {
+impl dy::ConstructorT for Uint8 {
     type ConstructedType = u8;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -297,12 +233,12 @@ impl dy::Constructor for Uint8 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Uint16 {
+impl dy::ConstructorT for Uint16 {
     type ConstructedType = u16;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -326,12 +262,12 @@ impl dy::Constructor for Uint16 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Uint32 {
+impl dy::ConstructorT for Uint32 {
     type ConstructedType = u32;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -355,12 +291,12 @@ impl dy::Constructor for Uint32 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl dy::Constructor for Uint64 {
+impl dy::ConstructorT for Uint64 {
     type ConstructedType = u64;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -384,102 +320,102 @@ impl dy::Constructor for Uint64 {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<st::Sint8Type> for Sint8 {
+impl InhabitsT<st::Sint8Type> for Sint8 {
     fn inhabits(&self, _: &st::Sint8Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint16Type> for Sint16 {
+impl InhabitsT<st::Sint16Type> for Sint16 {
     fn inhabits(&self, _: &st::Sint16Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint32Type> for Sint32 {
+impl InhabitsT<st::Sint32Type> for Sint32 {
     fn inhabits(&self, _: &st::Sint32Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Sint64Type> for Sint64 {
+impl InhabitsT<st::Sint64Type> for Sint64 {
     fn inhabits(&self, _: &st::Sint64Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint8Type> for Uint8 {
+impl InhabitsT<st::Uint8Type> for Uint8 {
     fn inhabits(&self, _: &st::Uint8Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint16Type> for Uint16 {
+impl InhabitsT<st::Uint16Type> for Uint16 {
     fn inhabits(&self, _: &st::Uint16Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint32Type> for Uint32 {
+impl InhabitsT<st::Uint32Type> for Uint32 {
     fn inhabits(&self, _: &st::Uint32Type) -> bool {
         true
     }
 }
 
-impl Inhabits<st::Uint64Type> for Uint64 {
+impl InhabitsT<st::Uint64Type> for Uint64 {
     fn inhabits(&self, _: &st::Uint64Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Sint8 {
+impl st::InhabitsT<st::Type> for Sint8 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Sint16 {
+impl st::InhabitsT<st::Type> for Sint16 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Sint32 {
+impl st::InhabitsT<st::Type> for Sint32 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Sint64 {
+impl st::InhabitsT<st::Type> for Sint64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Uint8 {
+impl st::InhabitsT<st::Type> for Uint8 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Uint16 {
+impl st::InhabitsT<st::Type> for Uint16 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Uint32 {
+impl st::InhabitsT<st::Type> for Uint32 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Uint64 {
+impl st::InhabitsT<st::Type> for Uint64 {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

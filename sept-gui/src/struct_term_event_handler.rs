@@ -1,11 +1,11 @@
 use crate::{
-    placeholder_event_handler_impl, AddressedEdit, Edit, CursorEdit, EventHandler,
-    EventHandlerCtx, LayoutDiscriminant, RootValueEdit,
+    placeholder_event_handler_impl, AddressedEdit, CursorEdit, Edit, EventHandlerCtx,
+    EventHandlerT, LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
-use sept::dy::IntoValue;
+use sept::dy::IntoValueT;
 
-impl EventHandler for sept::dy::StructTerm {
+impl EventHandlerT for sept::dy::StructTerm {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -15,7 +15,7 @@ impl EventHandler for sept::dy::StructTerm {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
             let mut event_handler_ctx_g = event_handler_ctx.push_nesting_depth();
             let event_handler_ctx = &mut event_handler_ctx_g;
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             match self.run_single_query(cursor_address_token)? {
                 sept::qv::StructTermQuery::StructTermFieldElemView(v) => {
                     v.handle_event(event, event_handler_ctx, cursor_address_token_i)
@@ -23,7 +23,7 @@ impl EventHandler for sept::dy::StructTerm {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 // egui::Event::Paste(string) => {
                 // TODO: Create a replace or insert edit, depending on the mode.
@@ -66,7 +66,7 @@ impl EventHandler for sept::dy::StructTerm {
     }
 }
 
-impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
+impl<'a> EventHandlerT for sept::qv::StructTermFieldElemView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -74,7 +74,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
         cursor_address_token_i: &mut dyn std::iter::Iterator<Item = &sept::dy::Value>,
     ) -> Result<Option<egui::Event>> {
         if let Some(cursor_address_token) = cursor_address_token_i.next() {
-            use sept::qv::SingleQuery;
+            use sept::qv::SingleQueryT;
             self.run_single_query(cursor_address_token)?.handle_event(
                 event,
                 event_handler_ctx,
@@ -82,7 +82,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
             )
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             let cursor_len = event_handler_ctx.cursor_address.len() as u32;
             assert!(cursor_len >= 1);
             match event {
@@ -124,7 +124,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     // Only delete if we're not at the end of the StructTerm.
                     if self.field_index < self.struct_term.len() {
                         let cursor_value = {
-                            use sept::qv::QueryableDynTrait;
+                            use sept::qv::QueryableDynT;
                             let query_b = event_handler_ctx
                                 .root_value
                                 .make_and_run_query(&mut event_handler_ctx.cursor_address.iter())
@@ -153,7 +153,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                         let mut v = self.clone();
                         v.increment_field_index_by(-1);
                         let cursor_field = {
-                            use sept::qv::EvalTrait;
+                            use sept::qv::EvalT;
                             v.eval().unwrap().to_owned()
                         };
 
@@ -358,7 +358,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
     }
 }
 
-impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
+impl<'a> EventHandlerT for sept::qv::StructTermFieldElemElemView<'a> {
     fn handle_event(
         &self,
         event: egui::Event,
@@ -385,7 +385,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
-            // TODO: Probably put this into a method in the EventHandler trait.
+            // TODO: Probably put this into a method in EventHandlerT.
             let cursor_len = event_handler_ctx.cursor_address.len() as u32;
             assert!(cursor_len >= 2);
             match event {

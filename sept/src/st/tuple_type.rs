@@ -9,16 +9,16 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
+#[st_term_t(AbstractTypeType = "Type", is_parametric = "false", is_type = "true")]
 pub struct TupleType {}
 
-impl st::Inhabits<Type> for TupleType {
+impl st::InhabitsT<Type> for TupleType {
     fn inhabits(&self, _rhs: &Type) -> bool {
         true
     }

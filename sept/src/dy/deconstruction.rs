@@ -130,7 +130,7 @@ impl Deconstruction {
     }
 }
 
-// impl st::Deserializable for Deconstruction {
+// impl st::DeserializableT for Deconstruction {
 //     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
 //         // Deserialize the DecostructionKind so that we know which one to deserialize.
 //         let deconstruction_kind_code = u8::deserialize(reader)?;
@@ -150,7 +150,7 @@ impl Deconstruction {
 //     }
 // }
 //
-// impl st::Serializable for Deconstruction {
+// impl st::SerializableT for Deconstruction {
 //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 //         // Serialize the DecostructionKind so that deserialization knows which one to deserialize.
 //         let mut bytes_written = (self.kind() as u8).serialize(writer)?;

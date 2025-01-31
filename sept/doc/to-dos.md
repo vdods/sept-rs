@@ -1,6 +1,5 @@
 # To-dos
 
--   Rename `*Trait` to `*T` and use `T` as a short semantic tag on trait names.
 -   Create a runtime for the term/type system.
     -   Store a poset of types for efficient type computations (inhabitation, subtype, supertype, common subtype, common supertype, etc).
     -   Will eventually need to handle schemes of types, meaning that there are parameterized families (potentially infinite in size) of terms/types that need to be handled without needing to actually instantiate them.
@@ -190,9 +189,9 @@
 
 -   Done: Maybe split things up into a static types module `st` and dynamic types module `dy`, since there are essentially
     two analogous sides to the sept data model.  Then there would be compile-time and runtime versions of each
-    trait, e.g. `TermTrait`, `TypeTrait`, etc.
+    trait, e.g. `TermT`, `TypeT`, etc.
 -   Implement macros for deriving traits, which will clean a ton of boilerplate up.
--   Implement `st::TransparentRefTrait` (contrast with `dy::TransparentRefTrait`) where the dereferenced type
+-   Implement `st::TransparentRefT` (contrast with `dy::TransparentRefT`) where the dereferenced type
     is specified.  This would be suitable for typed references.  Implementing full dereference (of nested
     references) will be tricky because it requires knowing or specifying all the types in the deref sequence.
 -   A `StructTermTerm` is really a kind of typed `TupleTerm`.  Maybe this should be implemented using semantic
@@ -202,7 +201,7 @@
     of `let x = X{};`.  Though apparently this doesn't work for type aliases (error is "can't use a type alias
     as a constructor").  In particular, `Float32`, `Float64`, `Sint8`, `Uint8`, etc are type aliases, so this
     wouldn't work for them.
--   Decompose `st::TermTrait` into traits `st::AbstractTypeOf`, `st::IsParametric`, and `st::IsType`, where
+-   Decompose `st::TermT` into traits `st::AbstractTypeOf`, `st::IsParametric`, and `st::IsType`, where
     they don't depend on any `&self` parameter.  Also define `dy` versions of each of these.  Jamming:
 
         trait dy::AbstractTypeOf {
@@ -300,15 +299,15 @@
 
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
 -   Could maybe use https://docs.rs/tuple_list/latest/tuple_list/ to implement a `st::TupleTerm`.
--   The notion of type is related to the `Constructor` trait.  In particular, a type is a term that has a notion of inhabitation by other terms (even if it may be inhabited by no terms, such as `EmptyType`).  This is really a declaration that something exists.  But `Constructor` is more specific, because it actually defines how a term can be used to construct another term, and defines what the parameterization is.
-    -   Question: Should a `Constructor` always construct a term that inhabits it?  That's a good starting assumption.  Algebraic data types, e.g. `pub enum Thing { A(String), Nothing}` can be handled by making `A` and `Nothing` non-parametric terms that are passed as parameters to the constructor `Thing`.  Though in this case, `Thing(A, ...)` could also be considered to be a constructor.
+-   The notion of type is related to the `ConstructorT` trait.  In particular, a type is a term that has a notion of inhabitation by other terms (even if it may be inhabited by no terms, such as `EmptyType`).  This is really a declaration that something exists.  But `ConstructorT` is more specific, because it actually defines how a term can be used to construct another term, and defines what the parameterization is.
+    -   Question: Should a `ConstructorT` always construct a term that inhabits it?  That's a good starting assumption.  Algebraic data types, e.g. `pub enum Thing { A(String), Nothing}` can be handled by making `A` and `Nothing` non-parametric terms that are passed as parameters to the constructor `Thing`.  Though in this case, `Thing(A, ...)` could also be considered to be a constructor.
     -   A `NonParametricTerm` is a kind of constructor, in that it is its own, zero-parameter, constructor.  Though probably shouldn't be implemented that way, since it also forms the base case of the inductive construction of terms.  Maybe simply allow it, since there's probably no harm in doing so, and it might simplify other logic.
 -   Implement destructuring of sept `dy::Value` into Rust types, especially tuples and structs.
 -   Rename `type_` to `r#type`.
 -   Maybe use the crate `funty` and its "fundamental" traits to clean up some of the POD types.
--   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `Deconstruct` and `Construct` can be implemented for `LocalSymRefTerm`.
+-   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `DeconstructT` and `ConstructorT` can be implemented for `LocalSymRefTerm`.
 -   Rename Ascii* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
--   Make Stringifiable's stringify() function work like std::fmt::Display, taking a writer instead of producing a String.
+-   Make `StringifiableT`'s stringify() function work like std::fmt::Display, taking a writer instead of producing a String.
 -   This shouldn't produce a warning:
 
         [2023-05-05T22:52:37.796819980 WARN sept/src/dy/runtime.rs:1229] Runtime is using TypeId to be able to `cmp` different types (u32, u32); this ordering is not stable between builds because TypeId is not stable between builds.

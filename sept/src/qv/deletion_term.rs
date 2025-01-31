@@ -3,8 +3,8 @@ use crate::{dy, qv, st, Result};
 /// This diff represents deletion of a value from a container or other structure, and depending
 /// on the container/structure, may require additional context to be fully meaningful (e.g. the
 /// address of the index to delete).
-#[derive(Clone, Debug, Eq, dy::IntoValue, PartialEq, st::TermTrait)]
-#[st_term_trait(
+#[derive(Clone, Debug, Eq, dy::IntoValueT, PartialEq, st::TermT)]
+#[st_term_t(
     AbstractTypeType = "st::Deletion",
     is_parametric = "true",
     is_type = "false"
@@ -19,7 +19,7 @@ impl DeletionTerm {
     }
 }
 
-impl dy::Deconstruct for DeletionTerm {
+impl dy::DeconstructT for DeletionTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         dy::ParametricDeconstruction::new_recursive(
             st::Insertion.into(),
@@ -29,14 +29,14 @@ impl dy::Deconstruct for DeletionTerm {
     }
 }
 
-impl st::Deserializable for DeletionTerm {
+impl st::DeserializableT for DeletionTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let old_data = dy::Value::deserialize(reader)?;
         Ok(Self { old_data })
     }
 }
 
-impl st::EditTrait for DeletionTerm {
+impl st::EditT for DeletionTerm {
     type Inverse = qv::InsertionTerm;
     fn into_inverse(self) -> Self::Inverse {
         qv::InsertionTerm {
@@ -45,19 +45,19 @@ impl st::EditTrait for DeletionTerm {
     }
 }
 
-impl st::Inhabits<st::Deletion> for DeletionTerm {
+impl st::InhabitsT<st::Deletion> for DeletionTerm {
     fn inhabits(&self, _rhs: &st::Deletion) -> bool {
         true
     }
 }
 
-impl st::Serializable for DeletionTerm {
+impl st::SerializableT for DeletionTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         self.old_data.serialize(writer)
     }
 }
 
-impl st::Stringifiable for DeletionTerm {
+impl st::StringifiableT for DeletionTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         s.push_str("DeletionTerm(");

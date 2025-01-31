@@ -1,25 +1,25 @@
 use crate::{
     dy, qv,
-    st::{self, Float32, Float64, Inhabits, Stringifiable, TermTrait},
+    st::{self, Float32, Float64, InhabitsT, StringifiableT, TermT},
     Error, Result,
 };
 
 pub type Float32Term = f32;
 pub type Float64Term = f64;
 
-impl qv::ApplyEditTrait for f32 {
+impl qv::ApplyEditT for f32 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl qv::ApplyEditTrait for f64 {
+impl qv::ApplyEditT for f64 {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-impl dy::Deconstruct for f32 {
+impl dy::DeconstructT for f32 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -30,7 +30,7 @@ impl dy::Deconstruct for f32 {
     }
 }
 
-impl dy::Deconstruct for f64 {
+impl dy::DeconstructT for f64 {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
@@ -41,22 +41,22 @@ impl dy::Deconstruct for f64 {
     }
 }
 
-impl Inhabits<Float32> for f32 {
+impl InhabitsT<Float32> for f32 {
     fn inhabits(&self, _: &Float32) -> bool {
         true
     }
 }
 
-impl Inhabits<Float64> for f64 {
+impl InhabitsT<Float64> for f64 {
     fn inhabits(&self, _: &Float64) -> bool {
         true
     }
 }
 
-impl dy::IntoValue for f32 {}
-impl dy::IntoValue for f64 {}
+impl dy::IntoValueT for f32 {}
+impl dy::IntoValueT for f64 {}
 
-impl st::Deserializable for f32 {
+impl st::DeserializableT for f32 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -64,7 +64,7 @@ impl st::Deserializable for f32 {
     }
 }
 
-impl st::Deserializable for f64 {
+impl st::DeserializableT for f64 {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let mut buffer = [0u8; std::mem::size_of::<Self>()];
         reader.read_exact(&mut buffer)?;
@@ -73,20 +73,20 @@ impl st::Deserializable for f64 {
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for f32 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for f32 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
 // TODO: Replace this with the full set of queries
-impl qv::QueryableDynTrait for f64 {
-    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryTrait + 'a> {
+impl qv::QueryableDynT for f64 {
+    fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
 }
 
-impl st::Serializable for f32 {
+impl st::SerializableT for f32 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -99,7 +99,7 @@ impl st::Serializable for f32 {
     }
 }
 
-impl st::Serializable for f64 {
+impl st::SerializableT for f64 {
     //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
@@ -112,7 +112,7 @@ impl st::Serializable for f64 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for f32 {
+impl qv::SingleQueryMutT<dy::Value> for f32 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -123,7 +123,7 @@ impl qv::SingleQueryMut<dy::Value> for f32 {
     }
 }
 
-impl qv::SingleQueryMut<dy::Value> for f64 {
+impl qv::SingleQueryMutT<dy::Value> for f64 {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
@@ -134,21 +134,21 @@ impl qv::SingleQueryMut<dy::Value> for f64 {
     }
 }
 
-impl Stringifiable for f32 {
+impl StringifiableT for f32 {
     fn stringify(&self) -> String {
         // Apparently Rust, by default, formats floats with enough digits to make them unique.
         self.to_string()
     }
 }
 
-impl Stringifiable for f64 {
+impl StringifiableT for f64 {
     fn stringify(&self) -> String {
         // Apparently Rust, by default, formats floats with enough digits to make them unique.
         self.to_string()
     }
 }
 
-impl TermTrait for f32 {
+impl TermT for f32 {
     type AbstractTypeType = Float32;
 
     fn is_parametric(&self) -> bool {
@@ -162,7 +162,7 @@ impl TermTrait for f32 {
     }
 }
 
-impl TermTrait for f64 {
+impl TermT for f64 {
     type AbstractTypeType = Float64;
 
     fn is_parametric(&self) -> bool {
@@ -176,7 +176,7 @@ impl TermTrait for f64 {
     }
 }
 
-impl st::TestValues for f32 {
+impl st::TestValuesT for f32 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as the constants.  Note that Self::NAN is not included
         // here because it has different comparison semantics than every other value.
@@ -203,7 +203,7 @@ impl st::TestValues for f32 {
     }
 }
 
-impl st::TestValues for f64 {
+impl st::TestValuesT for f64 {
     fn fixed_test_values() -> Vec<Self> {
         // Just do some common values as well as the constants.  Note that Self::NAN is not included
         // here because it has different comparison semantics than every other value.

@@ -39,7 +39,7 @@ impl TerminalDeconstruction {
     }
 }
 
-// impl st::Serializable for TerminalDeconstruction {
+// impl st::SerializableT for TerminalDeconstruction {
 //     fn serialize_parameters(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 //         Ok(dy::RUNTIME_LA.read().unwrap().serialize(self.as_ref(), writer)?)
 //     }

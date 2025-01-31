@@ -5,7 +5,7 @@ use crate::{dy, qv, Result};
 pub struct OrderedMapTermValElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object.
     pub ordered_map_term: &'a mut dy::OrderedMapTerm,
-    // TODO: Attempt to make this a reference again (have to modify SingleQueryMut::run_single_query_mut
+    // TODO: Attempt to make this a reference again (have to modify SingleQueryMutT::run_single_query_mut
     // and that's likely to be a big can of worms)
     pub key: dy::Value,
 }
@@ -23,7 +23,7 @@ impl<'a> OrderedMapTermValElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for OrderedMapTermValElemMutView<'a> {
+impl<'a> qv::ApplyEditT for OrderedMapTermValElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // Just forward to the val itself.  The unwrap can't fail because it was checked in the constructor.
         self.ordered_map_term
@@ -33,7 +33,7 @@ impl<'a> qv::ApplyEditTrait for OrderedMapTermValElemMutView<'a> {
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditTrait for OrderedMapTermValElemMutView<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for OrderedMapTermValElemMutView<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,

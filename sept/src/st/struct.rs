@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    st::{self, Inhabits, StructType},
+    st::{self, InhabitsT, StructType},
     Result,
 };
 use std::fmt::Debug;
@@ -10,20 +10,20 @@ use std::fmt::Debug;
     Copy,
     Debug,
     Eq,
-    dy::IntoValue,
-    st::NonParametricTermTrait,
+    dy::IntoValueT,
+    st::NonParametricTermT,
     PartialEq,
-    st::TermTrait,
-    st::TypeTrait,
+    st::TermT,
+    st::TypeT,
 )]
-#[st_term_trait(
+#[st_term_t(
     AbstractTypeType = "StructType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct Struct;
 
-impl dy::Constructor for Struct {
+impl dy::ConstructorT for Struct {
     type ConstructedType = dy::StructTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         //         // TEMP HACK: This will be a real type eventually.
@@ -58,18 +58,18 @@ impl dy::Constructor for Struct {
         &self,
         reader: &mut dyn std::io::Read,
     ) -> Result<Self::ConstructedType> {
-        use st::Deserializable;
+        use st::DeserializableT;
         Ok(Self::ConstructedType::deserialize(reader)?)
     }
 }
 
-impl Inhabits<StructType> for Struct {
+impl InhabitsT<StructType> for Struct {
     fn inhabits(&self, _: &StructType) -> bool {
         true
     }
 }
 
-impl st::Inhabits<st::Type> for Struct {
+impl st::InhabitsT<st::Type> for Struct {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }

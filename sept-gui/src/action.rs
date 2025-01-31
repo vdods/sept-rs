@@ -59,7 +59,7 @@ impl Action {
         let mut successful_edit_count = 0usize;
         for edit in edit_v {
             tracing::trace!("Action::apply; executing edit {:?}", edit);
-            use sept::qv::QueryMutAndApplyEditTrait;
+            use sept::qv::QueryMutAndApplyEditT;
             match edit {
                 Edit::CursorEdit(cursor_edit) => {
                     cursor_address
@@ -97,8 +97,8 @@ impl Action {
         root_value: &mut sept::dy::Value,
         cursor_address: &mut sept::dy::TupleTerm,
     ) {
-        use sept::qv::QueryMutAndApplyEditTrait;
-        use sept::st::EditTrait;
+        use sept::qv::QueryMutAndApplyEditT;
+        use sept::st::EditT;
         for edit in edit_v.iter().rev() {
             match edit {
                 Edit::CursorEdit(cursor_edit) => {
@@ -112,7 +112,7 @@ impl Action {
                             &mut address.iter(),
                             edit_inv,
                         )
-                        .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
+                        .expect("programmer error: there is some problem with the definition of some EditT inverse.");
                 }
                 Edit::RootValueEdit(root_value_edit) => {
                     // TODO: Figure out how to not clone root_value_edit.
@@ -124,7 +124,7 @@ impl Action {
                         &mut address.iter(),
                         edit_inv,
                     )
-                    .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
+                    .expect("programmer error: there is some problem with the definition of some EditT inverse.");
                 }
             }
         }

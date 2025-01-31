@@ -12,13 +12,13 @@ impl<'a> OrderedMapTermValMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditTrait for OrderedMapTermValMutView<'a> {
+impl<'a> qv::ApplyEditT for OrderedMapTermValMutView<'a> {
     fn apply_edit(&mut self, _edit: dy::Value) -> Result<()> {
         anyhow::bail!("OrderedMapTermValMutView doesn't support any edits yet");
     }
 }
 
-impl<'b> qv::SingleQueryMut<dy::Value> for OrderedMapTermValMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for OrderedMapTermValMutView<'b> {
     type ReturnType<'a> = qv::OrderedMapTermValElemMutView<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(

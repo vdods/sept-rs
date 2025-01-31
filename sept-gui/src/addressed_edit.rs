@@ -4,7 +4,7 @@ pub struct AddressedEdit {
     pub edit: sept::dy::Value,
 }
 
-impl sept::st::EditTrait for AddressedEdit {
+impl sept::st::EditT for AddressedEdit {
     type Inverse = Self;
     fn into_inverse(self) -> Self::Inverse {
         Self {

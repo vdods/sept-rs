@@ -50,15 +50,15 @@ fn main() -> anyhow::Result<()> {
         }
     };
     log::info!("parsed value:\n{:?}", value);
-    use sept::st::Stringifiable;
+    use sept::st::StringifiableT;
     log::info!("parsed value stringified:\n{}", value.stringify());
-    use sept::dy::Deconstruct;
+    use sept::dy::DeconstructT;
     let deconstruction = value.deconstructed();
     log::info!("parsed value deconstructed:\n{:?}", deconstruction);
     match cmd_flags.r#out {
         Format::Bin => {
             let mut stdout = std::io::stdout();
-            use sept::st::Serializable;
+            use sept::st::SerializableT;
             value.serialize(&mut stdout)?;
             Ok(())
         }

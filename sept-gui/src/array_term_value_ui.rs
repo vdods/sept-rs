@@ -1,10 +1,10 @@
 use crate::{
-    indentation_for, layout_job_append, render_type_annotation_for, ValueUI, ViewCtx,
+    indentation_for, layout_job_append, render_type_annotation_for, ValueUIT, ViewCtx,
     END_OF_TRANSMISSION_STR,
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUI for sept::dy::ArrayTerm {
+impl ValueUIT for sept::dy::ArrayTerm {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }

@@ -8,7 +8,7 @@ pub enum StructTermQuery<'a> {
 }
 
 // TODO: Derive
-impl<'b> qv::EvalTrait for StructTermQuery<'b> {
+impl<'b> qv::EvalT for StructTermQuery<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         match self {
             Self::StructTermFieldElemView(v) => v.eval(),

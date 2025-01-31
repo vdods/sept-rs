@@ -1,6 +1,6 @@
 use crate::{
     dy, qv,
-    st::{self, Stringifiable},
+    st::{self, StringifiableT},
     Result,
 };
 
@@ -10,7 +10,7 @@ use crate::{
 // TODO: Figure out how to do this more efficiently, e.g. not having a full copy of r#type (which
 // is really just the symbol_id of the StructTerm), and instead have a direct reference to the
 // StructTerm itself.
-#[derive(Clone, Debug, dy::IntoValue, PartialEq)]
+#[derive(Clone, Debug, dy::IntoValueT, PartialEq)]
 pub struct StructTermTerm {
     /// An instance of StructTermTerm necessarily has a defined type, which is an instance of
     /// StructTerm.  Typically that would be declared in a symbol table (probably the global symbol
@@ -26,29 +26,29 @@ pub struct StructTermTerm {
     pub(crate) field_t: dy::TupleTerm,
 }
 
-impl qv::ApplyEditTrait for StructTermTerm {
+impl qv::ApplyEditT for StructTermTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
 }
 
-/// StructTermTerm's canonical implementation of Deconstruct could not be simpler.
-impl dy::Deconstruct for StructTermTerm {
+/// StructTermTerm's canonical implementation of DeconstructT could not be simpler.
+impl dy::DeconstructT for StructTermTerm {
     fn deconstruct(self) -> dy::Deconstruction {
         dy::ParametricDeconstruction::new_recursive(self.r#type, self.field_t).into()
     }
 }
 
-// TODO: Impls for st::Inhabits<dy::GlobalSymRefTerm> and st::Inhabits<dy::LocalSymRefTerm>
+// TODO: Impls for st::InhabitsT<dy::GlobalSymRefTerm> and st::InhabitsT<dy::LocalSymRefTerm>
 
-impl st::Inhabits<dy::StructTerm> for StructTermTerm {
+impl st::InhabitsT<dy::StructTerm> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::StructTerm) -> bool {
         rhs.is_inhabited_by(&self.field_t)
     }
 }
 
 // This implementation is necessary because StructTermTerm::AbstractTypeType is dy::Value.
-impl st::Inhabits<dy::Value> for StructTermTerm {
+impl st::InhabitsT<dy::Value> for StructTermTerm {
     fn inhabits(&self, rhs: &dy::Value) -> bool {
         dy::RUNTIME_LA.read().unwrap().inhabits(self, rhs.as_ref())
     }
@@ -108,7 +108,7 @@ impl std::fmt::Display for StructTermTerm {
     }
 }
 
-impl st::Deserializable for StructTermTerm {
+impl st::DeserializableT for StructTermTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
         let type_ = dy::Value::deserialize(reader)?;
         let field_t = dy::TupleTerm::deserialize(reader)?;
@@ -118,7 +118,7 @@ impl st::Deserializable for StructTermTerm {
     }
 }
 
-impl st::Serializable for StructTermTerm {
+impl st::SerializableT for StructTermTerm {
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // This is a bit redundant, in that the case of serializing dy::Value::from(struct_term_term),
         // it serializes the type twice, but it drastically simplifies the logic.
@@ -128,10 +128,10 @@ impl st::Serializable for StructTermTerm {
     }
 }
 
-// /// Note that StructTermTerm doesn't implement st::Deserializable, because its constructor is
+// /// Note that StructTermTerm doesn't implement st::DeserializableT, because its constructor is
 // /// a parametric type (StructTerm).  Instead, it's deserialized using StructTerm's impl of
-// /// dy::Constructor::deserialize_parameters_and_construct.
-// impl st::Serializable for StructTermTerm {
+// /// dy::ConstructorT::deserialize_parameters_and_construct.
+// impl st::SerializableT for StructTermTerm {
 // //     fn serialize_top_level_code(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 // //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
 // //     }
@@ -150,7 +150,7 @@ impl st::Serializable for StructTermTerm {
 //     }
 // }
 
-impl st::Stringifiable for StructTermTerm {
+impl st::StringifiableT for StructTermTerm {
     fn stringify(&self) -> String {
         let mut s = String::new();
         // NOTE: This doesn't guarantee any of:
@@ -168,7 +168,7 @@ impl st::Stringifiable for StructTermTerm {
     }
 }
 
-impl st::TermTrait for StructTermTerm {
+impl st::TermT for StructTermTerm {
     type AbstractTypeType = dy::Value;
 
     /// Because of the dynamic nature of StructTermTerm (along with other implementation choices
@@ -185,7 +185,7 @@ impl st::TermTrait for StructTermTerm {
     }
 }
 
-impl st::TestValues for StructTermTerm {
+impl st::TestValuesT for StructTermTerm {
     fn fixed_test_values() -> Vec<Self> {
         vec![
             // Empty struct

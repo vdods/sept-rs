@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    qv::{self, QueryableDynTrait},
+    qv::{self, QueryableDynT},
     Error, Result,
 };
 
@@ -67,11 +67,11 @@ impl<'a> ArrayTermElemView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for ArrayTermElemView<'b> {
+impl<'b> qv::QueryT for ArrayTermElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -100,7 +100,7 @@ impl<'b> qv::QueryTrait for ArrayTermElemView<'b> {
         }
         // let first_address = address_token_i.next().unwrap();
         // // TODO: If char ever gets further queries (e.g. numeric unicode value), then pass them on here.
-        // use st::Stringifiable;
+        // use st::StringifiableT;
         // anyhow::bail!(
         //     "ArrayTermElemView query doesn't support address: {}",
         //     first_address.stringify()
@@ -108,7 +108,7 @@ impl<'b> qv::QueryTrait for ArrayTermElemView<'b> {
     }
 }
 
-impl<'b> qv::EvalTrait for ArrayTermElemView<'b> {
+impl<'b> qv::EvalT for ArrayTermElemView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         // let elem = self.array_term.get(self.elem_index).unwrap();
         let elem = self.elem_o.as_deref().ok_or_else(|| {
@@ -127,7 +127,7 @@ impl<'b> qv::EvalTrait for ArrayTermElemView<'b> {
 #[derive(Clone, Debug, derive_more::From)]
 pub enum ArrayTermElemViewQuery {}
 
-impl<'b> qv::SingleQuery<dy::Value> for ArrayTermElemView<'b> {
+impl<'b> qv::SingleQueryT<dy::Value> for ArrayTermElemView<'b> {
     type ReturnType<'a> = ArrayTermElemViewQuery where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
@@ -138,7 +138,7 @@ impl<'b> qv::SingleQuery<dy::Value> for ArrayTermElemView<'b> {
     }
 }
 
-impl qv::EvalTrait for ArrayTermElemViewQuery {
+impl qv::EvalT for ArrayTermElemViewQuery {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         unimplemented!("this shouldn't exist");
     }

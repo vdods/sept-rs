@@ -21,11 +21,11 @@ impl<'a> OrderedMapTermValView<'a> {
     }
 }
 
-impl<'b> qv::QueryTrait for OrderedMapTermValView<'b> {
+impl<'b> qv::QueryT for OrderedMapTermValView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-    ) -> Result<Box<dyn qv::EvalTrait + 'a>>
+    ) -> Result<Box<dyn qv::EvalT + 'a>>
     where
         Self: 'a,
     {
@@ -37,13 +37,13 @@ impl<'b> qv::QueryTrait for OrderedMapTermValView<'b> {
             // Otherwise, pass it on to the val.  This unwrap can't fail because key containment
             // was checked upon construction.
             let val = self.ordered_map_term.get(self.key).unwrap();
-            use qv::QueryableDynTrait;
+            use qv::QueryableDynT;
             val.make_and_run_query(&mut address_token_i)
         }
     }
 }
 
-impl<'b> qv::EvalTrait for OrderedMapTermValView<'b> {
+impl<'b> qv::EvalT for OrderedMapTermValView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         // This unwrap can't fail because key containment was checked upon construction.
         let val = self.ordered_map_term.get(self.key).unwrap();

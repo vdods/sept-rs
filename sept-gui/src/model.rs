@@ -90,7 +90,7 @@ impl Model {
             .open(&path)
             .expect("TODO: handle this");
 
-        use sept::st::Deserializable;
+        use sept::st::DeserializableT;
         let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
 
         self.root_value_la = Arc::new(RwLock::new(root_value));
@@ -132,7 +132,7 @@ impl Model {
             .open(&open_file_path)
             .expect("TODO: handle this");
 
-        use sept::st::Serializable;
+        use sept::st::SerializableT;
         self.root_value_la
             .read()
             .unwrap()
@@ -149,7 +149,7 @@ impl Model {
     /// Reset the model to a "blank" state, discarding any existing changes.
     pub fn clear(&mut self) {
         tracing::info!("Discard");
-        use sept::dy::IntoValue;
+        use sept::dy::IntoValueT;
         self.root_value_la = Arc::new(RwLock::new(sept::dy::ArrayTerm::from(vec![]).into_value()));
         self.cursor_address = sept::dy::TupleTerm::from(vec![]);
         self.action_v = VecDeque::new();
@@ -226,7 +226,7 @@ impl Model {
                 &mut enqueued_edit_v,
             );
 
-            use crate::EventHandler;
+            use crate::EventHandlerT;
             root_value_g
                 .handle_event(
                     event,
@@ -255,7 +255,7 @@ impl Model {
 
         ui.vertical(|ui| {
             let root_value_g = self.root_value_la.read().unwrap();
-            use crate::ValueUI;
+            use crate::ValueUIT;
             let layout_job = root_value_g.run_ui(ui, &mut view_ctx, None);
             ui.label(layout_job);
         });
@@ -266,7 +266,7 @@ impl Model {
 
 impl Default for Model {
     fn default() -> Self {
-        use sept::dy::IntoValue;
+        use sept::dy::IntoValueT;
         // TODO: Eventually this default root value should be Placeholder or something.
         let root_value = sept::dy::ArrayTerm::from(vec![]).into_value();
         let root_value_la = Arc::new(RwLock::new(root_value));

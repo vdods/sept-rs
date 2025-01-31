@@ -3,13 +3,13 @@ use crate::qv;
 /// This is meant to provide a specific return type for a single-step, mutable query, so that it can
 /// be called in other places that require more general query behavior.
 // TODO: Consider requiring SingleQuery<AddressToken>
-pub trait SingleQueryMut<AddressToken> {
-    // TODO: Is it possible to require SingleQueryMut<AddressToken> here?  probably not, since it would
+pub trait SingleQueryMutT<AddressToken> {
+    // TODO: Is it possible to require SingleQueryMutT<AddressToken> here?  probably not, since it would
     // be some ridiculous branching type unless somehow interrupted by trait objects.
     // TODO: Make it possible to use &AddressToken in ReturnType.  This probably requires
     // introducing a new lifetime for &AddressToken and maybe one for the return type,
     // and setting proper lifetime bounds.
-    type ReturnType<'a>: qv::ApplyEditTrait + qv::QueryMutAndApplyEditTrait + 'a
+    type ReturnType<'a>: qv::ApplyEditT + qv::QueryMutAndApplyEditT + 'a
     where
         Self: 'a;
     type Error;

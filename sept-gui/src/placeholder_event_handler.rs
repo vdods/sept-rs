@@ -1,9 +1,9 @@
 use crate::{
-    first_char_stripped_string, AddressedEdit, Edit, EventHandler, EventHandlerCtx, RootValueEdit,
+    first_char_stripped_string, AddressedEdit, Edit, EventHandlerCtx, EventHandlerT, RootValueEdit,
 };
 use anyhow::Result;
 
-impl EventHandler for sept::st::Placeholder {
+impl EventHandlerT for sept::st::Placeholder {
     fn handle_event(
         &self,
         event: egui::Event,

@@ -1,9 +1,9 @@
 use crate::Result;
 
-pub trait Deserializable {
+pub trait DeserializableT {
     // TODO: Is it necessary to pass in the constructor, e.g. for terms whose types are parametric
     // such as StructTermTerm?  No, that would be a weak trait.  Instead, those should be deserialized
-    // via Constructor::deserialize_parameters_and_construct.
+    // via ConstructorT::deserialize_parameters_and_construct.
 
     /// Produce an instance of Self by deserializing the serialized parameters.  This obviously
     /// requires knowing the type `Self`.

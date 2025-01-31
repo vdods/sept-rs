@@ -1,6 +1,6 @@
 use crate::{dy, qv, Result};
 
-pub trait QueryMutAndApplyEditTrait {
+pub trait QueryMutAndApplyEditT {
     // TODO: Rename to something better, this is ridiculous.
     // TODO: Maybe 's is not needed and can be elided.
     fn query_mut_and_apply_edit<'s, 'a>(
@@ -12,10 +12,10 @@ pub trait QueryMutAndApplyEditTrait {
         's: 'a;
 }
 
-impl<T> QueryMutAndApplyEditTrait for T
+impl<T> QueryMutAndApplyEditT for T
 where
-    T: qv::SingleQueryMut<dy::Value> + qv::ApplyEditTrait,
-    anyhow::Error: From<<T as qv::SingleQueryMut<dy::Value>>::Error>,
+    T: qv::SingleQueryMutT<dy::Value> + qv::ApplyEditT,
+    anyhow::Error: From<<T as qv::SingleQueryMutT<dy::Value>>::Error>,
 {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
