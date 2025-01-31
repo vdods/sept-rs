@@ -10,7 +10,7 @@ impl EventHandlerT for sept::dy::Value {
     ) -> Result<Option<egui::Event>> {
         // tracing::debug!("Value::handle_event; event: {:?}", event);
         // TODO: Probably use a registration pattern here
-        if let Some(x) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
+        if let Some(x) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)

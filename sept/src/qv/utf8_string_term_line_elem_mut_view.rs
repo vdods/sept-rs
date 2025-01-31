@@ -1,7 +1,7 @@
 use crate::{dy, qv, st, Error, Result};
 
 #[derive(Debug)]
-pub struct Utf8StringTermLineElemMutView<'a> {
+pub struct UTF8StringTermLineElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -13,12 +13,12 @@ pub struct Utf8StringTermLineElemMutView<'a> {
     pub line_char_count: usize,
 }
 
-impl<'a> Utf8StringTermLineElemMutView<'a> {
+impl<'a> UTF8StringTermLineElemMutView<'a> {
     pub fn new(string: &'a mut String, line_index: usize) -> Result<Self> {
         let line_count = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n').count();
         anyhow::ensure!(
             line_index < line_count,
-            "Utf8StringTermLineElemMutView line_index out of bounds"
+            "UTF8StringTermLineElemMutView line_index out of bounds"
         );
         let line = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n')
             .nth(line_index)
@@ -44,7 +44,7 @@ impl<'a> Utf8StringTermLineElemMutView<'a> {
         );
         anyhow::ensure!(
             line_index < line_count,
-            "Utf8StringTermLineElemMutView line_index out of bounds"
+            "UTF8StringTermLineElemMutView line_index out of bounds"
         );
         let line = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n')
             .nth(line_index)
@@ -71,7 +71,7 @@ impl<'a> Utf8StringTermLineElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
+impl<'a> qv::ApplyEditT for UTF8StringTermLineElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         let (line_count, line_char_index_v) = self.string_stats();
 
@@ -84,10 +84,10 @@ impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 insertion_term.new_data.is::<String>(),
-                "Utf8StringTermLineMutView expected InsertionTerm edit to have new_data of type String"
+                "UTF8StringTermLineMutView expected InsertionTerm edit to have new_data of type String"
             );
             let new_line = insertion_term.new_data.downcast_into::<String>();
-            anyhow::ensure!(self.line_index <= line_count, "Utf8StringTermLineMutView InsertionTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
+            anyhow::ensure!(self.line_index <= line_count, "UTF8StringTermLineMutView InsertionTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
             st::replace_substr_in_string(
                 &mut *self.string,
                 line_char_index_v[self.line_index],
@@ -99,10 +99,10 @@ impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 deletion_term.old_data.is::<String>(),
-                "Utf8StringTermLineMutView expected DeletionTerm edit to have old_data of type String"
+                "UTF8StringTermLineMutView expected DeletionTerm edit to have old_data of type String"
             );
             let old_line = deletion_term.old_data.downcast_into::<String>();
-            anyhow::ensure!(self.line_index < line_count, "Utf8StringTermLineMutView DeletionTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
+            anyhow::ensure!(self.line_index < line_count, "UTF8StringTermLineMutView DeletionTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
             st::replace_substr_in_string(
                 &mut *self.string,
                 line_char_index_v[self.line_index],
@@ -114,15 +114,15 @@ impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 replacement_term.old_data.is::<String>(),
-                "Utf8StringTermLineMutView expected ReplacementTerm edit to have old_data of type String"
+                "UTF8StringTermLineMutView expected ReplacementTerm edit to have old_data of type String"
             );
             anyhow::ensure!(
                 replacement_term.new_data.is::<String>(),
-                "Utf8StringTermLineMutView expected ReplacementTerm edit to have new_data of type String"
+                "UTF8StringTermLineMutView expected ReplacementTerm edit to have new_data of type String"
             );
             let old_line = replacement_term.old_data.downcast_into::<String>();
             let new_line = replacement_term.new_data.downcast_into::<String>();
-            anyhow::ensure!(self.line_index < line_count, "Utf8StringTermLineMutView ReplacementTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
+            anyhow::ensure!(self.line_index < line_count, "UTF8StringTermLineMutView ReplacementTerm edit had out-of-bounds line_index (line_index: {}, line_count: {})", self.line_index, line_count);
             st::replace_substr_in_string(
                 &mut *self.string,
                 line_char_index_v[self.line_index],
@@ -130,14 +130,14 @@ impl<'a> qv::ApplyEditT for Utf8StringTermLineElemMutView<'a> {
                 new_line.as_str(),
             )?;
         } else {
-            anyhow::bail!("Utf8StringTermLineMutView doesn't support edit: {}", edit);
+            anyhow::bail!("UTF8StringTermLineMutView doesn't support edit: {}", edit);
         }
         Ok(())
     }
 }
 
-impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemMutView<'b> {
-    type ReturnType<'a> = qv::Utf8StringTermLineElemCharMutView<'a> where Self: 'a;
+impl<'b> qv::SingleQueryMutT<dy::Value> for UTF8StringTermLineElemMutView<'b> {
+    type ReturnType<'a> = qv::UTF8StringTermLineElemCharMutView<'a> where Self: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
@@ -145,14 +145,14 @@ impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemMutView<'b> {
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         use st::StringifiableT;
         match address_token.downcast_ref::<String>().map(String::as_str) {
-            Some("char") => qv::Utf8StringTermLineElemCharMutView::new_with_cached_values(
+            Some("char") => qv::UTF8StringTermLineElemCharMutView::new_with_cached_values(
                 self.string,
                 self.line_index,
                 self.line_count,
                 self.line_char_count,
             ),
             _ => anyhow::bail!(
-                "Utf8StringTermLineElemMutView query doesn't support address: {}",
+                "UTF8StringTermLineElemMutView query doesn't support address: {}",
                 address_token.stringify()
             ),
         }

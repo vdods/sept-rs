@@ -151,7 +151,7 @@ impl<'b> qv::QueryT for StructTermFieldElemElemView<'b> {
             assert!(self.sub_index <= 1);
             if self.sub_index == 0 {
                 // Field name
-                Box::new(qv::Utf8StringTermView::new(&field_decl.0)).run_query(&mut address_token_i)
+                Box::new(qv::UTF8StringTermView::new(&field_decl.0)).run_query(&mut address_token_i)
             } else {
                 // Field type
                 Box::new(qv::ValueView::new(&field_decl.1)).run_query(&mut address_token_i)

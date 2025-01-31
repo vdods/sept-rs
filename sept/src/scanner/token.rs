@@ -37,9 +37,9 @@ impl<'a> IntegerLiteral<'a> {
 }
 
 #[derive(Clone, Debug, derive_more::Deref, derive_more::From, derive_more::Into, PartialEq)]
-pub struct AsciiStringLiteral<'a>(&'a str);
+pub struct ASCIIStringLiteral<'a>(&'a str);
 
-impl<'a> AsciiStringLiteral<'a> {
+impl<'a> ASCIIStringLiteral<'a> {
     pub fn as_str(&self) -> &'a str {
         self.0
     }
@@ -50,7 +50,7 @@ impl<'a> AsciiStringLiteral<'a> {
     pub fn unescaped(&self) -> Result<String> {
         assert!(
             self.len() >= 2 && self.starts_with('"') && self.ends_with('"'),
-            "expected the AsciiStringLiteral to have the form \"...\""
+            "expected the ASCIIStringLiteral to have the form \"...\""
         );
         // TODO: Pre-compute the length of the result to pre-allocate it.
         let mut retval = String::new();
@@ -66,7 +66,7 @@ impl<'a> AsciiStringLiteral<'a> {
                     cursor += 1;
                     anyhow::ensure!(
                         cursor < str_interior_as_u8_slice.len(),
-                        "malformed AsciiStringLiteral; expected escape char after \\"
+                        "malformed ASCIIStringLiteral; expected escape char after \\"
                     );
                     let second_char = str_interior_as_u8_slice[cursor] as char;
                     match second_char {
@@ -114,11 +114,11 @@ impl<'a> AsciiStringLiteral<'a> {
                             cursor += 1;
                             anyhow::ensure!(
                                 cursor + 2 <= str_interior_as_u8_slice.len(),
-                                "malformed AsciiStringLiteral; expected two hex digits after \\x"
+                                "malformed ASCIIStringLiteral; expected two hex digits after \\x"
                             );
                             let first_hex_char = str_interior_as_u8_slice[cursor] as char;
                             let second_hex_char = str_interior_as_u8_slice[cursor] as char;
-                            anyhow::ensure!(first_hex_char.is_ascii_hexdigit() && second_hex_char.is_ascii_hexdigit(), "malformed AsciiStringLiteral; expected two hex digits after \\x but got {:?}", &str_interior_as_u8_slice[cursor..cursor+2]);
+                            anyhow::ensure!(first_hex_char.is_ascii_hexdigit() && second_hex_char.is_ascii_hexdigit(), "malformed ASCIIStringLiteral; expected two hex digits after \\x but got {:?}", &str_interior_as_u8_slice[cursor..cursor+2]);
                             let unescaped_hex_char = str_interior_as_u8_slice[cursor] * 0x10u8
                                 + str_interior_as_u8_slice[cursor + 1];
                             cursor += 2;
@@ -126,7 +126,7 @@ impl<'a> AsciiStringLiteral<'a> {
                         }
                         _ => {
                             anyhow::bail!(
-                                "malformed AsciiStringLiteral; invalid escape char code: {:?}",
+                                "malformed ASCIIStringLiteral; invalid escape char code: {:?}",
                                 second_char
                             );
                         }
@@ -134,7 +134,7 @@ impl<'a> AsciiStringLiteral<'a> {
                 }
                 '\0' | '\x07' | '\x08' | '\t' | '\n' | '\x0B' | '\x0C' | '\r' | '"' => {
                     anyhow::bail!(
-                        "malformed AsciiStringLiteral; found an unescaped char: {:?}",
+                        "malformed ASCIIStringLiteral; found an unescaped char: {:?}",
                         first_char
                     );
                 }
@@ -167,7 +167,7 @@ pub enum Token<'a> {
     CIdentifier(CIdentifier<'a>),
     DecimalPointLiteral(DecimalPointLiteral<'a>),
     IntegerLiteral(IntegerLiteral<'a>),
-    AsciiStringLiteral(AsciiStringLiteral<'a>),
+    ASCIIStringLiteral(ASCIIStringLiteral<'a>),
     UnrecognizedInput(UnrecognizedInput<'a>),
 }
 
@@ -184,7 +184,7 @@ impl<'a> Token<'a> {
                 Token::DecimalPointLiteral(DecimalPointLiteral(input))
             }
             TokenKind::IntegerLiteral => Token::IntegerLiteral(IntegerLiteral(input)),
-            TokenKind::AsciiStringLiteral => Token::AsciiStringLiteral(AsciiStringLiteral(input)),
+            TokenKind::ASCIIStringLiteral => Token::ASCIIStringLiteral(ASCIIStringLiteral(input)),
             TokenKind::UnrecognizedInput => Token::UnrecognizedInput(UnrecognizedInput(input)),
         }
     }

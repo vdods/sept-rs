@@ -1,7 +1,7 @@
 use crate::{dy, qv, st, Error, Result};
 
 #[derive(Debug)]
-pub struct Utf8StringTermCharElemMutView<'a> {
+pub struct UTF8StringTermCharElemMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -12,12 +12,12 @@ pub struct Utf8StringTermCharElemMutView<'a> {
     pub char_count: usize,
 }
 
-impl<'a> Utf8StringTermCharElemMutView<'a> {
+impl<'a> UTF8StringTermCharElemMutView<'a> {
     pub fn new(string: &'a mut String, char_index: usize) -> Result<Self> {
         let char_count = string.chars().count();
         anyhow::ensure!(
             char_index <= char_count,
-            "Utf8StringTermCharMutView char_index out of bounds"
+            "UTF8StringTermCharMutView char_index out of bounds"
         );
         Ok(Self {
             string,
@@ -37,7 +37,7 @@ impl<'a> Utf8StringTermCharElemMutView<'a> {
         );
         anyhow::ensure!(
             char_index <= char_count,
-            "Utf8StringTermCharMutView char_index out of bounds"
+            "UTF8StringTermCharMutView char_index out of bounds"
         );
         Ok(Self {
             string,
@@ -47,7 +47,7 @@ impl<'a> Utf8StringTermCharElemMutView<'a> {
     }
 }
 
-impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
+impl<'a> qv::ApplyEditT for UTF8StringTermCharElemMutView<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         // TODO: Figure out how to extend.
         // TODO: Figure out how to dispatch more efficiently (look up table as in Runtime?)
@@ -56,10 +56,10 @@ impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 insertion_term.new_data.is::<char>(),
-                "Utf8StringTermCharMutView expected InsertionTerm edit to have new_data of type char"
+                "UTF8StringTermCharMutView expected InsertionTerm edit to have new_data of type char"
             );
             let new_char = insertion_term.new_data.downcast_into::<char>();
-            anyhow::ensure!(self.char_index <= self.string.len(), "Utf8StringTermCharMutView InsertionTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
+            anyhow::ensure!(self.char_index <= self.string.len(), "UTF8StringTermCharMutView InsertionTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
             st::replace_substr_in_string(
                 &mut *self.string,
                 self.char_index,
@@ -71,10 +71,10 @@ impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 deletion_term.old_data.is::<char>(),
-                "Utf8StringTermCharMutView expected DeletionTerm edit to have old_data of type char"
+                "UTF8StringTermCharMutView expected DeletionTerm edit to have old_data of type char"
             );
             let old_char = deletion_term.old_data.downcast_into::<char>();
-            anyhow::ensure!(self.char_index < self.string.len(), "Utf8StringTermCharMutView DeletionTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
+            anyhow::ensure!(self.char_index < self.string.len(), "UTF8StringTermCharMutView DeletionTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
             st::replace_single_char_in_string(
                 &mut *self.string,
                 self.char_index,
@@ -86,15 +86,15 @@ impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
             // Ideally this would invoke an st-module version of apply_edit, where all the types are known.
             anyhow::ensure!(
                 replacement_term.old_data.is::<char>(),
-                "Utf8StringTermCharMutView expected ReplacementTerm edit to have old_data of type char"
+                "UTF8StringTermCharMutView expected ReplacementTerm edit to have old_data of type char"
             );
             let old_char = replacement_term.old_data.downcast_into::<char>();
             anyhow::ensure!(
                 replacement_term.new_data.is::<char>(),
-                "Utf8StringTermCharMutView expected ReplacementTerm edit to have new_data of type char"
+                "UTF8StringTermCharMutView expected ReplacementTerm edit to have new_data of type char"
             );
             let new_char = replacement_term.new_data.downcast_into::<char>();
-            anyhow::ensure!(self.char_index < self.string.len(), "Utf8StringTermCharMutView ReplacementTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
+            anyhow::ensure!(self.char_index < self.string.len(), "UTF8StringTermCharMutView ReplacementTerm edit had out-of-bounds char_index (char_index: {}, string len: {})", self.char_index, self.string.len());
             st::replace_single_char_in_string(
                 &mut *self.string,
                 self.char_index,
@@ -102,19 +102,19 @@ impl<'a> qv::ApplyEditT for Utf8StringTermCharElemMutView<'a> {
                 &format!("{}", new_char),
             )?;
         } else {
-            anyhow::bail!("Utf8StringTermCharMutView doesn't support edit: {}", edit);
+            anyhow::bail!("UTF8StringTermCharMutView doesn't support edit: {}", edit);
         }
         Ok(())
     }
 }
 
-impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermCharElemMutView<'b> {
+impl<'b> qv::SingleQueryMutT<dy::Value> for UTF8StringTermCharElemMutView<'b> {
     type ReturnType<'a> = qv::EmptyQuery where Self: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
         _address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
-        anyhow::bail!("Utf8StringTermCharElemMutView doesn't support further queries at this time");
+        anyhow::bail!("UTF8StringTermCharElemMutView doesn't support further queries at this time");
     }
 }

@@ -24,7 +24,7 @@ pub fn parse_terminal<'a>(token_v: &[scanner::Token<'a>]) -> Result<(Terminal<'a
         scanner::TokenKind::CIdentifier
         | scanner::TokenKind::DecimalPointLiteral
         | scanner::TokenKind::IntegerLiteral
-        | scanner::TokenKind::AsciiStringLiteral => Ok((
+        | scanner::TokenKind::ASCIIStringLiteral => Ok((
             Terminal::from(next_token.clone()),
             ParseStats {
                 scanner_token_count: 1,
@@ -115,7 +115,7 @@ pub fn parse_expr_sequence<'a>(
             scanner::TokenKind::CIdentifier
             | scanner::TokenKind::DecimalPointLiteral
             | scanner::TokenKind::IntegerLiteral
-            | scanner::TokenKind::AsciiStringLiteral => {
+            | scanner::TokenKind::ASCIIStringLiteral => {
                 let (terminal, parse_stats) = parse_terminal(&token_v[scanner_token_count..])?;
                 expr_v.push(terminal.into());
                 scanner_token_count += parse_stats.scanner_token_count;
@@ -195,7 +195,7 @@ pub fn parse_syntactuple<'a>(
             | scanner::TokenKind::CIdentifier
             | scanner::TokenKind::DecimalPointLiteral
             | scanner::TokenKind::IntegerLiteral
-            | scanner::TokenKind::AsciiStringLiteral => {
+            | scanner::TokenKind::ASCIIStringLiteral => {
                 let (expr_sequence, parse_stats) = parse_expr_sequence(
                     &token_v[scanner_token_count..],
                     ExprSequenceEnd::Unrestricted,
@@ -266,7 +266,7 @@ fn parse_value_from_terminal<'a>(terminal: &Terminal<'a>) -> Result<dy::Value> {
                 Ok(integer_literal.parse::<u64>()?.into())
             }
         }
-        scanner::Token::AsciiStringLiteral(ascii_string_literal) => {
+        scanner::Token::ASCIIStringLiteral(ascii_string_literal) => {
             // TODO: have to un-escape the string here.
             Ok(String::from(ascii_string_literal.unescaped()?).into())
         }
@@ -507,7 +507,7 @@ mod tests {
             ),),
         );
         test_parse_expr_sequence_case(
-            "Tuple(Sint8(123), Bool(true), Void, Utf8String)",
+            "Tuple(Sint8(123), Bool(true), Void, UTF8String)",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "Tuple"),
                 make_syntactuple!(
@@ -523,7 +523,7 @@ mod tests {
                         make_syntactuple!(make_expr_sequence!(make_terminal!(CIdentifier, "true"))),
                     ),
                     make_expr_sequence!(make_terminal!(CIdentifier, "Void")),
-                    make_expr_sequence!(make_terminal!(CIdentifier, "Utf8String")),
+                    make_expr_sequence!(make_terminal!(CIdentifier, "UTF8String")),
                 ),
             ),
         );
@@ -544,13 +544,13 @@ mod tests {
             ),
         );
         test_parse_expr_sequence_case(
-            "GlobalSymRef(Utf8String(\"weewoo\"))",
+            "GlobalSymRef(UTF8String(\"weewoo\"))",
             &make_expr_sequence!(
                 make_terminal!(CIdentifier, "GlobalSymRef"),
                 make_syntactuple!(make_expr_sequence!(
-                    make_terminal!(CIdentifier, "Utf8String"),
+                    make_terminal!(CIdentifier, "UTF8String"),
                     make_syntactuple!(make_expr_sequence!(make_terminal!(
-                        AsciiStringLiteral,
+                        ASCIIStringLiteral,
                         "\"weewoo\""
                     ),),),
                 ),),

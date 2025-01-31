@@ -2,7 +2,7 @@ use crate::{dy, qv, st, Error, Result};
 use std::sync::{Arc, RwLock};
 
 #[derive(Clone, Debug)]
-pub struct Utf8StringTermLineElemView<'a> {
+pub struct UTF8StringTermLineElemView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -16,12 +16,12 @@ pub struct Utf8StringTermLineElemView<'a> {
     pub line_char_count: usize,
 }
 
-impl<'a> Utf8StringTermLineElemView<'a> {
+impl<'a> UTF8StringTermLineElemView<'a> {
     pub fn new(string: &'a str, line_index: usize) -> Result<Self> {
         let mut line_i = st::split_inclusive_allow_trailing_empty(string, '\n');
         let line_count = line_i.clone().count();
         let line = line_i.nth(line_index).ok_or_else(|| {
-            anyhow::anyhow!("Utf8StringTermLineElemView line_index out of bounds")
+            anyhow::anyhow!("UTF8StringTermLineElemView line_index out of bounds")
         })?;
         let line_char_count = line.chars().count();
         Ok(Self {
@@ -90,7 +90,7 @@ impl<'a> Utf8StringTermLineElemView<'a> {
     }
 }
 
-impl<'b> qv::QueryT for Utf8StringTermLineElemView<'b> {
+impl<'b> qv::QueryT for UTF8StringTermLineElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -106,18 +106,18 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemView<'b> {
         let first_address = address_token_i.next().unwrap();
         match first_address.downcast_ref::<String>().map(String::as_str) {
             Some("char") => {
-                // anyhow::ensure!(address_token_i.peek().is_some(), "Utf8StringTermLineView query address 'char' requires a second address (char index) but none was provided");
+                // anyhow::ensure!(address_token_i.peek().is_some(), "UTF8StringTermLineView query address 'char' requires a second address (char index) but none was provided");
                 // let second_address = address_token_i.next().unwrap();
-                // anyhow::ensure!(second_address.is::<u32>(), "Utf8StringTermLineView query address 'char' requires a second address (char index) of type u32 but got: {}", dy::RUNTIME_LA.read().unwrap().stringify(second_address));
+                // anyhow::ensure!(second_address.is::<u32>(), "UTF8StringTermLineView query address 'char' requires a second address (char index) of type u32 but got: {}", dy::RUNTIME_LA.read().unwrap().stringify(second_address));
                 // let char_index = *second_address.downcast_ref::<u32>().unwrap();
-                // let utf8_string_line_char_view = qv::Utf8StringTermLineElemCharElemView::new(
+                // let utf8_string_line_char_view = qv::UTF8StringTermLineElemCharElemView::new(
                 //     self.string,
                 //     self.line_index,
                 //     char_index as usize,
                 // )?;
                 // // Pass on the rest of the address to the char view's impl of query_mut.
                 // Box::new(utf8_string_line_char_view).run_query(&mut address_token_i)
-                Box::new(qv::Utf8StringTermLineElemCharView::new_with_cached_line(
+                Box::new(qv::UTF8StringTermLineElemCharView::new_with_cached_line(
                     self.string,
                     self.line_index,
                     self.line_count,
@@ -129,7 +129,7 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemView<'b> {
             _ => {
                 use st::StringifiableT;
                 anyhow::bail!(
-                    "Utf8StringTerm query doesn't support address: {}",
+                    "UTF8StringTerm query doesn't support address: {}",
                     first_address.stringify()
                 )
             }
@@ -137,7 +137,7 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemView<'b> {
     }
 }
 
-impl<'b> qv::EvalT for Utf8StringTermLineElemView<'b> {
+impl<'b> qv::EvalT for UTF8StringTermLineElemView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         Ok(dy::MaybeDereferencedValue::make_value_la(Arc::new(
             RwLock::new(dy::Value::from(self.line.to_string()).into()),
@@ -146,12 +146,12 @@ impl<'b> qv::EvalT for Utf8StringTermLineElemView<'b> {
 }
 
 #[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermLineElemViewQuery<'a> {
-    Utf8StringTermLineElemCharView(qv::Utf8StringTermLineElemCharView<'a>),
+pub enum UTF8StringTermLineElemViewQuery<'a> {
+    UTF8StringTermLineElemCharView(qv::UTF8StringTermLineElemCharView<'a>),
 }
 
-impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemView<'b> {
-    type ReturnType<'a> = Utf8StringTermLineElemViewQuery<'a> where 'b: 'a;
+impl<'b> qv::SingleQueryT<dy::Value> for UTF8StringTermLineElemView<'b> {
+    type ReturnType<'a> = UTF8StringTermLineElemViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
@@ -159,7 +159,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemView<'b> {
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(address_string) = address_token.downcast_ref::<String>() {
             match address_string.as_str() {
-                "char" => Ok(qv::Utf8StringTermLineElemCharView::new(
+                "char" => Ok(qv::UTF8StringTermLineElemCharView::new(
                     self.string,
                     self.line_index,
                 )?
@@ -167,7 +167,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemView<'b> {
                 // TODO: "len" perhaps
                 _ => {
                     anyhow::bail!(
-                        "Utf8StringTermLineElemView::run_single_query; unrecognized address_token {:?}",
+                        "UTF8StringTermLineElemView::run_single_query; unrecognized address_token {:?}",
                         address_string.as_str()
                     );
                 }
@@ -175,7 +175,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemView<'b> {
         } else {
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineElemView::run_single_query; unrecognized address_token {}",
+                "UTF8StringTermLineElemView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()
             );
         }

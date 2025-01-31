@@ -60,7 +60,7 @@ impl ValueUIT for sept::dy::Value {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -112,9 +112,9 @@ impl ValueUIT for sept::dy::Value {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Type>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8String>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8String>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8StringType>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
         } else if let Some(term) = self.downcast_ref::<sept::st::Array>() {
             term.run_ui_expanded(ui, view_ctx, continuation_layout_job_o)
@@ -207,7 +207,7 @@ impl ValueUIT for sept::dy::Value {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringTerm>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
@@ -259,9 +259,9 @@ impl ValueUIT for sept::dy::Value {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Float64Type>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8String>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8String>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
-        } else if let Some(term) = self.downcast_ref::<sept::st::Utf8StringType>() {
+        } else if let Some(term) = self.downcast_ref::<sept::st::UTF8StringType>() {
             term.run_ui_inline(ui, layout_job, view_ctx);
         } else if let Some(term) = self.downcast_ref::<sept::st::Array>() {
             term.run_ui_inline(ui, layout_job, view_ctx);

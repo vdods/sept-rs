@@ -35,7 +35,7 @@ Notes on viewer components for various types
     -   Sint#, Sint#Type
     -   Uint#, Uint#Type
     -   Float#, Float#Type
-    -   Utf8String, Utf8StringType
+    -   UTF8String, UTF8StringType
     -   Array, ArrayType,
     -   Struct, StructType
     -   Tuple, TupleType,
@@ -51,7 +51,7 @@ Notes on viewer components for various types
         -   Render as decimal value.
     -   Float#Term = f# (Rust type)
         -   Render as scientific notation with 17 digits of precision.
-    -   Utf8StringTerm = String (Rust type)
+    -   UTF8StringTerm = String (Rust type)
         -   Render as string literal.
         -   Render options
             -   As string literal with escape sequences -- could be considered "in-line".
@@ -190,7 +190,7 @@ Should queries actually be done through a first class data model, where various 
     -   And other term data methods
 -   Bool has:
     -   Not -- returns the negation of this boolean value.  This would look hilarious too, since it might be common for a query to end with `Not` a la Wayne's World.
--   Utf8String has:
+-   UTF8String has:
     -   Len -- returns the length of this string
     -   Char(N) -- returns the Nth char
     -   Lines -- returns a view into the newline-delimited lines of this string
@@ -415,7 +415,7 @@ Still to do:
 Notes for editing of data
 -   It probably makes sense to formally track the cursor in the log of data modification commands.  This way, each command doesn't have to have a full copy of the address of the value being edited.
 -   Data modification commands
-    -   For Utf8StringTerm
+    -   For UTF8StringTerm
         -   InsertChar -- inverse is DeleteChar
             -   insert_address
             -   char_to_insert
@@ -467,15 +467,15 @@ Notes for simplest possible implementation of query/edit.
                 true,
                 { 123 => 456 },
                 { { "a" => "b", "c" => "d" } => 9000, { "x" => "y", "z" => "w" } => 9009 },
-                Struct { "name": Utf8String, "age": Uint8 },
-                Struct { "name": Utf8String, "age": Uint8 } { "Ftanley", 100 },
+                Struct { "name": UTF8String, "age": Uint8 },
+                Struct { "name": UTF8String, "age": Uint8 } { "Ftanley", 100 },
             ]
 
     -   Query `()` should return a reference (which is a query view) to the whole array.
     -   Query `(0)` should return a reference (which is a query view) to the string.
-    -   Query `(0, "line", 0)` should return a `Utf8StringLine` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line is being viewed.  That query view object should indicate the type of the value is Utf8String and should be able to produce the value `"hippo\n"`.
+    -   Query `(0, "line", 0)` should return a `UTF8StringLine` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line is being viewed.  That query view object should indicate the type of the value is UTF8String and should be able to produce the value `"hippo\n"`.
         -   An edit to this query view should edit the substring `"hippo\n"` within the larger string.
-    -   Query `(0, "line", 1, "char", 0)` should return a `Utf8StringLineChar` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line and char is being viewed.  That query view object should indicate the type of the value is UnicodeChar and should be able to produce the value `'O'`.
+    -   Query `(0, "line", 1, "char", 0)` should return a `UTF8StringLineChar` query view which itself has a reference to the string `"hippo\nOSTRICH"` and which line and char is being viewed.  That query view object should indicate the type of the value is UnicodeChar and should be able to produce the value `'O'`.
     -   Query `(0, "line", "count")` (this is made-up for now) should return a query view object which returns the number of lines in the string.  It should not be editable.
         -   An edit to this query view should edit the character `'O'` within the larger string.
     -   Query `(1)` should return a reference to the boolean.
@@ -490,7 +490,7 @@ Notes for simplest possible implementation of query/edit.
     -   Query `(3, 'k', { "a" => "b", "c" => "d"}, 'k', "a")` should essentially create a stack of query view objects whose outermost one refers to the `"a"` key.
         -   An edit to this query view should first apply the edit to the outermost one (which is a view into the `"a"` key), which causes the edit to propagate to the next inner one (which is a view into the `{ "a" => "b", "c" => "d"}` key), which carries through with the edit.
     -   Future possibilities:
-        -   Query `(0, "line")` could return a query view which is the sequence of lines in that Utf8StringTerm.
+        -   Query `(0, "line")` could return a query view which is the sequence of lines in that UTF8StringTerm.
         -   Query `(2, 'k')` could return a query view which is the ordered set of keys of that OrderedMapTerm.
         -   Etc.
         -   Advanced queries could produce things like
@@ -556,7 +556,7 @@ Notes on fleshing out views and event handling for remainder of types
     -   Replace mode: Draw the I-beam cursor and highlight the element that will be replaced.
 -   Undo/redo
     -   Need top-level event handler which can intercept top-level commands.
--   Utf8StringTerm line char view
+-   UTF8StringTerm line char view
     -   To-do
         -   Hit `"` to exit the string and go to the next element in whatever contains the string (this may not be well-defined depending on what that container is, e.g. a hash set).  Should this go to the comma following the string, if it's in an ArrayTerm, so that one could type `,` to pass the comma and set the cursor to the next place?  This would make it match what you're typing.
         -   Typing a literal `"` in the string by typing `\"`, and typing a literal `\` by typing `\\`
@@ -567,7 +567,7 @@ Notes on fleshing out views and event handling for remainder of types
         -   Backspace
         -   Delete
         -   Escape / Alt-Enter
--   Utf8StringTerm char view (semi-deprecated)
+-   UTF8StringTerm char view (semi-deprecated)
     -   To-do
     -   Done
         -   Insertion mode typing
@@ -613,7 +613,7 @@ Notes on fleshing out views and event handling for remainder of types
     -   Done
 -   GlobalSymRefTerm
     -   To-do
-        -   Should behave like a Utf8StringTerm, maybe add some constraints later (e.g. no `\n` or other control chars).
+        -   Should behave like a UTF8StringTerm, maybe add some constraints later (e.g. no `\n` or other control chars).
     -   Done
 -   LocalSymRefTerm
     -   To-do

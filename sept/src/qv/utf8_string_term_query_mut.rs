@@ -1,13 +1,13 @@
 use crate::{dy, qv, Result};
 
 #[derive(Debug, derive_more::From)]
-pub enum Utf8StringTermQueryMut<'a> {
-    Utf8StringTermCharMutView(qv::Utf8StringTermCharMutView<'a>),
-    Utf8StringTermLineMutView(qv::Utf8StringTermLineMutView<'a>),
+pub enum UTF8StringTermQueryMut<'a> {
+    UTF8StringTermCharMutView(qv::UTF8StringTermCharMutView<'a>),
+    UTF8StringTermLineMutView(qv::UTF8StringTermLineMutView<'a>),
 }
 
 // TODO: Derive this
-impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermQueryMut<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for UTF8StringTermQueryMut<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -17,18 +17,18 @@ impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermQueryMut<'b> {
         's: 'a,
     {
         match self {
-            Self::Utf8StringTermCharMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
-            Self::Utf8StringTermLineMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
+            Self::UTF8StringTermCharMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
+            Self::UTF8StringTermLineMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
         }
     }
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditT for Utf8StringTermQueryMut<'a> {
+impl<'a> qv::ApplyEditT for UTF8StringTermQueryMut<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
-            Self::Utf8StringTermCharMutView(v) => v.apply_edit(edit),
-            Self::Utf8StringTermLineMutView(v) => v.apply_edit(edit),
+            Self::UTF8StringTermCharMutView(v) => v.apply_edit(edit),
+            Self::UTF8StringTermLineMutView(v) => v.apply_edit(edit),
         }
     }
 }

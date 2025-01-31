@@ -86,7 +86,7 @@ macro_rules! for_each_parametric_term {
                 $e
             },
             {
-                type T = $crate::st::Utf8StringTerm;
+                type T = $crate::st::UTF8StringTerm;
                 $e
             },
             {
@@ -98,7 +98,7 @@ macro_rules! for_each_parametric_term {
                 $e
             },
             // {
-            //     type T = $crate::st::AsciiCharTerm;
+            //     type T = $crate::st::ASCIICharTerm;
             //     $e
             // },
             {

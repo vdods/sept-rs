@@ -74,7 +74,7 @@ impl ViewOptions {
         use std::any::TypeId;
         let type_id = TypeId::of::<T>();
         // TODO: More efficient lookup
-        if type_id == TypeId::of::<sept::st::Utf8StringTerm>() {
+        if type_id == TypeId::of::<sept::st::UTF8StringTerm>() {
             ANSIColor::DARK_YELLOW
         } else if type_id == TypeId::of::<sept::dy::ArrayTerm>() {
             ANSIColor::DARK_RED
@@ -94,7 +94,7 @@ impl ViewOptions {
         use std::any::TypeId;
         let type_id = TypeId::of::<T>();
         // TODO: More efficient lookup
-        if type_id == TypeId::of::<sept::st::Utf8StringTerm>() {
+        if type_id == TypeId::of::<sept::st::UTF8StringTerm>() {
             ANSIColor::BRIGHT_YELLOW
         } else if type_id == TypeId::of::<sept::st::Sint8Term>()
             || type_id == TypeId::of::<sept::st::Sint16Term>()
@@ -145,8 +145,8 @@ impl ViewOptions {
             || type_id == TypeId::of::<sept::st::Uint64Type>()
             || type_id == TypeId::of::<sept::st::Float32Type>()
             || type_id == TypeId::of::<sept::st::Float64Type>()
-            || type_id == TypeId::of::<sept::st::Utf8String>()
-            || type_id == TypeId::of::<sept::st::Utf8StringType>()
+            || type_id == TypeId::of::<sept::st::UTF8String>()
+            || type_id == TypeId::of::<sept::st::UTF8StringType>()
             || type_id == TypeId::of::<sept::st::Array>()
             || type_id == TypeId::of::<sept::st::ArrayType>()
             || type_id == TypeId::of::<sept::st::Struct>()

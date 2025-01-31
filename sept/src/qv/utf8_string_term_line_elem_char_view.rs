@@ -1,10 +1,10 @@
 use crate::{dy, qv, st, Error, Result};
 use std::sync::{Arc, RwLock};
 
-// TODO: This should just be a char view that takes a Utf8StringTermLineView, unless it actually needs the
+// TODO: This should just be a char view that takes a UTF8StringTermLineView, unless it actually needs the
 // full context of string, line_index, and line.
 #[derive(Clone, Debug)]
-pub struct Utf8StringTermLineElemCharView<'a> {
+pub struct UTF8StringTermLineElemCharView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -17,12 +17,12 @@ pub struct Utf8StringTermLineElemCharView<'a> {
     pub line_char_count: usize,
 }
 
-impl<'a> Utf8StringTermLineElemCharView<'a> {
+impl<'a> UTF8StringTermLineElemCharView<'a> {
     pub fn new(string: &'a str, line_index: usize) -> Result<Self> {
         let mut line_i = st::split_inclusive_allow_trailing_empty(string, '\n');
         let line_count = line_i.clone().count();
         let line = line_i.nth(line_index).ok_or_else(|| {
-            anyhow::anyhow!("Utf8StringTermLineElemCharView line_index out of bounds")
+            anyhow::anyhow!("UTF8StringTermLineElemCharView line_index out of bounds")
         })?;
         let line_char_count = line.chars().count();
         Ok(Self {
@@ -66,7 +66,7 @@ impl<'a> Utf8StringTermLineElemCharView<'a> {
     }
 }
 
-impl<'b> qv::QueryT for Utf8StringTermLineElemCharView<'b> {
+impl<'b> qv::QueryT for UTF8StringTermLineElemCharView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -83,7 +83,7 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemCharView<'b> {
         if let Some(element_index) = first_address.downcast_ref::<u32>() {
             let char_o = self.line.chars().nth(*element_index as usize);
             Box::new(
-                qv::Utf8StringTermLineElemCharElemView::new_with_cached_line_and_char(
+                qv::UTF8StringTermLineElemCharElemView::new_with_cached_line_and_char(
                     self.string,
                     self.line_index,
                     *element_index as usize,
@@ -98,14 +98,14 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemCharView<'b> {
             // TODO: Support "len" query.
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineElemCharView query doesn't support address: {}",
+                "UTF8StringTermLineElemCharView query doesn't support address: {}",
                 first_address.stringify()
             );
         }
     }
 }
 
-impl<'b> qv::EvalT for Utf8StringTermLineElemCharView<'b> {
+impl<'b> qv::EvalT for UTF8StringTermLineElemCharView<'b> {
     /// This will produce an ArrayTerm populated with the chars of the line.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         use dy::IntoValueT;
@@ -122,12 +122,12 @@ impl<'b> qv::EvalT for Utf8StringTermLineElemCharView<'b> {
 }
 
 #[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermLineElemCharViewQuery<'a> {
-    Utf8StringTermLineElemCharElemView(qv::Utf8StringTermLineElemCharElemView<'a>),
+pub enum UTF8StringTermLineElemCharViewQuery<'a> {
+    UTF8StringTermLineElemCharElemView(qv::UTF8StringTermLineElemCharElemView<'a>),
 }
 
-impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharView<'b> {
-    type ReturnType<'a> = Utf8StringTermLineElemCharViewQuery<'a> where 'b: 'a;
+impl<'b> qv::SingleQueryT<dy::Value> for UTF8StringTermLineElemCharView<'b> {
+    type ReturnType<'a> = UTF8StringTermLineElemCharViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
@@ -136,7 +136,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharView<'b> {
         if let Some(char_index) = address_token.downcast_ref::<u32>() {
             let char_index = *char_index as usize;
             Ok(
-                qv::Utf8StringTermLineElemCharElemView::new_with_cached_line_and_char(
+                qv::UTF8StringTermLineElemCharElemView::new_with_cached_line_and_char(
                     self.string,
                     self.line_index,
                     char_index,
@@ -150,7 +150,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharView<'b> {
         } else {
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineElemCharView::run_single_query; unrecognized address_token {}",
+                "UTF8StringTermLineElemCharView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()
             );
         }

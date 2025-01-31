@@ -97,12 +97,12 @@ pub use crate::st::{
     unicode_char::UnicodeChar,
     unicode_char_term::UnicodeCharTerm,
     unicode_char_type::UnicodeCharType,
-    utf8_string::Utf8String,
+    utf8_string::UTF8String,
     utf8_string_term::{
         replace_single_char_in_string, replace_substr_in_string,
-        split_inclusive_allow_trailing_empty, Utf8StringTerm,
+        split_inclusive_allow_trailing_empty, UTF8StringTerm,
     },
-    utf8_string_type::Utf8StringType,
+    utf8_string_type::UTF8StringType,
     void::Void,
     void_type::VoidType,
 };
@@ -211,7 +211,7 @@ macro_rules! for_each_non_parametric_term {
                 type T = $crate::st::Float64;
                 $e
             },
-            //             { type T = $crate::st::AsciiChar;                  $e },
+            //             { type T = $crate::st::ASCIIChar;                  $e },
             {
                 type T = $crate::st::UnicodeChar;
                 $e
@@ -260,27 +260,27 @@ macro_rules! for_each_non_parametric_term {
                 type T = $crate::st::Float64Type;
                 $e
             },
-            //             { type T = $crate::st::AsciiCharType;                  $e },
+            //             { type T = $crate::st::ASCIICharType;                  $e },
             {
                 type T = $crate::st::UnicodeCharType;
                 $e
             },
             {
-                type T = $crate::st::Utf8String;
+                type T = $crate::st::UTF8String;
                 $e
             },
             {
-                type T = $crate::st::Utf8StringType;
+                type T = $crate::st::UTF8StringType;
                 $e
             },
             //             { type T = $crate::st::Sint;                  $e },
             //             { type T = $crate::st::Uint;                  $e },
             //             { type T = $crate::st::Float;                  $e },
-            //             { type T = $crate::st::Pod;                  $e },
+            //             { type T = $crate::st::POD;                  $e },
             //             { type T = $crate::st::SintType;                  $e },
             //             { type T = $crate::st::UintType;                  $e },
             //             { type T = $crate::st::FloatType;                  $e },
-            //             { type T = $crate::st::PodType;                  $e },
+            //             { type T = $crate::st::PODType;                  $e },
             //             { type T = $crate::st::Union;                  $e },
             //             { type T = $crate::st::Intersection;                  $e },
             //             { type T = $crate::st::Negation;                  $e },

@@ -87,29 +87,29 @@ pub use struct_term_view::StructTermView;
 pub use tuple_term_elem_mut_view::TupleTermElemMutView;
 pub use tuple_term_elem_view::TupleTermElemView;
 pub use tuple_term_view::TupleTermView;
-pub use utf8_string_term_char_elem_mut_view::Utf8StringTermCharElemMutView;
+pub use utf8_string_term_char_elem_mut_view::UTF8StringTermCharElemMutView;
 pub use utf8_string_term_char_elem_view::{
-    Utf8StringTermCharElemView, Utf8StringTermCharElemViewQuery,
+    UTF8StringTermCharElemView, UTF8StringTermCharElemViewQuery,
 };
 pub use utf8_string_term_char_mut_view::{
-    Utf8StringTermCharMutView, Utf8StringTermCharMutViewQuery,
+    UTF8StringTermCharMutView, UTF8StringTermCharMutViewQuery,
 };
-pub use utf8_string_term_char_view::{Utf8StringTermCharView, Utf8StringTermCharViewQuery};
-pub use utf8_string_term_line_elem_char_elem_mut_view::Utf8StringTermLineElemCharElemMutView;
-pub use utf8_string_term_line_elem_char_elem_view::Utf8StringTermLineElemCharElemView;
-pub use utf8_string_term_line_elem_char_mut_view::Utf8StringTermLineElemCharMutView;
+pub use utf8_string_term_char_view::{UTF8StringTermCharView, UTF8StringTermCharViewQuery};
+pub use utf8_string_term_line_elem_char_elem_mut_view::UTF8StringTermLineElemCharElemMutView;
+pub use utf8_string_term_line_elem_char_elem_view::UTF8StringTermLineElemCharElemView;
+pub use utf8_string_term_line_elem_char_mut_view::UTF8StringTermLineElemCharMutView;
 pub use utf8_string_term_line_elem_char_view::{
-    Utf8StringTermLineElemCharView, Utf8StringTermLineElemCharViewQuery,
+    UTF8StringTermLineElemCharView, UTF8StringTermLineElemCharViewQuery,
 };
-pub use utf8_string_term_line_elem_mut_view::Utf8StringTermLineElemMutView;
+pub use utf8_string_term_line_elem_mut_view::UTF8StringTermLineElemMutView;
 pub use utf8_string_term_line_elem_view::{
-    Utf8StringTermLineElemView, Utf8StringTermLineElemViewQuery,
+    UTF8StringTermLineElemView, UTF8StringTermLineElemViewQuery,
 };
 pub use utf8_string_term_line_mut_view::{
-    Utf8StringTermLineMutView, Utf8StringTermLineMutViewQuery,
+    UTF8StringTermLineMutView, UTF8StringTermLineMutViewQuery,
 };
-pub use utf8_string_term_line_view::{Utf8StringTermLineView, Utf8StringTermLineViewQuery};
-pub use utf8_string_term_query::Utf8StringTermQuery;
-pub use utf8_string_term_query_mut::Utf8StringTermQueryMut;
-pub use utf8_string_term_view::Utf8StringTermView;
+pub use utf8_string_term_line_view::{UTF8StringTermLineView, UTF8StringTermLineViewQuery};
+pub use utf8_string_term_query::UTF8StringTermQuery;
+pub use utf8_string_term_query_mut::UTF8StringTermQueryMut;
+pub use utf8_string_term_view::UTF8StringTermView;
 pub use value_view::ValueView;

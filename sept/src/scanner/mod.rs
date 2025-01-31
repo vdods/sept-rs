@@ -3,7 +3,7 @@ use crate::Result;
 mod token;
 
 pub use crate::scanner::token::{
-    AsciiStringLiteral, CIdentifier, DecimalPointLiteral, IntegerLiteral, Token, TokenKind,
+    ASCIIStringLiteral, CIdentifier, DecimalPointLiteral, IntegerLiteral, Token, TokenKind,
     UnrecognizedInput, Whitespace,
 };
 
@@ -159,7 +159,7 @@ lazy_static::lazy_static! {
         // -    The *? syntax indicates an "ungreedy" match (see https://docs.rs/regex/latest/regex/#repetitions).
         // TODO: Try using concat!(r#"^"("#, r"[ -!]", "|", etc) with newlines to visually break things up and
         // allow comments to be interspersed.
-        TokenKind::AsciiStringLiteral => regex::Regex::new(r#"^"([ -!]|[#-[]|[\]-~]|\\[0abtnvfr"\\]|\\x[0-9A-Fa-f]{2})*""#).unwrap(),
+        TokenKind::ASCIIStringLiteral => regex::Regex::new(r#"^"([ -!]|[#-[]|[\]-~]|\\[0abtnvfr"\\]|\\x[0-9A-Fa-f]{2})*""#).unwrap(),
         // This regex is just a stand-in.  It should probably never actually be used.  But theoretically
         // it would be defined as a regex that matches a single-char complement of all of the above regexes.
         TokenKind::UnrecognizedInput => regex::Regex::new("^([\0-\x1F]|\x7F)").unwrap(),

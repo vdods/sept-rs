@@ -10,8 +10,8 @@ use sept::{
         self, Array, ArrayType, Bool, BoolType, EmptyType, False, FalseType, Float32, Float32Type,
         Float64, Float64Type, InhabitsT, OrderedMap, OrderedMapType, Sint16, Sint16Type, Sint32,
         Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, StringifiableT, Struct, StructType,
-        TermT, True, TrueType, Type, TypeT, Uint16, Uint16Type, Uint32, Uint32Type, Uint64,
-        Uint64Type, Uint8, Uint8Type, Utf8String, Void, VoidType,
+        TermT, True, TrueType, Type, TypeT, UTF8String, Uint16, Uint16Type, Uint32, Uint32Type,
+        Uint64, Uint64Type, Uint8, Uint8Type, Void, VoidType,
     },
 };
 use std::{
@@ -1249,7 +1249,7 @@ fn test_deconstruct() {
 
     {
         let s = StructTerm::new(vec![
-            ("name".into(), Utf8String.into()),
+            ("name".into(), UTF8String.into()),
             ("age".into(), Uint8.into()),
         ])
         .expect("test");
@@ -1331,7 +1331,7 @@ fn test_constructor() {
     test_deconstruct_reconstruct_roundtrip::<u64, Uint64>(99u64);
     test_deconstruct_reconstruct_roundtrip::<f32, Float32>(100.25f32);
     test_deconstruct_reconstruct_roundtrip::<f64, Float64>(100.25f64);
-    test_deconstruct_reconstruct_roundtrip::<String, Utf8String>("BLAH".into());
+    test_deconstruct_reconstruct_roundtrip::<String, UTF8String>("BLAH".into());
 
     test_deconstruct_reconstruct_roundtrip::<TupleTerm, st::Tuple>(TupleTerm::from((
         123i8,
@@ -1371,23 +1371,23 @@ fn test_textify() {
     test_textify_case(4.75f64, "Float64(4.75)");
     test_textify_case(
         String::from("Hippos and Hippas"),
-        "Utf8String(\"Hippos and Hippas\")",
+        "UTF8String(\"Hippos and Hippas\")",
     );
     test_textify_case(
         TupleTerm::from((123i8, 99u32, 100.25f32, String::from("HIPPO"))),
-        "Tuple(Sint8(123), Uint32(99), Float32(100.25), Utf8String(\"HIPPO\"))",
+        "Tuple(Sint8(123), Uint32(99), Float32(100.25), UTF8String(\"HIPPO\"))",
     );
     test_textify_case(
         StructTerm::new(vec![
-            ("name".into(), Utf8String.into()),
+            ("name".into(), UTF8String.into()),
             ("score".into(), Uint64.into()),
         ])
         .expect("test"),
-        "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
+        "Struct(Tuple(UTF8String(\"name\"), UTF8String), Tuple(UTF8String(\"score\"), Uint64))",
     );
     test_textify_case(
         GlobalSymRefTerm::new_unchecked("fancyfancy".into()),
-        "GlobalSymRef(Utf8String(\"fancyfancy\"))",
+        "GlobalSymRef(UTF8String(\"fancyfancy\"))",
     );
 }
 
@@ -1405,9 +1405,9 @@ fn test_try_scanning_case_ascii_string_literal(input: &str) {
     // it should be somewhat platform agnostic, but generally should work with C and Rust.
     let input_str_literal = format!("{:?}", input);
     test_try_scanning_case(
-        scanner::TokenKind::AsciiStringLiteral,
+        scanner::TokenKind::ASCIIStringLiteral,
         &input_str_literal,
-        Some(scanner::AsciiStringLiteral::from(input_str_literal.as_ref()).into()),
+        Some(scanner::ASCIIStringLiteral::from(input_str_literal.as_ref()).into()),
     );
 }
 
@@ -1739,9 +1739,9 @@ fn test_try_scanning() {
         // TODO: More test cases
     ] {
         test_try_scanning_case(
-            scanner::TokenKind::AsciiStringLiteral,
+            scanner::TokenKind::ASCIIStringLiteral,
             input,
-            Some(scanner::AsciiStringLiteral::from(input).into()),
+            Some(scanner::ASCIIStringLiteral::from(input).into()),
         );
     }
     test_try_scanning_case_ascii_string_literal("");
@@ -1839,7 +1839,7 @@ fn test_scan() {
         r#"" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]""#,
         r#"" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~""#,
     ] {
-        test_scan_case(input, vec![Token::AsciiStringLiteral(input.into())]);
+        test_scan_case(input, vec![Token::ASCIIStringLiteral(input.into())]);
     }
 
     //
@@ -1885,7 +1885,7 @@ fn test_parse_value() {
         "Tuple(thingy, bloppy)",
         dy::TupleTerm::from(vec![dy::Value::from(true), dy::Value::from(123u32)]).into(),
     );
-    //     test_parse_value_case("Tuple(Sint8(123), Bool(true), Void, Utf8String)");
+    //     test_parse_value_case("Tuple(Sint8(123), Bool(true), Void, UTF8String)");
 
     //     test_parse_value_case(
     //         "ArrayES(Float64, 4)(100.0, 8.9, 0.0, 1.0)",
@@ -1898,7 +1898,7 @@ fn test_parse_value() {
         dy::TupleTerm::from(vec![dy::Value::from(100.0f64), dy::Value::from(89u64)]).into(),
     );
 
-    //     test_parse_value_case("GlobalSymRef(Utf8String(\"weewoo\"))");
+    //     test_parse_value_case("GlobalSymRef(UTF8String(\"weewoo\"))");
     test_parse_value_case(
         "thingy",
         dy::GlobalSymRefTerm::new_unchecked("thingy".into()).into(),
@@ -1939,15 +1939,15 @@ fn test_parse_deconstruction() {
     // TODO: Add test cases for UnicodeChar
 
     test_parse_deconstruction_case(
-        "Utf8String(\"blah\\n\\thh\")",
+        "UTF8String(\"blah\\n\\thh\")",
         dy::Value::from(String::from("blah\n\thh")),
     );
 
     test_parse_deconstruction_case(
-        "Struct(Tuple(Utf8String(\"name\"), Utf8String), Tuple(Utf8String(\"score\"), Uint64))",
+        "Struct(Tuple(UTF8String(\"name\"), UTF8String), Tuple(UTF8String(\"score\"), Uint64))",
         dy::Value::from(
             StructTerm::new(vec![
-                ("name".into(), Utf8String.into()),
+                ("name".into(), UTF8String.into()),
                 ("score".into(), Uint64.into()),
             ])
             .expect("test"),
@@ -2450,35 +2450,35 @@ fn test_query_trait_case<Q: qv::QueryT>(q: Q, address_v: &[dy::Value], expected_
 #[serial_test::serial]
 fn test_query_trait_utf8_string_term() {
     let s = "ab 日本語 hippo\nOSTRICH".to_string();
-    test_query_trait_case(qv::Utf8StringTermView::new(&s), &[], s.clone().into_value());
+    test_query_trait_case(qv::UTF8StringTermView::new(&s), &[], s.clone().into_value());
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["char".to_string().into_value(), 0u32.into_value()],
         'a'.into_value(),
     );
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["char".to_string().into_value(), 1u32.into_value()],
         'b'.into_value(),
     );
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["char".to_string().into_value(), 2u32.into_value()],
         ' '.into_value(),
     );
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["char".to_string().into_value(), 3u32.into_value()],
         '日'.into_value(),
     );
 
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["line".to_string().into_value(), 0u32.into_value()],
         "ab 日本語 hippo\n".to_string().into_value(),
     );
     test_query_trait_case(
-        qv::Utf8StringTermView::new(&s),
+        qv::UTF8StringTermView::new(&s),
         &["line".to_string().into_value(), 1u32.into_value()],
         "OSTRICH".to_string().into_value(),
     );
@@ -2488,7 +2488,7 @@ fn test_query_trait_utf8_string_term() {
 #[serial_test::serial]
 fn test_query_trait_struct_term() {
     let s = dy::StructTerm::new(vec![
-        ("name".to_string(), st::Utf8String.into_value()),
+        ("name".to_string(), st::UTF8String.into_value()),
         ("age".to_string(), st::Uint8.into_value()),
         ("is_rad".to_string(), st::Bool.into_value()),
     ])
@@ -2504,7 +2504,7 @@ fn test_query_trait_struct_term() {
     // test_query_trait_case(
     //     qv::StructTermView::new(&s),
     //     &['v'.into_value(), "name".to_string().into_value()],
-    //     st::Utf8String.into_value(),
+    //     st::UTF8String.into_value(),
     // );
     // TEMPORARILY DISABLED until key lookup is supported
     // test_query_trait_case(
@@ -2693,7 +2693,7 @@ fn test_query_mut_trait_utf8_string_term() {
 #[serial_test::serial]
 fn test_query_mut_trait_struct_term() {
     let s0 = dy::StructTerm::new(vec![
-        ("name".to_string(), st::Utf8String.into_value()),
+        ("name".to_string(), st::UTF8String.into_value()),
         ("age".to_string(), st::Uint8.into_value()),
         ("is_rad".to_string(), st::Bool.into_value()),
     ])
@@ -2725,7 +2725,7 @@ fn test_query_mut_trait_struct_term() {
         //     }
         //     .into_value(),
         //     dy::StructTerm::new(vec![
-        //         ("handle".to_string(), st::Utf8String.into_value()),
+        //         ("handle".to_string(), st::UTF8String.into_value()),
         //         ("age".to_string(), st::Uint8.into_value()),
         //         ("is_rad".to_string(), st::Bool.into_value()),
         //     ])
@@ -2738,7 +2738,7 @@ fn test_query_mut_trait_struct_term() {
         //     s0.clone(),
         //     vec!['v'.into_value(), "name".to_string().into_value()],
         //     qv::ReplacementTerm {
-        //         old_data: st::Utf8String.into(),
+        //         old_data: st::UTF8String.into(),
         //         new_data: st::UnicodeChar.into(),
         //     }
         //     .into_value(),

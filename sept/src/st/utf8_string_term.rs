@@ -4,13 +4,13 @@ use crate::{
     Error, Result,
 };
 
-pub type Utf8StringTerm = String;
+pub type UTF8StringTerm = String;
 
 impl dy::DeconstructT for String {
     fn deconstruct(self) -> dy::Deconstruction {
         // Deconstruct only the constructor, otherwise infinite recursion!
         dy::ParametricDeconstruction::new(
-            st::Utf8String.deconstruct(),
+            st::UTF8String.deconstruct(),
             vec![dy::TerminalDeconstruction::new_unchecked(dy::Value::from(self)).into()],
         )
         .into()
@@ -87,25 +87,25 @@ impl qv::ApplyEditT for String {
             let edit = edit.downcast_into::<qv::ReplacementTerm>();
             anyhow::ensure!(
                 edit.old_data.is::<String>(),
-                "Utf8StringTerm ReplacementTerm edit expected old_data to be String"
+                "UTF8StringTerm ReplacementTerm edit expected old_data to be String"
             );
             anyhow::ensure!(
                 edit.new_data.is::<String>(),
-                "Utf8StringTerm ReplacementTerm edit expected new_data to be String"
+                "UTF8StringTerm ReplacementTerm edit expected new_data to be String"
             );
             let old_string = edit.old_data.downcast_into::<String>();
             let new_string = edit.new_data.downcast_into::<String>();
-            anyhow::ensure!(*self == old_string, "Utf8StringTerm ReplacementTerm edit expected current value ({:?}) to match old_data ({:?})", self, old_string);
+            anyhow::ensure!(*self == old_string, "UTF8StringTerm ReplacementTerm edit expected current value ({:?}) to match old_data ({:?})", self, old_string);
             *self = new_string;
         } else {
-            anyhow::bail!("Utf8StringTerm does not support edit: {}", edit);
+            anyhow::bail!("UTF8StringTerm does not support edit: {}", edit);
         }
         Ok(())
     }
 }
 
-impl InhabitsT<st::Utf8String> for String {
-    fn inhabits(&self, _rhs: &st::Utf8String) -> bool {
+impl InhabitsT<st::UTF8String> for String {
+    fn inhabits(&self, _rhs: &st::UTF8String) -> bool {
         true
     }
 }
@@ -128,7 +128,7 @@ impl st::DeserializableT for String {
 
 impl qv::QueryableDynT for String {
     fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
-        Box::new(qv::Utf8StringTermView::new(self))
+        Box::new(qv::UTF8StringTermView::new(self))
     }
 }
 
@@ -137,7 +137,7 @@ impl st::SerializableT for String {
     //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
     //     }
     //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-    //         Ok(st::Utf8String.serialize(writer)?)
+    //         Ok(st::UTF8String.serialize(writer)?)
     //     }
     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
         // TODO: Figure out if this should be u64 or u32, or if there's some smarter encoding
@@ -151,7 +151,7 @@ impl st::SerializableT for String {
 }
 
 impl qv::SingleQueryT<dy::Value> for String {
-    type ReturnType<'a> = qv::Utf8StringTermQuery<'a>;
+    type ReturnType<'a> = qv::UTF8StringTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
@@ -159,19 +159,19 @@ impl qv::SingleQueryT<dy::Value> for String {
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(address_string) = address_token.downcast_ref::<String>() {
             match address_string.as_str() {
-                "char" => Ok(qv::Utf8StringTermCharView::new(self).into()),
-                "line" => Ok(qv::Utf8StringTermLineView::new(self).into()),
+                "char" => Ok(qv::UTF8StringTermCharView::new(self).into()),
+                "line" => Ok(qv::UTF8StringTermLineView::new(self).into()),
                 // TODO: "len" perhaps
                 _ => {
                     anyhow::bail!(
-                        "Utf8StringTerm::run_single_query; unrecognized address_token {:?}",
+                        "UTF8StringTerm::run_single_query; unrecognized address_token {:?}",
                         address_string.as_str()
                     );
                 }
             }
         } else {
             anyhow::bail!(
-                "Utf8StringTerm::run_single_query; unrecognized address_token {}",
+                "UTF8StringTerm::run_single_query; unrecognized address_token {}",
                 address_token.stringify()
             );
         }
@@ -179,7 +179,7 @@ impl qv::SingleQueryT<dy::Value> for String {
 }
 
 impl qv::SingleQueryMutT<dy::Value> for String {
-    type ReturnType<'a> = qv::Utf8StringTermQueryMut<'a>;
+    type ReturnType<'a> = qv::UTF8StringTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
@@ -187,19 +187,19 @@ impl qv::SingleQueryMutT<dy::Value> for String {
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(address_string) = address_token.downcast_ref::<String>() {
             match address_string.as_str() {
-                "char" => Ok(qv::Utf8StringTermCharMutView::new(self).into()),
-                "line" => Ok(qv::Utf8StringTermLineMutView::new(self).into()),
+                "char" => Ok(qv::UTF8StringTermCharMutView::new(self).into()),
+                "line" => Ok(qv::UTF8StringTermLineMutView::new(self).into()),
                 // TODO: "len" perhaps
                 _ => {
                     anyhow::bail!(
-                        "Utf8StringTerm::run_single_query_mut; unrecognized address_token {:?}",
+                        "UTF8StringTerm::run_single_query_mut; unrecognized address_token {:?}",
                         address_string.as_str()
                     );
                 }
             }
         } else {
             anyhow::bail!(
-                "Utf8StringTerm::run_single_query_mut; unrecognized address_token {}",
+                "UTF8StringTerm::run_single_query_mut; unrecognized address_token {}",
                 address_token.stringify()
             );
         }
@@ -242,7 +242,7 @@ impl StringifiableT for String {
 }
 
 impl TermT for String {
-    type AbstractTypeType = st::Utf8String;
+    type AbstractTypeType = st::UTF8String;
 
     fn is_parametric(&self) -> bool {
         true
@@ -256,7 +256,7 @@ impl TermT for String {
 }
 
 impl TermT for &'static str {
-    type AbstractTypeType = st::Utf8String;
+    type AbstractTypeType = st::UTF8String;
 
     fn is_parametric(&self) -> bool {
         true

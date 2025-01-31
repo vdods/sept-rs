@@ -31,7 +31,7 @@ impl dy::ConstructorT for GlobalSymRef {
             Some(string) => std::mem::take(string),
             None => {
                 anyhow::bail!(
-                    "{}.construct expected parameter of type Utf8String, but got one of type {:?}",
+                    "{}.construct expected parameter of type UTF8String, but got one of type {:?}",
                     self.stringify(),
                     parameter.type_id()
                 );

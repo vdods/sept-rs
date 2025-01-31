@@ -104,7 +104,7 @@ pub(crate) fn render_type_annotation_for_str(
         let extra_text = extra_text_o.unwrap_or("");
         layout_job_append(
             layout_job,
-            format!(": {}{}", sept::st::Utf8String.stringify(), extra_text).as_str(),
+            format!(": {}{}", sept::st::UTF8String.stringify(), extra_text).as_str(),
             view_ctx.color_for_type_annotation(),
             view_ctx,
         );
@@ -239,7 +239,7 @@ impl_value_ui_using_to_string!(sept::st::Uint32);
 impl_value_ui_using_to_string!(sept::st::Uint64);
 impl_value_ui_using_to_string!(sept::st::Float32);
 impl_value_ui_using_to_string!(sept::st::Float64);
-impl_value_ui_using_to_string!(sept::st::Utf8String);
+impl_value_ui_using_to_string!(sept::st::UTF8String);
 impl_value_ui_using_to_string!(sept::st::Array);
 impl_value_ui_using_to_string!(sept::st::OrderedMap);
 impl_value_ui_using_to_string!(sept::st::Struct);
@@ -258,7 +258,7 @@ impl_value_ui_using_to_string!(sept::st::Uint32Type);
 impl_value_ui_using_to_string!(sept::st::Uint64Type);
 impl_value_ui_using_to_string!(sept::st::Float32Type);
 impl_value_ui_using_to_string!(sept::st::Float64Type);
-impl_value_ui_using_to_string!(sept::st::Utf8StringType);
+impl_value_ui_using_to_string!(sept::st::UTF8StringType);
 impl_value_ui_using_to_string!(sept::st::ArrayType);
 impl_value_ui_using_to_string!(sept::st::OrderedMapType);
 impl_value_ui_using_to_string!(sept::st::StructType);

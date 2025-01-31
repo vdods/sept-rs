@@ -88,7 +88,7 @@ impl<'b> qv::QueryT for StructTermFieldElemView<'b> {
                 // match *elem_index {
                 //     0 => {
                 //         // Field name
-                //         Box::new(qv::Utf8StringTermView::new(
+                //         Box::new(qv::UTF8StringTermView::new(
                 //             self.struct_term.get_field_name(self.elem_index)?,
                 //         ))
                 //         .run_query(&mut address_token_i)

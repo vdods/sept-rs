@@ -1,10 +1,10 @@
 use crate::{dy, qv, st, Error, Result};
 use std::sync::{Arc, RwLock};
 
-// TODO: This should just be a char view that takes a Utf8StringTermLineView.
+// TODO: This should just be a char view that takes a UTF8StringTermLineView.
 #[allow(unused)] // TEMP HACK
 #[derive(Clone, Debug)]
-pub struct Utf8StringTermLineElemCharElemView<'a> {
+pub struct UTF8StringTermLineElemCharElemView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -20,13 +20,13 @@ pub struct Utf8StringTermLineElemCharElemView<'a> {
     pub char_o: Option<char>,
 }
 
-impl<'a> Utf8StringTermLineElemCharElemView<'a> {
+impl<'a> UTF8StringTermLineElemCharElemView<'a> {
     pub fn new(string: &'a str, line_index: usize, char_index: usize) -> Result<Self> {
         let mut line_i = st::split_inclusive_allow_trailing_empty(string, '\n');
         let line_count = line_i.clone().count();
         anyhow::ensure!(
             line_index < line_count,
-            "Utf8StringTermLineElemCharElemView line_index out of bounds"
+            "UTF8StringTermLineElemCharElemView line_index out of bounds"
         );
         let line = line_i.nth(line_index).unwrap();
         // TODO: This does redundant computation with determining of c; fix that.
@@ -36,14 +36,14 @@ impl<'a> Utf8StringTermLineElemCharElemView<'a> {
             // If we're in the last line, then char_index is allowed to match line_char_count.
             anyhow::ensure!(
                 char_index <= line_char_count,
-                "Utf8StringTermLineElemCharElemView char_index ({}) out of bounds (last line of string), max allowable char_index value is {}",
+                "UTF8StringTermLineElemCharElemView char_index ({}) out of bounds (last line of string), max allowable char_index value is {}",
                 char_index,
                 line_char_count,
             );
         } else {
             // Otherwise, char_index must be less than line_char_count.
             assert!(line_char_count > 0);
-            anyhow::ensure!(char_index < line_char_count, "Utf8StringTermLineElemCharElemView char_index ({}) out of bounds (non-last line of string), max allowable char_index value is {}", char_index, line_char_count-1);
+            anyhow::ensure!(char_index < line_char_count, "UTF8StringTermLineElemCharElemView char_index ({}) out of bounds (non-last line of string), max allowable char_index value is {}", char_index, line_char_count-1);
         }
         let char_o = line.chars().nth(char_index);
         Ok(Self {
@@ -68,7 +68,7 @@ impl<'a> Utf8StringTermLineElemCharElemView<'a> {
     //         "programmer error: actual line does not match specified cached line"
     //     );
     //     let c = line.chars().nth(char_index).ok_or_else(|| {
-    //         anyhow::anyhow!("Utf8StringTermLineElemCharElemView char_index out of bounds")
+    //         anyhow::anyhow!("UTF8StringTermLineElemCharElemView char_index out of bounds")
     //     })?;
     //     Ok(Self {
     //         string,
@@ -107,12 +107,12 @@ impl<'a> Utf8StringTermLineElemCharElemView<'a> {
             // If we're in the last line, then char_index is allowed to match line_char_count.
             anyhow::ensure!(
                 char_index <= line_char_count,
-                "Utf8StringTermLineElemCharElemView char_index ({}) out of bounds (last line of string), max allowable char_index is {}", char_index, line_char_count,
+                "UTF8StringTermLineElemCharElemView char_index ({}) out of bounds (last line of string), max allowable char_index is {}", char_index, line_char_count,
             );
         } else {
             // Otherwise, char_index must be less than line_char_count.
             assert!(line_char_count > 0);
-            anyhow::ensure!(char_index < line_char_count, "Utf8StringTermLineElemCharElemView char_index ({}) out of bounds (non-last line of string), max allowable char_index is {}", char_index, line_char_count-1);
+            anyhow::ensure!(char_index < line_char_count, "UTF8StringTermLineElemCharElemView char_index ({}) out of bounds (non-last line of string), max allowable char_index is {}", char_index, line_char_count-1);
         }
         assert_eq!(
             line.chars().nth(char_index),
@@ -235,7 +235,7 @@ impl<'a> Utf8StringTermLineElemCharElemView<'a> {
     // the constraints checking can't be done until after the edit is made.
 }
 
-impl<'b> qv::QueryT for Utf8StringTermLineElemCharElemView<'b> {
+impl<'b> qv::QueryT for UTF8StringTermLineElemCharElemView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -252,13 +252,13 @@ impl<'b> qv::QueryT for Utf8StringTermLineElemCharElemView<'b> {
         // TODO: If char ever gets further queries (e.g. numeric unicode value), then pass them on here.
         use st::StringifiableT;
         anyhow::bail!(
-            "Utf8StringTerm query doesn't support address: {}",
+            "UTF8StringTerm query doesn't support address: {}",
             first_address.stringify()
         );
     }
 }
 
-impl<'b> qv::EvalT for Utf8StringTermLineElemCharElemView<'b> {
+impl<'b> qv::EvalT for UTF8StringTermLineElemCharElemView<'b> {
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         use dy::IntoValueT;
         // We already retrieved the char during construction, so just return the value.
@@ -274,10 +274,10 @@ impl<'b> qv::EvalT for Utf8StringTermLineElemCharElemView<'b> {
 }
 
 #[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermLineElemCharElemViewQuery {}
+pub enum UTF8StringTermLineElemCharElemViewQuery {}
 
-impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharElemView<'b> {
-    type ReturnType<'a> = Utf8StringTermLineElemCharElemViewQuery where 'b: 'a;
+impl<'b> qv::SingleQueryT<dy::Value> for UTF8StringTermLineElemCharElemView<'b> {
+    type ReturnType<'a> = UTF8StringTermLineElemCharElemViewQuery where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
@@ -285,7 +285,7 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineElemCharElemView<'b> 
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         // TODO: Once char has queries, forward to that.
         anyhow::bail!(
-            "Utf8StringTermLineElemCharElemView::run_single_query does not support any queries"
+            "UTF8StringTermLineElemCharElemView::run_single_query does not support any queries"
         );
     }
 }

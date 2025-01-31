@@ -27,7 +27,6 @@
 -   It should be possible to use symbolic and URL-like references to types in the following ways:
     -   In a dynamic mode, declaring a term has a symbolic/URL-specified type simply does dynamic validation.
     -   In a static mode, a natively defined struct/class could have a derive attribute that verifies (maybe at load-time?) that the given struct/class faithfully represents the type referred to.  This would be the ideal way to implement strongly typed, statically compiled usages of schemas that are defined in some public, online repository.
--   Rename types involving acronyms to use all caps, e.g. `Utf8String` -> `UTF8String`, `PodType` -> `PODType`, because it looks better.
 
 ## Design Notes For `sept-gui`
 
@@ -275,7 +274,7 @@
                                 constructor: NonParametricDeconstruction(Tuple),
                                 parameters: (
                                     ParametricDeconstruction {
-                                        constructor: NonParametricDeconstruction(Utf8String),
+                                        constructor: NonParametricDeconstruction(UTF8String),
                                         parameters: (NonParametricDeconstruction("abc")),
                                     },
                                 ),
@@ -306,10 +305,10 @@
 -   Rename `type_` to `r#type`.
 -   Maybe use the crate `funty` and its "fundamental" traits to clean up some of the POD types.
 -   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `DeconstructT` and `ConstructorT` can be implemented for `LocalSymRefTerm`.
--   Rename Ascii* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
+-   Rename ASCII* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
 -   Make `StringifiableT`'s stringify() function work like std::fmt::Display, taking a writer instead of producing a String.
 -   This shouldn't produce a warning:
 
         [2023-05-05T22:52:37.796819980 WARN sept/src/dy/runtime.rs:1229] Runtime is using TypeId to be able to `cmp` different types (u32, u32); this ordering is not stable between builds because TypeId is not stable between builds.
--   Change the "line" and "char" queries of Utf8StringTerm to use 'l' and 'c'.  This saves screen space and memory (no heap allocation beyond the dy::Value's Box).
+-   Change the "line" and "char" queries of UTF8StringTerm to use 'l' and 'c'.  This saves screen space and memory (no heap allocation beyond the dy::Value's Box).
 -   Done: Consider putting all the view and query stuff into a new submodule of `sept` crate, e.g. `query` or maybe just `q`.

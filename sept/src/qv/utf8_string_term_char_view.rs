@@ -2,14 +2,14 @@ use crate::{dy, qv, st, Error, Result};
 use std::sync::{Arc, RwLock};
 
 #[derive(Clone, Debug)]
-pub struct Utf8StringTermCharView<'a> {
+pub struct UTF8StringTermCharView<'a> {
     pub string: &'a str,
 
     // cached values
     pub char_count: usize,
 }
 
-impl<'a> Utf8StringTermCharView<'a> {
+impl<'a> UTF8StringTermCharView<'a> {
     pub fn new(string: &'a str) -> Self {
         let char_count = string.chars().count();
         Self { string, char_count }
@@ -24,14 +24,14 @@ impl<'a> Utf8StringTermCharView<'a> {
     }
 }
 
-impl<'b> std::ops::Deref for Utf8StringTermCharView<'b> {
+impl<'b> std::ops::Deref for UTF8StringTermCharView<'b> {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.string
     }
 }
 
-impl<'b> qv::QueryT for Utf8StringTermCharView<'b> {
+impl<'b> qv::QueryT for UTF8StringTermCharView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -46,7 +46,7 @@ impl<'b> qv::QueryT for Utf8StringTermCharView<'b> {
         }
         let first_address = address_token_i.next().unwrap();
         if let Some(element_index) = first_address.downcast_ref::<u32>() {
-            Box::new(qv::Utf8StringTermCharElemView::new(
+            Box::new(qv::UTF8StringTermCharElemView::new(
                 self.string,
                 *element_index as usize,
             )?)
@@ -55,14 +55,14 @@ impl<'b> qv::QueryT for Utf8StringTermCharView<'b> {
             // TODO: Support "len" query.
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermCharView query doesn't support address: {}",
+                "UTF8StringTermCharView query doesn't support address: {}",
                 first_address.stringify()
             );
         }
     }
 }
 
-impl<'b> qv::EvalT for Utf8StringTermCharView<'b> {
+impl<'b> qv::EvalT for UTF8StringTermCharView<'b> {
     /// This will produce an ArrayTerm populated with the chars of the string.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
         let char_v = self
@@ -79,31 +79,31 @@ impl<'b> qv::EvalT for Utf8StringTermCharView<'b> {
 }
 
 #[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermCharViewQuery<'a> {
-    Utf8StringTermCharElemView(qv::Utf8StringTermCharElemView<'a>),
+pub enum UTF8StringTermCharViewQuery<'a> {
+    UTF8StringTermCharElemView(qv::UTF8StringTermCharElemView<'a>),
 }
 
-impl<'a> From<Utf8StringTermCharViewQuery<'a>> for Box<dyn qv::EvalT + 'a> {
-    fn from(value: Utf8StringTermCharViewQuery<'a>) -> Self {
+impl<'a> From<UTF8StringTermCharViewQuery<'a>> for Box<dyn qv::EvalT + 'a> {
+    fn from(value: UTF8StringTermCharViewQuery<'a>) -> Self {
         match value {
-            Utf8StringTermCharViewQuery::Utf8StringTermCharElemView(x) => Box::new(x),
+            UTF8StringTermCharViewQuery::UTF8StringTermCharElemView(x) => Box::new(x),
         }
     }
 }
 
-impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermCharView<'b> {
-    type ReturnType<'a> = Utf8StringTermCharViewQuery<'a> where 'b: 'a;
+impl<'b> qv::SingleQueryT<dy::Value> for UTF8StringTermCharView<'b> {
+    type ReturnType<'a> = UTF8StringTermCharViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
         address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(char_index) = address_token.downcast_ref::<u32>() {
-            Ok(qv::Utf8StringTermCharElemView::new(self.string, *char_index as usize)?.into())
+            Ok(qv::UTF8StringTermCharElemView::new(self.string, *char_index as usize)?.into())
         } else {
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermCharView::run_single_query; unrecognized address_token {}",
+                "UTF8StringTermCharView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()
             );
         }

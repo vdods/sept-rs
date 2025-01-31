@@ -10,8 +10,8 @@ use crate::{
         LocalSymRefType, OrderedMap, OrderedMapType, Placeholder, PlaceholderType, Sint16,
         Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType,
         Term, True, TrueType, Tuple, TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type,
-        Uint64, Uint64Type, Uint8, Uint8Type, UnicodeChar, UnicodeCharType, Utf8String,
-        Utf8StringType, Void, VoidType,
+        Uint64, Uint64Type, Uint8, Uint8Type, UnicodeChar, UnicodeCharType, UTF8String,
+        UTF8StringType, Void, VoidType,
     },
     Result,
 };
@@ -326,8 +326,8 @@ impl Runtime {
         runtime.register_type::<Float64Type>().unwrap();
         runtime.register_type::<UnicodeChar>().unwrap();
         runtime.register_type::<UnicodeCharType>().unwrap();
-        runtime.register_type::<Utf8String>().unwrap();
-        runtime.register_type::<Utf8StringType>().unwrap();
+        runtime.register_type::<UTF8String>().unwrap();
+        runtime.register_type::<UTF8StringType>().unwrap();
         runtime.register_type::<VoidType>().unwrap();
         runtime.register_type::<PlaceholderType>().unwrap();
         runtime.register_type::<Array>().unwrap();
@@ -415,10 +415,10 @@ impl Runtime {
             .register_non_parametric_term::<UnicodeCharType>()
             .unwrap();
         runtime
-            .register_non_parametric_term::<Utf8String>()
+            .register_non_parametric_term::<UTF8String>()
             .unwrap();
         runtime
-            .register_non_parametric_term::<Utf8StringType>()
+            .register_non_parametric_term::<UTF8StringType>()
             .unwrap();
         runtime.register_non_parametric_term::<ArrayType>().unwrap();
         runtime.register_non_parametric_term::<Array>().unwrap();
@@ -460,7 +460,7 @@ impl Runtime {
         runtime.register_constructor::<Uint64>().unwrap();
         runtime.register_constructor::<Float32>().unwrap();
         runtime.register_constructor::<Float64>().unwrap();
-        runtime.register_constructor::<Utf8String>().unwrap();
+        runtime.register_constructor::<UTF8String>().unwrap();
         runtime.register_constructor::<Array>().unwrap();
         runtime.register_constructor::<OrderedMap>().unwrap();
         runtime.register_constructor::<GlobalSymRef>().unwrap();

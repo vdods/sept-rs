@@ -2,14 +2,14 @@ use crate::{dy, qv, st, Error, Result};
 use std::sync::{Arc, RwLock};
 
 #[derive(Clone, Debug)]
-pub struct Utf8StringTermLineView<'a> {
+pub struct UTF8StringTermLineView<'a> {
     pub string: &'a str,
 
     // cached values
     pub line_count: usize,
 }
 
-impl<'a> Utf8StringTermLineView<'a> {
+impl<'a> UTF8StringTermLineView<'a> {
     pub fn new(string: &'a str) -> Self {
         let line_count = st::split_inclusive_allow_trailing_empty(string, '\n').count();
         Self { string, line_count }
@@ -24,14 +24,14 @@ impl<'a> Utf8StringTermLineView<'a> {
     }
 }
 
-impl<'b> std::ops::Deref for Utf8StringTermLineView<'b> {
+impl<'b> std::ops::Deref for UTF8StringTermLineView<'b> {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.string
     }
 }
 
-impl<'b> qv::EvalT for Utf8StringTermLineView<'b> {
+impl<'b> qv::EvalT for UTF8StringTermLineView<'b> {
     /// This will produce an ArrayTerm populated with (clones of) the lines of the string,
     /// where each line includes the newline.
     fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
@@ -46,7 +46,7 @@ impl<'b> qv::EvalT for Utf8StringTermLineView<'b> {
     }
 }
 
-impl<'b> qv::QueryT for Utf8StringTermLineView<'b> {
+impl<'b> qv::QueryT for UTF8StringTermLineView<'b> {
     fn run_query<'a>(
         self: Box<Self>,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -61,7 +61,7 @@ impl<'b> qv::QueryT for Utf8StringTermLineView<'b> {
         }
         let first_address = address_token_i.next().unwrap();
         if let Some(element_index) = first_address.downcast_ref::<u32>() {
-            Box::new(qv::Utf8StringTermLineElemView::new(
+            Box::new(qv::UTF8StringTermLineElemView::new(
                 self.string,
                 *element_index as usize,
             )?)
@@ -70,26 +70,26 @@ impl<'b> qv::QueryT for Utf8StringTermLineView<'b> {
             // TODO: Support "len" query.
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineView query doesn't support address: {}",
+                "UTF8StringTermLineView query doesn't support address: {}",
                 first_address.stringify()
             );
         }
     }
 }
 
-impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineView<'b> {
-    type ReturnType<'a> = Utf8StringTermLineViewQuery<'a> where 'b: 'a;
+impl<'b> qv::SingleQueryT<dy::Value> for UTF8StringTermLineView<'b> {
+    type ReturnType<'a> = UTF8StringTermLineViewQuery<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
         address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(line_index) = address_token.downcast_ref::<u32>() {
-            Ok(qv::Utf8StringTermLineElemView::new(self.string, *line_index as usize)?.into())
+            Ok(qv::UTF8StringTermLineElemView::new(self.string, *line_index as usize)?.into())
         } else {
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineView::run_single_query; unrecognized address_token {}",
+                "UTF8StringTermLineView::run_single_query; unrecognized address_token {}",
                 address_token.stringify()
             );
         }
@@ -97,6 +97,6 @@ impl<'b> qv::SingleQueryT<dy::Value> for Utf8StringTermLineView<'b> {
 }
 
 #[derive(Clone, Debug, derive_more::From)]
-pub enum Utf8StringTermLineViewQuery<'a> {
-    Utf8StringTermLineElemView(qv::Utf8StringTermLineElemView<'a>),
+pub enum UTF8StringTermLineViewQuery<'a> {
+    UTF8StringTermLineElemView(qv::UTF8StringTermLineElemView<'a>),
 }

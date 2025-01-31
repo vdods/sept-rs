@@ -1,21 +1,21 @@
 use crate::{
     dy,
-    st::{self, InhabitsT, StringifiableT, Utf8StringType},
+    st::{self, InhabitsT, StringifiableT, UTF8StringType},
     Result,
 };
 
-/// This represents the Utf8String type itself, not a boolean value such as true or false.
+/// This represents the UTF8String type itself, not a boolean value such as true or false.
 #[derive(
     Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
 #[st_term_t(
-    AbstractTypeType = "Utf8StringType",
+    AbstractTypeType = "UTF8StringType",
     is_parametric = "false",
     is_type = "true"
 )]
-pub struct Utf8String;
+pub struct UTF8String;
 
-impl dy::ConstructorT for Utf8String {
+impl dy::ConstructorT for UTF8String {
     type ConstructedType = String;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
@@ -29,7 +29,7 @@ impl dy::ConstructorT for Utf8String {
         match parameter.downcast_mut::<String>() {
             Some(string) => Ok(std::mem::take(string)),
             None => Err(anyhow::anyhow!(
-                "{}.construct expected parameter of type Utf8String, but got one of type {:?}",
+                "{}.construct expected parameter of type UTF8String, but got one of type {:?}",
                 self.stringify(),
                 parameter.type_id()
             )),
@@ -44,14 +44,14 @@ impl dy::ConstructorT for Utf8String {
     }
 }
 
-impl st::InhabitsT<st::Type> for Utf8String {
+impl st::InhabitsT<st::Type> for UTF8String {
     fn inhabits(&self, _: &st::Type) -> bool {
         true
     }
 }
 
-impl InhabitsT<Utf8StringType> for Utf8String {
-    fn inhabits(&self, _: &Utf8StringType) -> bool {
+impl InhabitsT<UTF8StringType> for UTF8String {
+    fn inhabits(&self, _: &UTF8StringType) -> bool {
         true
     }
 }

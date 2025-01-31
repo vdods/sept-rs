@@ -5,7 +5,7 @@ use crate::{
 };
 use egui::{text::LayoutJob, Ui};
 
-impl ValueUIT for sept::st::Utf8StringTerm {
+impl ValueUIT for sept::st::UTF8StringTerm {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -22,7 +22,7 @@ impl ValueUIT for sept::st::Utf8StringTerm {
             match guide_token.downcast_ref::<String>().map(|x| x.as_str()) {
                 Some("line") => {
                     // TODO: Does this need to call run_ui instead of run_ui_expanded?
-                    return sept::qv::Utf8StringTermLineView::new(self).run_ui_expanded(
+                    return sept::qv::UTF8StringTermLineView::new(self).run_ui_expanded(
                         ui,
                         view_ctx,
                         continuation_layout_job_o,
@@ -30,19 +30,19 @@ impl ValueUIT for sept::st::Utf8StringTerm {
                 }
                 Some("char") => {
                     // TODO: Does this need to call run_ui instead of run_ui_expanded?
-                    return sept::qv::Utf8StringTermCharView::new(self).run_ui_expanded(
+                    return sept::qv::UTF8StringTermCharView::new(self).run_ui_expanded(
                         ui,
                         view_ctx,
                         continuation_layout_job_o,
                     );
                 }
                 Some(mode) => {
-                    tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
+                    tracing::warn!("Invalid view mode {:?} for UTF8StringTerm", mode);
                 }
                 None => {
                     use sept::st::StringifiableT;
                     tracing::warn!(
-                        "Invalid view mode {} for Utf8StringTerm",
+                        "Invalid view mode {} for UTF8StringTerm",
                         guide_token.stringify()
                     );
                 }
@@ -53,7 +53,7 @@ impl ValueUIT for sept::st::Utf8StringTerm {
         // use "line" view.
         // TODO: Does this need to call run_ui instead of run_ui_expanded?
         // Just use "line" mode for everything.
-        sept::qv::Utf8StringTermLineView::new(self).run_ui_expanded(
+        sept::qv::UTF8StringTermLineView::new(self).run_ui_expanded(
             ui,
             view_ctx,
             continuation_layout_job_o,
@@ -67,21 +67,21 @@ impl ValueUIT for sept::st::Utf8StringTerm {
             match guide_token.downcast_ref::<String>().map(|x| x.as_str()) {
                 Some("line") => {
                     // TODO: Does this need to call run_ui instead of run_ui_expanded?
-                    return sept::qv::Utf8StringTermLineView::new(self)
+                    return sept::qv::UTF8StringTermLineView::new(self)
                         .run_ui_inline(ui, layout_job, view_ctx);
                 }
                 Some("char") => {
                     // TODO: Does this need to call run_ui instead of run_ui_expanded?
-                    return sept::qv::Utf8StringTermCharView::new(self)
+                    return sept::qv::UTF8StringTermCharView::new(self)
                         .run_ui_inline(ui, layout_job, view_ctx);
                 }
                 Some(mode) => {
-                    tracing::warn!("Invalid view mode {:?} for Utf8StringTerm", mode);
+                    tracing::warn!("Invalid view mode {:?} for UTF8StringTerm", mode);
                 }
                 None => {
                     use sept::st::StringifiableT;
                     tracing::warn!(
-                        "Invalid view mode {} for Utf8StringTerm",
+                        "Invalid view mode {} for UTF8StringTerm",
                         guide_token.stringify()
                     );
                 }
@@ -91,15 +91,15 @@ impl ValueUIT for sept::st::Utf8StringTerm {
         // // There was no guide token, so just do what the LayoutMode expects.  Because we're in run_ui_inline,
         // // use "char" view.
         // // TODO: Does this need to call run_ui instead of run_ui_inline?
-        // sept::qv::Utf8StringTermCharView::new(self).run_ui_inline(ui, layout_job, view_ctx)
+        // sept::qv::UTF8StringTermCharView::new(self).run_ui_inline(ui, layout_job, view_ctx)
 
         // Just use "line" mode for everything.
         // TODO: Does this need to call run_ui instead of run_ui_expanded?
-        return sept::qv::Utf8StringTermLineView::new(self).run_ui_inline(ui, layout_job, view_ctx);
+        return sept::qv::UTF8StringTermLineView::new(self).run_ui_inline(ui, layout_job, view_ctx);
     }
 }
 
-impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
+impl<'a> ValueUIT for sept::qv::UTF8StringTermCharView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -128,7 +128,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
         ui.label(layout_job);
 
         {
-            let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+            let regular_char_color = view_ctx_g.color_for::<sept::st::UTF8StringTerm>();
             let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
 
             let mut view_ctx_g = view_ctx_g.push_nesting_depth();
@@ -140,7 +140,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
             let mut char_index_begin = 0usize;
             for (line_index, line) in line_i.enumerate() {
                 ui.horizontal(|ui| {
-                    ui.label(indentation_for::<sept::st::Utf8StringTerm>(&mut view_ctx_g));
+                    ui.label(indentation_for::<sept::st::UTF8StringTerm>(&mut view_ctx_g));
 
                     // The content itself expects to be in a vertical.
                     ui.vertical(|ui| {
@@ -207,7 +207,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
             view_ctx_g.color_for_utf8string_quotes(),
             &mut view_ctx_g,
         );
-        let regular_char_color = view_ctx_g.color_for::<sept::st::Utf8StringTerm>();
+        let regular_char_color = view_ctx_g.color_for::<sept::st::UTF8StringTerm>();
         let escape_char_color = view_ctx_g.color_for_utf8string_escape_chars();
         render_str_as_literal_without_quotes(
             self,
@@ -235,7 +235,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermCharView<'a> {
     }
 }
 
-impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
+impl<'a> ValueUIT for sept::qv::UTF8StringTermLineView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }
@@ -268,7 +268,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
                 for (line_index, line) in line_i.enumerate() {
                     let mut view_ctx_g =
                         view_ctx_g.push_render_address_token((line_index as u32).into());
-                    layout_job = sept::qv::Utf8StringTermLineElemView::new_with_cached_line(
+                    layout_job = sept::qv::UTF8StringTermLineElemView::new_with_cached_line(
                         self,
                         line_index,
                         self.line_count,
@@ -306,14 +306,14 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
         {
             for (line_index, line) in line_i.enumerate() {
                 ui.horizontal(|ui| {
-                    ui.label(indentation_for::<sept::st::Utf8StringTerm>(&mut view_ctx_g));
+                    ui.label(indentation_for::<sept::st::UTF8StringTerm>(&mut view_ctx_g));
 
                     // The content itself expects to be in a vertical.
                     ui.vertical(|ui| {
                         let mut view_ctx_g =
                             view_ctx_g.push_render_address_token((line_index as u32).into());
                         let layout_job =
-                            sept::qv::Utf8StringTermLineElemView::new_with_cached_line(
+                            sept::qv::UTF8StringTermLineElemView::new_with_cached_line(
                                 self,
                                 line_index,
                                 self.line_count,
@@ -361,7 +361,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
             {
                 let mut view_ctx_g =
                     view_ctx_g.push_render_address_token((line_index as u32).into());
-                sept::qv::Utf8StringTermLineElemView::new_with_cached_line(
+                sept::qv::UTF8StringTermLineElemView::new_with_cached_line(
                     self,
                     line_index,
                     self.line_count,
@@ -389,7 +389,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineView<'a> {
     }
 }
 
-impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemView<'a> {
+impl<'a> ValueUIT for sept::qv::UTF8StringTermLineElemView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }
@@ -401,7 +401,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemView<'a> {
     ) -> LayoutJob {
         let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
 
-        let layout_job = sept::qv::Utf8StringTermLineElemCharView::new_with_cached_line(
+        let layout_job = sept::qv::UTF8StringTermLineElemCharView::new_with_cached_line(
             self.string,
             self.line_index,
             self.line_count,
@@ -416,7 +416,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemView<'a> {
     fn run_ui_inline(&self, ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
         let mut view_ctx_g = view_ctx.push_render_address_token("char".to_string().into());
 
-        sept::qv::Utf8StringTermLineElemCharView::new_with_cached_line(
+        sept::qv::UTF8StringTermLineElemCharView::new_with_cached_line(
             self.string,
             self.line_index,
             self.line_count,
@@ -428,7 +428,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemView<'a> {
     }
 }
 
-impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharView<'a> {
+impl<'a> ValueUIT for sept::qv::UTF8StringTermLineElemCharView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("this should not be called");
     }
@@ -453,7 +453,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharView<'a> {
         };
         for (c_index, char_o) in char_oi.enumerate() {
             let mut view_ctx_g = view_ctx.push_render_address_token((c_index as u32).into());
-            sept::qv::Utf8StringTermLineElemCharElemView::new_with_cached_line_and_char(
+            sept::qv::UTF8StringTermLineElemCharElemView::new_with_cached_line_and_char(
                 self.string,
                 self.line_index,
                 c_index,
@@ -489,7 +489,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharView<'a> {
         for (c_index, char_o) in char_oi.enumerate() {
             let mut view_ctx_g = view_ctx.push_render_address_token((c_index as u32).into());
             let mut view_ctx_g = view_ctx_g.push_nesting_depth();
-            sept::qv::Utf8StringTermLineElemCharElemView::new_with_cached_line_and_char(
+            sept::qv::UTF8StringTermLineElemCharElemView::new_with_cached_line_and_char(
                 self.string,
                 self.line_index,
                 c_index,
@@ -504,7 +504,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharView<'a> {
     }
 }
 
-impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
+impl<'a> ValueUIT for sept::qv::UTF8StringTermLineElemCharElemView<'a> {
     fn handle_events(&self, _ui: &mut Ui, _view_ctx: &mut ViewCtx<'_>) {
         panic!("should be deprecated");
     }
@@ -519,7 +519,7 @@ impl<'a> ValueUIT for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
         layout_job
     }
     fn run_ui_inline(&self, _ui: &mut Ui, layout_job: &mut LayoutJob, view_ctx: &mut ViewCtx<'_>) {
-        let regular_char_color = view_ctx.color_for::<sept::st::Utf8StringTerm>();
+        let regular_char_color = view_ctx.color_for::<sept::st::UTF8StringTerm>();
         let escape_char_color = view_ctx.color_for_utf8string_escape_chars();
 
         if let Some(c) = self.char_o {

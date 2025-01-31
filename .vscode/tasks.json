@@ -4,13 +4,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "all build",
+            "label": "all check",
             "type": "shell",
             "command": "cargo",
             "args": [
-                "test",
+                "check",
+                "--workspace",
                 "--all-features",
-                "--no-run"
+                "--tests"
             ],
             "group": "build",
             "presentation": {
@@ -27,15 +28,19 @@
             ]
         },
         {
-            "label": "all check",
+            "label": "all test",
             "type": "shell",
             "command": "cargo",
             "args": [
-                "check",
+                "test",
+                "--workspace",
                 "--all-features",
                 "--tests"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"
@@ -109,10 +114,7 @@
                 "sept-gui",
                 "--all-features"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "presentation": {
                 "clear": true,
                 "revealProblems": "onProblem"

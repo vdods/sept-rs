@@ -6,15 +6,7 @@ use crate::{
 use std::fmt::Debug;
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValueT,
-    st::NonParametricTermT,
-    PartialEq,
-    st::TermT,
-    st::TypeT,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
 #[st_term_t(
     AbstractTypeType = "StructType",
@@ -27,7 +19,7 @@ impl dy::ConstructorT for Struct {
     type ConstructedType = dy::StructTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         //         // TEMP HACK: This will be a real type eventually.
-        //         let field_decl_type = dy::TupleTerm::from((st::Utf8String, st::Type));
+        //         let field_decl_type = dy::TupleTerm::from((st::UTF8String, st::Type));
         // Verify that the parameters are correctly typed, and form the field_decl_v.
         let field_decl_v/*: Vec<(String, dy::Value)>*/ = parameter_t.into_inner().into_iter().enumerate().map(
             |(i, mut field_decl): (usize, dy::Value)| -> Result<(String, dy::Value)> {
@@ -42,7 +34,7 @@ impl dy::ConstructorT for Struct {
                 match field_decl.downcast_mut::<dy::TupleTerm>() {
                     Some(field_decl_t) => {
                         anyhow::ensure!(field_decl_t.len() == 2, "Error in {}th field decl of struct: expected field_decl_t to have 2 elements", i);
-                        anyhow::ensure!(field_decl_t[0].inhabits(&st::Utf8String), "Error in {}th field decl of struct: expected field_decl_t[0] (which was {:?}) to inhabit Utf8String", i, field_decl_t[0]);
+                        anyhow::ensure!(field_decl_t[0].inhabits(&st::UTF8String), "Error in {}th field decl of struct: expected field_decl_t[0] (which was {:?}) to inhabit UTF8String", i, field_decl_t[0]);
                         anyhow::ensure!(field_decl_t[1].inhabits(&st::Type), "Error in {}th field decl of struct: expected field_decl_t[1] (which was {:?}) to inhabit Type", i, field_decl_t[1]);
                         let field_type = field_decl_t.pop().unwrap();
                         let field_name = field_decl_t.pop().unwrap();

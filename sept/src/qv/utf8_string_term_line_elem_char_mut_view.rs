@@ -1,7 +1,7 @@
 use crate::{dy, qv, st, Error, Result};
 
 #[derive(Debug)]
-pub struct Utf8StringTermLineElemCharMutView<'a> {
+pub struct UTF8StringTermLineElemCharMutView<'a> {
     // TODO: This needs to eventually be generic somehow, i.e. a String view object, or Box<dyn Borrow<str>>.
     // Or actually it should be EvalT<'b> where 'a: 'b (i.e. 'b outlives 'a).
     // Eventually there could be st-module EvalT that has a specific type.
@@ -13,12 +13,12 @@ pub struct Utf8StringTermLineElemCharMutView<'a> {
     pub line_char_count: usize,
 }
 
-impl<'a> Utf8StringTermLineElemCharMutView<'a> {
+impl<'a> UTF8StringTermLineElemCharMutView<'a> {
     pub fn new(string: &'a mut String, line_index: usize) -> Result<Self> {
         let line_count = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n').count();
         anyhow::ensure!(
             line_index < line_count,
-            "Utf8StringTermLineElemCharMutView line_index was out of bounds"
+            "UTF8StringTermLineElemCharMutView line_index was out of bounds"
         );
         let line = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n')
             .nth(line_index)
@@ -44,7 +44,7 @@ impl<'a> Utf8StringTermLineElemCharMutView<'a> {
         );
         anyhow::ensure!(
             line_index < line_count,
-            "Utf8StringTermLineElemCharMutView line_index was out of bounds"
+            "UTF8StringTermLineElemCharMutView line_index was out of bounds"
         );
         let line = st::split_inclusive_allow_trailing_empty(string.as_str(), '\n')
             .nth(line_index)
@@ -63,7 +63,7 @@ impl<'a> Utf8StringTermLineElemCharMutView<'a> {
     }
 }
 
-// impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermLineElemCharMutView<'b> {
+// impl<'b> qv::QueryMutAndApplyEditT for UTF8StringTermLineElemCharMutView<'b> {
 //     fn query_mut_and_apply_edit<'s, 'a>(
 //         &'s mut self,
 //         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -87,21 +87,21 @@ impl<'a> Utf8StringTermLineElemCharMutView<'a> {
 //     }
 // }
 
-impl<'a> qv::ApplyEditT for Utf8StringTermLineElemCharMutView<'a> {
+impl<'a> qv::ApplyEditT for UTF8StringTermLineElemCharMutView<'a> {
     fn apply_edit(&mut self, _edit: dy::Value) -> anyhow::Result<()> {
         unimplemented!("blah");
     }
 }
 
-impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemCharMutView<'b> {
-    type ReturnType<'a> = qv::Utf8StringTermLineElemCharElemMutView<'a> where 'b: 'a;
+impl<'b> qv::SingleQueryMutT<dy::Value> for UTF8StringTermLineElemCharMutView<'b> {
+    type ReturnType<'a> = qv::UTF8StringTermLineElemCharElemMutView<'a> where 'b: 'a;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
         address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
         if let Some(char_index) = address_token.downcast_ref::<u32>() {
-            qv::Utf8StringTermLineElemCharElemMutView::new_with_cached_values(
+            qv::UTF8StringTermLineElemCharElemMutView::new_with_cached_values(
                 self.string,
                 self.line_index,
                 *char_index as usize,
@@ -111,7 +111,7 @@ impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemCharMutView<'b
         } else {
             use st::StringifiableT;
             anyhow::bail!(
-                "Utf8StringTermLineElemCharMutView::run_single_query_mut; unrecognized address_token {}",
+                "UTF8StringTermLineElemCharMutView::run_single_query_mut; unrecognized address_token {}",
                 address_token.stringify()
             );
         }
@@ -119,20 +119,20 @@ impl<'b> qv::SingleQueryMutT<dy::Value> for Utf8StringTermLineElemCharMutView<'b
 }
 
 #[derive(Debug, derive_more::From)]
-pub enum Utf8StringTermLineElemCharMutViewQuery<'a> {
-    Utf8StringTermCharElemMutView(qv::Utf8StringTermCharElemMutView<'a>),
+pub enum UTF8StringTermLineElemCharMutViewQuery<'a> {
+    UTF8StringTermCharElemMutView(qv::UTF8StringTermCharElemMutView<'a>),
 }
 
 // TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditT for Utf8StringTermLineElemCharMutViewQuery<'a> {
+impl<'a> qv::ApplyEditT for UTF8StringTermLineElemCharMutViewQuery<'a> {
     fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
         match self {
-            Self::Utf8StringTermCharElemMutView(v) => v.apply_edit(edit),
+            Self::UTF8StringTermCharElemMutView(v) => v.apply_edit(edit),
         }
     }
 }
 
-impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermLineElemCharMutViewQuery<'b> {
+impl<'b> qv::QueryMutAndApplyEditT for UTF8StringTermLineElemCharMutViewQuery<'b> {
     fn query_mut_and_apply_edit<'s, 'a>(
         &'s mut self,
         address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
@@ -142,7 +142,7 @@ impl<'b> qv::QueryMutAndApplyEditT for Utf8StringTermLineElemCharMutViewQuery<'b
         's: 'a,
     {
         match self {
-            Self::Utf8StringTermCharElemMutView(v) => {
+            Self::UTF8StringTermCharElemMutView(v) => {
                 v.query_mut_and_apply_edit(address_token_i, edit)
             }
         }

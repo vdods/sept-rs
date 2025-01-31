@@ -62,7 +62,7 @@ pub enum NonParametricTermCode {
     Uint64 = 0x17,
     Float32 = 0x18,
     Float64 = 0x19,
-    AsciiChar = 0x1A,
+    ASCIIChar = 0x1A,
     UnicodeChar = 0x1B,
 
     // POD Type Types
@@ -88,13 +88,13 @@ pub enum NonParametricTermCode {
     Float32Type = 0x25,
     /// Sole inhabitant is Float64
     Float64Type = 0x26,
-    /// Sole inhabitant is AsciiChar.
-    AsciiCharType = 0x27,
+    /// Sole inhabitant is ASCIIChar.
+    ASCIICharType = 0x27,
     UnicodeCharType = 0x28,
 
-    Utf8String = 0x29,
-    /// Sole inhabitant is Utf8String.
-    Utf8StringType = 0x2A,
+    UTF8String = 0x29,
+    /// Sole inhabitant is UTF8String.
+    UTF8StringType = 0x2A,
 
     // Other Types related to POD Types
     /// Isomorphic to Union(Sint8, Sint16, Sint32, Sint64).
@@ -107,8 +107,8 @@ pub enum NonParametricTermCode {
     Uint = 0x2C,
     /// Isomorphic to Union(Float32,Float64).
     Float = 0x2D,
-    /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  Pod : PodType.
-    Pod = 0x2E,
+    /// Isomorphic to Union(Bool, Sint, Uint, Float).  Inhabitants are POD values.  POD : PODType.
+    POD = 0x2E,
 
     /// Isomorphic to Union(Sint8Type, Sint16Type, Sint32Type, Sint64Type).
     SintType = 0x2F,
@@ -117,8 +117,8 @@ pub enum NonParametricTermCode {
     /// Isomorphic to Union(Float32Type,Float64Type).
     FloatType = 0x31,
     // TODO: Add CHAR types
-    /// Isomorphic to Union(BoolType, SintType, UintType, FloatType) (TODO: Somehow add Pod as an inhabitant)
-    PodType = 0x32,
+    /// Isomorphic to Union(BoolType, SintType, UintType, FloatType) (TODO: Somehow add POD as an inhabitant)
+    PODType = 0x32,
     // TODO: Add semantic classes like Positive, Negative, NonPositive, NonNegative, Zero
     /// Inhabitants have the form Union(T1,...,TN) -- implemented as UnionTerm.
     Union = 0x33,

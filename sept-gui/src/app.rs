@@ -56,12 +56,12 @@ impl App {
         // // let root_value = s1.into_value();
         // let root_value = sept::dy::ArrayTerm::from(vec![
         //     sept::dy::StructTerm::new(vec![
-        //         ("name".to_string(), sept::st::Utf8String.into()),
+        //         ("name".to_string(), sept::st::UTF8String.into()),
         //         ("age".to_string(), sept::st::Uint8.into()),
         //     ])
         //     .unwrap()
         //     .into(),
-        //     sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+        //     sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::UTF8String.into())])
         //         .unwrap()
         //         .into(),
         //     sept::dy::StructTerm::new(vec![]).unwrap().into(),
@@ -726,7 +726,7 @@ impl Default for App {
 //         ]);
 //         let t3 = sept::dy::TupleTerm::from(vec![
 //             sept::st::Sint32.into(),
-//             sept::st::Utf8String.into(),
+//             sept::st::UTF8String.into(),
 //             sept::st::Array.into(),
 //         ]);
 
@@ -837,12 +837,12 @@ impl Default for App {
 //         // let root_value = s1.into_value();
 //         let root_value = sept::dy::ArrayTerm::from(vec![
 //             sept::dy::StructTerm::new(vec![
-//                 ("name".to_string(), sept::st::Utf8String.into()),
+//                 ("name".to_string(), sept::st::UTF8String.into()),
 //                 ("age".to_string(), sept::st::Uint8.into()),
 //             ])
 //             .unwrap()
 //             .into(),
-//             sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+//             sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::UTF8String.into())])
 //                 .unwrap()
 //                 .into(),
 //             sept::dy::StructTerm::new(vec![]).unwrap().into(),
