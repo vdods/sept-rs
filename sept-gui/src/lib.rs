@@ -1,12 +1,13 @@
 //#![warn(clippy::all, rust_2018_idioms)]
 
+mod action;
 mod addressed_edit;
 mod ansi_color;
 mod app;
 mod array_term_event_handler;
 mod array_term_value_ui;
-mod command;
 mod cursor_edit;
+mod edit;
 mod event_handler;
 mod event_handler_ctx;
 mod event_handler_ctx_nesting_guard;
@@ -34,17 +35,18 @@ mod view_ctx_render_address_guard;
 mod view_ctx_ta_guard;
 mod view_options;
 
+pub use action::Action;
 pub use addressed_edit::AddressedEdit;
 pub use ansi_color::ANSIColor;
 pub use app::App;
-pub use command::Command;
 pub use cursor_edit::CursorEdit;
+pub use edit::Edit;
 pub use event_handler::EventHandler;
 pub use event_handler_ctx::EventHandlerCtx;
 pub use event_handler_ctx_nesting_guard::EventHandlerCtxNestingGuard;
 pub use layout_discriminant::LayoutDiscriminant;
 pub use layout_mode::LayoutMode;
-pub use model::Model;
+pub use model::{Model, SaveBehavior};
 pub use placeholder_event_handler::placeholder_event_handler_impl;
 pub use root_value_edit::RootValueEdit;
 pub use value_ui::{

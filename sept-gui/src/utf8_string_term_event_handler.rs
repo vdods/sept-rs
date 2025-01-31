@@ -133,7 +133,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
 
                     for c in string.chars() {
                         // Root value edit
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::InsertionTerm { new_data: c.into() }.into(),
                         }));
@@ -279,7 +279,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                             .map(|c| *c)
                     };
                     if let Some(cursor_char) = cursor_char_o {
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_char.into(),
@@ -323,7 +323,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                                 updated_cursor_address[cursor_len - 1] =
                                     (v.char_index as u32).into_value();
 
-                                event_handler_ctx.enqueue_command(RootValueEdit::from(
+                                event_handler_ctx.enqueue_edit(RootValueEdit::from(
                                     AddressedEdit {
                                         address: updated_cursor_address.clone(),
                                         edit: sept::qv::DeletionTerm {
@@ -358,7 +358,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermCharElemView<'a> {
                     let cursor_address = event_handler_ctx.cursor_address.clone();
 
                     // Root value edit
-                    event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                         address: cursor_address.clone(),
                         edit: sept::qv::InsertionTerm { new_data: c.into() }.into(),
                     }));
@@ -707,7 +707,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     ..
                 } => {
                     // Root value edit
-                    event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                         address: event_handler_ctx.cursor_address.clone(),
                         edit: sept::qv::InsertionTerm {
                             new_data: '\n'.into_value(),
@@ -720,7 +720,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                         {
                             let old_line_index = self.line_index as u32;
                             let new_line_index = old_line_index.saturating_add(1);
-                            event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                            event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                                 // TODO: This could use `-3` as the address once negative indexing is supported.
                                 address: vec![(cursor_len - 3).into_value()].into(),
                                 edit: sept::qv::ReplacementTerm {
@@ -738,7 +738,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                                 v.go_home();
                                 v.char_index as u32
                             };
-                            event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                            event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                                 // TODO: This could use `-1` as the address once negative indexing is supported.
                                 address: vec![(cursor_len - 1).into_value()].into(),
                                 edit: sept::qv::ReplacementTerm {
@@ -759,7 +759,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     ..
                 } => {
                     // Root value edit
-                    event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                         address: event_handler_ctx.cursor_address.clone(),
                         edit: sept::qv::InsertionTerm {
                             new_data: '\t'.into_value(),
@@ -770,7 +770,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                     {
                         let old_char_index = self.char_index as u32;
                         let new_char_index = old_char_index.saturating_add(1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -798,7 +798,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                         cursor_char_o
                     };
                     if let Some(cursor_char) = cursor_char_o {
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_char.into(),
@@ -843,7 +843,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
                                     (v.char_index as u32).into_value();
 
                                 // Root value edit
-                                event_handler_ctx.enqueue_command(RootValueEdit::from(
+                                event_handler_ctx.enqueue_edit(RootValueEdit::from(
                                     AddressedEdit {
                                         address: updated_cursor_address.clone(),
                                         edit: sept::qv::DeletionTerm {
@@ -872,7 +872,7 @@ impl<'a> EventHandler for sept::qv::Utf8StringTermLineElemCharElemView<'a> {
 
                     for c in string.chars() {
                         // Root value edit
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::InsertionTerm { new_data: c.into() }.into(),
                         }));
@@ -1063,7 +1063,7 @@ fn enter_line_char_mode(
 
     // Enter the respective elem view by adding cursor tokens.
     let mut cursor_len = event_handler_ctx.cursor_address.len() as u32;
-    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
         address: vec![cursor_len.into_value()].into(),
         edit: sept::qv::InsertionTerm {
             new_data: "line".to_string().into(),
@@ -1071,7 +1071,7 @@ fn enter_line_char_mode(
         .into(),
     }));
     cursor_len += 1;
-    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
         address: vec![cursor_len.into_value()].into(),
         edit: sept::qv::InsertionTerm {
             new_data: line_index.into(),
@@ -1079,7 +1079,7 @@ fn enter_line_char_mode(
         .into(),
     }));
     cursor_len += 1;
-    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
         address: vec![cursor_len.into_value()].into(),
         edit: sept::qv::InsertionTerm {
             new_data: "char".to_string().into(),
@@ -1087,7 +1087,7 @@ fn enter_line_char_mode(
         .into(),
     }));
     cursor_len += 1;
-    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
         address: vec![cursor_len.into_value()].into(),
         edit: sept::qv::InsertionTerm {
             new_data: char_index.into(),
@@ -1105,7 +1105,7 @@ fn enqueue_char_mode_cursor_edit(
     assert!(cursor_len >= 2);
     // Update the char_index
     if new_char_index != old_char_index {
-        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
             // TODO: This could use `-1` as the address once negative indexing is supported.
             address: vec![(cursor_len - 1).into_value()].into(),
             edit: sept::qv::ReplacementTerm {
@@ -1126,7 +1126,7 @@ fn enqueue_line_mode_cursor_edit(
     assert!(cursor_len >= 2);
     // Update the line_index
     if new_line_index != old_line_index {
-        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
             // TODO: This could use `-1` as the address once negative indexing is supported.
             address: vec![(cursor_len - 1).into_value()].into(),
             edit: sept::qv::ReplacementTerm {
@@ -1147,7 +1147,7 @@ fn enqueue_line_char_mode_cursor_edit(
     assert!(cursor_len >= 4);
     // Update the line_index
     if new_line_index != old_line_index {
-        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
             // TODO: This could use `-3` as the address once negative indexing is supported.
             address: vec![(cursor_len - 3).into_value()].into(),
             edit: sept::qv::ReplacementTerm {
@@ -1159,7 +1159,7 @@ fn enqueue_line_char_mode_cursor_edit(
     }
     // Update the char_index
     if new_char_index != old_char_index {
-        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
             // TODO: This could use `-1` as the address once negative indexing is supported.
             address: vec![(cursor_len - 1).into_value()].into(),
             edit: sept::qv::ReplacementTerm {

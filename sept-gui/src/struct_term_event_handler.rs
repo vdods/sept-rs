@@ -1,5 +1,5 @@
 use crate::{
-    placeholder_event_handler_impl, AddressedEdit, Command, CursorEdit, EventHandler,
+    placeholder_event_handler_impl, AddressedEdit, Edit, CursorEdit, EventHandler,
     EventHandlerCtx, LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
@@ -40,14 +40,14 @@ impl EventHandler for sept::dy::StructTerm {
                     // Enter the field elem elem view at the name component of the last field
                     // by adding two cursor tokens.
                     let cursor_len = event_handler_ctx.cursor_address.len() as u32;
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         address: vec![cursor_len.into_value()].into(),
                         edit: sept::qv::InsertionTerm {
                             new_data: (self.len() as u32).into(),
                         }
                         .into(),
                     }));
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         address: vec![(cursor_len + 1).into_value()].into(),
                         edit: sept::qv::InsertionTerm {
                             new_data: 0u32.into(),
@@ -131,7 +131,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                                 .unwrap();
                             query_b.eval().unwrap().to_owned()
                         };
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_value.into(),
@@ -165,7 +165,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                             (v.field_index as u32).into_value();
 
                         // Root value edit
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: updated_cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_field.into(),
@@ -175,7 +175,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
 
                         // Cursor edit
                         {
-                            event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                            event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                                 // TODO: This could use `-1` as the address once negative indexing is supported.
                                 address: vec![((cursor_len - 1) as u32).into_value()].into(),
                                 edit: sept::qv::ReplacementTerm {
@@ -200,7 +200,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.go_home();
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -223,7 +223,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.go_end();
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -249,7 +249,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.increment_field_index_by(-1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -277,7 +277,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.increment_field_index_by(1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -305,7 +305,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.increment_field_index_by(-1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -333,7 +333,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.increment_field_index_by(1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -416,7 +416,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.go_home();
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -439,7 +439,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     {
                         let mut v = self.clone();
                         v.go_end();
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -461,7 +461,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                 } => {
                     let mut v = self.clone();
                     v.increment_field_index_by(-1);
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-2` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 2).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -482,7 +482,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                     let mut v = self.clone();
                     // let old_field_index = v.field_index as u32;
                     v.increment_field_index_by(1);
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-2` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 2).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -502,7 +502,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                 } => {
                     let mut v = self.clone();
                     v.increment_sub_index_by(-1, true);
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-2` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 2).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -511,7 +511,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                         }
                         .into(),
                     }));
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-1` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 1).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -531,7 +531,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                 } => {
                     let mut v = self.clone();
                     v.increment_sub_index_by(1, true);
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-2` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 2).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -540,7 +540,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                         }
                         .into(),
                     }));
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         // TODO: This could use `-1` as the address once negative indexing is supported.
                         address: vec![(cursor_len - 1).into_value()].into(),
                         edit: sept::qv::ReplacementTerm {
@@ -575,7 +575,7 @@ impl<'a> EventHandler for sept::qv::StructTermFieldElemElemView<'a> {
                                 event_handler_ctx,
                                 |mut address: sept::dy::TupleTerm,
                                  new_data: sept::dy::Value|
-                                 -> Command {
+                                 -> Edit {
                                     // Insert the struct field `X: Term` at the end of the struct,
                                     // where X is the new_data determined by placeholder_event_handler_impl.
                                     // The address is of the field elem elem, so we have to pop one

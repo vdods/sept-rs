@@ -1,6 +1,6 @@
 use crate::{
-    AddressedEdit, Command, CursorEdit, EventHandlerCtxNestingGuard, LayoutDiscriminant,
-    LayoutMode, ViewOptions,
+    AddressedEdit, CursorEdit, Edit, EventHandlerCtxNestingGuard, LayoutDiscriminant, LayoutMode,
+    ViewOptions,
 };
 use sept::dy::IntoValue;
 use std::collections::VecDeque;
@@ -14,7 +14,7 @@ pub struct EventHandlerCtx<'a> {
     // but it might make sense to separate things out.
     view_options: &'a ViewOptions,
     pub remaining_event_v: &'a mut VecDeque<egui::Event>,
-    enqueued_command_v: &'a mut VecDeque<Command>,
+    enqueued_edit_v: &'a mut Vec<Edit>,
 }
 
 impl<'a> EventHandlerCtx<'a> {
@@ -23,7 +23,7 @@ impl<'a> EventHandlerCtx<'a> {
         cursor_address: &'a sept::dy::TupleTerm,
         view_options: &'a ViewOptions,
         remaining_event_v: &'a mut VecDeque<egui::Event>,
-        enqueued_command_v: &'a mut VecDeque<Command>,
+        enqueued_edit_v: &'a mut Vec<Edit>,
     ) -> Self {
         Self {
             root_value,
@@ -31,7 +31,7 @@ impl<'a> EventHandlerCtx<'a> {
             current_nesting_depth: 0,
             view_options,
             remaining_event_v,
-            enqueued_command_v,
+            enqueued_edit_v,
         }
     }
     pub fn page_up_down_delta(&self) -> u32 {
@@ -55,8 +55,8 @@ impl<'a> EventHandlerCtx<'a> {
             Ordering::Greater => LayoutDiscriminant::InteriorLevelInline,
         }
     }
-    pub fn enqueue_command(&mut self, command: impl Into<Command>) {
-        self.enqueued_command_v.push_back(command.into());
+    pub fn enqueue_edit(&mut self, edit: impl Into<Edit>) {
+        self.enqueued_edit_v.push(edit.into());
     }
     /// Note that this can't be used twice in the same handle_event pass, since it has to know the
     /// cursor_address len in order to generate the CursorEdit commands.
@@ -66,7 +66,7 @@ impl<'a> EventHandlerCtx<'a> {
     ) {
         let mut cursor_len = self.cursor_address.len() as u32;
         for address_token in address_token_i {
-            self.enqueue_command(CursorEdit::from(AddressedEdit {
+            self.enqueue_edit(CursorEdit::from(AddressedEdit {
                 address: vec![(cursor_len as u32).into_value()].into(),
                 edit: sept::qv::InsertionTerm {
                     new_data: address_token,
@@ -84,7 +84,7 @@ impl<'a> EventHandlerCtx<'a> {
         }
         let mut cursor_len = self.cursor_address.len() as u32;
         for address_token in self.cursor_address.iter().rev().take(pop_count) {
-            self.enqueue_command(CursorEdit::from(AddressedEdit {
+            self.enqueue_edit(CursorEdit::from(AddressedEdit {
                 // TODO: This could use `-1` as the address once negative indexing is supported.
                 address: vec![(cursor_len - 1).into_value()].into(),
                 edit: sept::qv::DeletionTerm {

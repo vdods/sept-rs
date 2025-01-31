@@ -646,17 +646,29 @@ Big-picture priorities for sept-gui
 -   Should be a minimally complete editor capable of producing/editing/browsing basic sept data.
 -   Don't include symbolic refs for now.  They complicate the semantics of copy/paste and serialization.  However, they are an important feature of the data model that needs to be proven out eventually.
 -   Features
-    -   Open
+    -   New
+        -   If there are unsaved changes, offer:
+            -   Save
+            -   Discard
+            -   Cancel
+        -   Keyboard shortcut Ctrl+N
+    -   X Open
+        -   X If there are unsaved changes, offer:
+            -   X Save
+            -   X Discard
+            -   X Cancel
         -   X Using file dialog
         -   X Pass file path from commandline
         -   X Keyboard shortcut Ctrl+O
-    -   Save
+    -   X Save
         -   X File dialog to pick a path if none already set
         -   X Keyboard shortcut Ctrl+S
-    -   Save As
+    -   X Save As
         -   X Using file dialog
         -   X Keyboard shortcut Ctrl+Shift+S
-    -   Unsaved changes tracker
+    -   X Unsaved changes tracker
+    -   X Undo
+    -   X Redo
     -   Select
     -   Copy (from within sept-gui)
         -   Probably this should produce a string that simulates the keyboard input to produce the copied data.
@@ -664,4 +676,17 @@ Big-picture priorities for sept-gui
     -   Paste (into sept-gui)
         -   Pasting within a string should do the obvious thing
         -   Pasting within a placeholder should simulate each char of the paste as input.  This may not play nice with strings unless the escaped char input is handled differently during the paste.
-    -   Undo/redo
+
+Implementation notes for undo/redo and determining if there are unsaved changes.
+-   Events (e.g. keyboard, mouse events) are handled first by the view (view options) and then by the root value, producing an action.
+-   An action is defined by a sequence of edits that are applied in order.
+-   An action can be un-done by applying the inverses of the edits in reverse order.
+-   An edit is one of:
+    -   CursorEdit -- modifies the cursor.
+    -   RootValueEdit -- modifies the root value.
+-   An action stores the sum of CursorEdits and RootValueEdits in its sequence of edits.
+-   The model for the document keeps a queue of actions for managing undo/redo.
+-   The current state of the document is an index into the queue of actions.
+-   The saved state of the document is an index into the queue of actions.
+-   The model for the document keeps the queue of cumulative root value edit counts, starting with 0.
+-   The document has unsaved changes iff the cumulative root value edit count for the current state and saved state are not equal.  Note that there can be CursorEdits in the action queue between the current state and saved state, and they don't affect the determination of unsaved changes.

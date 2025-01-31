@@ -1,6 +1,6 @@
 use crate::{
-    placeholder_event_handler_impl, AddressedEdit, Command, CursorEdit, EventHandler,
-    EventHandlerCtx, LayoutDiscriminant, RootValueEdit,
+    placeholder_event_handler_impl, AddressedEdit, CursorEdit, Edit, EventHandler, EventHandlerCtx,
+    LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
 use sept::dy::IntoValue;
@@ -39,7 +39,7 @@ impl EventHandler for sept::dy::ArrayTerm {
                 } => {
                     // Enter the elem view by adding a cursor token.
                     let cursor_len = event_handler_ctx.cursor_address.len() as u32;
-                    event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         address: vec![cursor_len.into_value()].into(),
                         edit: sept::qv::InsertionTerm {
                             new_data: 0u32.into(),
@@ -101,7 +101,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     // Escape this view by taking off the last cursor token.
                     {
                         let old_data = event_handler_ctx.cursor_address.last().unwrap().clone();
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::DeletionTerm { old_data }.into(),
@@ -124,7 +124,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                             v.go_home();
                             v.elem_index as u32
                         };
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -151,7 +151,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                             v.go_end();
                             v.elem_index as u32
                         };
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -178,7 +178,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         let mut v = self.clone();
                         let old_elem_index = v.elem_index as u32;
                         v.increment_elem_index_by(-1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -207,7 +207,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         let mut v = self.clone();
                         let old_elem_index = v.elem_index as u32;
                         v.increment_elem_index_by(1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -236,7 +236,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         let mut v = self.clone();
                         let old_elem_index = v.elem_index as u32;
                         v.increment_elem_index_by(-1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -265,7 +265,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         let mut v = self.clone();
                         let old_elem_index = v.elem_index as u32;
                         v.increment_elem_index_by(1);
-                        event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                             // TODO: This could use `-1` as the address once negative indexing is supported.
                             address: vec![(cursor_len - 1).into_value()].into(),
                             edit: sept::qv::ReplacementTerm {
@@ -297,7 +297,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                                 .unwrap();
                             query_b.eval().unwrap().to_owned()
                         };
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: event_handler_ctx.cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_value.into(),
@@ -330,7 +330,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         updated_cursor_address[cursor_len - 1] = (v.elem_index as u32).into_value();
 
                         // Root value edit
-                        event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                        event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                             address: updated_cursor_address.clone(),
                             edit: sept::qv::DeletionTerm {
                                 old_data: cursor_elem.into(),
@@ -340,7 +340,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
 
                         // Cursor edit
                         {
-                            event_handler_ctx.enqueue_command(CursorEdit::from(AddressedEdit {
+                            event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                                 // TODO: This could use `-1` as the address once negative indexing is supported.
                                 address: vec![((cursor_len - 1) as u32).into_value()].into(),
                                 edit: sept::qv::ReplacementTerm {
@@ -362,7 +362,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                     ..
                 } => {
                     // Insert a Placeholder at the current cursor position, but don't update the cursor.
-                    event_handler_ctx.enqueue_command(RootValueEdit::from(AddressedEdit {
+                    event_handler_ctx.enqueue_edit(RootValueEdit::from(AddressedEdit {
                         address: event_handler_ctx.cursor_address.clone(),
                         edit: sept::qv::InsertionTerm {
                             new_data: sept::st::Placeholder.into(),
@@ -381,7 +381,7 @@ impl<'a> EventHandler for sept::qv::ArrayTermElemView<'a> {
                         None => placeholder_event_handler_impl(
                             event,
                             event_handler_ctx,
-                            |address: sept::dy::TupleTerm, new_data: sept::dy::Value| -> Command {
+                            |address: sept::dy::TupleTerm, new_data: sept::dy::Value| -> Edit {
                                 RootValueEdit::from(AddressedEdit {
                                     address,
                                     edit: sept::qv::InsertionTerm { new_data }.into(),

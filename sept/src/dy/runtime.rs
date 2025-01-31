@@ -290,6 +290,14 @@ impl Runtime {
         runtime.register_apply_edit::<TupleTerm>().unwrap();
         runtime.register_apply_edit::<OrderedMapTerm>().unwrap();
 
+        runtime.register_into_inverse::<qv::DeletionTerm>().unwrap();
+        runtime
+            .register_into_inverse::<qv::InsertionTerm>()
+            .unwrap();
+        runtime
+            .register_into_inverse::<qv::ReplacementTerm>()
+            .unwrap();
+
         // Register types
         runtime.register_type::<Term>().unwrap();
         runtime.register_type::<Type>().unwrap();
@@ -1842,7 +1850,7 @@ impl Runtime {
         match self.into_inverse_fn_m.get(&edit.type_id()) {
             Some(into_inverse_fn) => Ok(into_inverse_fn(edit)),
             None => Err(anyhow::anyhow!(
-                "no into_inner fn found for `{}`",
+                "no into_inverse fn found for `{}`",
                 self.label_of_value_guts(edit.as_ref())
             )),
         }

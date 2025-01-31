@@ -1,5 +1,5 @@
 use crate::{
-    ANSIColor, Command, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
+    ANSIColor, Edit, LayoutDiscriminant, LayoutMode, Model, ViewCtxNestingGuard,
     ViewCtxRenderAddressGuard, ViewCtxTAGuard, ViewOptions,
 };
 use std::{cmp::Ordering, collections::VecDeque};
@@ -22,9 +22,10 @@ pub struct ViewCtx<'a> {
     pub current_nesting_depth: u32,
     /// If Some(_), will override self.view_options.show_type_annotations.
     pub override_show_type_annotations_o: Option<bool>,
-    /// This is the queue of commands generated this frame that should be executed after
+    /// This is the queue of edits generated this frame that should be executed after
     /// the frame is done rendering.
-    pub enqueued_command_v: VecDeque<Command>,
+    // TODO: Replace with Action?
+    pub enqueued_edit_v: VecDeque<Edit>,
 }
 
 impl<'b> ViewCtx<'b> {
@@ -40,7 +41,7 @@ impl<'b> ViewCtx<'b> {
             render_address: sept::dy::TupleTerm::from(vec![]),
             current_nesting_depth: 0,
             override_show_type_annotations_o: None,
-            enqueued_command_v: VecDeque::new(),
+            enqueued_edit_v: VecDeque::new(),
         }
     }
     pub fn cursor_address(&self) -> &sept::dy::TupleTerm {
@@ -74,8 +75,8 @@ impl<'b> ViewCtx<'b> {
         self.override_show_type_annotations_o
             .unwrap_or(self.view_options.show_type_annotations)
     }
-    pub fn enqueue_command(&mut self, command: impl Into<Command>) {
-        self.enqueued_command_v.push_back(command.into());
+    pub fn enqueue_edit(&mut self, edit: impl Into<Edit>) {
+        self.enqueued_edit_v.push_back(edit.into());
     }
     /// This returns (foreground_color, background_color) based on the given foreground_color and the
     /// current state of highlightedness based on the render_address compared to the cursor_address.

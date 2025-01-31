@@ -5,13 +5,26 @@ use egui::Modifiers;
 use sept::st::{Deserializable, Serializable};
 
 use crate::{
-    extract_text_prefix_from_front_text, AddressedEdit, Command, CursorEdit, EventHandlerCtx,
-    Model, ValueUI, ViewCtx, ViewOptions,
+    edit, extract_text_prefix_from_front_text, AddressedEdit, CursorEdit, Edit, EventHandlerCtx,
+    Model, SaveBehavior, ValueUI, ViewCtx, ViewOptions,
 };
 use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
 };
+
+const OFFER_SAVE_IF_UNSAVED_TITLE: &str = "File Has Unsaved Changes";
+
+/// Result of offer_save_if_unsaved, which is functionality common to multiple methods regarding file operations.
+#[derive(Clone, Copy, Debug)]
+pub enum OfferSaveResult {
+    /// This means that the user chose to cancel the operation, but no changes were actually made.
+    Cancel,
+    /// This means that the user chose to discard the changes, but no changes were actually made.
+    Discard,
+    /// This means that the file was saved to disk (either using a pre-existing path or a path the user just chose).
+    Saved,
+}
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -21,13 +34,618 @@ pub struct App {
     #[serde(skip)]
     model: Model,
     #[serde(skip)]
-    cursor_address: sept::dy::TupleTerm,
-    #[serde(skip)]
     view_options: ViewOptions,
-    #[serde(skip)]
-    local_symbol_table_la: Arc<RwLock<sept::dy::SymbolTable>>,
-    #[serde(skip)]
-    open_file_path_o: Option<std::path::PathBuf>,
+}
+
+impl App {
+    /// Called once before the first frame.
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        open_file_path_o: Option<std::path::PathBuf>,
+    ) -> Self {
+        // This is also where you can customized the look at feel of egui using
+        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+
+        // // Load previous app state (if any).
+        // // Note that you must enable the `persistence` feature for this to work.
+        // if let Some(storage) = cc.storage {
+        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        // }
+
+        // use sept::dy::IntoValue;
+        // // let root_value = s1.into_value();
+        // let root_value = sept::dy::ArrayTerm::from(vec![
+        //     sept::dy::StructTerm::new(vec![
+        //         ("name".to_string(), sept::st::Utf8String.into()),
+        //         ("age".to_string(), sept::st::Uint8.into()),
+        //     ])
+        //     .unwrap()
+        //     .into(),
+        //     sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
+        //         .unwrap()
+        //         .into(),
+        //     sept::dy::StructTerm::new(vec![]).unwrap().into(),
+        //     "".to_string().into(),
+        //     "a".to_string().into(),
+        //     "\n".to_string().into(),
+        //     "xy\npq\n".to_string().into(),
+        //     "hippos\nare\tabsolutely\nthe\nbest".to_string().into(),
+        //     sept::dy::ArrayTerm::from(vec![
+        //         sept::dy::ArrayTerm::from(vec![]).into(),
+        //         "thingy".to_string().into(),
+        //         "other\nthingy".to_string().into(),
+        //     ])
+        //     .into(),
+        // ])
+        // .into_value();
+
+        // use sept::dy::IntoValue;
+        // let root_value = if let Some(open_file_path) = open_file_path_o.as_deref() {
+        //     let mut file = std::fs::OpenOptions::new()
+        //         .read(true)
+        //         .open(open_file_path)
+        //         .expect("TODO: handle this");
+        //     use sept::st::Deserializable;
+        //     let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
+        //     cc.egui_ctx
+        //         .send_viewport_cmd(egui::ViewportCommand::Title(format!(
+        //             "SEPT - {}",
+        //             open_file_path.display()
+        //         )));
+        //     root_value
+        // } else {
+        //     // Default is an empty array.
+        //     sept::dy::ArrayTerm::from(vec![]).into_value()
+        // };
+        // let root_value_la = Arc::new(RwLock::new(root_value));
+        // let model = Model {
+        //     root_value_la,
+        //     executed_command_v: VecDeque::new(),
+        // };
+        // // Start with the cursor on the root value.
+        // let cursor_address = sept::dy::TupleTerm::from(vec![]);
+        // let view_options = ViewOptions::default();
+
+        // let local_symbol_table_la = Arc::new(RwLock::new(
+        //     sept::dy::SymbolTable::new_without_parent("boring".to_string()).expect("test"),
+        // ));
+
+        // Self {
+        //     model,
+        //     cursor_address,
+        //     view_options,
+        //     local_symbol_table_la,
+        //     open_file_path_o,
+        // }
+
+        let mut app = Self::default();
+        if let Some(open_file_path) = open_file_path_o {
+            app.file_open(Some(open_file_path), &cc.egui_ctx);
+        }
+        app
+    }
+    pub fn update_title(&self, ctx: &egui::Context) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.model.title()));
+    }
+    pub fn file_new(&mut self, ctx: &egui::Context) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            panic!("not implemented for wasm32 yet");
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        match self.offer_save_if_unsaved(
+            OFFER_SAVE_IF_UNSAVED_TITLE,
+            "Save before creating new document?",
+            ctx,
+        ) {
+            OfferSaveResult::Saved | OfferSaveResult::Discard => {
+                self.model.clear();
+                self.update_title(ctx);
+            }
+            OfferSaveResult::Cancel => {
+                // Don't do anything.
+            }
+        }
+    }
+    pub fn file_open(&mut self, path_o: Option<std::path::PathBuf>, ctx: &egui::Context) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            panic!("not implemented for wasm32 yet");
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        match self.offer_save_if_unsaved(
+            OFFER_SAVE_IF_UNSAVED_TITLE,
+            "Save before opening different document?",
+            ctx,
+        ) {
+            OfferSaveResult::Saved | OfferSaveResult::Discard => {
+                if let Some(path) = path_o {
+                    self.model.open(path);
+                    self.update_title(ctx);
+                } else if let Some(path) = rfd::FileDialog::new()
+                    .set_title("Open")
+                    .add_filter("SEPT Files (*.sept)", &["sept"])
+                    .pick_file()
+                {
+                    // This Model::clear is to ensure there are no unsaved changes, since Model::open
+                    // will panic if there are any.
+                    self.model.clear();
+                    self.model.open(path);
+                    self.update_title(ctx);
+                }
+            }
+            OfferSaveResult::Cancel => {
+                // Don't do anything.
+            }
+        }
+    }
+    pub fn file_save(&mut self, ctx: &egui::Context) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            panic!("not implemented for wasm32 yet");
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if self.model.open_file_path_o().is_none() {
+                if let Some(path) = rfd::FileDialog::new()
+                    .set_title("Save As")
+                    .add_filter("SEPT Files (*.sept)", &["sept"])
+                    .save_file()
+                {
+                    self.model.save_as(path);
+                }
+            } else {
+                self.model.save(SaveBehavior::OnlyIfChanged);
+            }
+            self.update_title(ctx);
+        }
+    }
+    pub fn file_save_as(&mut self, ctx: &egui::Context) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            panic!("not implemented for wasm32 yet");
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(path) = rfd::FileDialog::new()
+            .set_title("Save As")
+            .add_filter("SEPT Files (*.sept)", &["sept"])
+            .save_file()
+        {
+            self.model.save_as(path);
+            self.update_title(ctx);
+        }
+    }
+    pub fn file_quit(&mut self, ctx: &egui::Context) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            panic!("not implemented for wasm32 yet");
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        match self.offer_save_if_unsaved(OFFER_SAVE_IF_UNSAVED_TITLE, "Save before quitting?", ctx)
+        {
+            OfferSaveResult::Saved | OfferSaveResult::Discard => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            OfferSaveResult::Cancel => {
+                // Don't quit.
+            }
+        }
+    }
+    fn offer_save_if_unsaved(
+        &mut self,
+        title: &str,
+        description: &str,
+        ctx: &egui::Context,
+    ) -> OfferSaveResult {
+        if self.model.has_unsaved_changes() {
+            tracing::debug!("App::offer_save_if_unsaved -- Model has unsaved changes");
+            let message_dialog_result = rfd::MessageDialog::new()
+                .set_title(title)
+                .set_description(description)
+                .set_buttons(rfd::MessageButtons::YesNoCancelCustom(
+                    "Save".to_string(),
+                    "Discard".to_string(),
+                    "Cancel".to_string(),
+                ))
+                .show();
+            tracing::debug!(
+                "App::offer_save_if_unsaved -- MessageDialog result: {:?}",
+                message_dialog_result
+            );
+            match message_dialog_result {
+                rfd::MessageDialogResult::Custom(message) => {
+                    match message.as_str() {
+                        "Save" => {
+                            // Save before quitting.
+                            #[cfg(not(target_arch = "wasm32"))]
+                            if self.model.open_file_path_o().is_none() {
+                                if let Some(path) = rfd::FileDialog::new()
+                                    .set_title("Save As")
+                                    .add_filter("SEPT Files (*.sept)", &["sept"])
+                                    .save_file()
+                                {
+                                    self.model.save_as(path);
+                                    OfferSaveResult::Saved
+                                } else {
+                                    OfferSaveResult::Cancel
+                                }
+                            } else {
+                                self.model.save(SaveBehavior::OnlyIfChanged);
+                                OfferSaveResult::Saved
+                            }
+                        }
+                        "Discard" => OfferSaveResult::Discard,
+                        "Cancel" => OfferSaveResult::Cancel,
+                        _ => {
+                            panic!("programmer error: this should not happen");
+                        }
+                    }
+                }
+                _ => {
+                    panic!("programmer error: this should not happen");
+                }
+            }
+        } else {
+            OfferSaveResult::Saved
+        }
+    }
+    /// Handles top-level events, returning any unhandled events as Some(event), or
+    /// None if the event was handled.
+    pub fn handle_top_level_event(
+        &mut self,
+        event: egui::Event,
+        remaining_event_v: &mut VecDeque<egui::Event>,
+    ) -> Option<egui::Event> {
+        // tracing::trace!("App::handle_top_level_event; event: {:?}", event);
+        match event {
+            egui::Event::Key {
+                key: egui::Key::Equals,
+                pressed: true,
+                modifiers: egui::Modifiers::ALT,
+                ..
+            }
+            | egui::Event::Key {
+                key: egui::Key::Plus,
+                pressed: true,
+                modifiers: egui::Modifiers::ALT,
+                ..
+            } => {
+                self.view_options.inline_at_nesting_depth = self
+                    .view_options
+                    .inline_at_nesting_depth
+                    .saturating_add_signed(1);
+                // There will be a Text event that starts with "=", so remove that portion.
+                extract_text_prefix_from_front_text("=", remaining_event_v);
+                // We consumed the event.
+                None
+            }
+            egui::Event::Key {
+                key: egui::Key::Minus,
+                pressed: true,
+                modifiers: egui::Modifiers::ALT,
+                ..
+            } => {
+                self.view_options.inline_at_nesting_depth = self
+                    .view_options
+                    .inline_at_nesting_depth
+                    .saturating_add_signed(-1);
+                // There will be a Text event that starts with "-", so remove that portion.
+                extract_text_prefix_from_front_text("-", remaining_event_v);
+                // We consumed the event.
+                None
+            }
+            event => {
+                // We didn't consume the event, so return it.
+                Some(event)
+            }
+        }
+    }
+    /// Returns ordered sequence of unhandled events.
+    fn handle_input_events(&mut self, mut event_v: VecDeque<egui::Event>) -> Vec<egui::Event> {
+        let mut unhandled_event_v = Vec::new();
+        while !event_v.is_empty() {
+            let event = event_v.pop_front().unwrap();
+            if matches!(event, egui::Event::Key { .. }) {
+                tracing::debug!("App::handle_input_events; event: {:?}", event);
+            } else {
+                tracing::trace!("App::handle_input_events; event: {:?}", event);
+            }
+
+            // Handle undo/redo actions first.
+            let event = match event {
+                egui::Event::Key {
+                    key: egui::Key::Z,
+                    pressed: true,
+                    modifiers,
+                    ..
+                } if modifiers.command => {
+                    // TODO: Handle error, e.g. a sound or a status bar message indicating that
+                    // there are no actions to undo/redo.
+                    if modifiers.shift {
+                        self.model.redo_action();
+                    } else {
+                        self.model.undo_action();
+                    }
+                    // We handled the event.
+                    continue;
+                }
+                _ => event,
+            };
+
+            // Give the app a chance to handle top-level events.
+            // TODO: handle_top_level_event is really only handling events that affect the ViewOptions, so rename this method accordingly.
+            let event =
+                if let Some(unhandled_event) = self.handle_top_level_event(event, &mut event_v) {
+                    unhandled_event
+                } else {
+                    continue;
+                };
+
+            // Finally, give the model a chance to handle the event.
+            let unhandled_event_o = self
+                .model
+                .handle_event(event, &mut event_v, &self.view_options)
+                .expect("TODO: handle error");
+
+            // Store any unhandled events for the next pass.
+            if let Some(unhandled_event) = unhandled_event_o {
+                // Pass the event on to unhandled_event_v.
+                unhandled_event_v.push(unhandled_event);
+            }
+        }
+        unhandled_event_v
+    }
+}
+
+impl eframe::App for App {
+    /// Called by the frame work to save state before shutdown.
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        // eframe::set_value(storage, eframe::APP_KEY, self);
+
+        // TODO: Save all unsaved documents to their backup files before quitting.
+    }
+
+    /// Called each time the UI needs repainting, which may be many times per second.
+    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            let mut file_new = false;
+            let mut file_open = false;
+            let mut file_save = false;
+            let mut file_save_as = false;
+            let mut file_quit = false;
+
+            // Check keyboard shortcuts.
+            ui.input_mut(|input_state| {
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::N) {
+                    file_new = true;
+                }
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::O) {
+                    file_open = true;
+                }
+                // NOTE: This has to be done before the check for Ctrl+S due to some caveat in consume_key (see its docs).
+                if input_state.consume_key(Modifiers::CTRL | Modifiers::SHIFT, egui::Key::S) {
+                    file_save_as = true;
+                }
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::S) {
+                    file_save = true;
+                }
+                if input_state.consume_key(Modifiers::CTRL, egui::Key::Q) {
+                    file_quit = true;
+                }
+            });
+
+            tracing::trace!(
+                "App::update; new: {}, open: {}, save: {}, save_as: {}, quit: {}",
+                file_new,
+                file_open,
+                file_save,
+                file_save_as,
+                file_quit,
+            );
+
+            // The top panel is often a good place for a menu bar:
+            egui::menu::bar(ui, |ui| {
+                ui.menu_button("File", |ui| {
+                    // TODO: Impl open/save for wasm.
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        if ui.button("New").clicked() || file_new {
+                            file_new = true;
+                            ui.close_menu();
+                        }
+                        if ui.button("Open").clicked() || file_open {
+                            file_open = true;
+                            ui.close_menu();
+                        }
+                        if ui.button("Save").clicked() || file_save {
+                            file_save = true;
+                            ui.close_menu();
+                        }
+                        if ui.button("Save As").clicked() || file_save_as {
+                            file_save_as = true;
+                            ui.close_menu();
+                        }
+                        if ui.button("Quit").clicked() || file_quit {
+                            file_quit = true;
+                            ui.close_menu();
+                        }
+                    }
+
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        let _ = frame;
+                        let _ = ui;
+                    }
+                });
+            });
+
+            if file_new {
+                self.file_new(ctx);
+            }
+            if file_open {
+                self.file_open(None, ctx);
+            }
+            if file_save {
+                self.file_save(ctx);
+            }
+            if file_save_as {
+                self.file_save_as(ctx);
+            }
+            if file_quit {
+                self.file_quit(ctx);
+            }
+        });
+
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            // Render the cursor address.  Unfortunately because this has to be rendered before
+            // the CentralPanel, this gets updated with a slight delay after the events that change
+            // the cursor address.
+            ui.horizontal(|ui| {
+                ui.label("Cursor Address:");
+
+                // Create a model for the cursor address.
+                let model = Model::new(
+                    Arc::new(RwLock::new(self.model.cursor_address().clone().into())),
+                    sept::dy::TupleTerm::from(vec![]),
+                    None,
+                );
+                // Set the rendering options specific for rendering the cursor address.  These options
+                // are to make it very compact.
+                // TODO: Make it super compact by eliminating spaces.
+                let view_options = ViewOptions {
+                    inline_at_nesting_depth: 0,
+                    show_type_annotations: false,
+                    show_struct_field_name_hints: false,
+                    ..Default::default()
+                };
+                // Create a ViewCtx to be used for rendering the cursor address.  It itself does not
+                // have a cursor address, since the user is not interacting with it.
+                let mut view_ctx = ViewCtx::new(&model, &view_options, None);
+
+                let old_item_spacing = ui.spacing().item_spacing;
+                ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
+                // ui.spacing_mut().item_spacing.x = 0.0;
+
+                ui.vertical(|ui| {
+                    let layout_job = self.model.cursor_address().run_ui(ui, &mut view_ctx, None);
+                    ui.label(layout_job);
+                });
+
+                ui.spacing_mut().item_spacing = old_item_spacing;
+            });
+
+            ui.horizontal_wrapped(|ui| {
+                ui.label("Inlining Depth:");
+                ui.add(
+                    egui::DragValue::new(&mut self.view_options.inline_at_nesting_depth)
+                        .speed(0.0625),
+                );
+
+                ui.checkbox(
+                    &mut self.view_options.show_expanded_item_indicator,
+                    "Expanded Item Indicator",
+                );
+
+                ui.checkbox(
+                    &mut self.view_options.show_type_annotations,
+                    "Type Annotations",
+                );
+
+                ui.checkbox(
+                    &mut self.view_options.show_struct_field_name_hints,
+                    "Struct Field Name Hints",
+                );
+
+                ui.label("Font:");
+                ui.add(
+                    egui::DragValue::new(&mut self.view_options.font_id.size)
+                        .range(6.0..=30.0)
+                        .max_decimals(0)
+                        .suffix("pt")
+                        .speed(0.0625),
+                );
+                egui::ComboBox::from_id_salt("font family combobox")
+                    .selected_text(format!("{:?}", &mut self.view_options.font_id.family))
+                    .show_ui(ui, |ui| {
+                        // ui.style_mut().wrap = Some(false);
+                        ui.set_min_width(60.0);
+                        ui.selectable_value(
+                            &mut self.view_options.font_id.family,
+                            egui::FontFamily::Monospace,
+                            "Monospace",
+                        );
+                        ui.selectable_value(
+                            &mut self.view_options.font_id.family,
+                            egui::FontFamily::Proportional,
+                            "Proportional",
+                        );
+                    });
+
+                egui::warn_if_debug_build(ui);
+            });
+        });
+
+        // Note that the CentralPanel must be added after side panels.
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // tracing::trace!("App::update; events:");
+            // for event in ui.input().events.iter() {
+            //     tracing::trace!("    {:?}", event);
+            // }
+
+            let has_unsaved_changes_before = self.model.has_unsaved_changes();
+
+            // TODO: Handle all keyboard/text/paste (and possibly other) events for the cursor before
+            // starting the render, as these can change the cursor and therefore what should be rendered.
+            // Technically mouse events can also change the cursor, but I'm not sure how that can
+            // possibly be decoupled using an immediate mode GUI, unless maybe you can guarantee that no
+            // more than one cursor-changing mouse event is received at a time.
+            ui.input_mut(|input_state| {
+                let mut event_v = std::mem::take(&mut input_state.events)
+                    .into_iter()
+                    .collect::<VecDeque<_>>();
+                if !event_v.is_empty() {
+                    tracing::trace!("App::update; {} events:", event_v.len());
+                    for event in event_v.iter() {
+                        tracing::trace!("    {:?}", event);
+                    }
+                }
+                let unhandled_event_v = self.handle_input_events(event_v);
+                // Pass all unhandled events through to the UI's InputState, so that they can be
+                // handled on the UI pass.
+                input_state.events = unhandled_event_v;
+            });
+
+            if self.model.has_unsaved_changes() != has_unsaved_changes_before {
+                self.update_title(ctx);
+            }
+
+            egui::ScrollArea::vertical()
+                // .always_show_scroll(true)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    self.model.run_ui(ui, &self.view_options);
+                });
+        });
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        let model = Model::default();
+        // Start with the cursor on the root value.
+        let view_options = ViewOptions::default();
+
+        Self {
+            model,
+            view_options,
+        }
+    }
 }
 
 // impl Default for App {
@@ -259,599 +877,3 @@ pub struct App {
 //         }
 //     }
 // }
-
-impl Default for App {
-    fn default() -> Self {
-        use sept::dy::IntoValue;
-        // Default is an empty array.
-        let root_value = sept::dy::ArrayTerm::from(vec![]).into_value();
-        let root_value_la = Arc::new(RwLock::new(root_value));
-        let model = Model {
-            root_value_la,
-            executed_command_v: VecDeque::new(),
-        };
-        // Start with the cursor on the root value.
-        let cursor_address = sept::dy::TupleTerm::from(vec![]);
-        let view_options = ViewOptions::default();
-
-        let local_symbol_table_la = Arc::new(RwLock::new(
-            sept::dy::SymbolTable::new_without_parent("boring".to_string()).expect("test"),
-        ));
-
-        Self {
-            model,
-            cursor_address,
-            view_options,
-            local_symbol_table_la,
-            open_file_path_o: None,
-        }
-    }
-}
-
-impl App {
-    /// Called once before the first frame.
-    pub fn new(
-        cc: &eframe::CreationContext<'_>,
-        open_file_path_o: Option<std::path::PathBuf>,
-    ) -> Self {
-        // This is also where you can customized the look at feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
-        // // Load previous app state (if any).
-        // // Note that you must enable the `persistence` feature for this to work.
-        // if let Some(storage) = cc.storage {
-        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        // }
-
-        // use sept::dy::IntoValue;
-        // // let root_value = s1.into_value();
-        // let root_value = sept::dy::ArrayTerm::from(vec![
-        //     sept::dy::StructTerm::new(vec![
-        //         ("name".to_string(), sept::st::Utf8String.into()),
-        //         ("age".to_string(), sept::st::Uint8.into()),
-        //     ])
-        //     .unwrap()
-        //     .into(),
-        //     sept::dy::StructTerm::new(vec![("name".to_string(), sept::st::Utf8String.into())])
-        //         .unwrap()
-        //         .into(),
-        //     sept::dy::StructTerm::new(vec![]).unwrap().into(),
-        //     "".to_string().into(),
-        //     "a".to_string().into(),
-        //     "\n".to_string().into(),
-        //     "xy\npq\n".to_string().into(),
-        //     "hippos\nare\tabsolutely\nthe\nbest".to_string().into(),
-        //     sept::dy::ArrayTerm::from(vec![
-        //         sept::dy::ArrayTerm::from(vec![]).into(),
-        //         "thingy".to_string().into(),
-        //         "other\nthingy".to_string().into(),
-        //     ])
-        //     .into(),
-        // ])
-        // .into_value();
-
-        // use sept::dy::IntoValue;
-        // let root_value = if let Some(open_file_path) = open_file_path_o.as_deref() {
-        //     let mut file = std::fs::OpenOptions::new()
-        //         .read(true)
-        //         .open(open_file_path)
-        //         .expect("TODO: handle this");
-        //     use sept::st::Deserializable;
-        //     let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
-        //     cc.egui_ctx
-        //         .send_viewport_cmd(egui::ViewportCommand::Title(format!(
-        //             "SEPT - {}",
-        //             open_file_path.display()
-        //         )));
-        //     root_value
-        // } else {
-        //     // Default is an empty array.
-        //     sept::dy::ArrayTerm::from(vec![]).into_value()
-        // };
-        // let root_value_la = Arc::new(RwLock::new(root_value));
-        // let model = Model {
-        //     root_value_la,
-        //     executed_command_v: VecDeque::new(),
-        // };
-        // // Start with the cursor on the root value.
-        // let cursor_address = sept::dy::TupleTerm::from(vec![]);
-        // let view_options = ViewOptions::default();
-
-        // let local_symbol_table_la = Arc::new(RwLock::new(
-        //     sept::dy::SymbolTable::new_without_parent("boring".to_string()).expect("test"),
-        // ));
-
-        // Self {
-        //     model,
-        //     cursor_address,
-        //     view_options,
-        //     local_symbol_table_la,
-        //     open_file_path_o,
-        // }
-
-        let mut app = Self::default();
-        if let Some(open_file_path) = open_file_path_o {
-            app.open(open_file_path, &cc.egui_ctx);
-        }
-        app
-    }
-    pub fn set_title(&self, title: String, ctx: &egui::Context) {
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
-    }
-    pub fn open(&mut self, path: std::path::PathBuf, ctx: &egui::Context) {
-        tracing::info!("Open: {}", path.display());
-        let mut file = std::fs::OpenOptions::new()
-            .read(true)
-            .open(&path)
-            .expect("TODO: handle this");
-        use sept::st::Deserializable;
-        let root_value = sept::dy::Value::deserialize(&mut file).expect("TODO: handle this");
-        self.model.root_value_la = Arc::new(RwLock::new(root_value));
-        self.set_title(format!("SEPT - {}", path.display()), ctx);
-        self.open_file_path_o = Some(path);
-    }
-    pub fn save(&mut self, ctx: &egui::Context) {
-        if self.open_file_path_o.is_none() {
-            panic!("programmer error: app.open_file_path_o is expected to be non-None for save operation");
-        }
-        let open_file_path = self.open_file_path_o.as_deref().unwrap();
-        tracing::info!("Save As: {}", open_file_path.display());
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(open_file_path)
-            .expect("TODO: handle this");
-        let root_value_g = self.model.root_value_la.read().unwrap();
-        use sept::st::Serializable;
-        root_value_g
-            .serialize(&mut file)
-            .expect("TODO: handle this");
-        self.set_title(format!("SEPT - {}", open_file_path.display()), ctx);
-    }
-    pub fn save_as(&mut self, path: std::path::PathBuf, ctx: &egui::Context) {
-        tracing::info!("Save As: {}", path.display());
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)
-            .expect("TODO: handle this");
-        let root_value_g = self.model.root_value_la.read().unwrap();
-        use sept::st::Serializable;
-        root_value_g
-            .serialize(&mut file)
-            .expect("TODO: handle this");
-        self.set_title(format!("SEPT - {}", path.display()), ctx);
-        self.open_file_path_o = Some(path);
-    }
-}
-
-impl eframe::App for App {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        // eframe::set_value(storage, eframe::APP_KEY, self);
-    }
-
-    /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            let mut open = false;
-            let mut save = false;
-            let mut save_as = false;
-
-            // Check keyboard shortcuts.
-            ui.input_mut(|input_state| {
-                if input_state.consume_key(Modifiers::CTRL, egui::Key::O) {
-                    open = true;
-                }
-                // NOTE: This has to be done before the check for Ctrl+S due to some caveat in consume_key (see its docs).
-                if input_state.consume_key(Modifiers::CTRL | Modifiers::SHIFT, egui::Key::S) {
-                    save_as = true;
-                }
-                if input_state.consume_key(Modifiers::CTRL, egui::Key::S) {
-                    save = true;
-                }
-            });
-
-            tracing::debug!(
-                "App::update; open: {}, save: {}, save_as: {}",
-                open,
-                save,
-                save_as
-            );
-
-            // The top panel is often a good place for a menu bar:
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    // TODO: Impl open/save for wasm.
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        if ui.button("Open").clicked() {
-                            open = true;
-                            ui.close_menu();
-                        }
-
-                        if ui.button("Save").clicked() {
-                            save = true;
-                            ui.close_menu();
-                        }
-
-                        if ui.button("Save As").clicked() {
-                            save_as = true;
-                            ui.close_menu();
-                        }
-                    }
-
-                    // No File > Quit on web pages.
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    }
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        let _ = frame;
-                        let _ = ui;
-                    }
-                });
-            });
-
-            if open {
-                // TODO: Check if unsaved, and if so, prompt to save before opening the next file.
-
-                #[cfg(not(target_arch = "wasm32"))]
-                if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("Sept Files (*.sept)", &["sept"])
-                    .pick_file()
-                {
-                    self.open(path, ctx);
-                }
-            }
-            if save {
-                #[cfg(not(target_arch = "wasm32"))]
-                if self.open_file_path_o.is_none() {
-                    if let Some(path) = rfd::FileDialog::new()
-                        .add_filter("Sept Files (*.sept)", &["sept"])
-                        .save_file()
-                    {
-                        tracing::info!("Save: {}", path.display());
-                        self.open_file_path_o = Some(path);
-                    }
-                }
-
-                if let Some(open_file_path) = self.open_file_path_o.as_ref() {
-                    self.save(ctx);
-                }
-            }
-            if save_as {
-                #[cfg(not(target_arch = "wasm32"))]
-                if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("Sept Files (*.sept)", &["sept"])
-                    .save_file()
-                {
-                    self.save_as(path, ctx);
-                }
-            }
-        });
-
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            // Render the cursor address.  Unfortunately because this has to be rendered before
-            // the CentralPanel, this gets updated with a slight delay after the events that change
-            // the cursor address.
-            ui.horizontal(|ui| {
-                ui.label("Cursor Address:");
-
-                // Create a model for the cursor address.
-                let model = Model {
-                    root_value_la: Arc::new(RwLock::new(self.cursor_address.clone().into())),
-                    executed_command_v: VecDeque::new(),
-                };
-                // Set the rendering options specific for rendering the cursor address.  These options
-                // are to make it very compact.
-                // TODO: Make it super compact by eliminating spaces.
-                let view_options = ViewOptions {
-                    inline_at_nesting_depth: 0,
-                    show_type_annotations: false,
-                    show_struct_field_name_hints: false,
-                    ..Default::default()
-                };
-                // Create a ViewCtx to be used for rendering the cursor address.  It itself does not
-                // have a cursor address, since the user is not interacting with it.
-                let mut view_ctx = ViewCtx::new(&model, &view_options, None);
-
-                let old_item_spacing = ui.spacing().item_spacing;
-                ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
-                // ui.spacing_mut().item_spacing.x = 0.0;
-
-                ui.vertical(|ui| {
-                    let layout_job = self.cursor_address.run_ui(ui, &mut view_ctx, None);
-                    ui.label(layout_job);
-                });
-
-                ui.spacing_mut().item_spacing = old_item_spacing;
-            });
-
-            ui.horizontal_wrapped(|ui| {
-                ui.label("Inlining Depth:");
-                ui.add(
-                    egui::DragValue::new(&mut self.view_options.inline_at_nesting_depth)
-                        .speed(0.0625),
-                );
-
-                ui.checkbox(
-                    &mut self.view_options.show_expanded_item_indicator,
-                    "Expanded Item Indicator",
-                );
-
-                ui.checkbox(
-                    &mut self.view_options.show_type_annotations,
-                    "Type Annotations",
-                );
-
-                ui.checkbox(
-                    &mut self.view_options.show_struct_field_name_hints,
-                    "Struct Field Name Hints",
-                );
-
-                ui.label("Font:");
-                ui.add(
-                    egui::DragValue::new(&mut self.view_options.font_id.size)
-                        .range(6.0..=30.0)
-                        .max_decimals(0)
-                        .suffix("pt")
-                        .speed(0.0625),
-                );
-                egui::ComboBox::from_id_salt("font family combobox")
-                    .selected_text(format!("{:?}", &mut self.view_options.font_id.family))
-                    .show_ui(ui, |ui| {
-                        // ui.style_mut().wrap = Some(false);
-                        ui.set_min_width(60.0);
-                        ui.selectable_value(
-                            &mut self.view_options.font_id.family,
-                            egui::FontFamily::Monospace,
-                            "Monospace",
-                        );
-                        ui.selectable_value(
-                            &mut self.view_options.font_id.family,
-                            egui::FontFamily::Proportional,
-                            "Proportional",
-                        );
-                    });
-
-                egui::warn_if_debug_build(ui);
-            });
-        });
-
-        // Note that the CentralPanel must be added after side panels.
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // tracing::trace!("App::update; events:");
-            // for event in ui.input().events.iter() {
-            //     tracing::trace!("    {:?}", event);
-            // }
-
-            // TODO: Handle all keyboard/text/paste (and possibly other) events for the cursor before
-            // starting the render, as these can change the cursor and therefore what should be rendered.
-            // Technically mouse events can also change the cursor, but I'm not sure how that can
-            // possibly be decoupled using an immediate mode GUI, unless maybe you can guarantee that no
-            // more than one cursor-changing mouse event is received at a time.
-            ui.input_mut(|input_state| {
-                let mut event_v = std::mem::take(&mut input_state.events)
-                    .into_iter()
-                    .collect::<VecDeque<_>>();
-                if !event_v.is_empty() {
-                    tracing::trace!("App::update; {} events:", event_v.len());
-                    for event in event_v.iter() {
-                        tracing::trace!("    {:?}", event);
-                    }
-                }
-                let mut unhandled_event_v = Vec::new();
-                while !event_v.is_empty() {
-                    let event = event_v.pop_front().unwrap();
-                    let (unhandled_event_o, mut enqueued_command_v) = {
-                        let mut enqueued_command_v = VecDeque::new();
-
-                        // Give the app a chance to handle top-level events.
-                        let mut unhandled_event_o =
-                            self.handle_top_level_event(event, &mut event_v);
-                        // Fall through to the root value if not handled.
-                        unhandled_event_o = if let Some(unhandled_event) = unhandled_event_o {
-                            let root_value_g = self.model.root_value_la.read().unwrap();
-                            let mut event_handler_ctx = EventHandlerCtx::new(
-                                &root_value_g,
-                                &self.cursor_address,
-                                &self.view_options,
-                                &mut event_v,
-                                &mut enqueued_command_v,
-                            );
-
-                            use crate::EventHandler;
-                            // If top level didn't handle it, pass it on to the root value.
-                            root_value_g
-                                .handle_event(
-                                    unhandled_event,
-                                    &mut event_handler_ctx,
-                                    &mut self.cursor_address.iter(),
-                                )
-                                .unwrap()
-                        } else {
-                            None
-                        };
-                        (unhandled_event_o, enqueued_command_v)
-                    };
-
-                    // Apply the sequence of enqueued commands as a transaction.  If any of them fail,
-                    // then the whole thing should be rolled back.
-                    {
-                        let mut root_value_g = self.model.root_value_la.write().unwrap();
-                        let mut successful_command_count = 0usize;
-                        for command in enqueued_command_v.iter() {
-                            tracing::trace!("App::update; executing command {:?}", command);
-                            use sept::qv::QueryMutAndApplyEditTrait;
-                            match command {
-                                Command::CursorEdit(cursor_edit) => {
-                                    self.cursor_address
-                                        .query_mut_and_apply_edit(
-                                            &mut cursor_edit.address.iter(),
-                                            cursor_edit.edit.clone(),
-                                        )
-                                        .expect("programmer error: error in CursorEdit");
-                                }
-                                Command::RootValueEdit(root_value_edit) => {
-                                    match root_value_g.query_mut_and_apply_edit(
-                                        &mut root_value_edit.address.iter(),
-                                        root_value_edit.edit.clone(),
-                                    ) {
-                                        Ok(()) => {
-                                            // It worked.
-                                        }
-                                        Err(e) => {
-                                            // TODO: Show the error in some status bar or other visual indicator
-                                            // that's out of the way, or cause an error bell to sound.
-                                            tracing::error!("Edit error: {}", e);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            successful_command_count += 1;
-                        }
-                        // Handle transaction commit/rollback.
-                        // TODO: Encapsulate this into a method.
-                        if successful_command_count < enqueued_command_v.len() {
-                            // We fell short of executing all commands, meaning there was an error,
-                            // so roll them back, applying their inverses in reverse order.
-
-                            // NOTE: There has to be more articulation in the notion of command, for when
-                            // undo/redo are implemented.  Cursor edits and root value edits should be
-                            // considered edits and therefore are part of this transaction, but things
-                            // like view option changes or undo/redo commands should not be considered
-                            // edits and are therefore not part of the transaction.  For example, "undo"
-                            // should obviously not make it into the undo queue.
-
-                            for command in enqueued_command_v.drain(0..successful_command_count).rev() {
-                                use sept::st::EditTrait;
-                                use sept::qv::QueryMutAndApplyEditTrait;
-                                match command {
-                                    Command::CursorEdit(cursor_edit) => {
-                                        let AddressedEdit { address, edit: edit_inv } = cursor_edit.into_inverse().into();
-                                        self.cursor_address
-                                        .query_mut_and_apply_edit(
-                                            &mut address.iter(),
-                                            edit_inv,
-                                        )
-                                        .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
-                                    }
-                                    Command::RootValueEdit(root_value_edit) => {
-                                        let AddressedEdit { address, edit: edit_inv } = root_value_edit.into_inverse().into();
-                                        root_value_g.query_mut_and_apply_edit(
-                                            &mut address.iter(),
-                                            edit_inv,
-                                        )
-                                        .expect("programmer error: there is some problem with the definition of some EditTrait inverse.");
-                                    }
-                                }
-                            }
-                        } else {
-                            // The whole transaction succeeded, so store all edits in the undo queue.
-                            for command in enqueued_command_v.into_iter() {
-                                self.model.executed_command_v.push_back(command);
-                            }
-                        }
-                    }
-
-                    if let Some(unhandled_event) = unhandled_event_o {
-                        // Pass the event on to remaining_event_v.
-                        unhandled_event_v.push(unhandled_event);
-                    }
-                }
-                // Pass all unhandled events through to the UI's InputState, so that they can be
-                // handled on the UI pass.
-                input_state.events = unhandled_event_v;
-            });
-
-            egui::ScrollArea::vertical()
-                // .always_show_scroll(true)
-                .auto_shrink([false, true])
-                .show(ui, |ui| {
-                    let old_item_spacing = ui.spacing().item_spacing;
-                    ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
-                    // ui.spacing_mut().item_spacing = egui::vec2(-1.0, 1.0);
-                    // ui.spacing_mut().item_spacing.x = 0.0;
-
-                    let mut view_ctx = ViewCtx::new(
-                        &self.model,
-                        &self.view_options,
-                        Some(&mut self.cursor_address),
-                    );
-
-                    ui.vertical(|ui| {
-                        let layout_job = self.model.root_value_la.read().unwrap().run_ui(
-                            ui,
-                            &mut view_ctx,
-                            None,
-                        );
-                        ui.label(layout_job);
-                    });
-
-                    ui.spacing_mut().item_spacing = old_item_spacing;
-                });
-        });
-    }
-}
-
-impl App {
-    /// Handles top-level events, returning any unhandled events as Some(event), or
-    /// None if the event was handled.
-    pub fn handle_top_level_event(
-        &mut self,
-        event: egui::Event,
-        remaining_event_v: &mut VecDeque<egui::Event>,
-    ) -> Option<egui::Event> {
-        // tracing::trace!("App::handle_top_level_event; event: {:?}", event);
-        match event {
-            egui::Event::Key {
-                key: egui::Key::Equals,
-                pressed: true,
-                modifiers: egui::Modifiers::ALT,
-                ..
-            }
-            | egui::Event::Key {
-                key: egui::Key::Plus,
-                pressed: true,
-                modifiers: egui::Modifiers::ALT,
-                ..
-            } => {
-                self.view_options.inline_at_nesting_depth = self
-                    .view_options
-                    .inline_at_nesting_depth
-                    .saturating_add_signed(1);
-                // There will be a Text event that starts with "=", so remove that portion.
-                extract_text_prefix_from_front_text("=", remaining_event_v);
-                // We consumed the event.
-                None
-            }
-            egui::Event::Key {
-                key: egui::Key::Minus,
-                pressed: true,
-                modifiers: egui::Modifiers::ALT,
-                ..
-            } => {
-                self.view_options.inline_at_nesting_depth = self
-                    .view_options
-                    .inline_at_nesting_depth
-                    .saturating_add_signed(-1);
-                // There will be a Text event that starts with "-", so remove that portion.
-                extract_text_prefix_from_front_text("-", remaining_event_v);
-                // We consumed the event.
-                None
-            }
-            event => {
-                // We didn't consume the event, so return it.
-                Some(event)
-            }
-        }
-    }
-}
