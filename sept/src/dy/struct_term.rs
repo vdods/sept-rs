@@ -183,7 +183,7 @@ impl dy::ConstructorT for StructTerm {
         // could be done as a separate pass, though that would present problems for static types.
         anyhow::ensure!(
             struct_term_term.inhabits(self),
-            "type mismatch in StructTerm::deserialize_parameters_and_construct; expected type_ {} but got {}",
+            "type mismatch in StructTerm::deserialize_parameters_and_construct; expected r#type {} but got {}",
             self.textified(),
             struct_term_term.declared_type().textified(),
         );

@@ -116,7 +116,7 @@
     -   Colorized content
 -   Phase 2: Cursor navigation and selection
     -   Multi-"level" cursor navigation
-    -   Selection
+    -   Selection -- selection should be done entirely by modifying the cursor address with the various compound constructions such as arrays and sets of address tokens.  This way, a selection is itself a formal piece of data.
         -   Select none
         -   Grow selection "left"
         -   Grow selection "right"
@@ -127,6 +127,7 @@
         -   While selecting stuff with the mouse, could Ctrl+mousewheel be used to increase/decrease the level of the cursor?  The mouse itself would have its own cursor separate from the keyboard cursor.  Clicking would reset the keyboard cursor to the mouse cursor's location and level.
         -   Ctrl+click to toggle selection of a term
         -   Shift+click to select a range
+        -   Ctrl+Shift+click to add a range to a selection (from most recently selected term)
 -   Phase 3: Basic editing capabilities
     -   Creation of typed terms via keyboard shortcuts
     -   Copy, paste
@@ -152,7 +153,6 @@
         -   Being able to quickly select a collection of terms
         -   Keyboard shortcut to factorize them.  This should bring up a view of the base template and the template parameters.
         -   Edit the base template and template parameters
-        -
 
 ### Implementation Notes
 
@@ -299,16 +299,13 @@
 -   Figure out how to implement proc_macros for deriving traits on generic types.  In particular, will have to parse out not just a `syn::Ident` but whatever the right type is for the relevant generic syntax.
 -   Could maybe use https://docs.rs/tuple_list/latest/tuple_list/ to implement a `st::TupleTerm`.
 -   The notion of type is related to the `ConstructorT` trait.  In particular, a type is a term that has a notion of inhabitation by other terms (even if it may be inhabited by no terms, such as `EmptyType`).  This is really a declaration that something exists.  But `ConstructorT` is more specific, because it actually defines how a term can be used to construct another term, and defines what the parameterization is.
-    -   Question: Should a `ConstructorT` always construct a term that inhabits it?  That's a good starting assumption.  Algebraic data types, e.g. `pub enum Thing { A(String), Nothing}` can be handled by making `A` and `Nothing` non-parametric terms that are passed as parameters to the constructor `Thing`.  Though in this case, `Thing(A, ...)` could also be considered to be a constructor.
+    -   Question: Should a `ConstructorT` always construct a term that inhabits it?  That's a good starting assumption.  Algebraic data types, e.g. `pub enum Thing { A(String), Nothing} ` can be handled by making `A` and `Nothing` non-parametric terms that are passed as parameters to the constructor `Thing`.  Though in this case, `Thing(A, ...)` could also be considered to be a constructor.
     -   A `NonParametricTerm` is a kind of constructor, in that it is its own, zero-parameter, constructor.  Though probably shouldn't be implemented that way, since it also forms the base case of the inductive construction of terms.  Maybe simply allow it, since there's probably no harm in doing so, and it might simplify other logic.
 -   Implement destructuring of sept `dy::Value` into Rust types, especially tuples and structs.
--   Rename `type_` to `r#type`.
 -   Maybe use the crate `funty` and its "fundamental" traits to clean up some of the POD types.
 -   Come up with a scheme for identifying local symbol tables so that they can be unambiguously referred to in a `Deconstruction`, and therefore `DeconstructT` and `ConstructorT` can be implemented for `LocalSymRefTerm`.
--   Rename ASCII* to ASCII* and Utf* to UTF*, and generally make acronyms uppercase in names.
 -   Make `StringifiableT`'s stringify() function work like std::fmt::Display, taking a writer instead of producing a String.
 -   This shouldn't produce a warning:
 
         [2023-05-05T22:52:37.796819980 WARN sept/src/dy/runtime.rs:1229] Runtime is using TypeId to be able to `cmp` different types (u32, u32); this ordering is not stable between builds because TypeId is not stable between builds.
 -   Change the "line" and "char" queries of UTF8StringTerm to use 'l' and 'c'.  This saves screen space and memory (no heap allocation beyond the dy::Value's Box).
--   Done: Consider putting all the view and query stuff into a new submodule of `sept` crate, e.g. `query` or maybe just `q`.

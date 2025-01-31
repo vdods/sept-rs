@@ -110,11 +110,11 @@ impl std::fmt::Display for StructTermTerm {
 
 impl st::DeserializableT for StructTermTerm {
     fn deserialize(reader: &mut dyn std::io::Read) -> Result<Self> {
-        let type_ = dy::Value::deserialize(reader)?;
+        let r#type = dy::Value::deserialize(reader)?;
         let field_t = dy::TupleTerm::deserialize(reader)?;
         // NOTE: This check might cause dereferences (e.g. in GlobalSymRefTerm) which may fail to
         // resolve if they're not defined yet (e.g. in a mutually nested struct).
-        Ok(Self::new_checked(type_, field_t)?)
+        Ok(Self::new_checked(r#type, field_t)?)
     }
 }
 
@@ -136,7 +136,7 @@ impl st::SerializableT for StructTermTerm {
 // //         Ok(st::SerializedTopLevelCode::Construction.write(writer)?)
 // //     }
 // //     fn serialize_constructor(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
-// //         Ok(self.type_.serialize(writer)?)
+// //         Ok(self.r#type.serialize(writer)?)
 // //     }
 //     fn serialize(&self, writer: &mut dyn std::io::Write) -> Result<usize> {
 //         // NOTE: The assumption "the construction is known when calling serialize" is a bit tricky;

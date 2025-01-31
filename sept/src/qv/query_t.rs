@@ -1,7 +1,7 @@
 use crate::{dy, qv, Result};
 
 /// QueryT represents something that can be queried using a sequence of address tokens, ultimately
-/// producing a EvalT (which can be evaluated to produce a value).
+/// producing an EvalT (which can be evaluated to produce a value).
 pub trait QueryT: qv::EvalT {
     /// This returns a view object of the addressed value.
     fn run_query<'a>(
