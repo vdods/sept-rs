@@ -32,17 +32,36 @@ impl EventHandlerT for sept::dy::ArrayTerm {
                 // TODO: Create a replace or insert edit, depending on the mode.
                 // }
                 egui::Event::Key {
-                    key: egui::Key::Enter,
+                    key: egui::Key::OpenBracket,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
-                    // Enter the elem view by adding a cursor token.
+                    // Enter the elem view at the beginning of the array by adding a cursor token.
                     let cursor_len = event_handler_ctx.cursor_address.len() as u32;
                     event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
                         address: vec![cursor_len.into_value()].into(),
                         edit: sept::qv::InsertionTerm {
                             new_data: 0u32.into(),
+                        }
+                        .into(),
+                    }));
+                    // We consumed the event.
+                    Ok(None)
+                }
+                egui::Event::Key {
+                    key: egui::Key::Enter,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                    ..
+                } => {
+                    // Enter the elem view at the end of the array by adding a cursor token.
+                    // TODO: Could use -1 as the address once negative indexing is supported.
+                    let cursor_len = event_handler_ctx.cursor_address.len() as u32;
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
+                        address: vec![cursor_len.into_value()].into(),
+                        edit: sept::qv::InsertionTerm {
+                            new_data: (self.len() as u32).into(),
                         }
                         .into(),
                     }));
@@ -111,6 +130,38 @@ impl<'a> EventHandlerT for sept::qv::ArrayTermElemView<'a> {
                     Ok(None)
                 }
                 egui::Event::Key {
+                    key,
+                    pressed: true,
+                    modifiers,
+                    ..
+                } if (key == egui::Key::Enter && modifiers.command)
+                    || (key == egui::Key::CloseBracket && modifiers.is_none()) =>
+                {
+                    // Escape this view by taking off the last cursor token, and then attempting to
+                    // advance the cursor using egui::Key::ArrowRight, which is a uniform way to
+                    // advance the cursor by one element in all views.
+                    {
+                        let old_data = event_handler_ctx.cursor_address.last().unwrap().clone();
+                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
+                            // TODO: This could use `-1` as the address once negative indexing is supported.
+                            address: vec![(cursor_len - 1).into_value()].into(),
+                            edit: sept::qv::DeletionTerm { old_data }.into(),
+                        }));
+                        // Attempt to advance the cursor by one element.
+                        event_handler_ctx
+                            .remaining_event_v
+                            .push_front(egui::Event::Key {
+                                key: egui::Key::ArrowRight,
+                                physical_key: Some(egui::Key::ArrowRight),
+                                pressed: true,
+                                repeat: false,
+                                modifiers: egui::Modifiers::NONE,
+                            });
+                    }
+                    // We consumed the event.
+                    Ok(None)
+                }
+                egui::Event::Key {
                     key: egui::Key::Home,
                     pressed: true,
                     modifiers: egui::Modifiers::NONE,
@@ -171,7 +222,6 @@ impl<'a> EventHandlerT for sept::qv::ArrayTermElemView<'a> {
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
-                    // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
                         != LayoutDiscriminant::InteriorLevelInline
                     {
@@ -200,7 +250,6 @@ impl<'a> EventHandlerT for sept::qv::ArrayTermElemView<'a> {
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
-                    // if event_handler_ctx.layout_mode() == LayoutMode::Expanded {
                     if event_handler_ctx.layout_discriminant()
                         != LayoutDiscriminant::InteriorLevelInline
                     {
@@ -229,28 +278,21 @@ impl<'a> EventHandlerT for sept::qv::ArrayTermElemView<'a> {
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
-                    // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
-                    if event_handler_ctx.layout_discriminant()
-                        == LayoutDiscriminant::InteriorLevelInline
-                    {
-                        let mut v = self.clone();
-                        let old_elem_index = v.elem_index as u32;
-                        v.increment_elem_index_by(-1);
-                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
-                            // TODO: This could use `-1` as the address once negative indexing is supported.
-                            address: vec![(cursor_len - 1).into_value()].into(),
-                            edit: sept::qv::ReplacementTerm {
-                                old_data: old_elem_index.into(),
-                                new_data: (v.elem_index as u32).into(),
-                            }
-                            .into(),
-                        }));
-                        // We consumed the event.
-                        Ok(None)
-                    } else {
-                        // We didn't consume the event, so return it.
-                        Ok(Some(event))
-                    }
+                    // ArrowLeft always works to decrement elem index by one, regardless of LayoutDiscriminant.
+                    let mut v = self.clone();
+                    let old_elem_index = v.elem_index as u32;
+                    v.increment_elem_index_by(-1);
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
+                        // TODO: This could use `-1` as the address once negative indexing is supported.
+                        address: vec![(cursor_len - 1).into_value()].into(),
+                        edit: sept::qv::ReplacementTerm {
+                            old_data: old_elem_index.into(),
+                            new_data: (v.elem_index as u32).into(),
+                        }
+                        .into(),
+                    }));
+                    // We consumed the event.
+                    Ok(None)
                 }
                 egui::Event::Key {
                     key: egui::Key::ArrowRight,
@@ -258,28 +300,21 @@ impl<'a> EventHandlerT for sept::qv::ArrayTermElemView<'a> {
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
-                    // if event_handler_ctx.layout_mode() == LayoutMode::Inline {
-                    if event_handler_ctx.layout_discriminant()
-                        == LayoutDiscriminant::InteriorLevelInline
-                    {
-                        let mut v = self.clone();
-                        let old_elem_index = v.elem_index as u32;
-                        v.increment_elem_index_by(1);
-                        event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
-                            // TODO: This could use `-1` as the address once negative indexing is supported.
-                            address: vec![(cursor_len - 1).into_value()].into(),
-                            edit: sept::qv::ReplacementTerm {
-                                old_data: old_elem_index.into(),
-                                new_data: (v.elem_index as u32).into(),
-                            }
-                            .into(),
-                        }));
-                        // We consumed the event.
-                        Ok(None)
-                    } else {
-                        // We didn't consume the event, so return it.
-                        Ok(Some(event))
-                    }
+                    // ArrowRight always works to decrement elem index by one, regardless of LayoutDiscriminant.
+                    let mut v = self.clone();
+                    let old_elem_index = v.elem_index as u32;
+                    v.increment_elem_index_by(1);
+                    event_handler_ctx.enqueue_edit(CursorEdit::from(AddressedEdit {
+                        // TODO: This could use `-1` as the address once negative indexing is supported.
+                        address: vec![(cursor_len - 1).into_value()].into(),
+                        edit: sept::qv::ReplacementTerm {
+                            old_data: old_elem_index.into(),
+                            new_data: (v.elem_index as u32).into(),
+                        }
+                        .into(),
+                    }));
+                    // We consumed the event.
+                    Ok(None)
                 }
                 egui::Event::Key {
                     key: egui::Key::Delete,

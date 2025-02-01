@@ -558,8 +558,9 @@ Notes on fleshing out views and event handling for remainder of types
     -   Need top-level event handler which can intercept top-level commands.
 -   UTF8StringTerm line char view
     -   To-do
-        -   Hit `"` to exit the string and go to the next element in whatever contains the string (this may not be well-defined depending on what that container is, e.g. a hash set).  Should this go to the comma following the string, if it's in an ArrayTerm, so that one could type `,` to pass the comma and set the cursor to the next place?  This would make it match what you're typing.
+        -   Hit `"` to exit the string and go to the next element in whatever contains the string (this may not be well-defined depending on what that container is, e.g. a hash set).
         -   Typing a literal `"` in the string by typing `\"`, and typing a literal `\` by typing `\\`
+        -   Maybe Backspace when at the first char in a string should delete the string (if it's empty; maybe it should be a config option for when the string is non-empty).
     -   Done
         -   Insertion mode typing
         -   Typing `\n`
@@ -567,6 +568,7 @@ Notes on fleshing out views and event handling for remainder of types
         -   Backspace
         -   Delete
         -   Escape / Alt-Enter
+        -   Hit `Ctrl+Enter` to exit the string and go to the next element in whatever contains the string (this may not be well-defined depending on what that container is, e.g. a hash set).
 -   UTF8StringTerm char view (semi-deprecated)
     -   To-do
     -   Done
@@ -579,20 +581,18 @@ Notes on fleshing out views and event handling for remainder of types
         -   Paste
 -   ArrayTerm
     -   To-do
-        -   Typing `]` should exit the array and go to the next element in whatever contains the array (this may not be well-defined depending on what that container is, e.g. a hash set).  Or maybe it goes to the comma following that element.
     -   Done
         -   Insert key inserts a `Placeholder`
         -   Events issued when the cursor is at the end-of-array element act like a `Placeholder` (e.g. being able to insert strings or arrays at the end of an array).
         -   Backspace
         -   Delete
         -   Escape / Alt-Enter
+        -   `Ctrl+Enter` and `]` should each exit the array and go to the next element in whatever contains the array (this may not be well-defined depending on what that container is, e.g. a hash set).
 -   Placeholder
     -   To-do
     -   Done
         -   Typing `"` replaces the `Placeholder` with an empty string and enters the string.
-    -   To-do
-    -   Done
-        -   Typing `[` replaces the `Placeholder` with an empty string and enters the string.
+        -   Typing `[` replaces the `Placeholder` with an empty array and enters the array.
 -   TupleTerm
     -   To-do
         -   Everything analogous to ArrayTerm
@@ -622,8 +622,12 @@ Notes on fleshing out views and event handling for remainder of types
 ## 2023.06.28
 
 Notes on char editing
--   There should be the direct char view and the escaped char view
-    -   The direct char view operates with direct key presses
+-   There should be the direct char view (for non-programmers) and the escaped char view (for programmers)
+    -   The direct char view operates with direct key presses, perhaps showing certain control characters visually using unicode chars, like:
+        -   newline: ↵ `u21B5`
+        -   tab: » `uBB` or ↦ `u21A6` or ⇥ `u21E5`
+        -   space: · `uB7` or ␣ `u2423`
+        Reference: https://www.piliapp.com/symbols/tab/
     -   The escaped char view shows escape codes, such as `\n` and `\\`.
 -   When editing a string, if you type `\`, it should enter the escaped char view for that char, so that the next keypress(es) determine the specific escape code.  Some escape codes:
     -   `\` - backslash
@@ -646,12 +650,12 @@ Big-picture priorities for sept-gui
 -   Should be a minimally complete editor capable of producing/editing/browsing basic sept data.
 -   Don't include symbolic refs for now.  They complicate the semantics of copy/paste and serialization.  However, they are an important feature of the data model that needs to be proven out eventually.
 -   Features
-    -   New
-        -   If there are unsaved changes, offer:
-            -   Save
-            -   Discard
-            -   Cancel
-        -   Keyboard shortcut Ctrl+N
+    -   X New
+        -   X If there are unsaved changes, offer:
+            -   X Save
+            -   X Discard
+            -   X Cancel
+        -   X Keyboard shortcut Ctrl+N
     -   X Open
         -   X If there are unsaved changes, offer:
             -   X Save
@@ -670,12 +674,29 @@ Big-picture priorities for sept-gui
     -   X Undo
     -   X Redo
     -   Select
+        -   Maybe fancy select is not part of the MVP.  Because the cursor can take different levels, there is already a form of scoped selection, which should be good enough for now.  Later on, ranged and per-item selection should be supported.
+        -   On the other hand, being able to select/copy/cut/paste text within a string is critical.
+    -   Internal copy/paste
+        -   Copy buffer can contain arbitrarily structured sept data, and paste can work exactly as desired.
+    -   External copy/paste
+        -   It's probably necessary for the (external) copy buffer to contain some sort of human-readable representation of the copied data, and conversely, there should be a way to paste human-readable data.  Maybe just use human-readable sept representation.  Maybe offer a separate "import/export JSON" feature or some such.
     -   Copy (from within sept-gui)
         -   Probably this should produce a string that simulates the keyboard input to produce the copied data.
     -   Copy (from outside sept-gui)
     -   Paste (into sept-gui)
         -   Pasting within a string should do the obvious thing
         -   Pasting within a placeholder should simulate each char of the paste as input.  This may not play nice with strings unless the escaped char input is handled differently during the paste.
+    -   Creation and editing of other POD values
+        -   Types
+            -   Booleans
+            -   Chars
+            -   Unsigned ints
+            -   Signed ints
+            -   Floats
+        -   It should be possible to specify/alter the format of the values, e.g. binary, octal, decimal, hex, arbitrary base, etc.
+    -   Creation and editing of structs
+    -   Creation and editing of non-parametric terms
+        -   Because each of these has a specific sigil (identifier), there needs to be a way to select from one of the known sigils.  Hitting "enter" on the sigil should enter the selection mode.  Maybe this is some sort of dropdown with filtered search. 
 
 Implementation notes for undo/redo and determining if there are unsaved changes.
 -   Events (e.g. keyboard, mouse events) are handled first by the view (view options) and then by the root value, producing an action.
@@ -689,4 +710,40 @@ Implementation notes for undo/redo and determining if there are unsaved changes.
 -   The current state of the document is an index into the queue of actions.
 -   The saved state of the document is an index into the queue of actions.
 -   The model for the document keeps the queue of cumulative root value edit counts, starting with 0.
--   The document has unsaved changes iff the cumulative root value edit count for the current state and saved state are not equal.  Note that there can be CursorEdits in the action queue between the current state and saved state, and they don't affect the determination of unsaved changes.
+-   The document has unsaved changes iff the cumulative root value edit counts for the current state and saved state are not equal.  Note that there can be CursorEdits in the action queue between the current state and saved state, and they don't affect the determination of unsaved changes.
+
+## 2025.01.31
+
+Notes for decoupling sept data viewing/navigation/editing from `egui` crate:
+-   Create a data model for sept data editing events/commands, and have the event handlers for the various sept types use that data model.
+-   Then, for each UI frontend, there can be a translation from that frontend's event data model into sept's event data model.
+-   Ideally the layout of rendered sept data could also be abstracted, so that it can be decoupled from the UI frontend.
+-   This way, adding support for a UI frontend to `sept-gui` should be clear and formulaic, and much easier.
+-   The event handler for each sept type interprets events and translates them into edits (on cursor or root value).  There is arguably an intermediate stage where it would translate an event into potentially multiple semantically-imbued commands, such as "attempt to advance the cursor".  A sept type's event handler would respond to each command in its own type-dependent way (e.g. by advancing the cursor if that makes any sense for that type, or ignoring it if it doesn't).
+    -   Key events like `Enter`, `Alt+Enter`, `Escape`, `[`, `]`, `"`, often will be translated into commands:
+        -   `Enter` -> Have the cursor enter this term at the end (e.g. after the last element of an array).
+        -   `Alt+Enter` or `Escape` -> Have the cursor escape this term and expand to encompass it.
+            TODO: Maybe `Alt+Enter` can be have the cursor escape this term and attempt to retreat by one (or have `Escape` be this, not sure which one makes more sense).
+        -   `[` -> Have the cursor create and/or enter this array term at the beginning.
+        -   `]` -> Have the cursor escape this array term and then attempt to advance by one.
+        However, depending on the context, some of those key events could produce edits (e.g. in UTF8StringTerm).
+
+Implementation notes for sept data viewing/navigation/editing event model
+-   `egui::Event` variants that are currently used in `sept-gui`:
+    -   `Paste`
+    -   `Text`
+    -   `Key` with a key specifier, modifiers, pressed state, and repeat state.  These are used to navigate and modify data.
+-   Sept events/commands
+    -   Events
+        -   Key
+        -   Mouse (this depends on having the layout abstracted into sept)
+    -   Commands
+        -   Copy
+        -   Cut
+        -   Paste
+        -   Enter term at beginning
+        -   Enter term at end
+        -   Escape term
+        -   Increment cursor by n
+        -   Cursor to beginning
+        -   Cursor to end

@@ -703,6 +703,29 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemCharElemView<'a> {
                 egui::Event::Key {
                     key: egui::Key::Enter,
                     pressed: true,
+                    modifiers,
+                    ..
+                } if modifiers.command => {
+                    // Fully escape line-char mode by taking off the last four cursor tokens, and then
+                    // attempting to advance the cursor using egui::Key::ArrowRight, which is a uniform
+                    // way to advance the cursor by one element in all views.
+                    event_handler_ctx.enqueue_command_cursor_address_pop(4);
+                    // Attempt to advance the cursor by one element.
+                    event_handler_ctx
+                        .remaining_event_v
+                        .push_front(egui::Event::Key {
+                            key: egui::Key::ArrowRight,
+                            physical_key: Some(egui::Key::ArrowRight),
+                            pressed: true,
+                            repeat: false,
+                            modifiers: egui::Modifiers::NONE,
+                        });
+                    // We consumed the event.
+                    Ok(None)
+                }
+                egui::Event::Key {
+                    key: egui::Key::Enter,
+                    pressed: true,
                     modifiers: egui::Modifiers::NONE,
                     ..
                 } => {
