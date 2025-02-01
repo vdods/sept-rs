@@ -42,12 +42,16 @@ pub fn placeholder_event_handler_impl(
     edit_factory: impl Fn(sept::dy::TupleTerm, sept::dy::Value) -> Edit,
 ) -> Result<Option<egui::Event>> {
     match event {
-        egui::Event::Text(string) if string.starts_with("\"") || string.starts_with("[") => {
+        egui::Event::Text(string)
+            if string.starts_with("\"") || string.starts_with("[") || string.starts_with("(") =>
+        {
             let address = event_handler_ctx.cursor_address.clone();
             let new_data: sept::dy::Value = if string.starts_with("\"") {
                 "".to_string().into()
             } else if string.starts_with("[") {
                 sept::dy::ArrayTerm::from(vec![]).into()
+            } else if string.starts_with("(") {
+                sept::dy::TupleTerm::from(vec![]).into()
             } else {
                 unreachable!("programmer error: you missed a case!")
             };
@@ -66,10 +70,10 @@ pub fn placeholder_event_handler_impl(
                 .remaining_event_v
                 .push_front(egui::Event::Key {
                     key: egui::Key::Enter,
-                    pressed: true,
-                    modifiers: egui::Modifiers::NONE,
                     physical_key: Some(egui::Key::Enter),
+                    pressed: true,
                     repeat: false,
+                    modifiers: egui::Modifiers::NONE,
                 });
             // We consumed the event.
             Ok(None)

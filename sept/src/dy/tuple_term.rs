@@ -284,7 +284,7 @@ impl st::SerializableT for TupleTerm {
 }
 
 impl qv::SingleQueryT<dy::Value> for TupleTerm {
-    type ReturnType<'a> = TupleTermQuery<'a>;
+    type ReturnType<'a> = qv::TupleTermQuery<'a>;
     type Error = Error;
     fn run_single_query<'a>(
         &'a self,
@@ -302,7 +302,7 @@ impl qv::SingleQueryT<dy::Value> for TupleTerm {
 }
 
 impl qv::SingleQueryMutT<dy::Value> for TupleTerm {
-    type ReturnType<'a> = TupleTermQueryMut<'a>;
+    type ReturnType<'a> = qv::TupleTermQueryMut<'a>;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
@@ -390,50 +390,6 @@ pub fn prefix_partial_cmp(lhs: &[dy::Value], rhs: &[dy::Value]) -> Option<std::c
             Some(Greater)
         } else {
             Some(Less)
-        }
-    }
-}
-
-#[derive(Clone, Debug, derive_more::From)]
-pub enum TupleTermQuery<'a> {
-    TupleTermElemView(qv::TupleTermElemView<'a>),
-}
-
-// TODO: Derive
-impl<'b> qv::EvalT for TupleTermQuery<'b> {
-    fn eval<'a>(&'a self) -> Result<dy::MaybeDereferencedValue<'a>> {
-        match self {
-            Self::TupleTermElemView(v) => v.eval(),
-        }
-    }
-}
-
-#[derive(Debug, derive_more::From)]
-pub enum TupleTermQueryMut<'a> {
-    TupleTermElemMutView(qv::TupleTermElemMutView<'a>),
-}
-
-// TODO: Derive this
-impl<'b> qv::QueryMutAndApplyEditT for TupleTermQueryMut<'b> {
-    fn query_mut_and_apply_edit<'s, 'a>(
-        &'s mut self,
-        address_token_i: &mut dyn std::iter::Iterator<Item = &'a dy::Value>,
-        edit: dy::Value,
-    ) -> Result<()>
-    where
-        's: 'a,
-    {
-        match self {
-            Self::TupleTermElemMutView(v) => v.query_mut_and_apply_edit(address_token_i, edit),
-        }
-    }
-}
-
-// TODO: Derive this, because it just forwards to each variant.
-impl<'a> qv::ApplyEditT for TupleTermQueryMut<'a> {
-    fn apply_edit(&mut self, edit: dy::Value) -> anyhow::Result<()> {
-        match self {
-            Self::TupleTermElemMutView(v) => v.apply_edit(edit),
         }
     }
 }

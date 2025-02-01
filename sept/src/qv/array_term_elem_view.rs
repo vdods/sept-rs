@@ -17,7 +17,7 @@ impl<'a> ArrayTermElemView<'a> {
     pub fn new(array_term: &'a dy::ArrayTerm, elem_index: usize) -> Result<Self> {
         anyhow::ensure!(
             elem_index <= array_term.len(),
-            "ArrayTermElemView char index out of bounds"
+            "ArrayTermElemView index out of bounds"
         );
         let elem_o = array_term.get(elem_index);
         Ok(Self {
@@ -33,7 +33,7 @@ impl<'a> ArrayTermElemView<'a> {
     ) -> Result<Self> {
         anyhow::ensure!(
             elem_index <= array_term.len(),
-            "ArrayTermElemView char index out of bounds"
+            "ArrayTermElemView index out of bounds"
         );
         assert_eq!(
             elem_o,

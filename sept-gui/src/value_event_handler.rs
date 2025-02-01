@@ -1,4 +1,4 @@
-use crate::{EventHandlerT, EventHandlerCtx};
+use crate::{EventHandlerCtx, EventHandlerT};
 use anyhow::Result;
 
 impl EventHandlerT for sept::dy::Value {
@@ -10,13 +10,15 @@ impl EventHandlerT for sept::dy::Value {
     ) -> Result<Option<egui::Event>> {
         // tracing::debug!("Value::handle_event; event: {:?}", event);
         // TODO: Probably use a registration pattern here
-        if let Some(x) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
+        if let Some(x) = self.downcast_ref::<sept::dy::ArrayTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
-        } else if let Some(x) = self.downcast_ref::<sept::dy::ArrayTerm>() {
+        } else if let Some(x) = self.downcast_ref::<sept::st::Placeholder>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::dy::StructTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
-        } else if let Some(x) = self.downcast_ref::<sept::st::Placeholder>() {
+        } else if let Some(x) = self.downcast_ref::<sept::dy::TupleTerm>() {
+            x.handle_event(event, event_handler_ctx, cursor_address_token_i)
+        } else if let Some(x) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else {
             // This is just a temporary warning, until we support all Value variants.

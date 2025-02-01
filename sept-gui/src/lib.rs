@@ -23,6 +23,7 @@ mod root_value_edit;
 mod struct_term_event_handler;
 mod struct_term_term_value_ui;
 mod struct_term_value_ui;
+mod tuple_term_event_handler;
 mod tuple_term_value_ui;
 mod utf8_string_term_event_handler;
 mod utf8_string_term_value_ui;

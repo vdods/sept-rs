@@ -33,6 +33,8 @@ mod struct_term_query_mut;
 mod struct_term_view;
 mod tuple_term_elem_mut_view;
 mod tuple_term_elem_view;
+mod tuple_term_query;
+mod tuple_term_query_mut;
 mod tuple_term_view;
 mod utf8_string_term_char_elem_mut_view;
 mod utf8_string_term_char_elem_view;
@@ -86,6 +88,8 @@ pub use struct_term_query_mut::StructTermQueryMut;
 pub use struct_term_view::StructTermView;
 pub use tuple_term_elem_mut_view::TupleTermElemMutView;
 pub use tuple_term_elem_view::TupleTermElemView;
+pub use tuple_term_query::TupleTermQuery;
+pub use tuple_term_query_mut::TupleTermQueryMut;
 pub use tuple_term_view::TupleTermView;
 pub use utf8_string_term_char_elem_mut_view::UTF8StringTermCharElemMutView;
 pub use utf8_string_term_char_elem_view::{
