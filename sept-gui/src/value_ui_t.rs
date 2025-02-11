@@ -168,6 +168,7 @@ macro_rules! impl_value_ui_using_to_string {
 }
 
 // This is probably a TEMP HACK
+#[allow(unused_macros)]
 macro_rules! impl_value_ui_using_debug_format {
     ($ty:ty) => {
         impl ValueUIT for $ty {
@@ -211,7 +212,6 @@ impl_value_ui_using_to_string!(sept::st::Void);
 impl_value_ui_using_to_string!(sept::st::True);
 impl_value_ui_using_to_string!(sept::st::False);
 impl_value_ui_using_to_string!(sept::st::BoolTerm);
-impl_value_ui_using_debug_format!(sept::st::UnicodeCharTerm);
 impl_value_ui_using_to_string!(sept::st::Sint8Term);
 impl_value_ui_using_to_string!(sept::st::Sint16Term);
 impl_value_ui_using_to_string!(sept::st::Sint32Term);
@@ -277,32 +277,47 @@ pub(crate) fn render_str_as_literal_without_quotes(
     escape_char_color: egui::Color32,
     char_index_begin: usize,
 ) {
+    // TEMP HACK (maybe) -- handle char by char for now.  Maybe this is plenty efficient, hopefully LayoutJob does
+    // the correct buffering.
     for (c_index, c) in text.chars().enumerate() {
         let mut view_ctx_g =
             view_ctx.push_render_address_token(((c_index + char_index_begin) as u32).into());
+        render_char_as_literal_without_quotes(
+            c,
+            layout_job,
+            &mut view_ctx_g,
+            regular_char_color,
+            escape_char_color,
+        );
+    }
+}
 
-        // TEMP HACK -- handle char by char for now.  Maybe this is plenty efficient, hopefully LayoutJob does
-        // the correct buffering.
-        if c == '\\'
-            || c == '\"'
-            || (c as u32) < (' ' as u32)
-            || (c as u32) > ('~' as u32)
-            || c == END_OF_TRANSMISSION_CHAR
-        {
-            layout_job_append(
-                layout_job,
-                c.escape_default().to_string().as_str(),
-                escape_char_color,
-                &mut view_ctx_g,
-            );
-        } else {
-            layout_job_append(
-                layout_job,
-                c.to_string().as_str(),
-                regular_char_color,
-                &mut view_ctx_g,
-            );
-        }
+fn render_char_as_literal_without_quotes(
+    c: char,
+    layout_job: &mut LayoutJob,
+    view_ctx: &mut ViewCtx<'_>,
+    regular_char_color: egui::Color32,
+    escape_char_color: egui::Color32,
+) {
+    if sept::qv::UnicodeCharTermView::is_plain_char(c) {
+        layout_job_append(
+            layout_job,
+            c.to_string().as_str(),
+            regular_char_color,
+            view_ctx,
+        );
+    } else if sept::qv::UnicodeCharTermView::is_single_char_escape(c) {
+        layout_job_append(
+            layout_job,
+            c.escape_default().to_string().as_str(),
+            escape_char_color,
+            view_ctx,
+        );
+    } else {
+        unimplemented!(
+            "currently unsupported: char {} is not a plain char or a single-char escape",
+            c
+        );
     }
 }
 

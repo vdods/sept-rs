@@ -1,6 +1,6 @@
 use crate::{
-    placeholder_event_handler_impl, AddressedEdit, CursorEdit, Edit, EventHandlerCtx,
-    EventHandlerT, LayoutDiscriminant, RootValueEdit,
+    is_mouse_event, placeholder_event_handler_impl, AddressedEdit, CursorEdit, Edit,
+    EventHandlerCtx, EventHandlerT, LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
 use sept::dy::IntoValueT;
@@ -23,6 +23,13 @@ impl EventHandlerT for sept::dy::StructTerm {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "StructTerm::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 // egui::Event::Paste(string) => {
@@ -82,6 +89,13 @@ impl<'a> EventHandlerT for sept::qv::StructTermFieldElemView<'a> {
             )
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "StructTermFieldElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             let cursor_len = event_handler_ctx.cursor_address.len() as u32;
             assert!(cursor_len >= 1);
@@ -93,8 +107,7 @@ impl<'a> EventHandlerT for sept::qv::StructTermFieldElemView<'a> {
                     ..
                 } => {
                     // Enter this StructTerm field at element 0.
-                    event_handler_ctx
-                        .enqueue_command_cursor_address_push([0u32.into()].into_iter());
+                    event_handler_ctx.enqueue_edit_cursor_address_push([0u32.into()].into_iter());
                     // We consumed the event.
                     Ok(None)
                 }
@@ -111,7 +124,7 @@ impl<'a> EventHandlerT for sept::qv::StructTermFieldElemView<'a> {
                     ..
                 } => {
                     // Escape this view by taking off the last cursor token.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(1);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(1);
                     // We consumed the event.
                     Ok(None)
                 }
@@ -385,6 +398,13 @@ impl<'a> EventHandlerT for sept::qv::StructTermFieldElemElemView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "StructTermFieldElemElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             let cursor_len = event_handler_ctx.cursor_address.len() as u32;
             assert!(cursor_len >= 2);
@@ -402,7 +422,7 @@ impl<'a> EventHandlerT for sept::qv::StructTermFieldElemElemView<'a> {
                     ..
                 } => {
                     // Escape this view by taking off the last cursor token.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(1);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(1);
                     // We consumed the event.
                     Ok(None)
                 }

@@ -1,6 +1,6 @@
 use crate::{
-    first_char_stripped_string, placeholder_event_handler_impl, AddressedEdit, CursorEdit, Edit,
-    EventHandlerCtx, EventHandlerT, LayoutDiscriminant, RootValueEdit,
+    first_char_stripped_string, is_mouse_event, placeholder_event_handler_impl, AddressedEdit,
+    CursorEdit, Edit, EventHandlerCtx, EventHandlerT, LayoutDiscriminant, RootValueEdit,
 };
 use anyhow::Result;
 use sept::dy::IntoValueT;
@@ -24,6 +24,13 @@ impl EventHandlerT for sept::dy::TupleTerm {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "TupleTerm::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 // egui::Event::Paste(string) => {
@@ -46,10 +53,10 @@ impl EventHandlerT for sept::dy::TupleTerm {
                     }));
                     // Take the used char off the front of the string and push the rest back onto the remaining events,
                     // if there's anything left of the string after the first char.
-                    if let Some(string) = first_char_stripped_string(string) {
+                    if let Some(remaining_string) = first_char_stripped_string(string) {
                         event_handler_ctx
                             .remaining_event_v
-                            .push_front(egui::Event::Text(string));
+                            .push_front(egui::Event::Text(remaining_string));
                     }
                     // We consumed the event.
                     Ok(None)
@@ -101,6 +108,14 @@ impl<'a> EventHandlerT for sept::qv::TupleTermElemView<'a> {
                 }
             }
         } else {
+            // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "TupleTermElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             let cursor_len = event_handler_ctx.cursor_address.len() as u32;
             assert!(cursor_len >= 1);
             match event {

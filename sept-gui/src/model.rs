@@ -160,7 +160,7 @@ impl Model {
         self.open_file_path_o = None;
     }
     pub fn do_action(&mut self, action: Action) -> anyhow::Result<()> {
-        tracing::debug!("Do: {:?}", action);
+        tracing::trace!("Do: {:#?}", action);
 
         // Attempt to apply the action before updating the action queue, in case it fails.
         action.apply(
@@ -183,12 +183,12 @@ impl Model {
     }
     pub fn undo_action(&mut self) {
         if self.current_state_action_index == 0 {
-            tracing::debug!("Undo: no actions to undo");
+            tracing::trace!("Undo: no actions to undo");
             return;
         }
 
         let action = &self.action_v[self.current_state_action_index - 1];
-        tracing::debug!("Undo: {:?}", action);
+        tracing::trace!("Undo: {:#?}", action);
         action.revert(
             &mut self.root_value_la.write().unwrap(),
             &mut self.cursor_address,
@@ -197,12 +197,12 @@ impl Model {
     }
     pub fn redo_action(&mut self) {
         if self.current_state_action_index == self.action_v.len() {
-            tracing::debug!("Redo: no actions to redo");
+            tracing::trace!("Redo: no actions to redo");
             return;
         }
 
         let action = &self.action_v[self.current_state_action_index];
-        tracing::info!("Redo: {:?}", action);
+        tracing::trace!("Redo: {:#?}", action);
         action.apply(
             &mut self.root_value_la.write().unwrap(),
             &mut self.cursor_address,

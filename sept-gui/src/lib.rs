@@ -25,6 +25,8 @@ mod struct_term_term_value_ui;
 mod struct_term_value_ui;
 mod tuple_term_event_handler;
 mod tuple_term_value_ui;
+mod unicode_char_term_event_handler;
+mod unicode_char_term_value_ui;
 mod utf8_string_term_event_handler;
 mod utf8_string_term_value_ui;
 mod value_event_handler;
@@ -65,3 +67,15 @@ pub(crate) use value_ui_t::{
     render_str_as_literal_without_quotes, render_type_annotation_for,
     render_type_annotation_for_str,
 };
+
+// TEMP HACK
+pub fn is_mouse_event(event: &egui::Event) -> bool {
+    match event {
+        egui::Event::MouseMoved(_)
+        | egui::Event::MouseWheel { .. }
+        | egui::Event::PointerButton { .. }
+        | egui::Event::PointerGone
+        | egui::Event::PointerMoved(_) => true,
+        _ => false,
+    }
+}

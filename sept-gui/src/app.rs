@@ -5,8 +5,7 @@ use egui::Modifiers;
 use sept::st::{DeserializableT, SerializableT};
 
 use crate::{
-    edit, extract_text_prefix_from_front_text, AddressedEdit, CursorEdit, Edit, EventHandlerCtx,
-    Model, SaveBehavior, ValueUIT, ViewCtx, ViewOptions,
+    edit, extract_text_prefix_from_front_text, is_mouse_event, AddressedEdit, CursorEdit, Edit, EventHandlerCtx, Model, SaveBehavior, ValueUIT, ViewCtx, ViewOptions
 };
 use std::{
     collections::VecDeque,
@@ -350,10 +349,15 @@ impl App {
         let mut unhandled_event_v = Vec::new();
         while !event_v.is_empty() {
             let event = event_v.pop_front().unwrap();
-            if matches!(event, egui::Event::Key { .. }) {
-                tracing::debug!("App::handle_input_events; event: {:?}", event);
-            } else {
-                tracing::trace!("App::handle_input_events; event: {:?}", event);
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "App::handle_input_events; BEGIN -------------------------------------"
+                );
+                tracing::trace!(
+                    "App::handle_input_events; event: {:?}, cursor: {:?}",
+                    event,
+                    self.model.cursor_address()
+                );
             }
 
             // Handle undo/redo actions first.
@@ -440,14 +444,16 @@ impl eframe::App for App {
                 }
             });
 
-            tracing::trace!(
-                "App::update; new: {}, open: {}, save: {}, save_as: {}, quit: {}",
-                file_new,
-                file_open,
-                file_save,
-                file_save_as,
-                file_quit,
-            );
+            if file_new || file_open || file_save || file_save_as || file_quit {
+                tracing::trace!(
+                    "App::update; new: {}, open: {}, save: {}, save_as: {}, quit: {}",
+                    file_new,
+                    file_open,
+                    file_save,
+                    file_save_as,
+                    file_quit,
+                );
+            }
 
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {

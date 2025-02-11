@@ -624,9 +624,9 @@ Notes on fleshing out views and event handling for remainder of types
 Notes on char editing
 -   There should be the direct char view (for non-programmers) and the escaped char view (for programmers)
     -   The direct char view operates with direct key presses, perhaps showing certain control characters visually using unicode chars, like:
-        -   newline: ↵ `u21B5`
-        -   tab: » `uBB` or ↦ `u21A6` or ⇥ `u21E5`
-        -   space: · `uB7` or ␣ `u2423`
+        -   newline: ↵ `\u{21B5}`
+        -   tab: » `\u{BB}` or ↦ `\u{21A6}` or ⇥ `\u{21E5}`
+        -   space: · `\u{B7}` or ␣ `\u{2423}`
         Reference: https://www.piliapp.com/symbols/tab/
     -   The escaped char view shows escape codes, such as `\n` and `\\`.
 -   When editing a string, if you type `\`, it should enter the escaped char view for that char, so that the next keypress(es) determine the specific escape code.  Some escape codes:
@@ -634,7 +634,7 @@ Notes on char editing
     -   `n` - newline
     -   `t` - tab
     -   `x5E` - `^`
-    -   `u2764` - `❤` (reference `char::escape_unicode`)
+    -   `u{2764}` - `❤` (reference `char::escape_unicode`)
 
 Notes on string editing
 -   There should be "programmer mode" and "standard mode"
@@ -712,6 +712,34 @@ Implementation notes for undo/redo and determining if there are unsaved changes.
 -   The model for the document keeps the queue of cumulative root value edit counts, starting with 0.
 -   The document has unsaved changes iff the cumulative root value edit counts for the current state and saved state are not equal.  Note that there can be CursorEdits in the action queue between the current state and saved state, and they don't affect the determination of unsaved changes.
 
+Implementation notes for UnicodeCharTerm (i.e. char) views
+-   Digging into the Unicode standard a bit, there's no straightforward way to define "printable" vs "non-printable" characters, as there are many categories of characters with different semantics.  The two most relevant categorizations given in the standard are "character categories" (https://www.compart.com/en/unicode/category) and "bidirectional classes" (https://www.compart.com/en/unicode/bidiclass).  Each of these has many variants, not all of which bear on the "printable" vs "non-printable" determination.  A rough, made-up method set of discriminants that is probably good enough for now is:
+    -   Discriminate ASCII vs non-ASCII
+    -   If it's ASCII,
+        -   Is it a non-control char, and therefore directly printable?  This includes space.
+        -   Does it have a single-char escape code?
+            -   Rust supports: \0 \t \n \r \\ (and either \" and \' depending on quoting context)
+            -   Others (see `man ascii`): \a \b \v \f
+            -   C++ (https://en.cppreference.com/w/cpp/language/escape)
+        -   Otherwise it requires a hex code escape \xNN or unicode escape \u{NN}
+    -   Otherwise discriminate using the following character classes, which, if they're not ASCII, should be represented using a unicode escape \u{NNNNNN} (between 1 and 6 hex digits).
+        -   Control (https://www.compart.com/en/unicode/category/Cc)
+        -   Format (https://www.compart.com/en/unicode/category/Cf)
+        -   Separator (this is my own grouping)
+            -   Line separator (https://www.compart.com/en/unicode/category/Zl)
+            -   Paragraph separator (https://www.compart.com/en/unicode/category/Zp)
+            -   Space separator (https://www.compart.com/en/unicode/category/Zs)
+    -   Maybe also useful is to discriminate using the following bidirectional classes:
+        -   Whitespace (https://www.compart.com/en/unicode/bidiclass/WS)
+            This is contained fully in Control, Space separator, and Line separator categories.
+            But note that ASCII space U+0020 is contained here.
+-   Relevant Rust crate: https://crates.io/crates/unicode_categories
+-   Interesting corner case from https://crates.io/crates/unicode-display-width:
+    `Ẓ̌á̲l͔̝̞̄̑͌g̖̘̘̔̔͢͞͝o̪̔T̢̙̫̈̍͞e̬͈͕͌̏͑x̺̍ṭ̓̓ͅ`
+    This corresponds to the Rust string
+    
+        "\u{1e92}\u{30c}\u{e1}\u{332}\u{6c}\u{354}\u{31d}\u{31e}\u{304}\u{311}\u{34c}\u{67}\u{316}\u{318}\u{318}\u{314}\u{314}\u{362}\u{35e}\u{35d}\u{6f}\u{32a}\u{314}\u{54}\u{322}\u{319}\u{32b}\u{308}\u{30d}\u{35e}\u{65}\u{32c}\u{348}\u{355}\u{34c}\u{30f}\u{351}\u{78}\u{33a}\u{30d}\u{1e6d}\u{313}\u{313}\u{345}"
+
 ## 2025.01.31
 
 Notes for decoupling sept data viewing/navigation/editing from `egui` crate:
@@ -722,11 +750,11 @@ Notes for decoupling sept data viewing/navigation/editing from `egui` crate:
 -   The event handler for each sept type interprets events and translates them into edits (on cursor or root value).  There is arguably an intermediate stage where it would translate an event into potentially multiple semantically-imbued commands, such as "attempt to advance the cursor".  A sept type's event handler would respond to each command in its own type-dependent way (e.g. by advancing the cursor if that makes any sense for that type, or ignoring it if it doesn't).
     -   Key events like `Enter`, `Alt+Enter`, `Escape`, `[`, `]`, `"`, often will be translated into commands:
         -   `Enter` -> Have the cursor enter this term at the end (e.g. after the last element of an array).
-        -   `Alt+Enter` or `Escape` -> Have the cursor escape this term and expand to encompass it.
-            TODO: Maybe `Alt+Enter` can be have the cursor escape this term and attempt to retreat by one (or have `Escape` be this, not sure which one makes more sense).
+        -   `Alt+Enter` or `Escape` -> Have the cursor escape this term and expand to encompass it (this is the opposite of the effect of `Enter`).
         -   `[` -> Have the cursor create and/or enter this array term at the beginning.
         -   `]` -> Have the cursor escape this array term and then attempt to advance by one.
         However, depending on the context, some of those key events could produce edits (e.g. in UTF8StringTerm).
+-   Currently many of the specifics of editing are handled in the EventHandlerT implementations.  What would be better would be to provide methods to modify values directly where those methods emit sequences of format edits that produce those modifications.  This would probably need to have access to the cursor as well.  Doing this would probably drastically clean up the editing code.
 
 Implementation notes for sept data viewing/navigation/editing event model
 -   `egui::Event` variants that are currently used in `sept-gui`:
@@ -734,8 +762,12 @@ Implementation notes for sept data viewing/navigation/editing event model
     -   `Text`
     -   `Key` with a key specifier, modifiers, pressed state, and repeat state.  These are used to navigate and modify data.
 -   Sept events/commands
-    -   Events
-        -   Key
+    -   Events.  Regarding key and text events, not all text has a corresponding key press (e.g. non-keyboard unicode), 
+        and not all key presses have corresponding text (e.g. arrow keys, home/end/pgup/pgdown, del, backspace).  Each
+        input event should correspond to exactly one input datum, not potentially multiple like in `egui`.
+        -   Key -- Key event only, no corresponding Text
+        -   KeyAndText -- corresponds to a single event, but has a representation both as a Key and as a Text.
+        -   Text -- Text event only, no corresponding Key
         -   Mouse (this depends on having the layout abstracted into sept)
     -   Commands
         -   Copy

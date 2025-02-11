@@ -18,6 +18,8 @@ impl EventHandlerT for sept::dy::Value {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::dy::TupleTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
+        } else if let Some(x) = self.downcast_ref::<sept::st::UnicodeCharTerm>() {
+            x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else if let Some(x) = self.downcast_ref::<sept::st::UTF8StringTerm>() {
             x.handle_event(event, event_handler_ctx, cursor_address_token_i)
         } else {

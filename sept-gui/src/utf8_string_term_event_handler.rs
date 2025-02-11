@@ -1,6 +1,6 @@
 use crate::{
-    first_char_stripped_string, AddressedEdit, CursorEdit, EventHandlerCtx, EventHandlerT,
-    RootValueEdit,
+    first_char_stripped_string, is_mouse_event, AddressedEdit, CursorEdit, EventHandlerCtx,
+    EventHandlerT, RootValueEdit,
 };
 use anyhow::Result;
 use sept::dy::IntoValueT;
@@ -27,6 +27,13 @@ impl EventHandlerT for sept::st::UTF8StringTerm {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTerm::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 // egui::Event::Paste(string) => {
@@ -51,10 +58,10 @@ impl EventHandlerT for sept::st::UTF8StringTerm {
                     enter_line_char_mode(self, event_handler_ctx, EnterLineCharModeAt::Beginning);
                     // Take the used char off the front of the string and push the rest back onto the remaining events,
                     // if there's anything left of the string after the first char.
-                    if let Some(string) = first_char_stripped_string(string) {
+                    if let Some(remaining_string) = first_char_stripped_string(string) {
                         event_handler_ctx
                             .remaining_event_v
-                            .push_front(egui::Event::Text(string));
+                            .push_front(egui::Event::Text(remaining_string));
                     }
                     // We consumed the event.
                     Ok(None)
@@ -84,6 +91,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermCharView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermCharView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
@@ -107,6 +121,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermCharElemView<'a> {
             match self.run_single_query(cursor_address_token)? {}
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermCharElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 egui::Event::Key {
@@ -122,7 +143,7 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermCharElemView<'a> {
                     ..
                 } => {
                     // Escape this view by taking off the last two cursor tokens.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(2);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(2);
                     // We consumed the event.
                     Ok(None)
                 }
@@ -396,6 +417,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermLineView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
@@ -425,6 +453,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermLineElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 egui::Event::Key {
@@ -434,7 +469,7 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemView<'a> {
                     ..
                 } => {
                     // Enter this UTF8StringTerm in "char" view at element 0.
-                    event_handler_ctx.enqueue_command_cursor_address_push(
+                    event_handler_ctx.enqueue_edit_cursor_address_push(
                         ["char".to_string().into(), 0u32.into()].into_iter(),
                     );
                     // We consumed the event.
@@ -453,7 +488,7 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemView<'a> {
                     ..
                 } => {
                     // Escape this view by taking off the last two cursor tokens.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(2);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(2);
                     // We consumed the event.
                     Ok(None)
                 }
@@ -656,6 +691,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemCharView<'a> {
             }
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermLineElemChar::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
             match event {
                 event => {
@@ -680,6 +722,13 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemCharElemView<'a> {
             match self.run_single_query(cursor_address_token)? {}
         } else {
             // This is the value addressed by the cursor.
+            if !is_mouse_event(&event) {
+                tracing::trace!(
+                    "UTF8StringTermLineElemCharElemView::handle_event; event: {:?}, cursor: {:?}",
+                    event,
+                    event_handler_ctx.cursor_address
+                );
+            }
             // TODO: Probably put this into a method in EventHandlerT.
 
             match event {
@@ -696,7 +745,7 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemCharElemView<'a> {
                     ..
                 } => {
                     // Fully escape line-char mode by taking off the last four cursor tokens.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(4);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(4);
                     // We consumed the event.
                     Ok(None)
                 }
@@ -709,7 +758,7 @@ impl<'a> EventHandlerT for sept::qv::UTF8StringTermLineElemCharElemView<'a> {
                     // Fully escape line-char mode by taking off the last four cursor tokens, and then
                     // attempting to advance the cursor using egui::Key::ArrowRight, which is a uniform
                     // way to advance the cursor by one element in all views.
-                    event_handler_ctx.enqueue_command_cursor_address_pop(4);
+                    event_handler_ctx.enqueue_edit_cursor_address_pop(4);
                     // Attempt to advance the cursor by one element.
                     event_handler_ctx
                         .remaining_event_v
@@ -1119,6 +1168,8 @@ fn enter_line_char_mode(
     }));
 }
 
+// Note: This has a duplicate in unicode_char_term_event_handler.rs
+// Potentially should deduplicate.
 fn enqueue_char_mode_cursor_edit(
     old_char_index: u32,
     new_char_index: u32,

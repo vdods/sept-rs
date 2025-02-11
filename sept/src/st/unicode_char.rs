@@ -1,30 +1,22 @@
 use crate::{
     dy,
-    st::{self, InhabitsT, UnicodeCharType},
+    st::{self, InhabitsT},
     Result,
 };
 
 /// This represents the UnicodeChar type itself, not a boolean value such as true or false.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    dy::IntoValueT,
-    st::NonParametricTermT,
-    PartialEq,
-    st::TermT,
-    st::TypeT,
+    Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
 #[st_term_t(
-    AbstractTypeType = "UnicodeCharType",
+    AbstractTypeType = "st::UnicodeCharType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct UnicodeChar;
 
 impl dy::ConstructorT for UnicodeChar {
-    type ConstructedType = UnicodeChar;
+    type ConstructedType = st::UnicodeCharTerm;
     fn construct(&self, _parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         unimplemented!("TODO");
         // anyhow::ensure!(
@@ -53,8 +45,8 @@ impl dy::ConstructorT for UnicodeChar {
     }
 }
 
-impl InhabitsT<UnicodeCharType> for UnicodeChar {
-    fn inhabits(&self, _: &UnicodeCharType) -> bool {
+impl InhabitsT<st::UnicodeCharType> for UnicodeChar {
+    fn inhabits(&self, _: &st::UnicodeCharType) -> bool {
         true
     }
 }

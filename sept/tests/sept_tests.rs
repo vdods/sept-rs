@@ -2069,6 +2069,7 @@ fn test_serialize_deserialize() {
     test_serialize_deserialize_test_values::<u64>();
     test_serialize_deserialize_test_values::<f32>();
     test_serialize_deserialize_test_values::<f64>();
+    test_serialize_deserialize_test_values::<char>();
     test_serialize_deserialize_test_values::<String>();
 
     test_serialize_deserialize_test_values::<ArrayTerm>();

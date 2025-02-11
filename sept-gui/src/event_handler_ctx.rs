@@ -60,7 +60,7 @@ impl<'a> EventHandlerCtx<'a> {
     }
     /// Note that this can't be used twice in the same handle_event pass, since it has to know the
     /// cursor_address len in order to generate the CursorEdit commands.
-    pub fn enqueue_command_cursor_address_push(
+    pub fn enqueue_edit_cursor_address_push(
         &mut self,
         address_token_i: impl std::iter::Iterator<Item = sept::dy::Value>,
     ) {
@@ -78,7 +78,7 @@ impl<'a> EventHandlerCtx<'a> {
     }
     /// Note that this can't be used twice in the same handle_event pass, since it has to know the
     /// cursor_address len in order to generate the CursorEdit commands.
-    pub fn enqueue_command_cursor_address_pop(&mut self, pop_count: usize) {
+    pub fn enqueue_edit_cursor_address_pop(&mut self, pop_count: usize) {
         if pop_count > self.cursor_address.len() {
             panic!("programmer error: cursor_address underflow");
         }

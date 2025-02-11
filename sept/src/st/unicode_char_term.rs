@@ -1,12 +1,12 @@
 use crate::{
     dy, qv,
-    st::{self, InhabitsT, StringifiableT, TermT, UnicodeChar},
+    st::{self, InhabitsT, StringifiableT, TermT},
     Error, Result,
 };
 
 pub type UnicodeCharTerm = char;
 
-impl qv::ApplyEditT for char {
+impl qv::ApplyEditT for UnicodeCharTerm {
     fn apply_edit(&mut self, edit: dy::Value) -> Result<()> {
         qv::generic_apply_edit(self, edit)
     }
@@ -23,8 +23,8 @@ impl dy::DeconstructT for UnicodeCharTerm {
     }
 }
 
-impl InhabitsT<UnicodeChar> for UnicodeCharTerm {
-    fn inhabits(&self, _rhs: &UnicodeChar) -> bool {
+impl InhabitsT<st::UnicodeChar> for UnicodeCharTerm {
+    fn inhabits(&self, _rhs: &st::UnicodeChar) -> bool {
         true
     }
 }
@@ -45,7 +45,7 @@ impl st::DeserializableT for UnicodeCharTerm {
     }
 }
 
-impl qv::QueryableDynT for char {
+impl qv::QueryableDynT for UnicodeCharTerm {
     fn make_query<'a>(&'a self) -> Box<dyn qv::QueryT + 'a> {
         Box::new(qv::GenericView::new(self))
     }
@@ -75,14 +75,47 @@ impl st::SerializableT for UnicodeCharTerm {
     }
 }
 
-impl qv::SingleQueryMutT<dy::Value> for char {
+impl qv::SingleQueryT<dy::Value> for UnicodeCharTerm {
+    type ReturnType<'a> = qv::UnicodeCharTermQuery<'a>;
+    type Error = Error;
+    fn run_single_query<'a>(
+        &'a self,
+        address_token: &dy::Value,
+    ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
+        if let Some(c) = address_token.downcast_ref::<UnicodeCharTerm>() {
+            match *c {
+                // Plain char view.
+                'p' => Ok(qv::UnicodeCharTermPlainView::new(self)?.into()),
+                // Single-character escape code view (C for "character").
+                'c' => Ok(qv::UnicodeCharTermEscCView::new(self)?.into()),
+                // // Hexadecimal escape code view.
+                // 'x' => Ok(qv::UnicodeCharTermEscXView::new(self)?.into()),
+                // // Unicode escape code view.
+                // 'u' => Ok(qv::UnicodeCharTermEscUView::new(self)?.into()),
+                _ => {
+                    anyhow::bail!(
+                        "UnicodeCharTerm::run_single_query; unrecognized address_token {}",
+                        address_token.stringify()
+                    );
+                }
+            }
+        } else {
+            anyhow::bail!(
+                "UnicodeCharTerm::run_single_query; unrecognized address_token {}",
+                address_token.stringify()
+            );
+        }
+    }
+}
+
+impl qv::SingleQueryMutT<dy::Value> for UnicodeCharTerm {
     type ReturnType<'a> = qv::EmptyQuery;
     type Error = Error;
     fn run_single_query_mut<'a>(
         &'a mut self,
         _address_token: &dy::Value,
     ) -> std::result::Result<Self::ReturnType<'a>, Self::Error> {
-        anyhow::bail!("char does not support queries at this time");
+        anyhow::bail!("UnicodeCharTerm does not support queries at this time");
     }
 }
 
@@ -93,7 +126,7 @@ impl StringifiableT for UnicodeCharTerm {
 }
 
 impl TermT for UnicodeCharTerm {
-    type AbstractTypeType = UnicodeChar;
+    type AbstractTypeType = st::UnicodeChar;
 
     fn is_parametric(&self) -> bool {
         true
@@ -108,6 +141,6 @@ impl TermT for UnicodeCharTerm {
 
 impl st::TestValuesT for UnicodeCharTerm {
     fn fixed_test_values() -> Vec<Self> {
-        vec!['a', ' ', '\n', '日']
+        vec!['a', ' ', '\n', '\x03', '日']
     }
 }

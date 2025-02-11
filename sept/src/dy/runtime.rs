@@ -9,9 +9,9 @@ use crate::{
         Float64, Float64Type, GlobalSymRef, GlobalSymRefType, InhabitsT, LocalSymRef,
         LocalSymRefType, OrderedMap, OrderedMapType, Placeholder, PlaceholderType, Sint16,
         Sint16Type, Sint32, Sint32Type, Sint64, Sint64Type, Sint8, Sint8Type, Struct, StructType,
-        Term, True, TrueType, Tuple, TupleType, Type, Uint16, Uint16Type, Uint32, Uint32Type,
-        Uint64, Uint64Type, Uint8, Uint8Type, UnicodeChar, UnicodeCharType, UTF8String,
-        UTF8StringType, Void, VoidType,
+        Term, True, TrueType, Tuple, TupleType, Type, UTF8String, UTF8StringType, Uint16,
+        Uint16Type, Uint32, Uint32Type, Uint64, Uint64Type, Uint8, Uint8Type, UnicodeChar,
+        UnicodeCharType, Void, VoidType,
     },
     Result,
 };
@@ -460,6 +460,7 @@ impl Runtime {
         runtime.register_constructor::<Uint64>().unwrap();
         runtime.register_constructor::<Float32>().unwrap();
         runtime.register_constructor::<Float64>().unwrap();
+        runtime.register_constructor::<UnicodeChar>().unwrap();
         runtime.register_constructor::<UTF8String>().unwrap();
         runtime.register_constructor::<Array>().unwrap();
         runtime.register_constructor::<OrderedMap>().unwrap();

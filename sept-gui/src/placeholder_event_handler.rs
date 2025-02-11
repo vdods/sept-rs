@@ -1,6 +1,4 @@
-use crate::{
-    first_char_stripped_string, AddressedEdit, Edit, EventHandlerCtx, EventHandlerT, RootValueEdit,
-};
+use crate::{is_mouse_event, AddressedEdit, Edit, EventHandlerCtx, EventHandlerT, RootValueEdit};
 use anyhow::Result;
 
 impl EventHandlerT for sept::st::Placeholder {
@@ -33,7 +31,7 @@ impl EventHandlerT for sept::st::Placeholder {
 }
 
 /// Slightly more generalized version of Placeholder::event_handler which can handle inserting
-/// items at the non-element at the end of an array or other container.  command_factory takes
+/// items at the non-element at the end of an array or other container.  edit_factory takes
 /// the address and new_data and should return the command to be executed if the Placeholder
 /// is being replaced by the new_data.
 pub fn placeholder_event_handler_impl(
@@ -41,40 +39,39 @@ pub fn placeholder_event_handler_impl(
     event_handler_ctx: &mut EventHandlerCtx<'_>,
     edit_factory: impl Fn(sept::dy::TupleTerm, sept::dy::Value) -> Edit,
 ) -> Result<Option<egui::Event>> {
+    // This is the value addressed by the cursor.
+    if !is_mouse_event(&event) {
+        tracing::trace!(
+            "placeholder_event_handler_impl; event: {:?}, cursor: {:?}",
+            event,
+            event_handler_ctx.cursor_address
+        );
+    }
     match event {
         egui::Event::Text(string)
-            if string.starts_with("\"") || string.starts_with("[") || string.starts_with("(") =>
+            if string.starts_with("\"")
+                || string.starts_with("[")
+                || string.starts_with("'")
+                || string.starts_with("(") =>
         {
             let address = event_handler_ctx.cursor_address.clone();
-            let new_data: sept::dy::Value = if string.starts_with("\"") {
-                "".to_string().into()
-            } else if string.starts_with("[") {
-                sept::dy::ArrayTerm::from(vec![]).into()
-            } else if string.starts_with("(") {
-                sept::dy::TupleTerm::from(vec![]).into()
-            } else {
-                unreachable!("programmer error: you missed a case!")
+            let first_char = string.chars().next().unwrap();
+            // We leave the first char on the event string, so that it gets processed by the newly-inserted value.
+            let new_data: sept::dy::Value = match first_char {
+                '"' => "".to_string().into(),
+                '[' => sept::dy::ArrayTerm::from(vec![]).into(),
+                '\'' => ' '.into(),
+                '(' => sept::dy::TupleTerm::from(vec![]).into(),
+                _ => unreachable!("programmer error: you missed a case!"),
             };
             let edit = edit_factory(address, new_data);
             event_handler_ctx.enqueue_edit(edit);
-            // Take the used char off the front of the string and push the rest back onto the remaining events,
-            // if there's anything left of the string after the first char.
-            if let Some(string) = first_char_stripped_string(string) {
-                event_handler_ctx
-                    .remaining_event_v
-                    .push_front(egui::Event::Text(string));
-            }
-            // This is a bit of a hack, but it's very effective; we want to enter the
-            // just-inserted string, so we push an Enter event onto the remaining events.
+            // Push the string back onto the front of the event queue, so that the newly-inserted
+            // value can process it.  Generally, the way that it will process it is to make the cursor
+            // enter the value "at the beginning".
             event_handler_ctx
                 .remaining_event_v
-                .push_front(egui::Event::Key {
-                    key: egui::Key::Enter,
-                    physical_key: Some(egui::Key::Enter),
-                    pressed: true,
-                    repeat: false,
-                    modifiers: egui::Modifiers::NONE,
-                });
+                .push_front(egui::Event::Text(string));
             // We consumed the event.
             Ok(None)
         }

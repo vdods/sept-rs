@@ -1,6 +1,6 @@
 use crate::{
     dy,
-    st::{self, InhabitsT, StringifiableT, UTF8StringType},
+    st::{self, InhabitsT, StringifiableT},
     Result,
 };
 
@@ -9,14 +9,14 @@ use crate::{
     Clone, Copy, Debug, Eq, dy::IntoValueT, st::NonParametricTermT, PartialEq, st::TermT, st::TypeT,
 )]
 #[st_term_t(
-    AbstractTypeType = "UTF8StringType",
+    AbstractTypeType = "st::UTF8StringType",
     is_parametric = "false",
     is_type = "true"
 )]
 pub struct UTF8String;
 
 impl dy::ConstructorT for UTF8String {
-    type ConstructedType = String;
+    type ConstructedType = st::UTF8StringTerm;
     fn construct(&self, parameter_t: dy::TupleTerm) -> Result<Self::ConstructedType> {
         anyhow::ensure!(
             parameter_t.len() == 1,
@@ -50,8 +50,8 @@ impl st::InhabitsT<st::Type> for UTF8String {
     }
 }
 
-impl InhabitsT<UTF8StringType> for UTF8String {
-    fn inhabits(&self, _: &UTF8StringType) -> bool {
+impl InhabitsT<st::UTF8StringType> for UTF8String {
+    fn inhabits(&self, _: &st::UTF8StringType) -> bool {
         true
     }
 }

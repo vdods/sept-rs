@@ -36,6 +36,12 @@ mod tuple_term_elem_view;
 mod tuple_term_query;
 mod tuple_term_query_mut;
 mod tuple_term_view;
+mod unicode_char_term_esc_c_elem_view;
+mod unicode_char_term_esc_c_view;
+mod unicode_char_term_plain_elem_view;
+mod unicode_char_term_plain_view;
+mod unicode_char_term_query;
+mod unicode_char_term_view;
 mod utf8_string_term_char_elem_mut_view;
 mod utf8_string_term_char_elem_view;
 mod utf8_string_term_char_mut_view;
@@ -91,6 +97,16 @@ pub use tuple_term_elem_view::TupleTermElemView;
 pub use tuple_term_query::TupleTermQuery;
 pub use tuple_term_query_mut::TupleTermQueryMut;
 pub use tuple_term_view::TupleTermView;
+pub use unicode_char_term_esc_c_elem_view::{
+    UnicodeCharTermCharElemViewQuery, UnicodeCharTermEscCElemView,
+};
+pub use unicode_char_term_esc_c_view::{UnicodeCharTermEscCView, UnicodeCharTermEscCViewQuery};
+pub use unicode_char_term_plain_elem_view::{
+    UnicodeCharTermPlainElemView, UnicodeCharTermPlainElemViewQuery,
+};
+pub use unicode_char_term_plain_view::{UnicodeCharTermPlainView, UnicodeCharTermPlainViewQuery};
+pub use unicode_char_term_query::UnicodeCharTermQuery;
+pub use unicode_char_term_view::UnicodeCharTermView;
 pub use utf8_string_term_char_elem_mut_view::UTF8StringTermCharElemMutView;
 pub use utf8_string_term_char_elem_view::{
     UTF8StringTermCharElemView, UTF8StringTermCharElemViewQuery,

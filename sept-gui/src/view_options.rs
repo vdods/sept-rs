@@ -58,6 +58,12 @@ impl ViewOptions {
     pub fn color_for_utf8string_escape_chars(&self) -> egui::Color32 {
         ANSIColor::BRIGHT_RED
     }
+    pub fn color_for_unicode_char_quotes(&self) -> egui::Color32 {
+        ANSIColor::DARK_CYAN
+    }
+    pub fn color_for_unicode_char_escape_chars(&self) -> egui::Color32 {
+        ANSIColor::BRIGHT_BLUE
+    }
     pub fn color_for_global_sym_ref_quotes(&self) -> egui::Color32 {
         ANSIColor::DARK_GREEN
     }
@@ -96,6 +102,8 @@ impl ViewOptions {
         // TODO: More efficient lookup
         if type_id == TypeId::of::<sept::st::UTF8StringTerm>() {
             ANSIColor::BRIGHT_YELLOW
+        } else if type_id == TypeId::of::<sept::st::UnicodeCharTerm>() {
+            ANSIColor::BRIGHT_CYAN
         } else if type_id == TypeId::of::<sept::st::Sint8Term>()
             || type_id == TypeId::of::<sept::st::Sint16Term>()
             || type_id == TypeId::of::<sept::st::Sint32Term>()
